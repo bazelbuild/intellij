@@ -2,6 +2,7 @@ package com.google.idea.blaze.cpp
 
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
+import com.google.idea.blaze.base.buildview.pushJob
 import com.google.idea.blaze.base.command.info.BlazeInfo
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
@@ -13,7 +14,13 @@ import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,42 +29,41 @@ import java.util.function.Predicate
 
 private const val GEN_HEADER_ROOT_SEARCH_LIMIT = 50
 
-fun getValidHeaderRoots(
-  parentContext: BlazeContext,
-  projectData: BlazeProjectData,
-  toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
-  targetFilter: Predicate<TargetIdeInfo>,
-  executionRootPathResolver: ExecutionRootPathResolver,
-): ImmutableSet<Path> = Scope.push<ImmutableSet<Path>>(parentContext) { ctx ->
-  ctx.push(TimingScope("Resolve header include roots", TimingScope.EventType.Other))
+private val LOG = logger<HeaderRootTrimmer>()
 
-  val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
+@Service(Service.Level.PROJECT)
+class HeaderRootTrimmer(private val scope: CoroutineScope) {
 
-  val builder = ImmutableSet.builder<Path>()
-  for (path in paths) {
-    val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
+  companion object {
 
-    for (directory in possibleDirectories) {
-      val add = when {
-        // never allow the bazel-bin as a header search path
-        path.isBazelBin(projectData.blazeInfo) -> false
-
-        // if it is not an output directory, there should be now big binary artifacts
-        !path.isOutputDirectory(projectData.blazeInfo) -> true
-
-        // if it is an output directory, but there are headers, we need to allow it
-        genRootMayContainHeaders(directory) -> true
-
-        else -> false
-      }
-
-      if (add) {
-        builder.add(directory)
-      }
-    }
+    @JvmStatic
+    fun getInstance(project: Project): HeaderRootTrimmer = project.service()
   }
 
-  builder.build()
+  fun get(
+    parentContext: BlazeContext,
+    projectData: BlazeProjectData,
+    toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
+    targetFilter: Predicate<TargetIdeInfo>,
+    executionRootPathResolver: ExecutionRootPathResolver,
+  ): ImmutableSet<Path> = Scope.push<ImmutableSet<Path>>(parentContext) { ctx ->
+    ctx.push(TimingScope("Resolve header include roots", TimingScope.EventType.Other))
+
+    val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
+
+    val builder = ImmutableSet.builder<Path>()
+    ctx.pushJob(scope, "HeaderRootTrimmer") {
+      val results = paths.map { root ->
+        async {
+          collectHeaderRoots(executionRootPathResolver, root, projectData)
+        }
+      }
+
+      results.map { it.await() }.forEach(builder::addAll)
+    }
+
+    builder.build().also(::logHeaderRootPaths)
+  }
 }
 
 private fun collectExecutionRootPaths(
@@ -85,6 +91,36 @@ private fun collectExecutionRootPaths(
   }
 
   return paths
+}
+
+private fun collectHeaderRoots(
+  executionRootPathResolver: ExecutionRootPathResolver,
+  path: ExecutionRootPath,
+  projectData: BlazeProjectData,
+): List<Path> {
+  val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
+
+  val result = mutableListOf<Path>()
+  for (directory in possibleDirectories) {
+    val add = when {
+      // never allow the bazel-bin as a header search path
+      path.isBazelBin(projectData.blazeInfo) -> false
+
+      // if it is not an output directory, there should be now big binary artifacts
+      !path.isOutputDirectory(projectData.blazeInfo) -> true
+
+      // if it is an output directory, but there are headers, we need to allow it
+      genRootMayContainHeaders(directory) -> true
+
+      else -> false
+    }
+
+    if (add) {
+      result.add(directory)
+    }
+  }
+
+  return result
 }
 
 private fun genRootMayContainHeaders(directory: Path): Boolean {
@@ -115,6 +151,12 @@ private fun genRootMayContainHeaders(directory: Path): Boolean {
   }
 
   return false
+}
+
+private fun logHeaderRootPaths(roots: ImmutableSet<Path>) {
+  LOG.trace("############################## VALID HEADER ROOTS ##############################")
+  roots.forEach { LOG.trace(it.toString()) }
+  LOG.trace("################################################################################")
 }
 
 private fun ExecutionRootPath.isBazelBin(info: BlazeInfo): Boolean {

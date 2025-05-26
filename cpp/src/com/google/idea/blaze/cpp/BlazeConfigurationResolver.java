@@ -119,7 +119,7 @@ final class BlazeConfigurationResolver {
         context, blazeProjectData, toolchainLookupMap, compilerSettings, targetFilter, builder);
     builder.setCompilerSettings(compilerSettings);
     ImmutableSet<Path> validHeaderRoots =
-        HeaderRootTrimmerKt.getValidHeaderRoots(
+        HeaderRootTrimmer.getInstance(project).get(
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
     builder.setXcodeSettings(xcodeSettings);
