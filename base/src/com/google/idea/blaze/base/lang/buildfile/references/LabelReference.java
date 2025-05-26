@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.IncludeStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
@@ -173,9 +174,12 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
     // Directories before the colon are already covered.
     // We're only concerned with package-local directories.
     boolean hasColon = labelString.indexOf(':') != -1;
+    boolean isIncludeStatement = myElement.getParent() instanceof IncludeStatement;
     VirtualFileFilter filter =
         file ->
-            ("bzl".equals(file.getExtension()) && !file.getPath().equals(parentFile.getFilePath()))
+            (("bzl".equals(file.getExtension()) || 
+              (isIncludeStatement && file.getName().endsWith(".MODULE.bazel"))) 
+              && !file.getPath().equals(parentFile.getFilePath()))
                 || (hasColon && file.isDirectory());
     FileLookupData lookupData =
         FileLookupData.packageLocalFileLookup(labelString, myElement, referencedBuildFile, filter);
@@ -255,10 +259,13 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
 
   private static boolean skylarkExtensionReference(StringLiteral element) {
     PsiElement parent = element.getParent();
-    if (!(parent instanceof LoadStatement)) {
-      return false;
+    if (parent instanceof LoadStatement) {
+      return ((LoadStatement) parent).getImportPsiElement() == element;
     }
-    return ((LoadStatement) parent).getImportPsiElement() == element;
+    if (parent instanceof IncludeStatement) {
+      return ((IncludeStatement) parent).getImportPsiElement() == element;
+    }
+    return false;
   }
 
   private static boolean insideSkylarkExtension(StringLiteral element) {

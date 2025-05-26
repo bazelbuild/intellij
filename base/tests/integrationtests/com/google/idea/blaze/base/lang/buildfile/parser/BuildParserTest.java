@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
+import com.google.idea.blaze.base.lang.buildfile.psi.IncludeStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
@@ -525,6 +526,23 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   public void testLoadNoSymbol() throws Exception {
     parse("load('/foo/bar/file')\n");
     assertContainsError("'load' statements must include at least one loaded function");
+  }
+
+  @Test
+  public void testInclude() throws Exception {
+    ASTNode tree = createAST("include('foo.MODULE.bazel')\n");
+    List<IncludeStatement> stmts = getTopLevelNodesOfType(tree, IncludeStatement.class);
+    assertThat(stmts).hasSize(1);
+
+    IncludeStatement stmt = stmts.get(0);
+    assertThat(stmt.getImportedPath()).isEqualTo("foo.MODULE.bazel");
+    assertNoErrors();
+  }
+
+  @Test
+  public void testIncludeInvalidFile() throws Exception {
+    parse("include('foo.bazel')\n");
+    assertContainsError("Include statements only support '*.MODULE.bazel' files");
   }
 
   @Test
