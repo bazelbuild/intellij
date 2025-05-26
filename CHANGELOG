@@ -2,6 +2,7 @@ v2025.05.13
 ===========
 * Fix annotation_processing in fast_build aspect #7643
 * Revert "Make run configurations configurable (#7275)" #7659
+* Fixes for improperly started bazel process in run configurations #7691, #7692 (addressing #7623 #7648 #7682)
 
 v2025.04.29
 ===========
