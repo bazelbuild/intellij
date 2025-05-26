@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -54,6 +55,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
@@ -85,7 +87,6 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -129,7 +130,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
         && !invoker.getCapabilities().contains(BuildInvoker.Capability.SUPPORT_CLI)) {
       return startProcessRunfilesCase(project);
     }
-    return startProcessBazelCliCase(invoker, project, context);
+    return startProcessBazelCliCase(project, context);
   }
 
   private ProcessHandler startProcessRunfilesCase(Project project) throws ExecutionException {
@@ -164,10 +165,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
   }
 
   private ProcessHandler startProcessBazelCliCase(
-    BuildInvoker invoker, Project project, BlazeContext context) {
+    Project project, BlazeContext context) throws ExecutionException {
     BlazeCommand.Builder blazeCommand;
     BlazeTestUiSession testUiSession = null;
-    BlazeTestResultFinderStrategy testResultFinderStrategy = new BlazeTestResultHolder();
+    // TODO: find proper place to close the result helper (same for BlazeCidrLauncher)
+    final var buildResultHelper = new BuildResultHelperBep();
+    BlazeTestResultFinderStrategy testResultFinderStrategy = new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper.getOutputFile());
     if (useTestUi()
         && BlazeTestEventsHandler.targetsSupported(project, getConfiguration().getTargets())) {
       testUiSession =
@@ -175,6 +178,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
           ImmutableList.<String>builder()
             .add("--runs_per_test=1")
             .add("--flaky_test_attempts=1")
+            .addAll(buildResultHelper.getBuildFlags())
             .build(),
           testResultFinderStrategy);
     }
@@ -211,8 +215,9 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
         WorkspaceRoot.fromProject(project),
         BlazeInvocationContext.ContextType.RunConfiguration));
 
-    //TODO: b/399392908 - Revisit code hot-swapping using HotSwapCommandBuilder
-    return getCommandRunnerProcessHandler(invoker, blazeCommand, testResultFinderStrategy, context);
+    ImmutableList<String> command = blazeCommand.build().toList();
+
+    return getScopedProcessHandler(project, command, WorkspaceRoot.fromProject(project));
   }
 
   @Override
