@@ -16,13 +16,12 @@
 package com.google.idea.blaze.base.actions
 
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
+import com.google.idea.blaze.base.util.VfsUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 
 private val LOG = Logger.getInstance(BazelDumpVFSAction::class.java)
 
@@ -58,31 +57,7 @@ class BazelDumpVFSAction : DumbAwareAction() {
     }
 
     LOG.info("################################## EXECROOT VFS ################################")
-    collectChildrenInDb(virtualRoot).forEach { LOG.info(it.path) }
+    VfsUtil.streamChildrenInVfs(virtualRoot).forEach { LOG.info(it.toString()) }
     LOG.info("################################################################################")
-  }
-
-  // companion object {
-
-  //   @JvmStatic
-  //   fun collect(root: Path): List<Path> {
-  //     val virtualRoot = VirtualFileManager.getInstance().findFileByNioPath(root) ?: return emptyList()
-  //     return collectChildrenInDb(virtualRoot).map { Path.of(it.path) }.toList()
-  //   }
-  // }
-}
-
-private fun collectChildrenInDb(dir: VirtualFile): Sequence<VirtualFile> = sequence {
-  val persistentFS = PersistentFS.getInstance()
-  if (!persistentFS.wereChildrenAccessed(dir)) return@sequence
-
-  for (name in persistentFS.listPersisted(dir)) {
-    val child = dir.findChild(name) ?: continue
-
-    if (child.isDirectory) {
-      yieldAll(collectChildrenInDb(child))
-    } else {
-      yield(child)
-    }
   }
 }

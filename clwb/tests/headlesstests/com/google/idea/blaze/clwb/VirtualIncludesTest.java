@@ -4,10 +4,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
+import java.util.ArrayList;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +31,12 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     // required for bazel 5
     return super.projectViewText(version).addBuildFlag("--experimental_cc_implementation_deps");
+  }
+
+  @Override
+  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
+    super.addAllowedVfsRoots(roots);
+    roots.add(AllowedVfsRoot.recursive("bazel-out/k8-fastbuild/bin/lib/strip_absolut/_virtual_includes"));
   }
 
   private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {

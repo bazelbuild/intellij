@@ -2,6 +2,7 @@ package com.google.idea.testing.headless;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.testing.headless.Assertions.abort;
+import static com.google.idea.testing.headless.Assertions.assertPathExists;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
@@ -49,6 +50,7 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -57,7 +59,8 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
 
-  protected VirtualFile myProjectRoot;
+  protected Path myProjectRoot;
+  protected Path myExectuionRoot;
 
   protected static <T> T pullFuture(Future<T> future, long timeout, TimeUnit unit) {
     final var deadline = System.currentTimeMillis() + unit.toMillis(timeout);
@@ -101,14 +104,14 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    * is provided by `bazel_integration_test` rule in the `BIT_WORKSPACE_DIR`
    * environment variable.
    */
-  private static File getTestProjectRoot() {
+  private static Path getTestProjectRoot() {
     final var bitWorkspaceDir = System.getenv("BIT_WORKSPACE_DIR");
     assertThat(bitWorkspaceDir).isNotNull();
 
-    final var file = new File(normalizePath(bitWorkspaceDir));
-    assertExists(file);
+    final var root = Path.of(normalizePath(bitWorkspaceDir));
+    assertPathExists(root);
 
-    return file;
+    return root;
   }
 
   /**
@@ -116,28 +119,38 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
    * environment variable.
    */
-  private static String getTestBazelPath() throws Exception {
+  private static Path getTestBazelPath() {
     final var bitBazelBinary = System.getenv("BIT_BAZEL_BINARY");
     assertThat(bitBazelBinary).isNotNull();
 
-    final var file = new File(normalizePath(bitBazelBinary));
-    assertExists(file);
+    final var bazel = Path.of(normalizePath(bitBazelBinary));
+    assertPathExists(bazel);
 
+    return bazel.toAbsolutePath();
+  }
+
+  /**
+   * Runns bazel info to get the current execution root. The execroot might not
+   * exist yet.
+   */
+  private static Path getTestExecutionRoot(Path bazel) throws ExecutionException, InterruptedException {
+    final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
     // run bazel binary in project root to avoid downloading it twice
     final var result = ExternalTask.builder(getTestProjectRoot())
-        .args(file.getAbsolutePath(), "version")
+        .args(bazel.toString(), "info", "execution_root")
         .stderr(errStream)
+        .stdout(outStream)
         .build()
         .runAsync()
         .get();
 
     if (result != 0) {
-      abort("cannot run bazel binary: " + errStream);
+      abort("cannot run bazel info: " + errStream);
     }
 
-    return file.getAbsolutePath();
+    return Path.of(outStream.toString().strip());
   }
 
   @Override
@@ -145,7 +158,9 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     super.setUp();
 
     final var bazelBinary = getTestBazelPath();
-    BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary);
+    BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
+
+    myExectuionRoot = getTestExecutionRoot(bazelBinary);
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);
@@ -164,8 +179,8 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    */
   @Override
   protected void setUpProject() throws Exception {
-    final var rootFile = getTestProjectRoot();
-    myProjectRoot = HeavyPlatformTestCase.getVirtualFile(rootFile);
+    myProjectRoot = getTestProjectRoot();
+    final var rootFile = myProjectRoot.toFile();
 
     final var projectFile = new File(rootFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
 
@@ -310,7 +325,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   }
 
   protected VirtualFile findProjectFile(String relativePath) {
-    final var file = myProjectRoot.findFileByRelativePath(relativePath);
+    final var file = HeavyPlatformTestCase.getVirtualFile(myProjectRoot.toFile()).findFileByRelativePath(relativePath);
     assertThat(file).isNotNull();
 
     return file;

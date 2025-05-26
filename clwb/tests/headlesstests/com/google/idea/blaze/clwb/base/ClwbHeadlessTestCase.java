@@ -16,8 +16,9 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
-public class ClwbHeadlessTestCase extends HeadlessTestCase {
+public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
 
   @Override
   protected void setUp() throws Exception {
@@ -26,7 +27,15 @@ public class ClwbHeadlessTestCase extends HeadlessTestCase {
     setupSandboxBin();
   }
 
-  protected void setupSandboxBin() {
+  @Override
+  protected void tearDown() {
+    final var roots = new ArrayList<AllowedVfsRoot>();
+    addAllowedVfsRoots(roots);
+
+    Assertions.assertVfsLoads(myExectuionRoot, roots);
+  }
+
+  private void setupSandboxBin() {
     final var clionId = PluginId.getId("com.intellij.clion");
     assertThat(clionId).isNotNull();
 
@@ -45,6 +54,11 @@ public class ClwbHeadlessTestCase extends HeadlessTestCase {
     } catch (IOException e) {
       abort("could not create bin path symlink", e);
     }
+  }
+
+  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
+    // required because of the mark dirty in com.google.idea.blaze.base.sync.ProjectUpdateSyncTask#refreshVirtualFileSystem
+    roots.add(AllowedVfsRoot.flat(""));
   }
 
   @Override
