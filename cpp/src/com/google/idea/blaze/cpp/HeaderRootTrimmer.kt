@@ -34,25 +34,30 @@ fun getValidHeaderRoots(
   val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
 
   val builder = ImmutableSet.builder<Path>()
-
   for (path in paths) {
     val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
 
     for (directory in possibleDirectories) {
-      if (!path.isOutputDirectory(projectData.blazeInfo)) {
-        builder.add(directory)
-      } else if (genRootMayContainHeaders(directory)) {
+      val add = when {
+        // never allow the bazel-bin as a header search path
+        path.isBazelBin(projectData.blazeInfo) -> false
+
+        // if it is not an output directory, there should be now big binary artifacts
+        !path.isOutputDirectory(projectData.blazeInfo) -> true
+
+        // if it is an output directory, but there are headers, we need to allow it
+        genRootMayContainHeaders(directory) -> true
+
+        else -> false
+      }
+
+      if (add) {
         builder.add(directory)
       }
     }
   }
 
-  val roots = builder.build()
-
-  // val actual = HeaderRootTrimmer.getValidRoots(ctx, projectData, toolchainLookupMap, targetFilter, executionRootPathResolver)
-  // actual.forEach { assert(roots.contains(it.toPath())) { "missing root $it" } }
-
-  roots
+  builder.build()
 }
 
 private fun collectExecutionRootPaths(
@@ -112,6 +117,9 @@ private fun genRootMayContainHeaders(directory: Path): Boolean {
   return false
 }
 
+private fun ExecutionRootPath.isBazelBin(info: BlazeInfo): Boolean {
+  return ExecutionRootPath.pathsEqual(info.blazeBin, this)
+}
 
 private fun ExecutionRootPath.isOutputDirectory(info: BlazeInfo): Boolean {
   return ExecutionRootPath.isAncestor(info.blazeGenfiles, this, false)
