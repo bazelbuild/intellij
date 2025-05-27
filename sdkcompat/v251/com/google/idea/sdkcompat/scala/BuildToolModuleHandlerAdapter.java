@@ -16,14 +16,16 @@
 package com.google.idea.sdkcompat.scala;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.sbt.project.BuildToolModuleHandler;
 
 /**
  * Compatibility shim for BuildToolModuleHandler interface.
  */
-public interface BuildToolModuleHandlerAdapter {
+public interface BuildToolModuleHandlerAdapter extends BuildToolModuleHandler {
 
   /**
-   * Returns true if this handler can handle the given module.
+   * Default implementation that delegates to the actual interface method.
    */
+  @Override
   boolean handles(Module module);
 }
