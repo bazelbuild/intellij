@@ -27,6 +27,7 @@ java_library(
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/javascript/**",  #api223
+            "com/google/idea/sdkcompat/scala/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],

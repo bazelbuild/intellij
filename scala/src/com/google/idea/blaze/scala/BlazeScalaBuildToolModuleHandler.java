@@ -16,14 +16,14 @@
 package com.google.idea.blaze.scala;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.scala.BuildToolModuleHandlerAdapter;
 import com.intellij.openapi.module.Module;
-import org.jetbrains.sbt.project.BuildToolModuleHandler;
 
 /**
  * Implementation of BuildToolModuleHandler for Bazel Scala projects.
  * Indicates when a Scala module is handled by the Bazel build system.
  */
-public class BlazeScalaBuildToolModuleHandler implements BuildToolModuleHandler {
+public class BlazeScalaBuildToolModuleHandler implements BuildToolModuleHandlerAdapter {
   
   @Override
   public boolean handles(Module module) {
