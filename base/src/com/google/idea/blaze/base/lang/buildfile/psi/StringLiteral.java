@@ -157,6 +157,16 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
       }
       return new LoadedSymbolReference(this, importReference);
     }
+
+    IncludeStatement include = getIncludeStatementParent();
+    if (include != null) {
+      StringLiteral importNode = include.getImportPsiElement();
+      if (importNode == null) {
+        return null;
+      }
+      return new LabelReference(importNode, false);
+    }
+
     return new LabelReference(this, true);
   }
 
@@ -179,6 +189,16 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
       parent = parent.getParent();
     }
     return parent instanceof LoadedSymbol ? (LoadStatement) parent.getParent() : null;
+  }
+
+  @Nullable
+  public IncludeStatement getIncludeStatementParent() {
+    PsiElement parent = getParent();
+    if (parent instanceof IncludeStatement) {
+      // the include statement label
+      return (IncludeStatement) parent;
+    }
+    return null;
   }
 
   @Override

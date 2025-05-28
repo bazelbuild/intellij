@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -38,7 +39,15 @@ public interface BuildSystemProvider {
 
   ExtensionPointName<BuildSystemProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BuildSystemProvider");
-  ImmutableList<String> SUPPORTED_EXTENSIONS = ImmutableList.of("bzl", "sky", "star");
+  ImmutableList<String> SUPPORTED_EXTENSIONS = ImmutableList.of(
+      "bzl",
+      "sky",
+      "star"
+      );
+
+  ImmutableList<String> SUPPORTED_WILDCARDS = ImmutableList.of(
+      "*.MODULE.bazel"
+  );
 
   static BuildSystemProvider defaultBuildSystem() {
     return EP_NAME.getExtensions()[0];
@@ -150,6 +159,11 @@ public interface BuildSystemProvider {
     return SUPPORTED_EXTENSIONS;
   }
 
+  /** The file extensions supported, see {@link ExtensionFileNameMatcher}. */
+  default ImmutableList<String> possibleFileWildcards() {
+    return SUPPORTED_WILDCARDS;
+  }
+
   /** Check if the given filename is a valid BUILD file name. */
   default boolean isBuildFile(String fileName) {
     return possibleBuildFileNames().contains(fileName);
@@ -192,6 +206,7 @@ public interface BuildSystemProvider {
     possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleFileExtensions().forEach(s -> list.add(new ExtensionFileNameMatcher(s)));
+    possibleFileWildcards().forEach(s -> list.add(new WildcardFileNameMatcher(s)));
     possibleModuleFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     return list.build();
   }

@@ -48,6 +48,10 @@ public class BuildElementVisitor extends PsiElementVisitor {
     visitElement(node);
   }
 
+  public void visitIncludeStatement(IncludeStatement node) {
+    visitElement(node);
+  }
+
   public void visitIfStatement(IfStatement node) {
     visitElement(node);
   }

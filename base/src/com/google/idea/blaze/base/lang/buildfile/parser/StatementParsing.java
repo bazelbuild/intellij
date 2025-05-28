@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.parser;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementTypes;
+import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.tree.IElementType;
@@ -43,10 +44,17 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  // Unlike in Python grammar, 'load' is only allowed as a top-level statement
+  // Unlike in Python grammar, 'load' and 'include' are only allowed as top-level statements
   public void parseTopLevelStatement() {
-    if (currentToken() == TokenKind.IDENTIFIER && "load".equals(builder.getTokenText())) {
-      parseLoadStatement();
+    if (currentToken() == TokenKind.IDENTIFIER) {
+      String tokenText = builder.getTokenText();
+      if ("load".equals(tokenText)) {
+        parseLoadStatement();
+      } else if ("include".equals(tokenText)) {
+        parseIncludeStatement();
+      } else {
+        parseStatement();
+      }
     } else {
       parseStatement();
     }
@@ -106,6 +114,33 @@ public class StatementParsing extends Parsing {
       builder.error("'load' statements must include at least one loaded function");
     }
     marker.done(BuildElementTypes.LOAD_STATEMENT);
+  }
+
+  // include '(' STRING ')'
+  private void parseIncludeStatement() {
+    PsiBuilder.Marker marker = builder.mark();
+    expect(TokenKind.IDENTIFIER);
+    expect(TokenKind.LPAREN);
+
+    // Save the current position to check the string literal after parsing
+    PsiBuilder.Marker stringMarker = builder.mark();
+    parseStringLiteral(false);
+
+    // Get the text of the string literal
+    if (builder.getCurrentOffset() > 0) {
+      String text = builder.getOriginalText().subSequence(
+          stringMarker.getStartOffset(), builder.getCurrentOffset()).toString();
+      String path = StringLiteral.stripQuotes(text);
+
+      // Check if the path matches the "*.MODULE.bazel" pattern
+      if (!path.endsWith(".MODULE.bazel")) {
+        builder.error("Include statements only support '*.MODULE.bazel' files");
+      }
+    }
+    stringMarker.drop();
+
+    expect(TokenKind.RPAREN);
+    marker.done(BuildElementTypes.INCLUDE_STATEMENT);
   }
 
   /** [IDENTIFIER '='] STRING */
