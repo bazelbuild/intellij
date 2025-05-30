@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 import java.io.File;
@@ -34,13 +35,13 @@ final class BlazeConfigurationResolverResult {
   private final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
-  private final ImmutableSet<File> validHeaderRoots;
+  private final ImmutableSet<Path> validHeaderRoots;
   private final Optional<XcodeCompilerSettings> xcodeProperties;
 
   private BlazeConfigurationResolverResult(
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      ImmutableSet<File> validHeaderRoots,
+      ImmutableSet<Path> validHeaderRoots,
       Optional<XcodeCompilerSettings> xcodeProperties) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
@@ -73,7 +74,7 @@ final class BlazeConfigurationResolverResult {
   }
 
   boolean isValidHeaderRoot(File absolutePath) {
-    return validHeaderRoots.contains(absolutePath);
+    return validHeaderRoots.contains(absolutePath.toPath());
   }
 
   boolean isEquivalentConfigurations(BlazeConfigurationResolverResult other) {
@@ -97,7 +98,7 @@ final class BlazeConfigurationResolverResult {
     ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueConfigurations =
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
-    ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
+    ImmutableSet<Path> validHeaderRoots = ImmutableSet.of();
     Optional<XcodeCompilerSettings> xcodeSettings = Optional.empty();
 
     public Builder() {}
@@ -119,7 +120,7 @@ final class BlazeConfigurationResolverResult {
       this.compilerSettings = compilerSettings;
     }
 
-    void setValidHeaderRoots(ImmutableSet<File> validHeaderRoots) {
+    void setValidHeaderRoots(ImmutableSet<Path> validHeaderRoots) {
       this.validHeaderRoots = validHeaderRoots;
     }
 
