@@ -218,7 +218,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     buildDepsStatsBuilder.ifPresent(
         stats -> stats.setBuildFlags(builder.build().toArgumentList()));
     Instant buildTime = Instant.now();
-    BlazeBuildOutputs outputs = BazelExecService.instance(project).build(context, builder);
+    BlazeBuildOutputs outputs = BazelExecService.instance(project).build(context, builder, ImmutableMap.of());
     buildDepsStatsBuilder.ifPresent(
         stats -> {
           stats.setBuildIds(outputs.getBuildIds());

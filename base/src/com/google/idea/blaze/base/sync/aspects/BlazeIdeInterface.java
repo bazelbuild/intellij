@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -31,6 +32,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** A blaze build interface used for mocking out the blaze layer in tests. */
@@ -72,4 +74,37 @@ public interface BlazeIdeInterface {
       ImmutableSet<OutputGroup> outputGroups,
       BlazeInvocationContext blazeInvocationContext,
       boolean invokeParallel);
+
+  /**
+   * Invokes a blaze build for the given output groups
+   * running Bazel with the provided environment variables.
+   *
+   * @param outputGroups Set of {@link OutputGroup} to be generated in the build.
+   */
+  default BlazeBuildOutputs build(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
+      BuildInvoker invoker,
+      ProjectViewSet projectViewSet,
+      ShardedTargetList shardedTargets,
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      ImmutableSet<OutputGroup> outputGroups,
+      BlazeInvocationContext blazeInvocationContext,
+      boolean invokeParallel,
+      Map<String, String> envVars) {
+    return build(
+        project,
+        context,
+        workspaceRoot,
+        blazeVersion,
+        invoker,
+        projectViewSet,
+        shardedTargets,
+        workspaceLanguageSettings,
+        outputGroups,
+        blazeInvocationContext,
+        invokeParallel);
+    }
 }

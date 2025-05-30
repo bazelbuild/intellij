@@ -67,7 +67,7 @@ class BazelExecService(private val project: Project) : Disposable {
     }
   }
 
-  private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
+  private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder, env: Map<String, String> = mapOf()): Int {
     // the old sync view does not use a PTY based terminal
     if (BuildViewMigration.present(ctx)) {
       cmdBuilder.addBlazeFlags("--curses=yes")
@@ -84,6 +84,7 @@ class BazelExecService(private val project: Project) : Disposable {
       .withInitialRows(size.rows)
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
+      .withEnvironment(env)
       .apply { setWorkDirectory(root.pathString) } // required for backwards compatability
       .withRedirectErrorStream(true)
 
@@ -170,7 +171,7 @@ class BazelExecService(private val project: Project) : Disposable {
     }
   }
 
-  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs {
+  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder, env: Map<String, String> = mapOf()): BlazeBuildOutputs {
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
 
@@ -179,7 +180,7 @@ class BazelExecService(private val project: Project) : Disposable {
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder)
+      val exitCode = execute(ctx, cmdBuilder, env)
       val result = BuildResult.fromExitCode(exitCode)
 
       parseJob.cancelAndJoin()
