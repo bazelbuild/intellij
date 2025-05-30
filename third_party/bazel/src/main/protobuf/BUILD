@@ -300,7 +300,9 @@ cc_proto_library(
 
 filegroup(
     name = "srcs",
-    srcs = glob(["**"]),
+    srcs = glob(["**"]) + [
+        "//third_party/bazel/src/main/protobuf/project:srcs",
+    ],
 )
 
 filegroup(
