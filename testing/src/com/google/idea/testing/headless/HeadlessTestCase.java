@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
 
   protected Path myProjectRoot;
-  protected Path myExectuionRoot;
+  protected BazelInfo myBazelInfo;
 
   protected static <T> T pullFuture(Future<T> future, long timeout, TimeUnit unit) {
     final var deadline = System.currentTimeMillis() + unit.toMillis(timeout);
@@ -133,13 +133,13 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    * Runns bazel info to get the current execution root. The execroot might not
    * exist yet.
    */
-  private static Path getTestExecutionRoot(Path bazel) throws ExecutionException, InterruptedException {
+  private static BazelInfo getTestBazelInfo(Path bazel) throws ExecutionException, InterruptedException {
     final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
     // run bazel binary in project root to avoid downloading it twice
     final var result = ExternalTask.builder(getTestProjectRoot())
-        .args(bazel.toString(), "info", "execution_root")
+        .args(bazel.toString(), "info")
         .stderr(errStream)
         .stdout(outStream)
         .build()
@@ -150,7 +150,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
       abort("cannot run bazel info: " + errStream);
     }
 
-    return Path.of(outStream.toString().strip());
+    return BazelInfo.parse(outStream.toString());
   }
 
   @Override
@@ -160,7 +160,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     final var bazelBinary = getTestBazelPath();
     BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
 
-    myExectuionRoot = getTestExecutionRoot(bazelBinary);
+    myBazelInfo = getTestBazelInfo(bazelBinary);
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);

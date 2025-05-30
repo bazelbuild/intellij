@@ -1,5 +1,6 @@
 package com.google.idea.blaze.clwb.base;
 
+import com.google.idea.testing.headless.BazelInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
 import java.nio.file.Path;
@@ -23,6 +24,14 @@ public class AllowedVfsRoot {
 
   public static AllowedVfsRoot recursive(String path) {
     return new AllowedVfsRoot(Path.of(path).normalize(), true);
+  }
+
+  public static AllowedVfsRoot bazelBinFlat(BazelInfo info, String path) {
+    return new AllowedVfsRoot(info.executionRoot().relativize(info.bazelBin().resolve(path)).normalize(), false);
+  }
+
+  public static AllowedVfsRoot bazelBinRecursive(BazelInfo info, String path) {
+    return new AllowedVfsRoot(info.executionRoot().relativize(info.bazelBin().resolve(path)).normalize(), true);
   }
 
   public boolean contains(Path path) {

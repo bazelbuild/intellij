@@ -32,7 +32,7 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     final var roots = new ArrayList<AllowedVfsRoot>();
     addAllowedVfsRoots(roots);
 
-    Assertions.assertVfsLoads(myExectuionRoot, roots);
+    Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
   }
 
   private void setupSandboxBin() {

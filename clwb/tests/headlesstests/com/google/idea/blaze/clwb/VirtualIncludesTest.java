@@ -28,15 +28,9 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   }
 
   @Override
-  protected ProjectViewBuilder projectViewText(BazelVersion version) {
-    // required for bazel 5
-    return super.projectViewText(version).addBuildFlag("--experimental_cc_implementation_deps");
-  }
-
-  @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.recursive("bazel-out/k8-fastbuild/bin/lib/strip_absolut/_virtual_includes"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
   }
 
   private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {
