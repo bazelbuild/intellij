@@ -116,6 +116,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     projectServices.register(PsiManager.class, new MockPsiManager(project));
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
+    projectServices.register(HeaderRootTrimmer.class, new HeaderRootTrimmerMock());
 
     Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
 
