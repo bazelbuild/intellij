@@ -94,10 +94,10 @@ git_override(
     remote = "https://github.com/mbland/rules_scala.git",
 )
 
-bazel_dep(name = "rules_scala", repo_name = "io_bazel_rules_scala")
+bazel_dep(name = "rules_scala", version = "7.0.0")
 
 scala_dev_deps = use_extension(
-    "@io_bazel_rules_scala//scala/extensions:deps.bzl",
+    "@rules_scala//scala/extensions:deps.bzl",
     "scala_deps",
 )
 scala_dev_deps.toolchains(
