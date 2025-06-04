@@ -98,23 +98,14 @@ use_repo(
 
 bazel_dep(name = "rules_jvm_external", version = "6.7")
 
-# bzlmod-compatible version of rules_scala, required for Bazel 9+ compatibility
-git_override(
-    module_name = "rules_scala",
-    #branch = "bzlmod-bazel-8",
-    commit = "21e4be9557645885ba2aabab7922c457ffdf03ee",
-    remote = "https://github.com/mbland/rules_scala.git",
-)
-
-bazel_dep(name = "rules_scala", repo_name = "io_bazel_rules_scala")
+bazel_dep(name = "rules_scala", version = "7.0.0")
 
 scala_dev_deps = use_extension(
-    "@io_bazel_rules_scala//scala/extensions:deps.bzl",
+    "@rules_scala//scala/extensions:deps.bzl",
     "scala_deps",
 )
-scala_dev_deps.toolchains(
-    scalatest = True,
-)
+scala_dev_deps.scala()
+scala_dev_deps.scalatest()
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
