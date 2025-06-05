@@ -5,7 +5,7 @@ load(
     _CPP_COMPILE_ACTION_NAME = "CPP_COMPILE_ACTION_NAME",
     _C_COMPILE_ACTION_NAME = "C_COMPILE_ACTION_NAME",
 )
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
+load(":java_info.bzl", "get_java_info", "java_info_in_target")
 
 ZIP_TOOL_LABEL = "@@bazel_tools//tools/zip:zipper"
 
