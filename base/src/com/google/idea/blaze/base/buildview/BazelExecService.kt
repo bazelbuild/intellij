@@ -18,7 +18,6 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -58,8 +57,12 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     ctx: BlazeContext,
     block: suspend CoroutineScope.(BuildResultHelperBep) -> T
   ): T {
-    return ctx.pushJob(scope) {
-      BuildResultHelperBep().use { block(it) }
+    return runBlocking {
+      scope.async {
+        ctx.pushJob {
+          BuildResultHelperBep().use { block(it) }
+        }
+      }.await()
     }
   }
 

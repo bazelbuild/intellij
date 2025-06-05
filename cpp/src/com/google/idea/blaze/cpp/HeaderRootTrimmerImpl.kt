@@ -29,14 +29,9 @@ import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -61,14 +56,18 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
     val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
 
     val builder = ImmutableSet.builder<Path>()
-    ctx.pushJob(scope, "HeaderRootTrimmer") {
-      val results = paths.map { root ->
-        async(Dispatchers.IO) {
-          collectHeaderRoots(executionRootPathResolver, root, projectData)
-        }
-      }
+    runBlocking {
+      scope.launch {
+        ctx.pushJob("HeaderRootTrimmer") {
+          val results = paths.map { root ->
+            async(Dispatchers.IO) {
+              collectHeaderRoots(executionRootPathResolver, root, projectData)
+            }
+          }
 
-      results.map { it.await() }.forEach(builder::addAll)
+          results.map { it.await() }.forEach(builder::addAll)
+        }
+      }.join()
     }
 
     builder.build().also(::logHeaderRootPaths)
