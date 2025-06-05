@@ -5,15 +5,17 @@ load(
     _CPP_COMPILE_ACTION_NAME = "CPP_COMPILE_ACTION_NAME",
     _C_COMPILE_ACTION_NAME = "C_COMPILE_ACTION_NAME",
 )
+load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
+
 
 ZIP_TOOL_LABEL = "@@bazel_tools//tools/zip:zipper"
 
 # JAVA
 
 def _get_java_info(target, rule):
-    if not JavaInfo in target:
+    if not java_info_in_target(target):
         return None
-    p = target[JavaInfo]
+    p = get_java_info(target)
     return struct(
         compile_jars = p.compile_jars,
         transitive_compile_time_jars = p.transitive_compile_time_jars,
