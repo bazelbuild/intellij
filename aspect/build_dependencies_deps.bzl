@@ -7,7 +7,6 @@ load(
 )
 load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
 
-
 ZIP_TOOL_LABEL = "@@bazel_tools//tools/zip:zipper"
 
 # JAVA
