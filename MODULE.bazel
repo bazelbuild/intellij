@@ -41,9 +41,41 @@ bazel_dep(
     name = "rules_pkg",
     version = "1.1.0",
 )
+
+# custom configuration for rules kotlin, patches are required
 bazel_dep(
     name = "rules_kotlin",
-    version = "2.1.3-codeql.3",
+    version = "2.1.3",
+)
+single_version_override(
+    module_name = "rules_kotlin",
+    patch_strip = 1,
+    patches = [
+        "//third_party/kotlin/patches:codeql_add_language_version_option.patch",
+        "//third_party/kotlin/patches:codeql_do_not_emit_jdeps.patch",
+        "//third_party/kotlin/patches:codeql_fix_jdeps_merged_on_windows.patch",
+        "//third_party/kotlin/patches:kotlin_2_2.patch",
+    ],
+)
+
+# 252 SDKs require kotlin 2.2
+kotlin = use_extension(
+    "@rules_kotlin//src/main/starlark/core/repositories:bzlmod_setup.bzl",
+    "rules_kotlin_extensions",
+)
+kotlin.kotlinc_version(
+    sha256 = "7c2623fcc338e22f5b60cc51500b8c0906f853db59a3f5ee79aa6033e478fb81",
+    version = "2.2.0-RC2",
+)
+use_repo(
+    kotlin,
+    "com_github_google_ksp",
+    "com_github_jetbrains_kotlin",
+    "com_github_jetbrains_kotlin_git",
+    "com_github_pinterest_ktlint",
+    "kotlinx_serialization_core_jvm",
+    "kotlinx_serialization_json",
+    "kotlinx_serialization_json_jvm",
 )
 
 bazel_dep(
@@ -211,9 +243,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IC_252_SHA = "b1473112c7dfa453846a5fd824ecc60979fef1c35e5653da2ae8e36a0c3f8c6a"
+IC_252_SHA = "b9d255c81ee793cdbf2582a71941c1d3a127089979b272eb63484630fbfad885"
 
-IC_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/252.13776.59-EAP-SNAPSHOT/ideaIC-252.13776.59-EAP-SNAPSHOT.zip"
+IC_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/252.19874.12-EAP-SNAPSHOT/ideaIC-252.19874.12-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2025_2",
@@ -246,9 +278,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IU_252_SHA = "f4c53631bbe1eef329d08195625578fbabf21a9a8580f607faef9c369e20a9d7"
+IU_252_SHA = "fd703c50e123de5ba32e1a4e5e6ca268862aad8767a1f1e6df269f0f751f37d5"
 
-IU_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/252.13776.59-EAP-SNAPSHOT/ideaIU-252.13776.59-EAP-SNAPSHOT.zip"
+IU_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/252.19874.12-EAP-SNAPSHOT/ideaIU-252.19874.12-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2025_2",
@@ -279,9 +311,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "4446f86b61fa0fd507024803d637b4fc3bb7ce2734506c4b3614afbc421ce68b"
+CLION_252_SHA = "fae8c4239ae4b81ccabb21c9ec52770c3081fde4cfb2312c98111b7c2d683eb1"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.13776.55-EAP-SNAPSHOT/clion-252.13776.55-EAP-SNAPSHOT.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.19874.7-EAP-SNAPSHOT/clion-252.19874.7-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2025_2",
@@ -320,9 +352,9 @@ http_archive(
     url = DEVKIT_251_URL,
 )
 
-DEVKIT_252_SHA = "2b8fe2e2bdcda8d7e12b62576a850ca6d8b63261469aca64c3aae7f9c736566f"
+DEVKIT_252_SHA = "f8fbb10c819b6e6c25c36dc96f7b7fe42e3bfad811e59af281f76113fe5236eb"
 
-DEVKIT_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/252.13776.59/DevKit-252.13776.59.zip"
+DEVKIT_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/252.19874.12/DevKit-252.19874.12.zip"
 
 http_archive(
     name = "devkit_2025_2",
@@ -366,9 +398,9 @@ http_archive(
     url = PYTHON_PLUGIN_251_URL,
 )
 
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.13776.59/PythonCore-252.13776.59.zip"
+PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.19874.12/PythonCore-252.19874.12.zip"
 
-PYTHON_PLUGIN_252_SHA = "38c02ca3641068db65c85bf1caef36855291d1cab063fa1314cb7fed81fa0d85"
+PYTHON_PLUGIN_252_SHA = "d7165286119695e857a33285e4e8280fa54a1f9c0ec6465968de36bed8fd4deb"
 
 http_archive(
     name = "python_2025_2",
@@ -407,9 +439,9 @@ http_archive(
     url = GO_PLUGIN_251_URL,
 )
 
-GO_PLUGIN_252_SHA = "7f3a784fbb166b56b71b288958e99b48e16632ae33f189ff3439923d10414787"
+GO_PLUGIN_252_SHA = "4238ce235a664b8c90ea23b24d9ec8e1ad942c443071c7feef2e33741fbc4acf"
 
-GO_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/252.13776.59/org.jetbrains.plugins.go-252.13776.59.zip"
+GO_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/252.19874.12/org.jetbrains.plugins.go-252.19874.12.zip"
 
 http_archive(
     name = "go_2025_2",
@@ -448,9 +480,9 @@ http_archive(
     url = SCALA_PLUGIN_251_URL,
 )
 
-SCALA_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.2.2/org.intellij.scala-2025.2.2.zip"
+SCALA_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.2.7/org.intellij.scala-2025.2.7.zip"
 
-SCALA_PLUGIN_252_SHA = "8cbd629b63cca96e90c5712b129867f129a0beb655f94f0fa463710c0fc62697"
+SCALA_PLUGIN_252_SHA = "998488d679b3a3854e79792efae987a569a0cb8b1e718009ec56cccfedc61f46"
 
 http_archive(
     name = "scala_2025_2",
@@ -489,9 +521,9 @@ http_archive(
     url = TOML_PLUGIN_251_URL,
 )
 
-TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.13776.59/org.toml.lang-252.13776.59.zip"
+TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.19874.20/org.toml.lang-252.19874.20.zip"
 
-TOML_PLUGIN_252_SHA = "598a0b42ca86e471e553d32b2d4300602e130153bf7fc15da0ed913b149930a6"
+TOML_PLUGIN_252_SHA = "48a8cbc8455fa4c10ce520342ed6d6ea66ff7f0f8ffa21a613ccaf78dee5d9b5"
 
 http_archive(
     name = "toml_2025_2",

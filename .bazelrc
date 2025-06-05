@@ -19,4 +19,3 @@ common --incompatible_use_plus_in_repo_names
 startup --windows_enable_symlinks
 build --enable_runfiles
 build --legacy_external_runfiles
-common --registry=https://raw.githubusercontent.com/github/codeql/06fd0647b786ff67ca40e606e747f4449dea167a/misc/bazel/registry --registry=https://bcr.bazel.build/
