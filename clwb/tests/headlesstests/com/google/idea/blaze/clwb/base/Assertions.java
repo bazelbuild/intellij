@@ -98,7 +98,7 @@ public class Assertions {
   }
 
   public static void assertVfsLoads(Path executionRoot, List<AllowedVfsRoot> allowedRoots) {
-    final var childrenInVfs = VfsUtil.collectChildrenInVfs(executionRoot);
+    final var childrenInVfs = VfsUtil.getVfsChildrenAsList(executionRoot);
 
     loop: for (final var child : childrenInVfs) {
       for (final var allowedRoot : allowedRoots) {

@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import java.io.File
 import java.nio.file.Files
@@ -62,7 +63,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
     val builder = ImmutableSet.builder<Path>()
     ctx.pushJob(scope, "HeaderRootTrimmer") {
       val results = paths.map { root ->
-        async {
+        async(Dispatchers.IO) {
           collectHeaderRoots(executionRootPathResolver, root, projectData)
         }
       }

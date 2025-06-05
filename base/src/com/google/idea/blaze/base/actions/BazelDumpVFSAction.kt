@@ -34,30 +34,30 @@ class BazelDumpVFSAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project
     if (project == null) {
-      LOG.error("no open project found")
+      LOG.warn("no open project found")
       return
     }
 
     val data = BlazeProjectDataManager.getInstance(project).blazeProjectData
     if (data == null) {
-      LOG.error("no project data found")
+      LOG.warn("no project data found")
       return
     }
 
     val root = data.blazeInfo.executionRoot
     if (root == null) {
-      LOG.error("no execution root found")
+      LOG.warn("no execution root found")
       return
     }
 
     val virtualRoot = VirtualFileManager.getInstance().findFileByNioPath(root.toPath())
     if (virtualRoot == null) {
-      LOG.error("no virtual file found for workspace root")
+      LOG.warn("no virtual file found for workspace root")
       return
     }
 
     LOG.info("################################## EXECROOT VFS ################################")
-    VfsUtil.streamChildrenInVfs(virtualRoot).forEach { LOG.info(it.toString()) }
+    VfsUtil.getVfsChildrenAsSequence(virtualRoot).forEach { LOG.info(it.toString()) }
     LOG.info("################################################################################")
   }
 }

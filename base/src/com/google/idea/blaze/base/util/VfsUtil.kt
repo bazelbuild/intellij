@@ -18,17 +18,19 @@ package com.google.idea.blaze.base.util
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
 object VfsUtil {
 
+  @TestOnly
   @JvmStatic
-  fun collectChildrenInVfs(root: Path): List<Path> {
+  fun getVfsChildrenAsList(root: Path): List<Path> {
     val virtualRoot = VirtualFileManager.getInstance().findFileByNioPath(root) ?: return emptyList()
-    return streamChildrenInVfs(virtualRoot).toList()
+    return getVfsChildrenAsSequence(virtualRoot).toList()
   }
 
-  fun streamChildrenInVfs(dir: VirtualFile): Sequence<Path> = sequence {
+  fun getVfsChildrenAsSequence(dir: VirtualFile): Sequence<Path> = sequence {
     val persistentFS = PersistentFS.getInstance()
     if (!persistentFS.wereChildrenAccessed(dir)) return@sequence
 
@@ -36,7 +38,7 @@ object VfsUtil {
       val child = dir.findChild(name) ?: continue
 
       if (child.isDirectory) {
-        yieldAll(streamChildrenInVfs(child))
+        yieldAll(getVfsChildrenAsSequence(child))
       } else {
         yield(Path.of(child.path))
       }

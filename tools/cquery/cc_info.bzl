@@ -29,7 +29,7 @@ def linking_context_to_struct(ctx):
         linker_inputs = [linker_input_to_struct(it) for it in ctx.linker_inputs.to_list()],
     )
 
-def fomrat_cc_info(info):
+def format_cc_info(info):
     result = struct(
         compilation_context = compilation_context_to_struct(info.compilation_context),
         linking_context = linking_context_to_struct(info.linking_context),
@@ -41,7 +41,7 @@ def format(target):
     buffer = "%s: " % target.label
 
     if CC_INFO in providers(target):
-        buffer += fomrat_cc_info(providers(target)[CC_INFO])
+        buffer += format_cc_info(providers(target)[CC_INFO])
     else:
         buffer += "NO CcInfo"
 
