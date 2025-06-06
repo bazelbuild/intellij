@@ -1,4 +1,6 @@
-SOURCE: https://github.com/github/codeql/blob/06fd0647b786ff67ca40e606e747f4449dea167a/misc/bazel/registry/modules/rules_kotlin/2.1.3-codeql.3/patches/codeql_do_not_emit_jdeps.patch
+Modified from original source: https://github.com/github/codeql/blob/06fd0647b786ff67ca40e606e747f4449dea167a/misc/bazel/registry/modules/rules_kotlin/2.1.3-codeql.3/patches/codeql_do_not_emit_jdeps.patch
+Copyright (c) GitHub, Inc.
+Licensed under the Apache License, Version 2.0
 
 diff --git a/kotlin/settings/BUILD.bazel b/kotlin/settings/BUILD.bazel
 index 2c93c11..f352b80 100644
