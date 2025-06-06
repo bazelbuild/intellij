@@ -439,6 +439,9 @@
     <registryKey defaultValue="true"
                  description="Enable basic syntax highlighting in Query Sync's 'Analysis Disabled' mode"
                  key="bazel.qsync.enable.basic.highlighting.in.non.analysis.mode"/>
+    <registryKey defaultValue="false"
+                 description="Mark execroot as dirty before refresh after sync"
+                 key="bazel.sync.mark.dirty"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
   </extensions>
 
