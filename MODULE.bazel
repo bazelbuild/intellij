@@ -29,7 +29,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "protobuf",
-    version = "29.4",
+    version = "29.5",
 )
 bazel_dep(
     name = "bazel_skylib",
