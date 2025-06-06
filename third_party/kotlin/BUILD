@@ -7,7 +7,7 @@ kt_kotlinc_options(
 )
 
 # choose lowest api version depending on what we target atm:
-# https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-librar
+# https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
 define_kt_toolchain(
     name = "toolchain",
     api_version = "2.0",
