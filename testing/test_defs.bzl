@@ -28,6 +28,7 @@ ADD_OPENS = [
         "java.desktop/javax.swing.plaf.basic",
         "java.desktop/javax.swing.text",
         "java.desktop/javax.swing.text.html",
+        "java.desktop/javax.swing.text.html.parser",
         "java.desktop/sun.awt",
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",
@@ -269,7 +270,6 @@ def intellij_integration_test_suite(
         deps = deps,
         target_compatible_with = target_compatible_with,
         testonly = 1,
-        #        stdlib = "//testing:lib",
     )
 
     # NOTE: Do not replace with `kotlin_test` as it orders classpath in a way

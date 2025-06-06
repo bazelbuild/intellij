@@ -44,81 +44,23 @@ def _check_channel_map():
     if unexpected:
         fail("Unexpected values in INDIRECT_PRODUCT_CHANNELS: %s" % unexpected)
 
-DIRECT_IJ_PRODUCTS = {
-    "intellij-2024.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_3",
-    ),
-    "intellij-2024.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2024_3",
-    ),
-    "intellij-2025.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2025_1",
-    ),
-    "intellij-2025.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2025_1",
-    ),
-    "intellij-2025.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2025_2",
-    ),
-    "intellij-2025.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2025_2",
-    ),
-    "intellij-ue-2024.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2024_3",
-    ),
-    "intellij-ue-2024.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2024_3",
-    ),
-    "intellij-ue-2025.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2025_1",
-    ),
-    "intellij-ue-2025.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2025_1",
-    ),
-    "intellij-ue-2025.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2025_2",
-    ),
-    "intellij-ue-2025.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2025_2",
-    ),
+def _build_ij_product(ide, directory, version):
+    return struct(
+        ide = ide,
+        directory = "%s_%s" % (directory, version.replace(".", "_")),
+        version = version,
+    )
 
-    "clion-2024.3": struct(
-        ide = "clion",
-        directory = "clion_2024_3",
-    ),
-    "clion-2024.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2024_3",
-    ),
-    "clion-2025.1": struct(
-        ide = "clion",
-        directory = "clion_2025_1",
-    ),
-    "clion-2025.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2025_1",
-    ),
-    "clion-2025.2": struct(
-        ide = "clion",
-        directory = "clion_2025_2",
-    ),
-    "clion-2025.2-mac": struct(
-        ide = "clion",
-        directory = "clion_2025_2",
-    ),
-}
+def _build_ij_product_dict(versions):
+    result = {}
+    for version in versions:
+        result["intellij-%s" % version] = _build_ij_product("intellij", "intellij_ce", version)
+        result["intellij-ue-%s" % version] = _build_ij_product("intellij-ue", "intellij_ue", version)
+        result["clion-%s" % version] = _build_ij_product("clion", "clion", version)
+
+    return result
+
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2024.3", "2025.1", "2025.2"])
 
 def select_for_plugin_api(params):
     """Selects for a plugin_api.
@@ -191,7 +133,6 @@ def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = 
     Args:
         intellij: Files to use for IntelliJ. If None, will use default.
         intellij_ue: Files to use for IntelliJ UE. If None, will use value chosen for 'intellij'.
-        android_studio: Files to use for Android Studio. If None will use default.
         clion: Files to use for CLion. If None will use default.
         default: Files to use for any IDEs not passed.
     Returns:
