@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -51,13 +50,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Optional;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -118,8 +113,8 @@ final class BlazeConfigurationResolver {
     buildBlazeConfigurationData(
         context, blazeProjectData, toolchainLookupMap, compilerSettings, targetFilter, builder);
     builder.setCompilerSettings(compilerSettings);
-    ImmutableSet<File> validHeaderRoots =
-        HeaderRootTrimmer.getValidRoots(
+    ImmutableSet<Path> validHeaderRoots =
+        HeaderRootTrimmer.getInstance(project).getValidHeaderRoots(
             context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
     builder.setXcodeSettings(xcodeSettings);

@@ -6,12 +6,14 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.OSRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.system.OS;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +34,12 @@ public class QuerySyncTest extends ClwbHeadlessTestCase {
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     return super.projectViewText(version).useQuerySync(true);
+  }
+
+  @Override
+  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
+    super.addAllowedVfsRoots(roots);
+    roots.add(AllowedVfsRoot.recursive("external/catch2+/src"));
   }
 
   @Test

@@ -147,6 +147,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
     projectServices.register(SyncCache.class, new SyncCache(project));
+    projectServices.register(HeaderRootTrimmer.class, new HeaderRootTrimmerMock());
 
     context.addOutputSink(IssueOutput.class, errorCollector);
 

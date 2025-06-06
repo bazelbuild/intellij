@@ -147,6 +147,10 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
     return FileUtil.isAncestor(possibleParentPath, possibleChildPath, strict);
   }
 
+  public static boolean pathsEqual(ExecutionRootPath a, ExecutionRootPath b) {
+    return FileUtil.pathsEqual(a.getAbsoluteOrRelativeFile().getPath(), b.getAbsoluteOrRelativeFile().getPath());
+  }
+
   public static ExecutionRootPath fromProto(String proto) {
     return ProjectDataInterner.intern(new ExecutionRootPath(proto));
   }

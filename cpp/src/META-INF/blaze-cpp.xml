@@ -67,6 +67,8 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.cpp.HeaderRootTrimmer"
+                    serviceImplementation="com.google.idea.blaze.cpp.HeaderRootTrimmerImpl"/>
   </extensions>
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.cpp.qsync.CcProjectModelUpdater$Provider" />
