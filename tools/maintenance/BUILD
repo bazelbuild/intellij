@@ -18,7 +18,10 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 kt_jvm_library(
     name = "lib",
     srcs = ["maintenance.kt"],
-    deps = ["@com_google_guava_guava//jar"],
+    deps = [
+        "@maven//:com_google_guava_guava",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib"
+    ],
 )
 
 java_binary(

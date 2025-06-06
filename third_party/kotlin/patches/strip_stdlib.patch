@@ -1,0 +1,15 @@
+Do not link kotlin stdlib automatically into all jars.
+
+diff --git a/kotlin/internal/jvm/compile.bzl b/kotlin/internal/jvm/compile.bzl
+index 3f1aa7e..a6dc2b0 100644
+--- a/kotlin/internal/jvm/compile.bzl
++++ b/kotlin/internal/jvm/compile.bzl
+@@ -113,7 +113,7 @@ def _jvm_deps(ctx, toolchains, associate_deps, deps, exports = [], runtime_deps
+             "\n------\nTargets should only be put in associates= or deps=, not both:\n%s" %
+             ",\n ".join(["    %s" % x for x in list(diff)]),
+         )
+-    dep_infos = [_java_info(d) for d in associate_deps + deps] + [toolchains.kt.jvm_stdlibs]
++    dep_infos = [_java_info(d) for d in associate_deps + deps]
+
+     associates = _associate_utils.get_associates(ctx, toolchains = toolchains, associates = associate_deps)
+

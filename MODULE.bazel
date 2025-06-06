@@ -3,8 +3,6 @@ module(
     repo_name = "intellij_with_bazel",
 )
 
-register_toolchains("//third_party/kotlin:toolchain")
-
 bazel_dep(
     name = "platforms",
     version = "0.0.11",
@@ -54,29 +52,11 @@ single_version_override(
         "//third_party/kotlin/patches:codeql_add_language_version_option.patch",
         "//third_party/kotlin/patches:codeql_do_not_emit_jdeps.patch",
         "//third_party/kotlin/patches:codeql_fix_jdeps_merged_on_windows.patch",
-        "//third_party/kotlin/patches:kotlin_2_2.patch",
+        "//third_party/kotlin/patches:strip_stdlib.patch",
     ],
 )
 
-# 252 SDKs require kotlin 2.2
-kotlin = use_extension(
-    "@rules_kotlin//src/main/starlark/core/repositories:bzlmod_setup.bzl",
-    "rules_kotlin_extensions",
-)
-kotlin.kotlinc_version(
-    sha256 = "7c2623fcc338e22f5b60cc51500b8c0906f853db59a3f5ee79aa6033e478fb81",
-    version = "2.2.0-RC2",
-)
-use_repo(
-    kotlin,
-    "com_github_google_ksp",
-    "com_github_jetbrains_kotlin",
-    "com_github_jetbrains_kotlin_git",
-    "com_github_pinterest_ktlint",
-    "kotlinx_serialization_core_jvm",
-    "kotlinx_serialization_json",
-    "kotlinx_serialization_json_jvm",
-)
+register_toolchains("//third_party/kotlin:toolchain")
 
 bazel_dep(
     name = "rules_shell",
@@ -165,6 +145,8 @@ maven.install(
         "org.hamcrest:hamcrest-core:3.0",
         "org.jetbrains:annotations:26.0.2",
         "org.jetbrains.pty4j:pty4j:0.13.0",
+        # Only required for the maintenance script, otherwise use the stdlib for the sdk
+        "org.jetbrains.kotlin:kotlin-stdlib:2.1.21",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,

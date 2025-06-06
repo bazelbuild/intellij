@@ -425,7 +425,7 @@
     "@@rules_kotlin+//src/main/starlark/core/repositories:bzlmod_setup.bzl%rules_kotlin_extensions": {
       "general": {
         "bzlTransitiveDigest": "HQj+CxiKO2Qusxix8lH5ytNvW/JndcsFbJxBlRDFd2s=",
-        "usagesDigest": "Fr661lNv+iEofZzD+n9dgRnA6YejmtLB7GQRH2O2pfQ=",
+        "usagesDigest": "qTwqmKKUfWcPdvM0waG+CPWrxsbeAWVeUxavm7tEk9E=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -434,16 +434,16 @@
             "repoRuleId": "@@rules_kotlin+//src/main/starlark/core/repositories:compiler.bzl%kotlin_compiler_git_repository",
             "attributes": {
               "urls": [
-                "https://github.com/JetBrains/kotlin/releases/download/v2.2.0-RC2/kotlin-compiler-2.2.0-RC2.zip"
+                "https://github.com/JetBrains/kotlin/releases/download/v2.1.0/kotlin-compiler-2.1.0.zip"
               ],
-              "sha256": "7c2623fcc338e22f5b60cc51500b8c0906f853db59a3f5ee79aa6033e478fb81"
+              "sha256": "b6698d5728ad8f9edcdd01617d638073191d8a03139cc538a391b4e3759ad297"
             }
           },
           "com_github_jetbrains_kotlin": {
             "repoRuleId": "@@rules_kotlin+//src/main/starlark/core/repositories:compiler.bzl%kotlin_capabilities_repository",
             "attributes": {
               "git_repository_name": "com_github_jetbrains_kotlin_git",
-              "compiler_version": "2.2.0-RC2"
+              "compiler_version": "2.1.0"
             }
           },
           "com_github_google_ksp": {
