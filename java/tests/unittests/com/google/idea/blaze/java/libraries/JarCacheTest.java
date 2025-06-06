@@ -36,10 +36,8 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.SyncState;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.DefaultPrefetcher;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -54,7 +52,7 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettingsExamples.SingleLanguage;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
@@ -204,8 +202,7 @@ public class JarCacheTest extends BlazeTestCase {
     BlazeJavaSyncData syncData =
         new BlazeJavaSyncData(importResult, new GlobSet(ImmutableList.of()));
     return MockBlazeProjectDataBuilder.builder(workspaceRoot)
-        .setWorkspaceLanguageSettings(
-            new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA)))
+        .setWorkspaceLanguageSettings(SingleLanguage.JAVA)
         .setSyncState(new SyncState.Builder().put(syncData).build())
         .setArtifactLocationDecoder(decoder)
         .build();
