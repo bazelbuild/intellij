@@ -9,11 +9,11 @@ maven.install(
         "junit:junit:4.13.2",
 
         # JUnit 5 (Jupiter + Engine + API)
-        "org.junit.jupiter:junit-jupiter-api:5.12.1",
-        "org.junit.jupiter:junit-jupiter-engine:5.12.1",
-        "org.junit.jupiter:junit-jupiter-params:5.12.1",
-        "org.junit.platform:junit-platform-reporting:1.12.1",
-        "org.junit.platform:junit-platform-launcher:1.12.1",
+        "org.junit.jupiter:junit-jupiter-api:5.13.1",
+        "org.junit.jupiter:junit-jupiter-engine:5.13.1",
+        "org.junit.jupiter:junit-jupiter-params:5.13.1",
+        "org.junit.platform:junit-platform-reporting:1.13.1",
+        "org.junit.platform:junit-platform-launcher:1.13.1",
     ],
     lock_file = "//:maven_install.json",
     repositories = [
