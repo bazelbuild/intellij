@@ -50,7 +50,11 @@ public class FileCaches {
             fileCache.onSync(project, context, projectView, projectData, oldProjectData, syncMode);
           });
     }
-    LocalFileSystem.getInstance().refresh(true);
+
+    // CLion does not use this extension point, this is just an unnecessary refresh there
+    if (!FileCache.EP_NAME.getExtensionList().isEmpty()) {
+      LocalFileSystem.getInstance().refresh(true);
+    }
   }
 
   /**

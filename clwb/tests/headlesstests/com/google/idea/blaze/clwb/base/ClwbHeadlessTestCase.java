@@ -56,10 +56,7 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     }
   }
 
-  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
-    // required because of the mark dirty in com.google.idea.blaze.base.sync.ProjectUpdateSyncTask#refreshVirtualFileSystem
-    roots.add(AllowedVfsRoot.flat(""));
-  }
+  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) { }
 
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
