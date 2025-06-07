@@ -102,7 +102,7 @@ bazel_dep(name = "rules_jvm_external", version = "6.7")
 git_override(
     module_name = "rules_scala",
     #branch = "bzlmod-bazel-8",
-    commit = "21e4be9557645885ba2aabab7922c457ffdf03ee",
+    commit = "d222569ee056b617487ae8f584d161c29005fdc5",
     remote = "https://github.com/mbland/rules_scala.git",
 )
 
