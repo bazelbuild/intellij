@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -93,6 +94,12 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   private @Nullable File tryToResolveExternalArtifactToMainWorkspace(ArtifactLocation artifactLocation) {
     if (artifactLocation.isExternal()) {
       try {
+        Path estimatedLocation = blazeInfo.getExecutionRoot().toPath().resolve(artifactLocation.getExecutionRootRelativePath());
+        if (!Files.exists(estimatedLocation)) {
+          LOG.info("Cannot resolve " + estimatedLocation + " because it does not exist");
+          return null;
+        }
+
         File realFile = blazeInfo.getExecutionRoot().toPath()
             .resolve(artifactLocation.getExecutionRootRelativePath()).toRealPath().toFile();
         if (pathResolver.getWorkspacePath(realFile) != null) {
