@@ -77,7 +77,8 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
     Module module = moduleModel.findModuleByName(moduleName);
     if (module == null) {
       File imlFile = new File(imlDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      removeImlFile(imlFile);
+      VirtualFile virtualImlFile = VfsUtil.findFileByIoFile(imlFile, true);
+      removeImlFile(virtualImlFile);
       module = moduleModel.newModule(imlFile.getPath(), moduleType.getId());
       module.setOption(EXTERNAL_SYSTEM_ID_KEY, EXTERNAL_SYSTEM_ID_VALUE);
     }
@@ -122,7 +123,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
           continue;
         }
         moduleModel.disposeModule(module);
-        File imlFile = new File(module.getModuleFilePath());
+        VirtualFile imlFile = module.getModuleFile();
         removeImlFile(imlFile);
       }
     }
@@ -145,9 +146,8 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   // Otherwise, it is possible for IntelliJ to read the
   // old IML file from its index and behave unpredictably
   // (like failing to save the new IML files to disk).
-  private static void removeImlFile(final File imlFile) {
-    final VirtualFile imlVirtualFile = VfsUtil.findFileByIoFile(imlFile, true);
-    if (imlVirtualFile != null && imlVirtualFile.exists()) {
+  private static void removeImlFile(final VirtualFile imlVirtualFile) {
+    if (imlVirtualFile != null && imlVirtualFile.exists() && !imlVirtualFile.isDirectory()) {
       ApplicationManager.getApplication()
           .runWriteAction(
               new Runnable() {
