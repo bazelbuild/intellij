@@ -146,6 +146,12 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   // old IML file from its index and behave unpredictably
   // (like failing to save the new IML files to disk).
   private static void removeImlFile(final File imlFile) {
+    // Make sure the thing we're about to delete is actually an .iml file!
+    // See https://github.com/bazelbuild/intellij/issues/7723 for context
+    if (!imlFile.isFile() || !imlFile.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+      logger.warn(String.format("Path doesn't look like an .iml file: %s", imlFile.getPath()));
+      return;
+    }
     final VirtualFile imlVirtualFile = VfsUtil.findFileByIoFile(imlFile, true);
     if (imlVirtualFile != null && imlVirtualFile.exists()) {
       ApplicationManager.getApplication()
