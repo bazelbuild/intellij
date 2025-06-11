@@ -1,9 +1,8 @@
 v2025.06.10
 ===========
-Fixes:
-* Fixing removing incorectly detected iml file #7726
-* Catch and log the error when there are dots in a qualified name #7694
-* ability to configure python debug session flags #7656
+* feat: ability to configure python debug session flags #7656
+* fix: Fixing removing incorectly detected iml file #7726
+* fix: CLion: Replace VFS in HeaderRootTrimmer #7701
 
 v2025.05.27
 ===========
