@@ -561,7 +561,7 @@ new_git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl"
 new_git_repository(
     name = "jarjar",
     build_file_content = _JARJAR_BUILD_FILE,
-    commit = "38ff702d10baec78f30d5f57485ae452f0fe33b5",
+    commit = "f870e037624e2076de208dd58c5f24529f6d53bf",
     remote = "https://github.com/google/jarjar",
     shallow_since = "1518210648 -0800",
 )
