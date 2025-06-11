@@ -1,7 +1,7 @@
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(
     name = "rules_go",
-    version = "0.54.1",
+    version = "0.55.1",
     repo_name = "io_bazel_rules_go",
 )
 bazel_dep(
