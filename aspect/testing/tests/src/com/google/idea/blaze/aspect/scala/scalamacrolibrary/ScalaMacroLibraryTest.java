@@ -44,7 +44,7 @@ public class ScalaMacroLibraryTest extends BazelIntellijAspectTest {
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .contains(testRelative(intellijInfoFileName("simple")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .contains(testRelative("simple.jar"));
+        .containsAnyOf(testRelative("simple-srcjar.jar"), testRelative("simple-ijar.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .contains(testRelative("simple.jar"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();

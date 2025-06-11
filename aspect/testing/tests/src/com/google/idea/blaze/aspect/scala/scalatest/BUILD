@@ -1,5 +1,5 @@
 load(
-    "@io_bazel_rules_scala//scala:scala.bzl",
+    "@rules_scala//scala:scala.bzl",
     "scala_test",
 )
 load("@rules_java//java:java_test.bzl", "java_test")
