@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.VerifyException;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
@@ -32,6 +33,9 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.section.sections.SyncTelemetryScriptSection;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.NotSupportedWithQuerySyncException;
 import com.google.idea.blaze.base.qsync.QuerySyncPromo;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -58,6 +62,7 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -66,6 +71,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.text.StringUtil;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -223,19 +230,89 @@ public class BlazeSyncManager {
 
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
     Future<?> querySyncPromoFuture = new QuerySyncPromo(project).getPromoShowFuture();
+    int exitCode = 0;
+    Stopwatch s = Stopwatch.createStarted();
     try {
       SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
     } catch (InterruptedException e) {
       context.output(new PrintOutput("Sync interrupted: " + e.getMessage()));
       context.setCancelled();
+      exitCode = 130;
     } catch (ExecutionException e) {
       context.output(new PrintOutput(e.getMessage(), OutputType.ERROR));
       context.setHasError();
+      exitCode = 1;
     } catch (CancellationException e) {
       context.output(new PrintOutput("Sync cancelled"));
       context.setCancelled();
+      exitCode = 8;
     } finally {
       querySyncPromoFuture.cancel(false);
+      trackSyncingPerformance(context, project, params, s, exitCode);
+    }
+  }
+
+  private static void trackSyncingPerformance(
+    BlazeContext context, 
+    Project project, 
+    BlazeSyncParams params, 
+    Stopwatch stopwatch, 
+    int exitCode) {
+    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
+    WorkspacePath trackingScript =
+        projectView.getScalarValue(SyncTelemetryScriptSection.KEY).orElse(null);
+    if (trackingScript == null) {
+      return;
+    }
+
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project)
+            .getBlazeProjectData();
+    String syncMode = "incremental";
+    if (params.syncMode() == SyncMode.STARTUP) {
+      syncMode = "startup";
+    } else if (params.syncOrigin().equals(BlazeSyncStartupActivity.SYNC_REASON)) {
+      syncMode = "import";
+    } else if (params.syncMode() == SyncMode.NO_BUILD) {
+      syncMode = "no_build";
+    } else if (params.syncMode() == SyncMode.PARTIAL) {
+      syncMode = "partial";
+    } else if (params.syncMode() == SyncMode.FULL) {
+      syncMode = "full";
+    }
+
+    Duration duration = stopwatch.elapsed();
+    Instant endTime = Instant.now();
+    Instant startTime = endTime.minus(duration);
+    String startTimeStr = String.format("%d.%09d", startTime.getEpochSecond(), startTime.getNano());
+    String product = MorePlatformUtils.getProductIdForLogs();
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+
+    ImmutableList.Builder<String> args = ImmutableList.builder();
+    args.add(trackingScript.asPath().toString());
+    args.add("--product");
+    args.add(product);
+    args.add("--sync-mode");
+    args.add(syncMode);
+    args.add("--start-time");
+    args.add(startTimeStr);
+    args.add("--duration");
+    args.add(Long.toString(duration.toMillis()));
+    args.add("--exit-code");
+    args.add(Integer.toString(exitCode));
+    ImmutableList<String> command = args.build();
+
+    ProcessBuilder processBuilder =
+        new ProcessBuilder()
+            .command(command)
+            .directory(workspaceRoot.directory());
+    try {
+      Process trackingInvocation = processBuilder.start();
+    } catch (Exception e) {
+      String errorMessage = String.format(
+          "Failed to run sync telemetry script (%s) for project (%s): %s",
+          trackingScript, project.getName(), e.getMessage());
+      context.output(SummaryOutput.output(Prefix.INFO, errorMessage).log());
     }
   }
 

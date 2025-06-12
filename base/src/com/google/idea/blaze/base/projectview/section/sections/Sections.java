@@ -26,6 +26,7 @@ public class Sections {
   // list ordering is used when constructing default template (ProjectViewDefaultValueProvider)
   private static final List<SectionParser> PARSERS =
       Lists.newArrayList(
+          SyncTelemetryScriptSection.PARSER,
           TextBlockSection.PARSER,
           ImportSection.PARSER,
           TryImportSection.PARSER,
