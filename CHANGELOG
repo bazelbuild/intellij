@@ -1,3 +1,9 @@
+v2025.06.10
+===========
+* feat: ability to configure python debug session flags #7656
+* fix: Fixing removing incorectly detected iml file #7726
+* fix: CLion: Replace VFS in HeaderRootTrimmer #7701
+
 v2025.05.27
 ===========
 * Project data directory is marked via exclusion patterns #7641
