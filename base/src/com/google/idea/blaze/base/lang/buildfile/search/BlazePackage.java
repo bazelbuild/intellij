@@ -105,15 +105,22 @@ public class BlazePackage {
   }
 
   /**
-   * Returns the file path relative to this blaze package, or null if it does lie inside this
-   * package
+   * Returns the file path relative to this blaze package, or null if it does not lie inside this
+   * package.
    */
   @Nullable
   public String getPackageRelativePath(String filePath) {
-    final Path packageDirPath = Path.of(PathUtil.getParentPath(buildFile.getFilePath()));
-    Path filePathPath = Path.of(filePath);
-    return filePathPath.startsWith(packageDirPath) ? filePathPath.subpath(packageDirPath.getNameCount(), filePathPath.getNameCount())
-      .toString() : null;
+    final var packageDir = Path.of(buildFile.getFilePath()).getParent();
+    if (packageDir == null) {
+      return null;
+    }
+
+    final var filePathPath = Path.of(filePath);
+    if (!filePathPath.startsWith(packageDir)) {
+      return null;
+    }
+
+    return packageDir.relativize(filePathPath).toString();
   }
 
   /** Formats the child file path as a BUILD label (i.e. "//package_path[:relative_path]") */

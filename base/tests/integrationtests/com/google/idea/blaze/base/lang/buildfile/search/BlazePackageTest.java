@@ -81,5 +81,6 @@ public class BlazePackageTest extends BuildFileIntegrationTestCase {
       .isEqualTo("Some.java");
     assertThat(blazePackage.getPackageRelativePath(workspaceRoot.path().resolve("java/com/google/foo/Some.java").toString()))
       .isEqualTo("foo/Some.java");
+    assertThat(blazePackage.getPackageRelativePath(workspaceRoot.path().toString())).isEqualTo(null);
   }
 }
