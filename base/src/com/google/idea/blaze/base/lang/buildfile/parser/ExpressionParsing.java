@@ -77,6 +77,8 @@ public class ExpressionParsing extends Parsing {
               TokenKind.IN,
               TokenKind.NOT_IN),
           EnumSet.of(TokenKind.PIPE),
+          EnumSet.of(TokenKind.CARET),
+          EnumSet.of(TokenKind.AMPERSAND),
           EnumSet.of(TokenKind.LESS_LESS, TokenKind.GREATER_GREATER),
           EnumSet.of(TokenKind.MINUS, TokenKind.PLUS),
           EnumSet.of(TokenKind.SLASH, TokenKind.SLASH_SLASH, TokenKind.STAR, TokenKind.PERCENT));

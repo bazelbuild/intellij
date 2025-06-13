@@ -69,7 +69,9 @@ public enum TokenKind {
   DEDENT("dedent"),
   PASS("pass"),
   PERCENT("%"),
+  AMPERSAND("&"),
   PIPE("|"),
+  CARET("^"),
   PLUS("+"),
   PLUS_EQUALS("+="),
   MINUS_EQUALS("-="),
@@ -143,7 +145,9 @@ public enum TokenKind {
           GREATER_GREATER,
           LESS_LESS,
           PLUS,
+          AMPERSAND,
           PIPE,
+          CARET,
           STAR);
 
   public static final ImmutableSet<TokenKind> AUGMENTED_ASSIGNMENT_OPS =

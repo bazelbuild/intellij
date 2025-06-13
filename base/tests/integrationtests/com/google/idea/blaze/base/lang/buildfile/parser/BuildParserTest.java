@@ -114,6 +114,20 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
+  public void testBinaryOperators() {
+    // See https://starlark-lang.org/spec.html#binary-operators
+    assertThat(parse("6 + 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 - 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 * 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 / 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 % 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 & 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 | 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 ^ 1")).isEqualTo("binary_op(int, int)");
+    assertNoErrors();
+  }
+
+  @Test
   public void testTwoCharOperators() {
     assertThat(parse("6 // 1")).isEqualTo("binary_op(int, int)");
     assertThat(parse("6 << 1")).isEqualTo("binary_op(int, int)");

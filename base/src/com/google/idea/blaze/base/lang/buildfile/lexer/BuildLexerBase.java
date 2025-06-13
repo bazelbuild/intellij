@@ -810,6 +810,12 @@ public class BuildLexerBase {
         case '|':
           addToken(TokenKind.PIPE, pos - 1, pos);
           break;
+        case '^':
+          addToken(TokenKind.CARET, pos - 1, pos);
+          break;
+        case '&':
+          addToken(TokenKind.AMPERSAND, pos - 1, pos);
+          break;
         case '=':
           addToken(TokenKind.EQUALS, pos - 1, pos);
           break;
