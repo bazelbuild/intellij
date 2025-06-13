@@ -22,5 +22,10 @@
       description="Determines whether AutoImportProjectOpenProcessor is a strong info holder."
       key="bazel.project.auto.open"
       overrides="true"/>
+    <registryKey
+      defaultValue="true"
+      description="Mark execroot as dirty before refresh after sync"
+      key="bazel.sync.mark.dirty"
+      overrides="true"/>
   </extensions>
 </idea-plugin>

@@ -63,6 +63,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -73,11 +74,12 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -284,25 +286,46 @@ final class ProjectUpdateSyncTask {
   }
 
   private static void refreshVirtualFileSystem(
-      BlazeContext context, Project project, BlazeProjectData blazeProjectData) {
-    Scope.push(
-        context,
-        (childContext) -> {
-          childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
-          childContext.output(new StatusOutput("Refreshing files..."));
-          if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-            IssueOutput.warn("Attempted to refresh file system while holding read lock")
-                .submit(childContext);
-            logger.warn("Attempted to refresh file system while holding read lock");
-          } else if (Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
-              .anyMatch(p -> p.refreshExecutionRoot(project, blazeProjectData))) {
-            // this refresh should happen off EDT and without read lock.
-            VirtualFile root =
-                VfsUtil.findFileByIoFile(blazeProjectData.getBlazeInfo().getExecutionRoot(), true);
-            VfsUtil.markDirtyAndRefresh(
-                /* async= */ false, /* recursive= */ true, /* reloadChildren= */ true, root);
-          }
-        });
+      BlazeContext parentContext,
+      Project project,
+      BlazeProjectData blazeProjectData
+  ) {
+    Scope.push(parentContext, (ctx) -> {
+      ctx.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
+      ctx.output(new StatusOutput("Refreshing files..."));
+
+      final var shouldRefreshRoot = BlazeSyncPlugin.EP_NAME.getExtensionList()
+          .stream()
+          .anyMatch(it -> it.refreshExecutionRoot(project, blazeProjectData));
+
+      if (!shouldRefreshRoot) {
+        return;
+      }
+
+      // holding a read lock while calling refresh will cause a deadlock
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+        IssueOutput.warn("Attempted to refresh file system while holding read lock").submit(ctx);
+        return;
+      }
+
+      if (Registry.is("bazel.sync.mark.dirty")) {
+        final var file = VfsUtil.findFileByIoFile(
+            /* file = */ blazeProjectData.getBlazeInfo().getExecutionRoot(),
+            /* refreshIfNeeded = */ false
+        );
+
+        if (file instanceof NewVirtualFile virtualFile) {
+          virtualFile.markDirtyRecursively();
+        }
+      }
+
+      LocalFileSystem.getInstance().refreshIoFiles(
+          /* files = */ List.of(blazeProjectData.getBlazeInfo().getExecutionRoot()),
+          /* async = */ false,
+          /* recursive = */ true,
+          /* onFinish = */ null
+      );
+    });
   }
 
   private void createSdks(BlazeProjectData blazeProjectData) {
