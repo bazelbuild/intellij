@@ -54,12 +54,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   @Test
   public void testAugmentedAssign() throws Exception {
     //See https://starlark-lang.org/spec.html#augmented-assignments
-    //TODO support >>= and <<=
     assertThat(parse("x += 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x -= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x *= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x /= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x //= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x >>= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x <<= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x %= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x &= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x |= 1")).isEqualTo("aug_assign(reference, int)");
@@ -113,8 +114,10 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testSlashSlashOperator() {
+  public void testTwoCharOperators() {
     assertThat(parse("6 // 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 << 1")).isEqualTo("binary_op(int, int)");
+    assertThat(parse("6 >> 1")).isEqualTo("binary_op(int, int)");
     assertNoErrors();
   }
 

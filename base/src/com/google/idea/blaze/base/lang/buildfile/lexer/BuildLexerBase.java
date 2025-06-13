@@ -772,10 +772,28 @@ public class BuildLexerBase {
           popParen();
           break;
         case '>':
-          addToken(TokenKind.GREATER, pos - 1, pos);
+          if (lookaheadIs(0, '>') && lookaheadIs(1, '=')) {
+            addToken(TokenKind.GREATER_GREATER_EQUALS, pos - 1, pos + 2);
+            pos += 2;
+          } else if (lookaheadIs(0, '>')) {
+            addToken(TokenKind.GREATER_GREATER, pos - 1, pos + 1);
+            pos++;
+          } else {
+            // >= is handled by tokenizeTwoChars.
+            addToken(TokenKind.GREATER, pos - 1, pos);
+          }
           break;
         case '<':
-          addToken(TokenKind.LESS, pos - 1, pos);
+          if (lookaheadIs(0, '<') && lookaheadIs(1, '=')) {
+            addToken(TokenKind.LESS_LESS_EQUALS, pos - 1, pos + 2);
+            pos += 2;
+          } else if (lookaheadIs(0, '<')) {
+            addToken(TokenKind.LESS_LESS, pos - 1, pos + 1);
+            pos++;
+          } else {
+            // <= is handled by tokenizeTwoChars.
+            addToken(TokenKind.LESS, pos - 1, pos);
+          }
           break;
         case ':':
           addToken(TokenKind.COLON, pos - 1, pos);
