@@ -54,6 +54,9 @@ public class BuildLexerBase {
           .put('*', TokenKind.STAR_EQUALS)
           .put('/', TokenKind.SLASH_EQUALS)
           .put('%', TokenKind.PERCENT_EQUALS)
+          .put('^', TokenKind.CARET_EQUALS)
+          .put('&', TokenKind.AMPERSAND_EQUALS)
+          .put('|', TokenKind.PIPE_EQUALS)
           .build();
 
   private final LexerMode mode;

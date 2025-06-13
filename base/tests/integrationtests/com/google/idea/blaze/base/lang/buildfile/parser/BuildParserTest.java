@@ -53,12 +53,17 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testAugmentedAssign() throws Exception {
+    //See https://starlark-lang.org/spec.html#augmented-assignments
+    //TODO support >>= and <<=
     assertThat(parse("x += 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x -= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x *= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x /= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x //= 1")).isEqualTo("aug_assign(reference, int)");
     assertThat(parse("x %= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x &= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x |= 1")).isEqualTo("aug_assign(reference, int)");
+    assertThat(parse("x ^= 1")).isEqualTo("aug_assign(reference, int)");
     assertNoErrors();
   }
 
