@@ -12,7 +12,7 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_version")
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
@@ -53,7 +53,13 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_cidr",
-    module = ["com.intellij.modules.cidr.lang"],
+    module = select_for_version(
+        default = ["com.intellij.cidr.lang"],
+        versions = {
+            "2024.3": ["com.intellij.modules.cidr.lang"],  #api243
+            "2025.1": ["com.intellij.modules.cidr.lang"],  #api251
+        },
+    ),
     plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 

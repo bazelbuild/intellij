@@ -22,6 +22,7 @@ load(
     "//build_defs:intellij_plugin_debug_target.bzl",
     "intellij_plugin_debug_target",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_version")
 load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
@@ -46,7 +47,13 @@ intellij_plugin_library(
 
 optional_plugin_xml(
     name = "optional_clwb_oclang",
-    module = ["com.intellij.modules.cidr.lang"],
+    module = select_for_version(
+        default = ["com.intellij.cidr.lang"],
+        versions = {
+            "2024.3": ["com.intellij.modules.cidr.lang"],  #api243
+            "2025.1": ["com.intellij.modules.cidr.lang"],  #api251
+        },
+    ),
     plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
@@ -204,13 +211,13 @@ clwb_headless_test(
 test_suite(
     name = "headless_tests",
     tests = [
+        ":example_headless_test",
+        ":execution_headless_test",
         ":external_includes_headless_test",
         ":llvm_toolchain_headless_test",
         ":query_sync_headless_test",
         ":simple_headless_test",
-        ":virtual_includes_headless_test",
-        ":execution_headless_test",
         ":target_compatible_headless_test",
-        ":example_headless_test",
+        ":virtual_includes_headless_test",
     ],
 )
