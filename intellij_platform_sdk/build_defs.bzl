@@ -165,6 +165,33 @@ def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = 
 
     return select_for_plugin_api(params)
 
+def select_for_version(versions, default = []):
+    """Selects for the supported IDEs.
+
+    Args:
+        version: Map from version to File list.
+        default: Files to use for any version not passed.
+    Returns:
+        A select statement on all versions to select a list of files.
+
+    Example:
+      java_library(
+        name = "foo",
+        srcs = select_for_version(
+            versions = { "2024.1": [":2024_1_only_sources"] },
+            default = [":default_sources"],
+        ),
+      )
+    """
+
+    params = dict()
+    for ij_product, value in DIRECT_IJ_PRODUCTS.items():
+        if value.version in versions:
+            params[ij_product] = versions[value.version]
+    params["default"] = default
+
+    return select_for_plugin_api(params)
+
 def _plugin_api_directory(value):
     if hasattr(value, "oss_workspace"):
         directory = value.oss_workspace
