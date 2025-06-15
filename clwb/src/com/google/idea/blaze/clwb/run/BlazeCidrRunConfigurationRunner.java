@@ -112,7 +112,15 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     final var flagsBuilder = ImmutableList.<String>builder();
 
     if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
-      flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
+      String workspaceRootPath = WorkspaceRoot.fromProject(env.getProject()).toString();
+      // Convert backslashes to forward slashes for Windows compatibility,
+      // particularly for tools like CMake invoked via rules_foreign_cc.
+      if (SystemInfo.isWindows) {
+        workspaceRootPath = workspaceRootPath.replace('\\', '/');
+      }
+      // Keep the single quotes around the whole copt value and double quotes around the path
+      // as Bazel might need them for correct parsing, especially if the path contains spaces.
+      flagsBuilder.add("--copt=-fdebug-compilation-dir='" + workspaceRootPath + "'");
 
       if (SystemInfo.isMac) {
         flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
