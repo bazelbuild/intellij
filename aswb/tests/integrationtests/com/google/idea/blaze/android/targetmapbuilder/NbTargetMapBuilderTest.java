@@ -63,7 +63,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setLabel("//android_ndk_linux/toolchains:armv7a")
                     .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(
-                        CToolchainIdeInfo.builder()
+                        CToolchainIdeInfo.builderWithDefaults()
                             .setTargetName("arm-linux-androideabi")
                             .setCppExecutable(
                                 new ExecutionRootPath("bin/arm-linux-androideabi-gcc"))
@@ -77,7 +77,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setLabel("//android_ndk_linux/toolchains:aarch64")
                     .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
                     .setCToolchainInfo(
-                        CToolchainIdeInfo.builder()
+                        CToolchainIdeInfo.builderWithDefaults()
                             .setTargetName("aarch64-linux-android")
                             .setCppExecutable(
                                 new ExecutionRootPath("bin/aarch64-linux-android-gcc"))

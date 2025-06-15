@@ -40,6 +40,7 @@ public final class BlazeCompilerSettings {
   private final String compilerVersion;
   private final ImmutableMap<String, String> compilerEnvironment;
   private final ImmutableList<ExecutionRootPath> builtInIncludes;
+  @Nullable private final ExecutionRootPath sysroot;
 
   BlazeCompilerSettings(
       Project project,
@@ -49,7 +50,8 @@ public final class BlazeCompilerSettings {
       ImmutableList<String> cppFlags,
       String compilerVersion,
       ImmutableMap<String, String> compilerEnvironment,
-      ImmutableList<ExecutionRootPath> bultinIncludes) {
+      ImmutableList<ExecutionRootPath> bultinIncludes,
+      @Nullable ExecutionRootPath sysroot) {
     this.cCompiler = cCompiler;
     this.cppCompiler = cppCompiler;
     this.cCompilerSwitches = ImmutableList.copyOf(getCompilerSwitches(project, cFlags));
@@ -57,6 +59,7 @@ public final class BlazeCompilerSettings {
     this.compilerVersion = compilerVersion;
     this.compilerEnvironment = compilerEnvironment;
     this.builtInIncludes = bultinIncludes;
+    this.sysroot = sysroot;
   }
 
   public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
@@ -110,5 +113,10 @@ public final class BlazeCompilerSettings {
 
   public ImmutableList<ExecutionRootPath> getBuiltInIncludes() {
     return builtInIncludes;
+  }
+
+  @Nullable
+  public ExecutionRootPath getSysroot() {
+    return sysroot;
   }
 }
