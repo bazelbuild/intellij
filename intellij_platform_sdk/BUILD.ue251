@@ -59,17 +59,6 @@ java_import(
 )
 
 java_import(
-    name = "coverage",
-    jars = glob(["plugins/coverage/lib/*.jar"]),
-)
-
-#api232
-java_import(
-    name = "devkit",
-    jars = [],
-)
-
-java_import(
     name = "hg4idea",
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
@@ -90,16 +79,6 @@ java_import(
 java_import(
     name = "tslint",
     jars = glob(["plugins/tslint/lib/*.jar"]),
-)
-
-java_import(
-    name = "angular",
-    jars = glob(["plugins/AngularJS/lib/*.jar"]),
-)
-
-java_import(
-    name = "intellilang",
-    jars = glob(["plugins/IntelliLang/lib/*.jar"]),
 )
 
 java_import(

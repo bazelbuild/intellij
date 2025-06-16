@@ -51,22 +51,9 @@ java_library(
 )
 
 java_library(
-    name = "angular_internal",
-    tags = ["no-ide"],
-    visibility = ["//visibility:private"],
-    exports = select_for_plugin_api({
-        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:angular"],
-        "intellij-ue-2025.1": ["@intellij_ue_2025_1//:angular"],
-        "intellij-ue-2025.2": ["@intellij_ue_2025_2//:angular"],
-        "default": [],
-    }),
-)
-
-java_library(
     name = "javascript_for_tests",
     testonly = 1,
     exports = [
-        ":angular_internal",
         ":css_internal",
         ":javascript_internal",
     ],
@@ -76,7 +63,6 @@ java_library(
     name = "javascript",
     neverlink = 1,
     exports = [
-        ":angular_internal",
         ":javascript_internal",
     ],
 )
