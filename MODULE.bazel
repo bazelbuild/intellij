@@ -130,7 +130,6 @@ maven.install(
         "com.google.errorprone:error_prone_annotations:2.20.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
         "com.google.truth:truth:1.4.4",
-        "com.google.truth.extensions:truth-java8-extension:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
         "com.google.guava:failureaccess:1.0.2",
         "org.hamcrest:hamcrest-core:3.0",
@@ -169,7 +168,6 @@ use_repo(
     objenesis = "org_objenesis_objenesis",
     ptylib = "org_jetbrains_pty4j_pty4j",
     truth = "com_google_truth_truth",
-    truth8 = "com_google_truth_extensions_truth_java8_extension",
 )
 
 bazel_dep(name = "rules_go", version = "0.55.1", repo_name = "io_bazel_rules_go")

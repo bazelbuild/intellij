@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.kotlin.run.producers;
 
-import static com.google.common.truth.Truth8.assertThat;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;

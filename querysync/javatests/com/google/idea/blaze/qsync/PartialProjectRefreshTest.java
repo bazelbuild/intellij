@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.Query;
@@ -137,7 +136,7 @@ public class PartialProjectRefreshTest {
         Optional.empty(),
         ImmutableSet.of(),
         /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")));
-    Truth8.assertThat(queryStrategy.getQuerySpec()).isEmpty();
+    assertThat(queryStrategy.getQuerySpec()).isEmpty();
     QuerySummary applied = queryStrategy.applyDelta(QuerySummaryImpl.EMPTY);
     assertThat(applied.getRulesMap().keySet())
       .containsExactly(Label.of("//my/build/package2:rule"));

@@ -22,7 +22,6 @@ import static com.google.idea.blaze.qsync.project.ProjectPath.workspaceRelative;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.QuerySyncTestUtils;
 import com.google.idea.blaze.qsync.artifacts.BuildArtifact;
@@ -166,7 +165,7 @@ public class CcWorkspaceBuilderTest {
     assertThat(compilerSettings.getCompilerExecutablePath().getPath())
         .isEqualTo("workspace/path/to/clang");
 
-    Truth8.assertThat(
+    assertThat(
             context.getLanguageToCompilerSettingsMap().keySet().stream()
                 .map(l -> CcLanguage.valueOf(CcLanguage.getDescriptor().findValueByName(l))))
         .containsExactly(CcLanguage.CPP, CcLanguage.C);
@@ -248,7 +247,7 @@ public class CcWorkspaceBuilderTest {
     assertThat(workspace.getContextsList()).hasSize(2);
     // Assert that both compilation contexts share a flagset ID (since the two targets share the
     // same flags):
-    Truth8.assertThat(
+    assertThat(
             workspace.getContextsList().stream()
                 .map(CcCompilationContext::getSourcesList)
                 .flatMap(List::stream)

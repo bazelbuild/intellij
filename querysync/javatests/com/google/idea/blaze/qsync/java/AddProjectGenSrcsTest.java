@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.NoopContext;
@@ -299,13 +298,13 @@ public class AddProjectGenSrcsTest {
     Module workspace = newProject.getModules(0);
     // check our above assumption:
     assertThat(workspace.getName()).isEqualTo(".workspace");
-    Truth8.assertThat(
+    assertThat(
             workspace.getContentEntriesList().stream()
                 .map(ContentEntry::getSourcesList)
                 .flatMap(Collection::stream)
                 .filter(SourceFolder::getIsGenerated))
         .isEmpty();
-    Truth8.assertThat(newProject.getArtifactDirectories().getDirectoriesMap().values().stream()
+    assertThat(newProject.getArtifactDirectories().getDirectoriesMap().values().stream()
             .map(ArtifactDirectoryContents::getContentsMap)
             .map(Map::entrySet)
             .flatMap(Collection::stream))
