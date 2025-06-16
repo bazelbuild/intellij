@@ -43,12 +43,13 @@ public final class BuildResultParser {
    */
   public static ParsedBepOutput getBuildOutput(
     BuildEventStreamProvider bepStream, Interner<String> stringInterner)
-    throws BuildResultHelper.GetArtifactsException {
+    throws GetArtifactsException {
     try {
       return BepParser.parseBepArtifacts(bepStream, stringInterner);
-    } catch (BuildEventStreamProvider.BuildEventStreamException e) {
+    }
+    catch (BuildEventStreamProvider.BuildEventStreamException e) {
       BuildResultHelper.logger.error(e);
-      throw new BuildResultHelper.GetArtifactsException(String.format(
+      throw new GetArtifactsException(String.format(
         "Failed to parse bep for build id: %s: %s", bepStream.getId(), e.getMessage()));
     }
   }
@@ -63,12 +64,13 @@ public final class BuildResultParser {
    */
   public static ParsedBepOutput.Legacy getBuildOutputForLegacySync(
     BuildEventStreamProvider bepStream, Interner<String> stringInterner)
-    throws BuildResultHelper.GetArtifactsException {
+    throws GetArtifactsException {
     try {
       return BepParser.parseBepArtifactsForLegacySync(bepStream, stringInterner);
-    } catch (BuildEventStreamProvider.BuildEventStreamException e) {
+    }
+    catch (BuildEventStreamProvider.BuildEventStreamException e) {
       BuildResultHelper.logger.error(e);
-      throw new BuildResultHelper.GetArtifactsException(String.format(
+      throw new GetArtifactsException(String.format(
         "Failed to parse bep for build id: %s: %s", bepStream.getId(), e.getMessage()));
     }
   }
@@ -77,24 +79,13 @@ public final class BuildResultParser {
    * Parses BEP stream and returns the corresponding {@link BlazeTestResults}. May
    * only be called once on a given stream.
    */
-  public static BlazeTestResults getTestResults(BuildEventStreamProvider bepStream) throws BuildResultHelper.GetArtifactsException {
-    try  {
-      return BuildEventProtocolOutputReader.parseTestResults(bepStream);
-    } catch (BuildEventStreamProvider.BuildEventStreamException e) {
-      BuildResultHelper.logger.warn(e);
-      throw new BuildResultHelper.GetArtifactsException(
-        String.format("Failed to parse bep for build id: %s", bepStream.getId()), e);
-    }
-  }
-
-  /**
-   * Parses the BEP stream and collects all build flags used. Return all flags that pass filters
-   */
-  public static BuildFlags getBlazeFlags(BuildEventStreamProvider bepStream) throws BuildResultHelper.GetFlagsException {
+  public static BlazeTestResults getTestResults(BuildEventStreamProvider bepStream) throws GetArtifactsException {
     try {
-      return BuildFlags.parseBep(bepStream);
-    } catch (BuildEventStreamProvider.BuildEventStreamException e) {
-      throw new BuildResultHelper.GetFlagsException(
+      return BuildEventProtocolOutputReader.parseTestResults(bepStream);
+    }
+    catch (BuildEventStreamProvider.BuildEventStreamException e) {
+      BuildResultHelper.logger.warn(e);
+      throw new GetArtifactsException(
         String.format("Failed to parse bep for build id: %s", bepStream.getId()), e);
     }
   }
@@ -109,12 +100,12 @@ public final class BuildResultParser {
       BuildEventStreamProvider bepStream,
       Interner<String> stringInterner,
       String label)
-      throws BuildResultHelper.GetArtifactsException {
+      throws GetArtifactsException {
     final var parsedBepOutput = getBuildOutput(bepStream, stringInterner);
 
     final var result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
     if (result.status != BuildResult.Status.SUCCESS) {
-      throw new BuildResultHelper.GetArtifactsException(
+      throw new GetArtifactsException(
           String.format("Failed to parse bep for build id: %s", bepStream.getId()));
     }
 
@@ -130,7 +121,7 @@ public final class BuildResultParser {
         .collect(ImmutableList.toImmutableList());
 
     if (artifacts.isEmpty()) {
-      throw new BuildResultHelper.GetArtifactsException(
+      throw new GetArtifactsException(
           String.format("No output artifacts found for build id: %s", bepStream.getId()));
     }
 
