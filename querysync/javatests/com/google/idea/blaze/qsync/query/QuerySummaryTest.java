@@ -103,7 +103,7 @@ public class QuerySummaryTest {
   @Test
   public void testGetParentPackage_noparent() {
     QuerySummary summary = QuerySummaryImpl.create(createProtoForPackages("//my/build/package:rule"));
-    Truth.assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
+    assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
   }
 
   @Test

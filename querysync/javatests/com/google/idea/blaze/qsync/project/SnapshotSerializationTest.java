@@ -67,7 +67,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    Truth.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
