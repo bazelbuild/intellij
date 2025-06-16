@@ -298,36 +298,6 @@ java_library(
     ],
 )
 
-# IntelliJ Coverage plugin
-java_library(
-    name = "coverage",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":coverage"],
-    ),
-)
-
-# IntelliJ Coverage plugin
-java_library(
-    name = "coverage_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":coverage"],
-    ),
-)
-
-# Used to support IntelliJ plugin development in our plugin
-java_library(
-    name = "devkit",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":devkit"],
-    ),
-)
-
 # IntelliJ Mercurial plugin
 java_library(
     name = "hg4idea",
@@ -335,16 +305,6 @@ java_library(
     exports = select_from_plugin_api_directory(
         clion = [":hg4idea"],
         intellij = [":hg4idea"],
-    ),
-)
-
-# IntelliJ IntelliLang plugin
-java_library(
-    name = "intellilang_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":intellilang"],
     ),
 )
 
