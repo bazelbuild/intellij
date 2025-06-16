@@ -53,13 +53,7 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_cidr",
-    module = select_for_version(
-        default = ["com.intellij.cidr.lang"],
-        versions = {
-            "2024.3": ["com.intellij.modules.cidr.lang"],  #api243
-            "2025.1": ["com.intellij.modules.cidr.lang"],  #api251
-        },
-    ),
+    module = ["com.intellij.cidr.lang"],
     plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
