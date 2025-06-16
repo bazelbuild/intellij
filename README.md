@@ -2,8 +2,7 @@
 
 This project uses binary bundles licensed under JetBrains User Agreement (https://www.jetbrains.com/legal/docs/toolbox/user/).
 
-This is an early-access version of our Bazel plugins for IntelliJ,
-Android Studio, and CLion.
+This is an early-access version of our Bazel plugins for IntelliJ and CLion.
 
 The Bazel plugin uploaded to the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel) 
 regularly from the state of this repository. See the [releases](https://github.com/bazelbuild/intellij/releases) 
@@ -24,15 +23,22 @@ systems.
 
 ## Source Code Locations
 
-The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij) of this repository. An external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. 
+The Bazel plugins for IntelliJ and CLion are built and released from the [master branch](https://github.com/bazelbuild/intellij) of this repository. An 
+external team of maintainers addresses IntelliJ and CLion plugin issues and pull requests. 
 
-The Bazel plugin for Android Studio is built and released from  [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/). The [google branch](https://github.com/bazelbuild/intellij/tree/google) is now deprecated.
+The Bazel plugin for Android Studio is built and released from [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/). The [google branch](https://github.com/bazelbuild/intellij/tree/google) is now deprecated.
+The last snapshot of the Android Studio plugin that was hosted in this repository can be found on the 
+[aswb branch](https://github.com/bazelbuild/intellij/tree/aswb).
 
-Although the code in this repository and in AOSP share the same structure and core components, they have diverged from each other. 
+Although the code in this repository and in AOSP share the same structure and core components, they have diverged from 
+each other. 
 
-- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Users can request that certain fixes which are also needed for the Android Studio plugin get merged into the AOSP project. This will require the internal teams’ approval. 
-- Changes made by the internal Google teams are automatically exported to AOSP. These commits will regularly be cherry-picked to the master branch. See the next paragraph for details.
-- The master branch is not intended to be used to build the Android Studio with Bazel plugin; failures of the Android Studio plugin built from the master branch will not be addressed.
+- Changes for IntelliJ and CLion plugins are *only* merged into the master branch of this repository. Users can request 
+  that certain fixes which are also needed for the Android Studio plugin get merged into the AOSP project. This will 
+  require the internal teams’ approval. 
+- Changes made by the internal Google teams are automatically exported to AOSP. These commits were regularly 
+  cherry-picked to the master branch. See the next paragraph for details.
+- The Android Studio plugin was removed from the master branch and is now only available in the AOSP. 
 
 ### Cherry-picks from AOSP to this project
 
@@ -44,6 +50,8 @@ Starting from that point, we have been making our best effort to apply AOSP chan
 For this purpose, we use the Python tool [LeFrosch/intellij-aosp-merge](https://github.com/LeFrosch/intellij-aosp-merge), which is capable of adjusting paths from AOSP to this project's layout and allows us to compare revisions in AOSP and here.
 
 Status of picked and skipped commits could be found in the following [googledoc](https://jb.gg/aosp-picks).
+
+Due to multiple regressions caused by picks from the AOSP, cherry-picks have been halted for the time being.
 
 ## Installation
 
@@ -58,7 +66,6 @@ Beta versions are usually uploaded to the Beta channel 2 weeks before they becom
   You can now find the latest Beta under `Settings -> Plugins -> Marketplace` or update the Bazel plugin to Beta if you already installed it.
   - IntelliJ IDEA -> `https://plugins.jetbrains.com/plugins/beta/8609`
   - CLion -> `https://plugins.jetbrains.com/plugins/beta/9554`
-  - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
 We recommend watching [this video](https://www.youtube.com/watch?v=GV_KwWK3Qy8) to familiarize yourself with the plugin's features.
@@ -90,7 +97,6 @@ Install Bazel, then build the target `*:*_bazel_zip` for your desired product:
 
 * `bazel build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-ue-oss-latest-stable`
 * `bazel build //clwb:clwb_bazel_zip --define=ij_product=clion-oss-latest-stable`
-* `bazel build //aswb:aswb_bazel_zip --define=ij_product=android-studio-oss-latest-stable`
 
 from the project root. This will create a plugin zip file at
 `bazel-bin/<PRODUCT>/<PRODUCT>_bazel.zip`, which can be installed directly
