@@ -3,10 +3,10 @@ Copyright (c) GitHub, Inc.
 Licensed under the Apache License, Version 2.0
 
 diff --git a/src/main/starlark/core/options/opts.kotlinc.bzl b/src/main/starlark/core/options/opts.kotlinc.bzl
-index 76df826..ef2d6ca 100644
+index 1406970..41b62f8 100644
 --- a/src/main/starlark/core/options/opts.kotlinc.bzl
 +++ b/src/main/starlark/core/options/opts.kotlinc.bzl
-@@ -33,6 +33,11 @@ def _map_jdk_release_to_flag(version):
+@@ -34,6 +34,11 @@ def _map_jdk_release_to_flag(version):
          return None
      return ["-Xjdk-release=%s" % version]
 
@@ -18,7 +18,7 @@ index 76df826..ef2d6ca 100644
  _KOPTS_ALL = {
      "warn": struct(
          args = dict(
-@@ -429,6 +434,15 @@ _KOPTS_ALL = {
+@@ -448,6 +453,15 @@ default: 'first-only-warn' in language version 2.2+, 'first-only' in version 2.1
          value_to_flag = None,
          map_value_to_flag = _map_jdk_release_to_flag,
      ),
@@ -31,6 +31,6 @@ index 76df826..ef2d6ca 100644
 +        value_to_flag = None,
 +        map_value_to_flag = _map_language_version_to_flag,
 +    ),
- }
-
- def _merge(key, rule_defined):
+     "x_suppress_warning": struct(
+         args = dict(
+             default = [],
