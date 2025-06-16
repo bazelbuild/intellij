@@ -49,9 +49,6 @@ single_version_override(
     module_name = "rules_kotlin",
     patch_strip = 1,
     patches = [
-        "//third_party/kotlin/patches:codeql_add_language_version_option.patch",
-        "//third_party/kotlin/patches:codeql_do_not_emit_jdeps.patch",
-        "//third_party/kotlin/patches:codeql_fix_jdeps_merged_on_windows.patch",
         "//third_party/kotlin/patches:strip_stdlib.patch",
     ],
 )
