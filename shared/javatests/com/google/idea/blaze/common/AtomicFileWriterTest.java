@@ -16,7 +16,6 @@
 package com.google.idea.blaze.common;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;

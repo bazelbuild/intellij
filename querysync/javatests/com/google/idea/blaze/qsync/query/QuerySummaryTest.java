@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
 import com.google.common.base.Preconditions;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
@@ -104,7 +103,7 @@ public class QuerySummaryTest {
   @Test
   public void testGetParentPackage_noparent() {
     QuerySummary summary = QuerySummaryImpl.create(createProtoForPackages("//my/build/package:rule"));
-    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
+    assertThat(summary.getParentPackage(Path.of("my/build/package"))).isEmpty();
   }
 
   @Test
@@ -113,7 +112,7 @@ public class QuerySummaryTest {
         QuerySummaryImpl.create(
             createProtoForPackages(
                 "//my/build/package:rule", "//my/build/package/subpackage:rule"));
-    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package/subpackage")))
+    assertThat(summary.getParentPackage(Path.of("my/build/package/subpackage")))
         .hasValue(Path.of("my/build/package"));
   }
 
@@ -122,7 +121,7 @@ public class QuerySummaryTest {
     QuerySummary summary =
         QuerySummaryImpl.create(
             createProtoForPackages("//my/build/package:rule", "//my/build/package/sub1/sub2:rule"));
-    Truth8.assertThat(summary.getParentPackage(Path.of("my/build/package/sub1/sub2")))
+    assertThat(summary.getParentPackage(Path.of("my/build/package/sub1/sub2")))
         .hasValue(Path.of("my/build/package"));
   }
 

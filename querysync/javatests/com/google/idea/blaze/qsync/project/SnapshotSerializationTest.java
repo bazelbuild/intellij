@@ -22,7 +22,6 @@ import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.MOD
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.truth.Truth8;
 import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
@@ -68,7 +67,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -92,7 +91,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -118,7 +117,7 @@ public class SnapshotSerializationTest {
             .readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT)
             .get()
             .getSyncData();
-    Truth8.assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
+    assertThat(deserialized.vcsState()).isEqualTo(original.vcsState());
     assertThat(deserialized).isEqualTo(original);
   }
 
@@ -139,7 +138,7 @@ public class SnapshotSerializationTest {
             .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//project/path:path"))
             .build();
     byte[] serialized = new SnapshotSerializer(-1).visit(original).toProto().toByteArray();
-    Truth8.assertThat(
+    assertThat(
             new SnapshotDeserializer().readFrom(new ByteArrayInputStream(serialized), NOOP_CONTEXT))
         .isEmpty();
   }
