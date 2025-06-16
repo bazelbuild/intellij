@@ -122,8 +122,8 @@ filegroup(
 java_import(
     name = "bundled_plugins",
     jars = glob([
-       "plugins/clion-ide/lib/clion-ide.jar",
-       "plugins/clion-ide/lib/modules/*.jar",
+       "plugins/clion/lib/*.jar",
+       "plugins/clion/lib/modules/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
 )
