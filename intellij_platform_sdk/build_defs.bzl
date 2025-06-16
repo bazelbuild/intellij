@@ -5,13 +5,13 @@ load("@rules_java//java:defs.bzl", "java_import")
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-oss-oldest-stable": "intellij-2024.3",
-    "intellij-oss-latest-stable": "intellij-2025.1",
+    "intellij-oss-latest-stable": "intellij-2025.2",
     "intellij-oss-under-dev": "intellij-2025.2",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2024.3",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2025.1",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2025.2",
     "intellij-ue-oss-under-dev": "intellij-ue-2025.2",
     "clion-oss-oldest-stable": "clion-2024.3",
-    "clion-oss-latest-stable": "clion-2025.1",
+    "clion-oss-latest-stable": "clion-2025.2",
     "clion-oss-under-dev": "clion-2025.2",
 }
 
