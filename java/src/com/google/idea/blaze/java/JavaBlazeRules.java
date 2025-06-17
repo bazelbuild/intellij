@@ -41,10 +41,6 @@ public final class JavaBlazeRules implements Kind.Provider {
     JAVA_MUTABLE_PROTO_LIBRARY("java_mutable_proto_library", LanguageClass.JAVA, RuleType.LIBRARY),
     JAVA_PLUGIN("java_plugin", LanguageClass.JAVA, RuleType.UNKNOWN),
     JAVA_WRAP_CC("java_wrap_cc", LanguageClass.JAVA, RuleType.UNKNOWN),
-    GWT_APPLICATION("gwt_application", LanguageClass.JAVA, RuleType.UNKNOWN),
-    GWT_HOST("gwt_host", LanguageClass.JAVA, RuleType.UNKNOWN),
-    GWT_MODULE("gwt_module", LanguageClass.JAVA, RuleType.UNKNOWN),
-    GWT_TEST("gwt_test", LanguageClass.JAVA, RuleType.TEST),
     JAVA_WEB_TEST("java_web_test", LanguageClass.JAVA, RuleType.TEST);
 
     private final String name;
