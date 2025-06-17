@@ -59,8 +59,8 @@ public class ExpressionParsing extends Parsing {
       ImmutableSet.of(TokenKind.EOF, TokenKind.RPAREN, TokenKind.SEMI, TokenKind.NEWLINE);
 
   /**
-   * Highest precedence goes last. Based on:
-   * http://docs.python.org/2/reference/expressions.html#operator-precedence
+   * Highest precedence goes last. Based on
+   * <a href="http://docs.python.org/2/reference/expressions.html#operator-precedence">Python 2 specification</a>.
    */
   private static final ImmutableList<EnumSet<TokenKind>> OPERATOR_PRECEDENCE =
       ImmutableList.of(
@@ -77,6 +77,9 @@ public class ExpressionParsing extends Parsing {
               TokenKind.IN,
               TokenKind.NOT_IN),
           EnumSet.of(TokenKind.PIPE),
+          EnumSet.of(TokenKind.CARET),
+          EnumSet.of(TokenKind.AMPERSAND),
+          EnumSet.of(TokenKind.LESS_LESS, TokenKind.GREATER_GREATER),
           EnumSet.of(TokenKind.MINUS, TokenKind.PLUS),
           EnumSet.of(TokenKind.SLASH, TokenKind.SLASH_SLASH, TokenKind.STAR, TokenKind.PERCENT));
 
