@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
 
 /** Aspect strategy for Bazel, where the aspect is situated in an external repository. */
 public class AspectStrategyBazel extends AspectStrategy {
-  Boolean supportsAspectParameters;
 
   static final class Provider implements AspectStrategyProvider {
     @Override
@@ -44,7 +43,6 @@ public class AspectStrategyBazel extends AspectStrategy {
   @VisibleForTesting
   public AspectStrategyBazel(BlazeVersionData versionData) {
     super(/* aspectSupportsDirectDepsTrimming= */ true);
-    supportsAspectParameters = versionData.bazelIsAtLeastVersion(6, 0, 0);
   }
 
   @Override
@@ -52,11 +50,6 @@ public class AspectStrategyBazel extends AspectStrategy {
   public Optional<String> getAspectFlag(Project project) {
     return AspectStorageService.of(project).resolve("intellij_info_bundled.bzl")
         .map(label -> String.format("--aspects=%s%%intellij_info_aspect", label));
-  }
-
-  @Override
-  protected Boolean supportsAspectsParameters() {
-    return supportsAspectParameters;
   }
 
   @Override

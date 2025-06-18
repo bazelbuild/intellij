@@ -225,10 +225,5 @@ public class AspectStrategyTest extends BlazeTestCase {
     protected Optional<String> getAspectFlag(Project project) {
       return Optional.empty();
     }
-
-    @Override
-    protected Boolean supportsAspectsParameters() {
-      return true;
-    }
   }
 }

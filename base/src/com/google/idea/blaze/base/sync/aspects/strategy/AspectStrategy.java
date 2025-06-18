@@ -92,8 +92,6 @@ public abstract class AspectStrategy {
 
   protected abstract Optional<String> getAspectFlag(Project project);
 
-  protected abstract Boolean supportsAspectsParameters();
-
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
    * be called once.
