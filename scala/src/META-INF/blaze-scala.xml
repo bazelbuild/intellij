@@ -18,8 +18,4 @@
     <SyncPlugin implementation="com.google.idea.blaze.scala.sync.AlwaysPresentScalaSyncPlugin"/>
     <TargetKindProvider implementation="com.google.idea.blaze.scala.ScalaBlazeRules"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.sbt">
-    <buildToolModuleHandler implementation="com.google.idea.blaze.scala.BlazeScalaBuildToolModuleHandler"/>
-  </extensions>
 </idea-plugin>
