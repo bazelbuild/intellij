@@ -1,6 +1,6 @@
 bazel_dep(
     name = "rules_java",
-    version = "8.12.0",
+    version = "8.13.0",
 )
 bazel_dep(
     name = "rules_kotlin",
