@@ -322,7 +322,7 @@ def bazel_integration_tests(name, env = None, tags = None, last_green = True, **
     parallel.
     """
     env = env or {}
-    tags = tags or ["exclusive"]
+    tags = tags or []
 
     for version in bazel_binaries.versions.all:
         if version == "last_green" and not last_green:
