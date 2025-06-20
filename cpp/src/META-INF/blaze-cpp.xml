@@ -60,6 +60,7 @@
                     overrides="true"
     />
     <registryKey defaultValue="false" description="Disable absolute path trimming in debug clang builds" key="bazel.trim.absolute.path.disabled"/>
+    <registryKey defaultValue="true" description="Enable /proc/self/cwd to be mapped to the workspace root" key="bazel.cpp.debug.map_working_dir"/>
     <registryKey defaultValue="true" description="Allow external targets from source directories be imported in" key="bazel.cpp.sync.external.targets.from.directories"/>
     <registryKey defaultValue="false" description="Filter out some incompatible compiler flags (-include)" key="bazel.cpp.sync.workspace.filter.out.incompatible.flags"/>
     <registryKey defaultValue="true" description="Use _cpp_use_get_tool_for_action to get compiler executable" key="bazel.cc.aspect.use_get_tool_for_action"/>
