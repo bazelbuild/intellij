@@ -10,7 +10,7 @@ maven.install(
 
         # JUnit 5 (Jupiter + Engine + API)
         "org.junit.jupiter:junit-jupiter-api:5.13.1",
-        "org.junit.jupiter:junit-jupiter-engine:5.13.1",
+        "org.junit.jupiter:junit-jupiter-engine:5.13.2",
         "org.junit.jupiter:junit-jupiter-params:5.13.1",
         "org.junit.platform:junit-platform-reporting:1.13.1",
         "org.junit.platform:junit-platform-launcher:1.13.1",
