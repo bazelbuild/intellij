@@ -1,9 +1,9 @@
-# TEMPLATE-INCLUDE-BEGIN
+# TEMPLATE-IGNORE-BEGIN
 ###if( $isJavaEnabled == "true" && $bazel8OrAbove == "true" )
 ##load("@rules_java//java/common:java_info.bzl", "JavaInfo")
 ##load("@rules_java//java/common:java_common.bzl", "java_common")
 ###end
-# TEMPLATE-INCLUDE-END
+# TEMPLATE-IGNORE-END
 
 def java_info_in_target(target):
 # TEMPLATE-IGNORE-BEGIN
@@ -11,7 +11,7 @@ def java_info_in_target(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isJavaEnabled == "true" )
+##  #if( $isJavaEnabled == "true" || $isTransitiveJava == "true" )
 ##  return JavaInfo in target
 ##  #else
 ##  return None
