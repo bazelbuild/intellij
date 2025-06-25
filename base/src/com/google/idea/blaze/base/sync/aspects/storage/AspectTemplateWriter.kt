@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 The Bazel Authors. All rights reserved.
+ * Copyright 2025 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.aspects.storage
 
 import com.google.common.collect.ImmutableMap
+import com.google.common.collect.ImmutableSet
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.ProjectViewSet
@@ -27,6 +28,7 @@ import com.google.idea.blaze.base.util.TemplateWriter
 import com.intellij.openapi.project.Project
 import java.io.IOException
 import java.nio.file.Path
+import java.util.EnumSet
 
 private const val TEMPLATE_JAVA = "java_info.template.bzl"
 private const val REALIZED_JAVA = "java_info.bzl"
@@ -105,8 +107,16 @@ class AspectTemplateWriter : AspectWriter {
     val isNotBzlmod = state.blazeInfo.starlarkSemantics?.contains("enable_bzlmod=false") ?: false
     fun hasRepository(name: String) = externalWorkspaceData?.getByRepoName(name) != null
 
-    val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_java")))
+    val jvmLanguages = EnumSet.of(LanguageClass.JAVA, LanguageClass.KOTLIN, LanguageClass.SCALA)
+    val isJavaEnabled = activeLanguages.intersect(jvmLanguages).isNotEmpty() &&
+            externalWorkspaceData != null &&
+            ImmutableSet.of("rules_java", "rules_scala", "rules_kotlin").any { hasRepository(it) }
+
+//    val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
+//        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_java")))
+//
+//    val isTransitiveJava = !isJavaEnabled && activeLanguages.contains(LanguageClass.SCALA) &&
+//        (externalWorkspaceData != null && isAtLeastBazel8 && !isNotBzlmod && hasRepository("rules_scala"))
 
     val isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_python")))
