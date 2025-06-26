@@ -1,15 +1,14 @@
 Do not link kotlin stdlib automatically into all jars.
 
 diff --git a/kotlin/internal/jvm/jvm_deps.bzl b/kotlin/internal/jvm/jvm_deps.bzl
-index 6e2957a..f896cdf 100644
+index e6965c9..45d33fe 100644
 --- a/kotlin/internal/jvm/jvm_deps.bzl
 +++ b/kotlin/internal/jvm/jvm_deps.bzl
-@@ -23,7 +23,7 @@ def _java_info(target):
-
- def _jvm_deps(ctx, toolchains, associate_deps, deps, exports = [], runtime_deps = []):
-     """Encapsulates jvm dependency metadata."""
--    dep_infos = [_java_info(d) for d in deps] + [toolchains.kt.jvm_stdlibs]
-+    dep_infos = [_java_info(d) for d in deps]
-
-     associates = _associate_utils.get_associates(ctx, toolchains = toolchains, associates = associate_deps)
-
+@@ -29,7 +29,6 @@ def _jvm_deps(ctx, toolchains, associate_deps, deps = [], deps_java_infos = [],
+         associates = associate_deps,
+     )
+     dep_infos = (
+-        [toolchains.kt.jvm_stdlibs] +
+         associates.dep_infos +
+         deps_java_infos +
+         [_java_info(d) for d in deps]
