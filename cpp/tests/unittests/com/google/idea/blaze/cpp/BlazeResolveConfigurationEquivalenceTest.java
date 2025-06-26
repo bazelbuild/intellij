@@ -78,9 +78,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests that we group equivalent {@link BlazeResolveConfiguration}s. */
+/**
+ * Tests that we group equivalent {@link BlazeResolveConfiguration}s.
+ */
 @RunWith(JUnit4.class)
 public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
+
   private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
@@ -563,8 +566,15 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     return TargetIdeInfo.builder()
         .setLabel("//:toolchain")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
-        .setCToolchainInfo(
-            CToolchainIdeInfo.builder().setCCppCompiler(new ExecutionRootPath("cc")));
+        .setCToolchainInfo(CToolchainIdeInfo.builder()
+            .setCCompiler(new ExecutionRootPath("cc"))
+            .setCppCompiler(new ExecutionRootPath("cc"))
+            .setCompilerName("cc")
+            .setCCompilerOptions(ImmutableList.of())
+            .setCppCompilerOptions(ImmutableList.of())
+            .setBuiltInIncludeDirectories(ImmutableList.of())
+            .setTargetName("toolchain")
+        );
   }
 
   private static ListSection<DirectoryEntry> directories(String... directories) {
@@ -609,12 +619,12 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .filter(c -> c.getDisplayName().equals(name))
             .collect(Collectors.toList());
     assertWithMessage(
-            String.format(
-                "%s contains %s",
-                configurations.stream()
-                    .map(BlazeResolveConfiguration::getDisplayName)
-                    .collect(Collectors.toList()),
-                name))
+        String.format(
+            "%s contains %s",
+            configurations.stream()
+                .map(BlazeResolveConfiguration::getDisplayName)
+                .collect(Collectors.toList()),
+            name))
         .that(filteredConfigurations)
         .hasSize(1);
     return filteredConfigurations.get(0);
@@ -660,6 +670,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private static class ReusedConfigurationExpectations {
+
     final ImmutableCollection<String> reusedLabels;
     final ImmutableCollection<String> notReusedLabels;
 

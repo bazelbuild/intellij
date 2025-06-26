@@ -38,11 +38,14 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import java.io.File;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link BlazeCompilerSettings}. */
+/**
+ * Tests for {@link BlazeCompilerSettings}.
+ */
 @RunWith(JUnit4.class)
 public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
@@ -83,19 +86,25 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     return new BazelBuildSystemProvider();
   }
 
+  private static BlazeCompilerSettings.Builder createCompilerSettingsBuilder() {
+    return BlazeCompilerSettings.builder()
+        .setCCompiler(new File("bin/c"))
+        .setCppCompiler(new File("bin/c++"))
+        .setVersion("cc version (trunk r123456)")
+        .setName("cc")
+        .setCSwitches(ImmutableList.of())
+        .setCppSwitches(ImmutableList.of())
+        .setBuiltInIncludes(ImmutableList.of())
+        .setEnvironment(ImmutableMap.of());
+  }
+
   @Test
   public void testCompilerSwitchesSimple() {
     ImmutableList<String> cFlags = ImmutableList.of("-fast", "-slow");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
+    BlazeCompilerSettings settings = createCompilerSettingsBuilder()
+        .setCSwitches(cFlags)
+        .setCppSwitches(cFlags)
+        .build();
 
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-fast", "-slow")
@@ -104,57 +113,26 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Test
   public void relativeSysroot_makesAbsolutePathInMainWorkspace() {
-    ImmutableList<String> cFlags = ImmutableList.of("--sysroot=third_party/toolchain/");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
-
-    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
-        .containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
+    final var flags = List.of("--sysroot=third_party/toolchain/");
+    final var result = BlazeCompilerFlagsProcessor.process(project, flags);
+    assertThat(result).containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
   }
 
   @Test
   public void absoluteSysroot_doesNotChange() {
-    ImmutableList<String> cFlags = ImmutableList.of("--sysroot=/usr");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
-
-    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
-        .containsExactly("--sysroot=/usr");
+    final var flags = List.of("--sysroot=/usr");
+    final var result = BlazeCompilerFlagsProcessor.process(project, flags);
+    assertThat(result).containsExactly("--sysroot=/usr");
   }
 
   @Test
   public void relativeIsystem_makesAbsolutePathInWorkspaces() {
-    ImmutableList<String> cFlags =
-        ImmutableList.of("-isystem", "external/arm_gcc/include", "-DFOO=1", "-Ithird_party/stl");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
+    final var flags = List.of("-isystem", "external/arm_gcc/include", "-DFOO=1", "-Ithird_party/stl");
+    final var result = BlazeCompilerFlagsProcessor.process(project, flags);
 
-    String outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
-    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
+    final var outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
+
+    assertThat(result)
         .containsExactly(
             "-isystem",
             outputBase + "/external/arm_gcc/include",
@@ -165,21 +143,12 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Test
   public void relativeIquote_makesAbsolutePathInExecRoot() {
-    ImmutableList<String> cFlags =
-        ImmutableList.of("-iquote", "bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
+    final var flags = List.of("-iquote", "bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
+    final var result = BlazeCompilerFlagsProcessor.process(project, flags);
 
-    String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
-    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
+    final var execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
+
+    assertThat(result)
         .containsExactly(
             "-iquote",
             execRoot + "/bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
@@ -187,36 +156,17 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Test
   public void absoluteISystem_doesNotChange() {
-    ImmutableList<String> cFlags = ImmutableList.of("-isystem", "/usr/include");
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            cFlags,
-            cFlags,
-            "cc version (trunk r123456)",
-            ImmutableMap.of(),
-            ImmutableList.of());
-
-    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
-        .containsExactly("-isystem", "/usr/include");
+    final var flags = List.of("-isystem", "/usr/include");
+    final var result = BlazeCompilerFlagsProcessor.process(project, flags);
+    assertThat(result).containsExactly("-isystem", "/usr/include");
   }
 
   @Test
   public void developerDirEnvVar_doesNotChange() {
-    BlazeCompilerSettings settings =
-        new BlazeCompilerSettings(
-            getProject(),
-            new File("bin/c"),
-            new File("bin/c++"),
-            ImmutableList.of(),
-            ImmutableList.of(),
-            "cc version (trunk r123456)",
-            ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"),
-            ImmutableList.of());
+    BlazeCompilerSettings settings = createCompilerSettingsBuilder()
+        .setEnvironment(ImmutableMap.of("DEVELOPER_DIR", "/tmp/foobar"))
+        .build();
 
-    assertThat(settings.getCompilerEnvironment("DEVELOPER_DIR"))
-        .matches("/tmp/foobar");
+    assertThat(settings.environment().get("DEVELOPER_DIR")).matches("/tmp/foobar");
   }
 }
