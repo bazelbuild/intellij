@@ -60,7 +60,7 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2024.3", "2025.1", "2025.2"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.1", "2025.2"])
 
 def select_for_plugin_api(params):
     """Selects for a plugin_api.

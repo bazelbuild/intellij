@@ -10,10 +10,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:javascript"],
         "intellij-ue-2025.1": ["@intellij_ue_2025_1//:javascript"],
         "intellij-ue-2025.2": ["@intellij_ue_2025_2//:javascript"],
-        "clion-2024.3": ["@clion_2024_3//:javascript"],
         "clion-2025.1": ["@clion_2025_1//:javascript"],
         "clion-2025.2": ["@clion_2025_2//:javascript"],
         "default": [],
@@ -25,10 +23,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:css"],
         "intellij-ue-2025.1": ["@intellij_ue_2025_1//:css"],
         "intellij-ue-2025.2": ["@intellij_ue_2025_2//:css"],
-        "clion-2024.3": ["@clion_2024_3//:css"],
         "clion-2025.1": ["@clion_2025_1//:css"],
         "clion-2025.2": ["@clion_2025_2//:css"],
         "default": [],
@@ -40,10 +36,8 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2024.3": ["@intellij_ue_2024_3//:tslint"],
         "intellij-ue-2025.1": ["@intellij_ue_2025_1//:tslint"],
         "intellij-ue-2025.2": ["@intellij_ue_2025_2//:tslint"],
-        "clion-2024.3": ["@clion_2024_3//:tslint"],
         "clion-2025.1": ["@clion_2025_1//:tslint"],
         "clion-2025.2": ["@clion_2025_2//:tslint"],
         "default": [],

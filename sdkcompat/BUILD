@@ -16,10 +16,8 @@ java_library(
     name = "sdkcompat",
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_plugin_api({
-        "intellij-ue-2024.3": ["//sdkcompat/v243"],
         "intellij-ue-2025.1": ["//sdkcompat/v251"],
         "intellij-ue-2025.2": ["//sdkcompat/v252"],
-        "clion-2024.3": ["//sdkcompat/v243"],
         "clion-2025.1": ["//sdkcompat/v251"],
         "clion-2025.2": ["//sdkcompat/v252"],
         "default": [],
