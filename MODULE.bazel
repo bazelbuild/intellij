@@ -80,7 +80,7 @@ bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.5.0")
 bazel_binaries.download(
     current = True,
-    version = "8.2.1",
+    version = "8.3.0",
 )
 bazel_binaries.download(version = "last_green")
 use_repo(
