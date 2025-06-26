@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
@@ -39,16 +40,17 @@ public interface BlazeCompilerFlagsProcessor {
   /** Convert a list of flags to a processed list of flags. */
   List<String> processFlags(List<String> flags);
 
-  static List<String> process(Project project, List<String> compilerFlags) {
-    List<BlazeCompilerFlagsProcessor> processors =
-        Arrays.stream(EP_NAME.getExtensions())
-            .map(provider -> provider.getProcessor(project))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
-    for (BlazeCompilerFlagsProcessor processor : processors) {
+  static ImmutableList<String> process(Project project, List<String> compilerFlags) {
+    final var processors = Arrays.stream(EP_NAME.getExtensions())
+        .map(provider -> provider.getProcessor(project))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .toList();
+
+    for (final var processor : processors) {
       compilerFlags = processor.processFlags(compilerFlags);
     }
-    return compilerFlags;
+
+    return ImmutableList.copyOf(compilerFlags);
   }
 }
