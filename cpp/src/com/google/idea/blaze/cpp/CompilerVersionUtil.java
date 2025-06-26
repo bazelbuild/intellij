@@ -26,6 +26,6 @@ public class CompilerVersionUtil {
   }
 
   public static boolean isMSVC(String version) {
-    return version.contains("Microsoft");
+    return version.lines().findFirst().map((it) -> it.contains("Microsoft")).orElse(false);
   }
 }

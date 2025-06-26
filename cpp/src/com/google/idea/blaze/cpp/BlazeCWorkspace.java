@@ -174,7 +174,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     final var infoMap = new ImmutableMap.Builder<TargetKey, BlazeCTargetInfoService.TargetInfo>();
     resolverResult.getConfigurationMap().forEach((data, config) -> {
       final var info = new BlazeCTargetInfoService.TargetInfo(
-          data.compilerSettings.getCompilerVersion(),
+          data.compilerSettings().version(),
           config.getDisplayName()
       );
 
@@ -184,24 +184,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
     });
 
     return infoMap.build();
-  }
-
-  private static CompilerSpecificSwitchBuilder selectSwitchBuilder(
-      BlazeCompilerSettings compilerSettings) {
-    final var version = compilerSettings.getCompilerVersion();
-
-    if (CompilerVersionUtil.isAppleClang(version)) {
-      return new AppleClangSwitchBuilder();
-    }
-    if (CompilerVersionUtil.isClang(version)) {
-      return new ClangSwitchBuilder();
-    }
-    if (CompilerVersionUtil.isMSVC(version)) {
-      return new MSVCSwitchBuilder();
-    }
-
-    // default to gcc
-    return new GCCSwitchBuilder();
   }
 
   private static CidrCompilerSwitches buildSwitchBuilder(
@@ -252,7 +234,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
-        final var compilerSwitchesBuilder = selectSwitchBuilder(compilerSettings);
+        final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
         // this parses user defined copts filed, later -I include paths are resolved using the
         // ExecutionRootPathResolver
@@ -316,7 +298,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // add builtin includes provided by the compiler as system includes
         // Note: In most cases CLion is able to derive the builtin includes during compiler info collection, unless
         // the toolchain uses an external sysroot.
-        compilerSettings.getBuiltInIncludes().stream()
+        compilerSettings.builtInIncludes().stream()
             .flatMap(resolver)
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
@@ -454,7 +436,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     OCCompilerKind compilerKind = compilerSettings.getCompiler(language);
     File executable = compilerSettings.getCompilerExecutable(language);
 
-    final var switchBuilder = selectSwitchBuilder(compilerSettings);
+    final var switchBuilder = compilerSettings.createSwitchBuilder();
     switchBuilder.withSwitches(compilerSettings.getCompilerSwitches(language, null));
     quoteIncludePaths.forEach(switchBuilder::withQuoteIncludePath);
 
