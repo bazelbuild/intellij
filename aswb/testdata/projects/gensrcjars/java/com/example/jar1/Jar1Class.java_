@@ -1,7 +1,0 @@
-package com.example.jar1;
-
-public class Jar1Class {
-
-  public static final String STRING = "jar1";
-
-}
