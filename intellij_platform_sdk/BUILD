@@ -79,11 +79,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2024.3",
-    values = {"define": "ij_product=intellij-2024.3"},
-)
-
-config_setting(
     name = "intellij-2025.1",
     values = {"define": "ij_product=intellij-2025.1"},
 )
@@ -91,14 +86,6 @@ config_setting(
 config_setting(
     name = "intellij-2025.2",
     values = {"define": "ij_product=intellij-2025.2"},
-)
-
-config_setting(
-    name = "intellij-2024.3-mac",
-    values = {
-        "define": "ij_product=intellij-2024.3",
-        "cpu": "darwin_x86_64",
-    },
 )
 
 config_setting(
@@ -118,11 +105,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-ue-2024.3",
-    values = {"define": "ij_product=intellij-ue-2024.3"},
-)
-
-config_setting(
     name = "intellij-ue-2025.1",
     values = {"define": "ij_product=intellij-ue-2025.1"},
 )
@@ -130,14 +112,6 @@ config_setting(
 config_setting(
     name = "intellij-ue-2025.2",
     values = {"define": "ij_product=intellij-ue-2025.2"},
-)
-
-config_setting(
-    name = "intellij-ue-2024.3-mac",
-    values = {
-        "define": "ij_product=intellij-ue-2024.3",
-        "cpu": "darwin_x86_64",
-    },
 )
 
 config_setting(
@@ -178,11 +152,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2024.3",
-    values = {"define": "ij_product=clion-2024.3"},
-)
-
-config_setting(
     name = "clion-2025.1",
     values = {"define": "ij_product=clion-2025.1"},
 )
@@ -190,14 +159,6 @@ config_setting(
 config_setting(
     name = "clion-2025.2",
     values = {"define": "ij_product=clion-2025.2"},
-)
-
-config_setting(
-    name = "clion-2024.3-mac",
-    values = {
-        "define": "ij_product=clion-2024.3",
-        "cpu": "darwin_x86_64",
-    },
 )
 
 config_setting(
