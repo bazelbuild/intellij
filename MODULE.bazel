@@ -80,7 +80,7 @@ bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.5.0")
 bazel_binaries.download(
     current = True,
-    version = "8.2.1",
+    version = "8.3.0",
 )
 bazel_binaries.download(version = "last_green")
 use_repo(
@@ -89,7 +89,7 @@ use_repo(
     "bazel_binaries_bazelisk",
     "build_bazel_bazel_6_5_0",
     "build_bazel_bazel_7_5_0",
-    "build_bazel_bazel_8_2_1",
+    "build_bazel_bazel_8_3_0",
     "build_bazel_bazel_last_green",
 )
 
