@@ -104,7 +104,7 @@ from the IDE. `<PRODUCT>` can be one of `ijwb, clwb, aswb`.
 
 If the IDE refuses to load the plugin because of version issues, specify the
 correct `ij_product`. These are in the form `<IDE>-oss-<VERSION>` with 
-  * `<IDE>` being one of `intellij-ue, intellij, clion, android-studio`, 
+  * `<IDE>` being one of `intellij-ue, intellij, clion`, 
   * `<VERSION>` being one of `oldest-stable, latest-stable, under-dev`.
 Alternatevely, for you can set `ij_product` to direct IntelliJ or CLion versions, for example `clion-2023.2`, `intellij-2023.2` or `intellij-ue-2023.2`
 
