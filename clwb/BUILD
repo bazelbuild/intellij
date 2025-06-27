@@ -202,9 +202,16 @@ clwb_headless_test(
     example = "simple_project",
 )
 
+clwb_headless_test(
+    name = "clang_cl_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ClangClTest.java"],
+    project = "clang_cl",
+)
+
 test_suite(
     name = "headless_tests",
     tests = [
+        ":clang_cl_headless_test",
         ":example_headless_test",
         ":execution_headless_test",
         ":external_includes_headless_test",

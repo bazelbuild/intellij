@@ -95,7 +95,7 @@ private fun collectExecutionRootPaths(
   // the filter stricter, and it is unclear if this would affect any users.
   // NOTE: if the toolchain uses an external sysroot, CLion might not be able to discover the all builtin include paths.
   for (toolchain in toolchainLookupMap.values) {
-    paths.addAll(toolchain.builtInIncludeDirectories)
+    paths.addAll(toolchain.builtInIncludeDirectories())
   }
 
   return paths

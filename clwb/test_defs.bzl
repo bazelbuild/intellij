@@ -56,5 +56,5 @@ def clwb_headless_test(name, srcs, project = None, example = None, deps = [], la
             "MSYS_NO_PATHCONV": "true",
         },
         # inherit bash shell and visual studio path from host for windows
-        additional_env_inherit = ["BAZEL_SH", "BAZEL_VC"],
+        additional_env_inherit = ["BAZEL_SH", "BAZEL_VC", "BAZEL_LLVM"],
     )

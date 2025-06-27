@@ -61,7 +61,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
 
   @Override
   public @Nullable CidrToolEnvironment create(BlazeCompilerSettings settings) {
-    if (!CompilerVersionUtil.isMSVC(settings.getCompilerVersion())) {
+    if (!CompilerVersionUtil.isMSVC(settings.version())) {
       return null;
     }
 

@@ -128,19 +128,19 @@ final class BlazeResolveConfiguration {
   @VisibleForTesting
   List<ExecutionRootPath> getLibraryHeadersRootsInternal() {
     ImmutableList.Builder<ExecutionRootPath> roots = ImmutableList.builder();
-    roots.addAll(configurationData.transitiveQuoteIncludeDirectories);
-    roots.addAll(configurationData.transitiveIncludeDirectories);
-    roots.addAll(configurationData.transitiveSystemIncludeDirectories);
+    roots.addAll(configurationData.transitiveQuoteIncludeDirectories());
+    roots.addAll(configurationData.transitiveIncludeDirectories());
+    roots.addAll(configurationData.transitiveSystemIncludeDirectories());
     return roots.build();
   }
 
   @VisibleForTesting
   ImmutableCollection<String> getTargetCopts() {
-    return configurationData.localCopts;
+    return configurationData.localCopts();
   }
 
   BlazeCompilerSettings getCompilerSettings() {
-    return configurationData.compilerSettings;
+    return configurationData.compilerSettings();
   }
 
   ImmutableList<VirtualFile> getSources(TargetKey targetKey) {
