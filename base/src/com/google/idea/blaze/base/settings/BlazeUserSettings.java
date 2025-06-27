@@ -70,7 +70,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private FocusBehavior showBlazeConsoleOnRun = FocusBehavior.ALWAYS;
   private FocusBehavior showProblemsViewOnRun = FocusBehavior.NEVER;
   private boolean syncStatusPopupShown = false;
-  private boolean expandSyncToWorkingSet = true;
+  private boolean expandSyncToWorkingSet = false;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
   private boolean useNewSyncView = false;
