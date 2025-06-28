@@ -120,7 +120,7 @@ class AspectTemplateWriter : AspectWriter {
   }
 
   /** This class models a language class to its code-generator rule names. */
-  class LanguageClassRuleNames(val languageClass: LanguageClass, private val ruleNames: List<String>) {
+  class LanguageClassRuleNames(val languageClass: LanguageClass, val ruleNames: List<String>) {
 
     override fun toString(): String {
       return String.format("[%s] -> [%s]", languageClass, ruleNames.joinToString(","))
