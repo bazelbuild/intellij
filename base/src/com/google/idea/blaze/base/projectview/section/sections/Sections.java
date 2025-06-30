@@ -49,7 +49,8 @@ public class Sections {
           BuildConfigSection.PARSER,
           UseExclusionPatternsSection.PARSER,
           UseQuerySyncSection.PARSER,
-          ViewProjectRootSection.PARSER);
+          ViewProjectRootSection.PARSER,
+          IfPythonPluginImportSection.PARSER);
 
   public static List<SectionParser> getParsers() {
     List<SectionParser> parsers = Lists.newArrayList(PARSERS);
