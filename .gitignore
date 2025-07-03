@@ -4,6 +4,7 @@ bazel-*
 .ijwb/
 .aswb/
 .clwb/
+.idea/
 
 # General
 .DS_Store
