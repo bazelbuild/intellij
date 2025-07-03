@@ -6,11 +6,19 @@ cc_binary(
         "hello-world.cc",
         "//lib/raw_files:lib",
     ],
-    copts = [
-        "-Ilib/raw_files/default",  # basically manual strip absolut
-        "-isystemlib/raw_files/system",
-        "-iquotelib/raw_files/quote",
-    ],
+    # basically manual strip absolut, different flags required for MSVC
+    copts = select({
+        "@platforms//os:windows": [
+            "/Ilib/raw_files/default",
+            "/external:Ilib/raw_files/system",
+            "/external:Ilib/raw_files/quote",
+        ],
+        "//conditions:default": [
+            "-Ilib/raw_files/default",
+            "-isystemlib/raw_files/system",
+            "-iquotelib/raw_files/quote",
+        ],
+    }),
     deps = [
         "//lib/impl_deps:lib",
         "//lib/strip_absolut:gen",
