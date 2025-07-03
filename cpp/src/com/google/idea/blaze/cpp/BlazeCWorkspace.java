@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
+import com.google.idea.blaze.cpp.copts.CoptsProcessor;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
