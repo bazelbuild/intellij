@@ -1,0 +1,1 @@
+build:linux --cxxopt=""  # should be filtered by com.google.idea.blaze.cpp.EmptyOptionsFilter
