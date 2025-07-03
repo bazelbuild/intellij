@@ -5,19 +5,15 @@ The Bazel Plugin for IntelliJ IDEA supports JVM hotswapping, allowing you to mod
 ## Steps
 
 1. **Start a Debugger Session**
-   - Run your Bazel application in debug mode.
+   - Run your Bazel application in debug mode (only `bazel run` launches are supported).
 
 2. **Modify Your Code**
    - Make changes to your source files while the application is running.
 
 3. **Compile and Reload**
-   - Go to **Run** > **Debugging actions** > **Compile and Reload Modified Files**.
+   - Go to **Build** > **Bazel: Apply HotSwap**.
 
 ## Notes
 
 - **Supported Changes**: Edits within method bodies.
 - **Unsupported Changes**: Adding methods, fields, or altering class structures may require a restart.
-
-## Demo
-https://github.com/user-attachments/assets/a0f602d3-815b-4980-8194-3114971d2899
-

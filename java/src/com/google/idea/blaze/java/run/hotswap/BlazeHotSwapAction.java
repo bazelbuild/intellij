@@ -23,30 +23,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
+import icons.PlatformDebuggerImplIcons.Actions;
 
 /** Overrides the built-in hotswap action for Blaze projects */
 public class BlazeHotSwapAction extends AnAction {
 
-  private static final String ACTION_ID = "Hotswap";
-
-  static class Customizer implements ActionConfigurationCustomizer {
-    @Override
-    public void customize(ActionManager actionManager) {
-      AnAction delegate = actionManager.getAction(ACTION_ID);
-      if (delegate == null) {
-        // HotSwapAction not registered by default for Android Studio, though still in the classpath
-        delegate = new HotSwapAction();
-      }
-      ReplaceActionHelper.conditionallyReplaceAction(
-          actionManager, ACTION_ID, new BlazeHotSwapAction(delegate), Blaze::isBlazeProject);
-    }
-  }
-
-  private BlazeHotSwapAction(AnAction delegate) {
-    super(
-        delegate.getTemplatePresentation().getTextWithMnemonic(),
-        delegate.getTemplatePresentation().getDescription(),
-        delegate.getTemplatePresentation().getIcon());
+  public BlazeHotSwapAction() {
+    super(Actions.DebuggerSync);
   }
 
   @Override
