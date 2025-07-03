@@ -18,13 +18,8 @@ load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 kt_jvm_library(
     name = "cpp",
     srcs = glob([
-        "src/com/google/idea/blaze/cpp/*.java",
-        "src/com/google/idea/blaze/cpp/*.kt",
-        "src/com/google/idea/blaze/cpp/includes/*.java",
-        "src/com/google/idea/blaze/cpp/qsync/*.java",
-        "src/com/google/idea/blaze/cpp/syncstatus/*.java",
-        "src/com/google/idea/blaze/cpp/navigation/*.java",
-        "src/com/google/idea/blaze/cpp/oclang/*.java",
+        "src/**/*.java",
+        "src/**/*.kt",
     ]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [

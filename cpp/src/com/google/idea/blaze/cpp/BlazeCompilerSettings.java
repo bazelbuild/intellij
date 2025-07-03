@@ -32,7 +32,6 @@ import com.jetbrains.cidr.lang.workspace.compiler.GCCSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
-import com.jetbrains.cidr.lang.workspace.compiler.UnknownCompilerKind;
 import java.io.File;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -73,11 +72,7 @@ public abstract class BlazeCompilerSettings {
     return gcc.get();
   }
 
-  public OCCompilerKind getCompiler(OCLanguageKind languageKind) {
-    if (languageKind != CLanguageKind.C && languageKind != CLanguageKind.CPP) {
-      return UnknownCompilerKind.INSTANCE;
-    }
-
+  public OCCompilerKind getCompilerKind() {
     return when(
         /* msvc */ () -> MSVCCompilerKind.INSTANCE,
         /* clang */ () -> ClangCompilerKind.INSTANCE,
