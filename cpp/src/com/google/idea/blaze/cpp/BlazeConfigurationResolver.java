@@ -80,13 +80,7 @@ final class BlazeConfigurationResolver {
       BlazeProjectData blazeProjectData,
       BlazeConfigurationResolverResult oldResult) {
     ExecutionRootPathResolver executionRootPathResolver =
-        new ExecutionRootPathResolver(
-            Blaze.getBuildSystemProvider(project),
-            WorkspaceRoot.fromProject(project),
-            blazeProjectData.getBlazeInfo().getExecutionRoot(),
-            blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver(),
-            blazeProjectData.getTargetMap());
+        ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
             context, blazeProjectData.getTargetMap());

@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolverImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,7 +91,7 @@ public class BlazeDlvPositionConverterTest extends BlazeIntegrationTestCase {
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
     executionRoot = projectData.getBlazeInfo().getExecutionRoot();
     mockFileSystem = new PartialMockLocalFileSystem();
-    ExecutionRootPathResolver resolver = new ExecutionRootPathResolver(
+    ExecutionRootPathResolver resolver = new ExecutionRootPathResolverImpl(
                     new BazelBuildSystemProvider(),
                     workspaceRoot,
                     executionRoot,

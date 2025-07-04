@@ -3,10 +3,8 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
-import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import java.util.ArrayList;
@@ -55,6 +53,9 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertContainsHeader("strip_absolut/strip_absolut.h", compilerSettings);
     assertContainsHeader("strip_absolut/generated.h", compilerSettings);
     assertContainsHeader("strip_relative.h", compilerSettings);
+    assertContainsHeader("raw_default.h", compilerSettings);
+    assertContainsHeader("raw_system.h", compilerSettings);
+    assertContainsHeader("raw_quote.h", compilerSettings);
 
     assertThat(findProjectFile("lib/strip_absolut/strip_absolut.h"))
         .isEqualTo(findHeader("strip_absolut/strip_absolut.h", compilerSettings));
@@ -64,6 +65,15 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
 
     assertThat(findProjectFile("lib/impl_deps/impl.h"))
         .isEqualTo(findHeader("lib/impl_deps/impl.h", compilerSettings));
+
+    assertThat(findProjectFile("lib/raw_files/default/raw_default.h"))
+        .isEqualTo(findHeader("raw_default.h", compilerSettings));
+
+    assertThat(findProjectFile("lib/raw_files/system/raw_system.h"))
+        .isEqualTo(findHeader("raw_system.h", compilerSettings));
+
+    assertThat(findProjectFile("lib/raw_files/quote/raw_quote.h"))
+        .isEqualTo(findHeader("raw_quote.h", compilerSettings));
   }
 
   private void checkImplDeps() {

@@ -31,6 +31,8 @@
                     qualifiedName="com.google.idea.blaze.cpp.CppSupportChecker" />
     <extensionPoint interface="com.google.idea.blaze.cpp.CppEnvironmentProvider"
                     qualifiedName="com.google.idea.blaze.cpp.CppEnvironmentProvider"/>
+    <extensionPoint interface="com.google.idea.blaze.cpp.copts.CoptsProcessor"
+                    qualifiedName="com.google.idea.blaze.cpp.copts.CoptsProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -39,6 +41,19 @@
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze.cpp.copts">
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.LegacyIncludeFilter"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.EmptyOptionsFilter"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.GCCDefaultIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.GCCSystemIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.GCCQuoteIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.MSVCDefaultIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.MSVCSystemIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.ClangClDefaultIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.ClangClSystemIncludeProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.ClangClQuoteIncludeProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
@@ -52,17 +67,28 @@
      Therefore, we register a service that returns nothing.
      We override this registration on macOS systems later. -->
     <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
-      serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderNoopImpl"
-    />
+                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderNoopImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
                     serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"
                     os="mac"
-                    overrides="true"
-    />
-    <registryKey defaultValue="false" description="Disable absolute path trimming in debug clang builds" key="bazel.trim.absolute.path.disabled"/>
-    <registryKey defaultValue="true" description="Allow external targets from source directories be imported in" key="bazel.cpp.sync.external.targets.from.directories"/>
-    <registryKey defaultValue="false" description="Filter out some incompatible compiler flags (-include)" key="bazel.cpp.sync.workspace.filter.out.incompatible.flags"/>
-    <registryKey defaultValue="true" description="Use _cpp_use_get_tool_for_action to get compiler executable" key="bazel.cc.aspect.use_get_tool_for_action"/>
+                    overrides="true"/>
+
+    <registryKey defaultValue="false"
+                 description="Disable absolute path trimming in debug clang builds"
+                 key="bazel.trim.absolute.path.disabled"/>
+    <registryKey defaultValue="true"
+                 description="Allow external targets from source directories be imported in"
+                 key="bazel.cpp.sync.external.targets.from.directories"/>
+    <registryKey defaultValue="false"
+                 description="Filter out some incompatible compiler flags (-include)"
+                 key="bazel.cpp.sync.workspace.filter.out.incompatible.flags"/>
+    <registryKey defaultValue="true"
+                 description="Filter out some empty compiler flags"
+                 key="bazel.cpp.sync.workspace.filter.out.empty.flags"/>
+    <registryKey defaultValue="true"
+                 description="Use _cpp_use_get_tool_for_action to get compiler executable"
+                 key="bazel.cc.aspect.use_get_tool_for_action"/>
+
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
@@ -70,6 +96,7 @@
     <projectService serviceInterface="com.google.idea.blaze.cpp.HeaderRootTrimmer"
                     serviceImplementation="com.google.idea.blaze.cpp.HeaderRootTrimmerImpl"/>
   </extensions>
+
   <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
     <QuerySyncListenerProvider implementation="com.google.idea.blaze.cpp.qsync.CcProjectModelUpdater$Provider" />
   </extensions>

@@ -142,7 +142,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     Registry.get("bazel.sync.resolve.virtual.includes").setValue(true);
 
     pathResolver =
-        new ExecutionRootPathResolver(
+        new ExecutionRootPathResolverImpl(
             new BazelBuildSystemProvider(),
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),

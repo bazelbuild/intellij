@@ -4,12 +4,10 @@ load(
     "intellij_integration_test_suite",
 )
 
-def clwb_headless_test(name, srcs, project = None, example = None, deps = [], last_green = True):
-    runner = name + "_runner"
-
+def _integration_test_suite(name, srcs, deps = []):
     intellij_integration_test_suite(
-        name = runner,
-        srcs = srcs + native.glob(["tests/headlesstests/com/google/idea/blaze/clwb/base/*.java"]),
+        name = name,
+        srcs = srcs,
         test_package_root = "com.google.idea.blaze.clwb",
         runtime_deps = [":clwb_bazel"],
         jvm_flags = [
@@ -34,6 +32,28 @@ def clwb_headless_test(name, srcs, project = None, example = None, deps = [], la
             "@org_opentest4j_opentest4j//jar",
             "//testing/src/com/google/idea/testing/headless",
         ],
+    )
+
+def clwb_integration_test(name, srcs, deps = []):
+    _integration_test_suite(
+        name = name,
+        srcs = srcs + native.glob([
+            "tests/integrationtests/com/google/idea/blaze/clwb/base/*.java",
+            "tests/integrationtests/com/google/idea/blaze/clwb/base/*.kt",
+        ]),
+        deps = deps + ["//cpp"],
+    )
+
+def clwb_headless_test(name, srcs, project = None, example = None, deps = [], last_green = True):
+    runner = name + "_runner"
+
+    _integration_test_suite(
+        name = runner,
+        srcs = srcs + native.glob([
+            "tests/headlesstests/com/google/idea/blaze/clwb/base/*.java",
+            "tests/headlesstests/com/google/idea/blaze/clwb/base/*.kt",
+        ]),
+        deps = deps,
     )
 
     if project != None:
