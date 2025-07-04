@@ -43,15 +43,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.JavaCoroutines;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * External library manager that rebuilds {@link BlazeExternalSyntheticLibrary}s during sync, and
@@ -79,17 +79,19 @@ public class ExternalLibraryManager implements Disposable {
       @Override
       public @Nullable Object filesChanged(@NotNull List<? extends VFileEvent> list, @NotNull Continuation<? super Unit> continuation) {
         return JavaCoroutines.suspendJava(javaContinuation -> {
-              if (duringBlazeSync || libraries.isEmpty()) {
-                return;
-              }
-              ImmutableList<VirtualFile> deletedFiles =
-                  list.stream()
-                      .filter(VFileDeleteEvent.class::isInstance)
-                      .map(VFileEvent::getFile)
-                      .collect(toImmutableList());
-              if (!deletedFiles.isEmpty()) {
-                libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
-              }
+              ((Consumer<List<? extends VFileEvent>>) events -> {
+                if (duringBlazeSync || libraries.isEmpty()) {
+                  return;
+                }
+                ImmutableList<VirtualFile> deletedFiles =
+                    events.stream()
+                        .filter(VFileDeleteEvent.class::isInstance)
+                        .map(VFileEvent::getFile)
+                        .collect(toImmutableList());
+                if (!deletedFiles.isEmpty()) {
+                  libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
+                }
+              }).accept(list);
               javaContinuation.resume(Unit.INSTANCE);
             }
             , continuation);
