@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class ExecutionRootPathResolverImpl implements ExecutionRootPathResolver {
 
@@ -36,7 +37,8 @@ public class ExecutionRootPathResolverImpl implements ExecutionRootPathResolver 
   private final WorkspacePathResolver workspacePathResolver;
   private final TargetMap targetMap;
 
-  ExecutionRootPathResolverImpl(
+  @VisibleForTesting
+  public ExecutionRootPathResolverImpl(
       BuildSystemProvider buildSystemProvider,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
