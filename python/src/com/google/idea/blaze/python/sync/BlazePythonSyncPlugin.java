@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
-import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -43,7 +42,6 @@ import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.python.projectview.PythonCodeGeneratorRuleNamesSection;
-import com.google.idea.blaze.python.projectview.DebugFlagsSection;
 import com.google.idea.common.util.Transactions;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -512,14 +510,6 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
         existingSection,
         ListSection.update(AdditionalLanguagesSection.KEY, existingSection)
             .removeAll(LanguageClass.PYTHON));
-  }
-
-  @Override
-  public Collection<SectionParser> getSections() {
-    return ImmutableList.of(
-        DebugFlagsSection.PARSER,
-        PythonCodeGeneratorRuleNamesSection.PARSER
-    );
   }
 
   @Override
