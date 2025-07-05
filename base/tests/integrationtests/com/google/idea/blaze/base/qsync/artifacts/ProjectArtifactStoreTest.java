@@ -6,7 +6,6 @@ import com.google.idea.blaze.base.qsync.FileRefresher;
 import com.google.idea.blaze.common.NoopContext;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
-import com.google.idea.blaze.qsync.artifacts.FileTransform;
 import com.google.idea.blaze.qsync.artifacts.MockArtifactCache;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectories;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
@@ -54,8 +53,7 @@ public class ProjectArtifactStoreTest {
             projectPath,
             workspacePath,
             new MockArtifactCache(cacheDir),
-            fileRefresher,
-            FileTransform.COPY);
+            fileRefresher);
   }
 
   @Test
