@@ -58,7 +58,6 @@ import com.google.idea.blaze.base.projectview.section.sections.UseExclusionPatte
 import com.google.idea.blaze.base.projectview.section.sections.UseQuerySyncSection;
 import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
-import com.google.idea.blaze.base.projectview.section.sections.IfPythonPluginImportSection;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -123,7 +122,6 @@ public class ProjectViewSetTest extends BlazeTestCase {
                             .set(new WorkspacePath("test")))
                     .add(ScalarSection.builder(UseExclusionPatternsSection.KEY).set(false))
                     .add(ScalarSection.builder(ViewProjectRootSection.KEY).set(false))
-                    .add(ScalarSection.builder(IfPythonPluginImportSection.KEY).set(new WorkspacePath(".ijwb/python.bazelproject")))
                     .build())
             .build();
 
