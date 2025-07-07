@@ -3,6 +3,8 @@ v2025.06.24
 * Promote 2025.2 builds to stable #7740
 * Do not mark execution root as dirty #7715
 * Use relativize in BlazePackage.getPackageRelativePath #7728
+* fix: hotswap can be invoked with Bazel: Apply Hotswap action #7770
+* fix: git status is not updated console git operation and alt-tab to IDE #7749
 
 v2025.06.10
 ===========
