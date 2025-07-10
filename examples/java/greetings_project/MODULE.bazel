@@ -1,6 +1,6 @@
 bazel_dep(name = "rules_java", version = "8.13.0")
 bazel_dep(name = "contrib_rules_jvm", version = "0.29.0")
-bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "rules_jvm_external", version = "6.8")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
