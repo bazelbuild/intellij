@@ -1,6 +1,6 @@
 bazel_dep(name = "rules_java", version = "8.13.0")
 bazel_dep(name = "contrib_rules_jvm", version = "0.29.0")
-bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "rules_jvm_external", version = "6.8")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -9,11 +9,11 @@ maven.install(
         "junit:junit:4.13.2",
 
         # JUnit 5 (Jupiter + Engine + API)
-        "org.junit.jupiter:junit-jupiter-api:5.13.2",
-        "org.junit.jupiter:junit-jupiter-engine:5.13.2",
-        "org.junit.jupiter:junit-jupiter-params:5.13.2",
-        "org.junit.platform:junit-platform-reporting:1.13.2",
-        "org.junit.platform:junit-platform-launcher:1.13.2",
+        "org.junit.jupiter:junit-jupiter-api:5.13.3",
+        "org.junit.jupiter:junit-jupiter-engine:5.13.3",
+        "org.junit.jupiter:junit-jupiter-params:5.13.3",
+        "org.junit.platform:junit-platform-reporting:1.13.3",
+        "org.junit.platform:junit-platform-launcher:1.13.3",
     ],
     lock_file = "//:maven_install.json",
     repositories = [

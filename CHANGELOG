@@ -1,3 +1,11 @@
+v2025.07.08
+===========
+fixes:
+* IDEA can't refresh git status when file commit external #7749
+* Hotswap no longer works since Intellij 2024.3.2 #7770
+* fix the aspect template for handling language code-gen #7771
+* CLion: add suport for clang-cl #7765
+
 v2025.06.24
 ===========
 * Promote 2025.2 builds to stable #7740

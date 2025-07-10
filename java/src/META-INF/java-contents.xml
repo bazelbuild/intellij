@@ -38,6 +38,13 @@
       id="Blaze.AddLibraryTargetDirectoryToProjectView"
       text="Add Library Target Directory to Project View">
     </action>
+    <action class="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction"
+      id="Blaze.HotSwap"
+      text="Bazel: Apply HotSwap">
+
+      <add-to-group group-id="BuildMenu" anchor="after"
+        relative-to-action="CompileFile"/>
+    </action>
 
     <group id="Blaze.Java.ProjectViewPopupMenu">
       <add-to-group group-id="Blaze.PerFileContextMenu"/>
@@ -137,7 +144,6 @@
         serviceImplementation="com.google.idea.blaze.java.run.BlazeCompilerManager"
         overrides="true"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
-    <actionConfigurationCustomizer implementation="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Customizer"/>
     <notificationGroup id="Fastbuild failed notification"
         displayType="STICKY_BALLOON"/>
   </extensions>

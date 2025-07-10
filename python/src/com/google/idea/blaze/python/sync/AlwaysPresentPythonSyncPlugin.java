@@ -21,11 +21,14 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.plugin.PluginUtils;
+import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.python.PythonPluginUtils;
+import com.google.idea.blaze.python.projectview.DebugFlagsSection;
+import com.google.idea.blaze.python.projectview.PythonCodeGeneratorRuleNamesSection;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.Set;
@@ -82,4 +85,13 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
     }
     return true;
   }
+
+  @Override
+  public Collection<SectionParser> getSections() {
+    return ImmutableList.of(
+            DebugFlagsSection.PARSER,
+            PythonCodeGeneratorRuleNamesSection.PARSER
+    );
+  }
+
 }
