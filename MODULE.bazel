@@ -93,7 +93,7 @@ use_repo(
     "build_bazel_bazel_last_green",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.7")
+bazel_dep(name = "rules_jvm_external", version = "6.8")
 
 bazel_dep(name = "rules_scala", version = "7.0.0")
 
