@@ -50,8 +50,8 @@
     "https://bcr.bazel.build/modules/bazel_skylib/1.6.1/MODULE.bazel": "8fdee2dbaace6c252131c00e1de4b165dc65af02ea278476187765e1a617b917",
     "https://bcr.bazel.build/modules/bazel_skylib/1.7.0/MODULE.bazel": "0db596f4563de7938de764cc8deeabec291f55e8ec15299718b93c4423e9796d",
     "https://bcr.bazel.build/modules/bazel_skylib/1.7.1/MODULE.bazel": "3120d80c5861aa616222ec015332e5f8d3171e062e3e804a2a0253e1be26e59b",
-    "https://bcr.bazel.build/modules/bazel_skylib/1.8.0/MODULE.bazel": "2fb3fb53675f6adfc1ca5bfbd5cfb655ae350fba4706d924a8ec7e3ba945671c",
-    "https://bcr.bazel.build/modules/bazel_skylib/1.8.0/source.json": "5875230cfe587308c40964baa5504351c1f0c576171d7e605dba0ad452d5fcb9",
+    "https://bcr.bazel.build/modules/bazel_skylib/1.8.1/MODULE.bazel": "88ade7293becda963e0e3ea33e7d54d3425127e0a326e0d17da085a5f1f03ff6",
+    "https://bcr.bazel.build/modules/bazel_skylib/1.8.1/source.json": "7ebaefba0b03efe59cac88ed5bbc67bcf59a3eff33af937345ede2a38b2d368a",
     "https://bcr.bazel.build/modules/bazel_worker_api/0.0.1/MODULE.bazel": "02a13b77321773b2042e70ee5e4c5e099c8ddee4cf2da9cd420442c36938d4bd",
     "https://bcr.bazel.build/modules/bazel_worker_api/0.0.4/MODULE.bazel": "460aa12d01231a80cce03c548287b433b321d205b0028ae596728c35e5ee442e",
     "https://bcr.bazel.build/modules/bazel_worker_api/0.0.4/source.json": "d353c410d47a8b65d09fa98e83d57ebec257a2c2b9c6e42d6fda1cb25e5464a5",
@@ -215,8 +215,8 @@
     "https://bcr.bazel.build/modules/rules_python/0.4.0/MODULE.bazel": "9208ee05fd48bf09ac60ed269791cf17fb343db56c8226a720fbb1cdf467166c",
     "https://bcr.bazel.build/modules/rules_python/0.40.0/MODULE.bazel": "9d1a3cd88ed7d8e39583d9ffe56ae8a244f67783ae89b60caafc9f5cf318ada7",
     "https://bcr.bazel.build/modules/rules_python/1.0.0/MODULE.bazel": "898a3d999c22caa585eb062b600f88654bf92efb204fa346fb55f6f8edffca43",
-    "https://bcr.bazel.build/modules/rules_python/1.5.0/MODULE.bazel": "6386416f9180310c4a469d5eaf30abf5fc589ded8495ee956d44bcfb94bd08e3",
-    "https://bcr.bazel.build/modules/rules_python/1.5.0/source.json": "492da6b3621bf8a3ba602cfb88031c3684bf4929fc10aca40e6df04ae37a30db",
+    "https://bcr.bazel.build/modules/rules_python/1.5.1/MODULE.bazel": "acfe65880942d44a69129d4c5c3122d57baaf3edf58ae5a6bd4edea114906bf5",
+    "https://bcr.bazel.build/modules/rules_python/1.5.1/source.json": "aa903e1bcbdfa1580f2b8e2d55100b7c18bc92d779ebb507fec896c75635f7bd",
     "https://bcr.bazel.build/modules/rules_robolectric/4.14.1.2/MODULE.bazel": "d44fec647d0aeb67b9f3b980cf68ba634976f3ae7ccd6c07d790b59b87a4f251",
     "https://bcr.bazel.build/modules/rules_robolectric/4.14.1.2/source.json": "37c10335f2361c337c5c1f34ed36d2da70534c23088062b33a8bdaab68aa9dea",
     "https://bcr.bazel.build/modules/rules_rust/0.45.1/MODULE.bazel": "a69d0db3a958fab2c6520961e1b2287afcc8b36690fd31bbc4f6f7391397150d",
@@ -402,6 +402,65 @@
         "recordedRepoMappingEntries": []
       }
     },
+    "@@pybind11_bazel+//:python_configure.bzl%extension": {
+      "general": {
+        "bzlTransitiveDigest": "OMjJ8aOAn337bDg7jdyvF/juIrC2PpUcX6Dnf+nhcF0=",
+        "usagesDigest": "fycyB39YnXIJkfWCIXLUKJMZzANcuLy9ZE73hRucjFk=",
+        "recordedFileInputs": {
+          "@@pybind11_bazel+//MODULE.bazel": "88af1c246226d87e65be78ed49ecd1e6f5e98648558c14ce99176da041dc378e"
+        },
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "local_config_python": {
+            "repoRuleId": "@@pybind11_bazel+//:python_configure.bzl%python_configure",
+            "attributes": {}
+          },
+          "pybind11": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@pybind11_bazel+//:pybind11.BUILD",
+              "strip_prefix": "pybind11-2.11.1",
+              "urls": [
+                "https://github.com/pybind/pybind11/archive/v2.11.1.zip"
+              ]
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "pybind11_bazel+",
+            "bazel_tools",
+            "bazel_tools"
+          ]
+        ]
+      }
+    },
+    "@@rules_android+//bzlmod_extensions:apksig.bzl%apksig_extension": {
+      "general": {
+        "bzlTransitiveDigest": "6NJSHjev77G4XUXqswn+uU8LwqBD5JUgxtcFMWhBJUQ=",
+        "usagesDigest": "0FXD4PX+vQ/jVne2oV4v3Cw5Mc9DZQ4yTcoRkAjj/X4=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "apksig": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "url": "https://android.googlesource.com/platform/tools/apksig/+archive/24e3075e68ebe17c0b529bb24bfda819db5e2f3b.tar.gz",
+              "build_file": "@@rules_android+//bzlmod_extensions:apksig.BUILD"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "rules_android+",
+            "bazel_tools",
+            "bazel_tools"
+          ]
+        ]
+      }
+    },
     "@@rules_android+//rules/android_sdk_repository:rule.bzl%android_sdk_repository_extension": {
       "general": {
         "bzlTransitiveDigest": "NAy+0M15JNVEBb8Tny6t7j3lKqTnsAMjoBB6LJ+C370=",
@@ -421,7 +480,7 @@
     "@@rules_bazel_integration_test+//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "XC9nqZ31LIbq8N7cEK+rYa2iXNQLcJ3cyGWw+zPZlc0=",
-        "usagesDigest": "xxtHfH/Ek0n0yj0KB4I/LSjTjPyG7nh/5bzCWfpXhVk=",
+        "usagesDigest": "JZr1EQD67w7RFVdg9TL/gSP/ioluX//498yfabBstpY=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -446,10 +505,10 @@
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
-          "build_bazel_bazel_8_2_1": {
+          "build_bazel_bazel_8_3_1": {
             "repoRuleId": "@@rules_bazel_integration_test+//bazel_integration_test/private:bazel_binaries.bzl%bazel_binary",
             "attributes": {
-              "version": "8.2.1",
+              "version": "8.3.1",
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
@@ -466,10 +525,10 @@
               "version_to_repo": {
                 "6.5.0": "build_bazel_bazel_6_5_0",
                 "7.5.0": "build_bazel_bazel_7_5_0",
-                "8.2.1": "build_bazel_bazel_8_2_1",
+                "8.3.1": "build_bazel_bazel_8_3_1",
                 "last_green": "build_bazel_bazel_last_green"
               },
-              "current_version": "8.2.1"
+              "current_version": "8.3.1"
             }
           }
         },
@@ -479,7 +538,7 @@
             "bazel_binaries_bazelisk",
             "build_bazel_bazel_6_5_0",
             "build_bazel_bazel_7_5_0",
-            "build_bazel_bazel_8_2_1",
+            "build_bazel_bazel_8_3_1",
             "build_bazel_bazel_last_green",
             "bazel_binaries"
           ],
@@ -496,6 +555,89 @@
             "rules_bazel_integration_test+",
             "cgrindel_bazel_starlib",
             "cgrindel_bazel_starlib+"
+          ]
+        ]
+      }
+    },
+    "@@rules_fuzzing+//fuzzing/private:extensions.bzl%non_module_dependencies": {
+      "general": {
+        "bzlTransitiveDigest": "lxvzPQyluk241QRYY81nZHOcv5Id/5U2y6dp42qibis=",
+        "usagesDigest": "wy6ISK6UOcBEjj/mvJ/S3WeXoO67X+1llb9yPyFtPgc=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "platforms": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "urls": [
+                "https://mirror.bazel.build/github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz",
+                "https://github.com/bazelbuild/platforms/releases/download/0.0.8/platforms-0.0.8.tar.gz"
+              ],
+              "sha256": "8150406605389ececb6da07cbcb509d5637a3ab9a24bc69b1101531367d89d74"
+            }
+          },
+          "rules_python": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "sha256": "d70cd72a7a4880f0000a6346253414825c19cdd40a28289bdf67b8e6480edff8",
+              "strip_prefix": "rules_python-0.28.0",
+              "url": "https://github.com/bazelbuild/rules_python/releases/download/0.28.0/rules_python-0.28.0.tar.gz"
+            }
+          },
+          "bazel_skylib": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "sha256": "cd55a062e763b9349921f0f5db8c3933288dc8ba4f76dd9416aac68acee3cb94",
+              "urls": [
+                "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz",
+                "https://github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz"
+              ]
+            }
+          },
+          "com_google_absl": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "urls": [
+                "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.1.zip"
+              ],
+              "strip_prefix": "abseil-cpp-20240116.1",
+              "integrity": "sha256-7capMWOvWyoYbUaHF/b+I2U6XLMaHmky8KugWvfXYuk="
+            }
+          },
+          "rules_fuzzing_oss_fuzz": {
+            "repoRuleId": "@@rules_fuzzing+//fuzzing/private/oss_fuzz:repository.bzl%oss_fuzz_repository",
+            "attributes": {}
+          },
+          "honggfuzz": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@rules_fuzzing+//:honggfuzz.BUILD",
+              "sha256": "6b18ba13bc1f36b7b950c72d80f19ea67fbadc0ac0bb297ec89ad91f2eaa423e",
+              "url": "https://github.com/google/honggfuzz/archive/2.5.zip",
+              "strip_prefix": "honggfuzz-2.5"
+            }
+          },
+          "rules_fuzzing_jazzer": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_jar",
+            "attributes": {
+              "sha256": "ee6feb569d88962d59cb59e8a31eb9d007c82683f3ebc64955fd5b96f277eec2",
+              "url": "https://repo1.maven.org/maven2/com/code-intelligence/jazzer/0.20.1/jazzer-0.20.1.jar"
+            }
+          },
+          "rules_fuzzing_jazzer_api": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_jar",
+            "attributes": {
+              "sha256": "f5a60242bc408f7fa20fccf10d6c5c5ea1fcb3c6f44642fec5af88373ae7aa1b",
+              "url": "https://repo1.maven.org/maven2/com/code-intelligence/jazzer-api/0.20.1/jazzer-api-0.20.1.jar"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "rules_fuzzing+",
+            "bazel_tools",
+            "bazel_tools"
           ]
         ]
       }
@@ -593,7 +735,7 @@
     "@@rules_python+//python/uv:uv.bzl%uv": {
       "general": {
         "bzlTransitiveDigest": "bGHlxez0Lkvq2VwrlfCLraKHiJIRHSIJb432X2+pky8=",
-        "usagesDigest": "+FeVD5prEATvdb4BfobRlRNbhdc4Ba3xHxH0Xy4Cf9Q=",
+        "usagesDigest": "WYhzIw9khRBy34H1GxV5+fI1yi07O90NmCXosPUdHWQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
