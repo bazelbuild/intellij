@@ -92,7 +92,7 @@ public abstract class BlazeCompilerSettings {
     );
   }
 
-  public File getCompilerExecutable(OCLanguageKind lang) {
+  public @Nullable File getCompilerExecutable(OCLanguageKind lang) {
     if (lang == CLanguageKind.C) {
       return cCompiler();
     } else if (lang == CLanguageKind.CPP) {
