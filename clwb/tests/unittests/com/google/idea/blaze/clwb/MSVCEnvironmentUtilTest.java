@@ -19,34 +19,38 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
+import com.google.idea.blaze.clwb.environment.MSVCEnvironmentUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.TestModeFlags;
-import java.io.File;
 
+import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link MSVCEnvironmentProvider}.
+ * Tests for {@link MSVCEnvironmentUtil}.
  */
 @RunWith(JUnit4.class)
-public class MSVCEnvironmentProviderTest {
+public class MSVCEnvironmentUtilTest {
+
   @Before
   public void windowsOnly() {
     assumeTrue(SystemInfo.isWindows);
   }
 
   private static void setBazelVC(String value) {
-    TestModeFlags.set(MSVCEnvironmentProvider.BAZEL_VC_KEY, value);
+    TestModeFlags.set(MSVCEnvironmentUtil.BAZEL_VC_KEY, value);
   }
 
   @Test
   public void getToolSetPath_usesBazelVC() {
     setBazelVC("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC");
 
-    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File("")))
+    assertThat(MSVCEnvironmentUtil.getToolSetPath(Path.of("")))
+        .isEqualTo("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community");
+    assertThat(MSVCEnvironmentUtil.getToolSetPath(null))
         .isEqualTo("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community");
   }
 
@@ -54,14 +58,17 @@ public class MSVCEnvironmentProviderTest {
   public void getToolSetPath_emptyBazelVC() {
     setBazelVC("");
 
-    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File(""))).isNull();
+    assertThat(MSVCEnvironmentUtil.getToolSetPath(Path.of(""))).isNull();
+    assertThat(MSVCEnvironmentUtil.getToolSetPath(null)).isNull();
   }
 
   @Test
   public void getToolSetPath_fromCompilerPath() {
+    setBazelVC("");
+
     final var path = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.40.33807\\bin\\Hostx64\\x64\\cl.exe";
 
-    assertThat(MSVCEnvironmentProvider.getToolSetPath(new File(path)))
+    assertThat(MSVCEnvironmentUtil.getToolSetPath(Path.of(path)))
         .isEqualTo("c:\\program files\\microsoft visual studio\\2022\\community");
   }
 }
