@@ -416,6 +416,7 @@ public final class BlazeConfigurationToolchainResolver {
         .setEnvironment(compilerWrapperEnvVars)
         .setBuiltInIncludes(toolchainIdeInfo.builtInIncludeDirectories())
         .setName(toolchainIdeInfo.compilerName())
+        .setSysroot(toolchainIdeInfo.sysroot())
         .build();
   }
 

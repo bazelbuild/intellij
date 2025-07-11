@@ -18,6 +18,8 @@ def _integration_test_suite(name, srcs, deps = []):
             # suppressed plugin sets for classic, radler is currently disabled for tests
             "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
             "-Didea.suppressed.plugins.set.selector=classic",
+            # enable detailed logging in tests to diagnose issues in CI
+            "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
         ],
         deps = deps + [
             ":clwb_lib",

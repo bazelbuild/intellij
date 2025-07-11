@@ -155,6 +155,14 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
     return ProjectDataInterner.intern(new ExecutionRootPath(proto));
   }
 
+  public static @Nullable ExecutionRootPath fromNullableProto(@Nullable String proto) {
+    if (proto == null || proto.isBlank()) {
+      return null;
+    }
+
+    return fromProto(proto);
+  }
+
   @Override
   public String toProto() {
     return path.getPath();

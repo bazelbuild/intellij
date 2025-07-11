@@ -203,6 +203,12 @@ clwb_headless_test(
 )
 
 clwb_headless_test(
+    name = "lib_cpp_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LibCppTest.java"],
+    project = "simple",
+)
+
+clwb_headless_test(
     name = "clang_cl_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ClangClTest.java"],
     project = "clang_cl",
@@ -220,6 +226,7 @@ test_suite(
         ":simple_headless_test",
         ":target_compatible_headless_test",
         ":virtual_includes_headless_test",
+        ":lib_cpp_headless_test",
     ],
 )
 

@@ -43,6 +43,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
@@ -71,14 +73,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Main entry point for C/CPP configuration data. */
 public final class BlazeCWorkspace implements ProjectComponent {
+
   // Required by OCWorkspaceImpl.ModifiableModel::commit
   // This component is never actually serialized, and this should not ever need to change
   private static final int SERIALIZATION_VERSION = 1;
-  private static final Logger logger = Logger.getInstance(BlazeCWorkspace.class);
+  private static final Logger LOG = Logger.getInstance(BlazeCWorkspace.class);
 
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
@@ -114,7 +118,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
       SyncMode syncMode) {
     if (syncMode.equals(SyncMode.STARTUP)
         && !OCWorkspace.getInstance(project).getConfigurations().isEmpty()) {
-      logger.info(
+      LOG.info(
           String.format(
               "OCWorkspace already loaded %d configurations -- skipping update",
               OCWorkspace.getInstance(project).getConfigurations().size()));
@@ -133,7 +137,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
               public void run(ProgressIndicator indicator) {
                 if (!syncMode.equals(SyncMode.FULL)
                     && oldResult.isEquivalentConfigurations(newResult)) {
-                  logger.info("Skipping update configurations -- no changes");
+                  LOG.info("Skipping update configurations -- no changes");
                 } else {
                   Stopwatch s = Stopwatch.createStarted();
                   indicator.setIndeterminate(false);
@@ -143,7 +147,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                       calculateConfigurations(
                           blazeProjectData, workspaceRoot, newResult, indicator);
                   commit(SERIALIZATION_VERSION, context, model, workspaceRoot);
-                  logger.info(
+                  LOG.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
                 }
@@ -182,6 +186,32 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return combinedBuilder.build();
   }
 
+  private static void logResolveConfiguration(BlazeResolveConfiguration config) {
+    if (!LOG.isTraceEnabled()) {
+      return;
+    }
+
+    final var builder = new StringBuilder();
+    builder.append(String.format("Configuring resolve configuration: %s\n", config.getDisplayName()));
+    builder.append(String.format("-> targets: %s\n", StringUtil.join(config.getTargets(), ", ")));
+
+    final var compiler = config.getCompilerSettings();
+
+    final var includes = compiler.builtInIncludes().stream()
+        .map((it) -> it.getAbsoluteOrRelativeFile().toString())
+        .collect(Collectors.joining(", "));
+
+    builder.append(String.format("-> compiler: %s (%s)\n", compiler.name(), compiler.version()));
+    builder.append(String.format("-> c   compiler: %s\n", compiler.cCompiler()));
+    builder.append(String.format("-> c   switches: %s\n", StringUtil.join(compiler.cSwitches(), ", ")));
+    builder.append(String.format("-> cpp compiler: %s\n", compiler.cppCompiler()));
+    builder.append(String.format("-> cpp switches: %s\n", StringUtil.join(compiler.cppSwitches(), ", ")));
+    builder.append(String.format("-> builtin includes: %s\n", includes));
+    builder.append(String.format("-> sysroot: %s\n", compiler.sysroot()));
+
+    LOG.trace(builder.toString());
+  }
+
   private WorkspaceModel calculateConfigurations(
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
@@ -199,6 +229,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
     int progress = 0;
 
     for (BlazeResolveConfiguration resolveConfiguration : configurations) {
+      logResolveConfiguration(resolveConfiguration);
+
       indicator.setText2(resolveConfiguration.getDisplayName());
       indicator.setFraction(((double) progress) / configurations.size());
       BlazeCompilerSettings compilerSettings = resolveConfiguration.getCompilerSettings();
@@ -257,13 +289,18 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        // add builtin includes provided by the compiler as system includes
-        // Note: In most cases CLion is able to derive the builtin includes during compiler info collection, unless
-        // the toolchain uses an external sysroot.
-        compilerSettings.builtInIncludes().stream()
-            .flatMap(resolver)
-            .map(File::getAbsolutePath)
-            .forEach(compilerSwitchesBuilder::withSystemIncludePath);
+        // add includes from a custom sysroot as system includes
+        // Note: Only add includes from a custom sysroot manually, CLion can derive the other
+        // bulletin includes during the compiler info collection. Manually adding all builtin
+        // includes can lead to headers being resolved into the wrong include directory.
+        final var sysroot = compilerSettings.sysroot();
+        if (sysroot != null) {
+          compilerSettings.builtInIncludes().stream()
+              .filter((it) -> ExecutionRootPath.isAncestor(sysroot, it, false))
+              .flatMap(resolver)
+              .map(File::getAbsolutePath)
+              .forEach(compilerSwitchesBuilder::withSystemIncludePath);
+        }
 
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);

@@ -55,6 +55,8 @@ public abstract class BlazeCompilerSettings {
 
   public abstract ImmutableList<ExecutionRootPath> builtInIncludes();
 
+  public abstract @Nullable ExecutionRootPath sysroot();
+
   private <T> T when(Supplier<T> msvc, Supplier<T> clang, Supplier<T> clangCl, Supplier<T> gcc) {
     if (CompilerVersionUtil.isMSVC(version())) {
       return msvc.get();
@@ -90,7 +92,7 @@ public abstract class BlazeCompilerSettings {
     );
   }
 
-  public File getCompilerExecutable(OCLanguageKind lang) {
+  public @Nullable File getCompilerExecutable(OCLanguageKind lang) {
     if (lang == CLanguageKind.C) {
       return cCompiler();
     } else if (lang == CLanguageKind.CPP) {
@@ -132,6 +134,8 @@ public abstract class BlazeCompilerSettings {
     public abstract Builder setEnvironment(ImmutableMap<String, String> value);
 
     public abstract Builder setBuiltInIncludes(ImmutableList<ExecutionRootPath> value);
+
+    public abstract Builder setSysroot(@Nullable ExecutionRootPath value);
 
     public abstract BlazeCompilerSettings build();
   }
