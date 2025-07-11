@@ -187,6 +187,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
   }
 
   private static void logResolveConfiguration(BlazeResolveConfiguration config) {
+    if (!LOG.isTraceEnabled()) {
+      return;
+    }
+
     final var builder = new StringBuilder();
     builder.append(String.format("Configuring resolve configuration: %s\n", config.getDisplayName()));
     builder.append(String.format("-> targets: %s\n", StringUtil.join(config.getTargets(), ", ")));
