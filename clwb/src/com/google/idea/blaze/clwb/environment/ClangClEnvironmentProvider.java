@@ -35,7 +35,7 @@ class ClangClEnvironmentProvider implements CppEnvironmentProvider {
 
   @Override
   public @Nullable CidrToolEnvironment create(BlazeCompilerSettings settings) {
-    if (settings.getCompiler(CLanguageKind.C) != ClangClCompilerKind.INSTANCE) {
+    if (settings.getCompilerKind() != ClangClCompilerKind.INSTANCE) {
       return null;
     }
 
