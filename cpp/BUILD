@@ -13,22 +13,13 @@ load(
     "stamped_plugin_xml",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_version")
-load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
-)
+load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 
 kt_jvm_library(
     name = "cpp",
     srcs = glob([
-        "src/com/google/idea/blaze/cpp/*.java",
-        "src/com/google/idea/blaze/cpp/*.kt",
-        "src/com/google/idea/blaze/cpp/includes/*.java",
-        "src/com/google/idea/blaze/cpp/qsync/*.java",
-        "src/com/google/idea/blaze/cpp/syncstatus/*.java",
-        "src/com/google/idea/blaze/cpp/navigation/*.java",
-        "src/com/google/idea/blaze/cpp/oclang/*.java",
+        "src/**/*.java",
+        "src/**/*.kt",
     ]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
@@ -136,71 +127,4 @@ intellij_unit_test_suite(
         clion = [":clion_sysprop_rule"],
         default = [],
     ),
-)
-
-stamped_plugin_xml(
-    name = "cpp_plugin_xml",
-    plugin_id = "com.google.idea.bazel.cpp",
-    plugin_name = "com.google.idea.bazel.cpp",
-)
-
-intellij_plugin(
-    name = "cpp_integration_test_plugin",
-    testonly = 1,
-    plugin_xml = ":cpp_plugin_xml",
-    deps = [
-        ":plugin_library",
-        "//base:plugin_library",
-    ],
-)
-
-java_library(
-    name = "integration_test_utils",
-    testonly = 1,
-    srcs = [
-        "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java",
-        "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
-    ],
-    visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [
-        "//base",
-        "//base:integration_test_utils",
-        "//base:unit_test_utils",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
-        "//testing:lib",
-        "//third_party/java/junit",
-        "@com_google_guava_guava//jar",
-    ],
-)
-
-intellij_integration_test_suite(
-    name = "integration_tests",
-    srcs = glob(
-        ["tests/integrationtests/**/*.java"],
-        exclude = [
-            "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java",
-            "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
-        ],
-    ),
-    required_plugins = "com.google.idea.bazel.cpp",
-    test_package_root = "com.google.idea.blaze.cpp",
-    visibility = DEFAULT_TEST_VISIBILITY,
-    runtime_deps = [
-        ":cpp_integration_test_plugin",
-    ],
-    deps = [
-        ":cpp",
-        ":integration_test_utils",
-        "//base",
-        "//base:integration_test_utils",
-        "//base:unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
-        "//third_party/java/junit",
-        "@com_google_guava_guava//jar",
-    ],
 )

@@ -27,7 +27,7 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
-load(":test_defs.bzl", "clwb_headless_test")
+load(":test_defs.bzl", "clwb_headless_test", "clwb_integration_test")
 
 licenses(["notice"])
 
@@ -220,5 +220,17 @@ test_suite(
         ":simple_headless_test",
         ":target_compatible_headless_test",
         ":virtual_includes_headless_test",
+    ],
+)
+
+clwb_integration_test(
+  name = "copts_processor",
+  srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/CoptsProcessorTest.kt"],
+)
+
+test_suite(
+    name = "integration_tests",
+    tests = [
+      ":copts_processor",
     ],
 )

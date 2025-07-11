@@ -16,12 +16,9 @@
 
 package com.google.idea.blaze.cpp;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -35,11 +32,9 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler;
+import com.google.idea.blaze.cpp.copts.CoptsProcessor;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,11 +43,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
@@ -66,21 +57,15 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
-import com.jetbrains.cidr.lang.workspace.compiler.AppleClangSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.CachedTempFilesPool;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder;
-import com.jetbrains.cidr.lang.workspace.compiler.GCCSwitchBuilder;
-import com.jetbrains.cidr.lang.workspace.compiler.MSVCSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -209,14 +194,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environmentMap = new HashMap<>();
     ImmutableList<BlazeResolveConfiguration> configurations =
         configResolveData.getAllConfigurations();
-    ExecutionRootPathResolver executionRootPathResolver =
-        new ExecutionRootPathResolver(
-            Blaze.getBuildSystemProvider(project),
-            workspaceRoot,
-            blazeProjectData.getBlazeInfo().getExecutionRoot(),
-            blazeProjectData.getBlazeInfo().getOutputBase(),
-            blazeProjectData.getWorkspacePathResolver(),
-            blazeProjectData.getTargetMap());
+    final var executionRootPathResolver = ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
 
     int progress = 0;
 
@@ -236,20 +214,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // collect them once and reuse for each source file's options
         final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
-        // this parses user defined copts filed, later -I include paths are resolved using the
-        // ExecutionRootPathResolver
-        // TODO: this can either be dropped or we might need to add support for other include types
-        UnfilteredCompilerOptions coptsExtractor = UnfilteredCompilerOptions.builder()
-            .registerSingleOrSplitOption("-I")
-            .build(targetIdeInfo.getcIdeInfo().getLocalCopts());
-
-        // forward user defined switches either directly or filter them first
-        final var plainLocalCopts = coptsExtractor.getUninterpretedOptions();
-        if (Registry.is("bazel.cpp.sync.workspace.filter.out.incompatible.flags")) {
-          compilerSwitchesBuilder.withSwitches(filterIncompatibleFlags(plainLocalCopts));
-        } else {
-          compilerSwitchesBuilder.withSwitches(plainLocalCopts);
-        }
+        CoptsProcessor.apply(
+            /* options = */ targetIdeInfo.getcIdeInfo().getLocalCopts(),
+            /* kind = */ compilerSettings.getCompilerKind(),
+            /* sink = */ compilerSwitchesBuilder,
+            /* resolve = */ executionRootPathResolver
+        );
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         targetIdeInfo.getcIdeInfo().getTransitiveDefines()
@@ -258,14 +228,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
         Function<ExecutionRootPath, Stream<File>> resolver =
             executionRootPath ->
                 executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
-
-        // localIncludes are sourced from -I options in a target's "copts" attribute. They can be
-        // arbitrarily declared and may not exist in configResolveData.
-        coptsExtractor.getExtractedOptionValues("-I").stream()
-            .map(ExecutionRootPath::new)
-            .flatMap(resolver)
-            .map(File::getAbsolutePath)
-            .forEach(compilerSwitchesBuilder::withIncludePath);
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
         targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
@@ -433,7 +395,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeCompilerSettings compilerSettings,
       List<String> quoteIncludePaths,
       OCLanguageKind language) {
-    OCCompilerKind compilerKind = compilerSettings.getCompiler(language);
+    OCCompilerKind compilerKind = compilerSettings.getCompilerKind();
     File executable = compilerSettings.getCompilerExecutable(language);
 
     final var switchBuilder = compilerSettings.createSwitchBuilder();
@@ -470,15 +432,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   public OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(project);
-  }
-
-  // Filter out any raw copts that aren't compatible with feature detection.
-  private static ImmutableList<String> filterIncompatibleFlags(List<String> copts) {
-    return copts.stream()
-        // "-include somefile.h" doesn't seem to work for some reason. E.g.,
-        // "-include cstddef" results in "clang: error: no such file or directory: 'cstddef'"
-        .filter(opt -> !opt.startsWith("-include "))
-        .collect(toImmutableList());
   }
 
   private void commit(

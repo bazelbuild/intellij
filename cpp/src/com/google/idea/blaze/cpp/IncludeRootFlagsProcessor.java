@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolverImpl;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
@@ -36,21 +37,12 @@ public class IncludeRootFlagsProcessor implements BlazeCompilerFlagsProcessor {
 
     @Override
     public Optional<BlazeCompilerFlagsProcessor> getProcessor(Project project) {
-      BlazeProjectData projectData =
-          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (projectData == null) {
+      final var resolver = ExecutionRootPathResolver.fromProject(project);
+      if (resolver == null) {
         return Optional.empty();
       }
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-      ExecutionRootPathResolver executionRootPathResolver =
-          new ExecutionRootPathResolver(
-              Blaze.getBuildSystemProvider(project),
-              workspaceRoot,
-              projectData.getBlazeInfo().getExecutionRoot(),
-              projectData.getBlazeInfo().getOutputBase(),
-              projectData.getWorkspacePathResolver(),
-              projectData.getTargetMap());
-      return Optional.of(new IncludeRootFlagsProcessor(executionRootPathResolver));
+
+      return Optional.of(new IncludeRootFlagsProcessor(resolver));
     }
   }
 
