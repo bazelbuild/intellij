@@ -1,10 +1,3 @@
-# TEMPLATE-INCLUDE-BEGIN
-###if( $isJavaEnabled == "true" && $bazel8OrAbove == "true" )
-##load("@rules_java//java/common:java_info.bzl", "JavaInfo")
-##load("@rules_java//java/common:java_common.bzl", "java_common")
-###end
-# TEMPLATE-INCLUDE-END
-
 def java_info_in_target(target):
 # TEMPLATE-IGNORE-BEGIN
     return JavaInfo in target
