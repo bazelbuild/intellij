@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
+import com.google.idea.blaze.cpp.sync.VirtualIncludesCacheService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
@@ -99,7 +100,20 @@ private fun collectExecutionRootPaths(
     paths.addAll(toolchain.builtInIncludeDirectories())
   }
 
+  if (VirtualIncludesCacheService.enabled) {
+    removeVirtualIncludes(paths, targetMap)
+  }
+
   return paths
+}
+
+private fun removeVirtualIncludes(paths: MutableSet<ExecutionRootPath>, targetMap: TargetMap) {
+  for ((key, target) in targetMap.map()) {
+    target.getcIdeInfo() ?: continue
+    paths.remove(key.label.executionRootPath())
+  }
+
+  paths.removeIf { it.isVirtualInclude() }
 }
 
 private fun collectHeaderRoots(
@@ -177,4 +191,8 @@ private fun ExecutionRootPath.isBazelBin(info: BlazeInfo): Boolean {
 private fun ExecutionRootPath.isOutputDirectory(info: BlazeInfo): Boolean {
   return ExecutionRootPath.isAncestor(info.blazeGenfiles, this, false)
       || ExecutionRootPath.isAncestor(info.blazeBin, this, false)
+}
+
+private fun ExecutionRootPath.isVirtualInclude(): Boolean {
+  return this.absoluteOrRelativeFile.parentFile?.name == "_virtual_includes"
 }
