@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
+import com.google.idea.blaze.cpp.sync.VirtualIncludesCacheService;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -67,6 +68,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -301,6 +303,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
               .map(File::getAbsolutePath)
               .forEach(compilerSwitchesBuilder::withSystemIncludePath);
         }
+
+        VirtualIncludesCacheService.of(project).collectVirtualIncludes(targetIdeInfo)
+            .forEach(compilerSwitchesBuilder::withQuoteIncludePath);
 
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
