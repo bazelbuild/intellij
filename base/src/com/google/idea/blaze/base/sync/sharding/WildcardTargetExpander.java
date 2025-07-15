@@ -270,8 +270,9 @@ public class WildcardTargetExpander {
     if (targetList.isEmpty()) {
       return targetList;
     }
+    String query = String.format("attr('tags', '^((?!no-ide).)*$', %s)", targetList);
     return excludeManualTargets
-        ? String.format("attr('tags', '%s', %s)", MANUAL_EXCLUDE_TAG, targetList)
-        : targetList;
+        ? String.format("attr('tags', '%s', %s)", MANUAL_EXCLUDE_TAG, query)
+        : query;
   }
 }

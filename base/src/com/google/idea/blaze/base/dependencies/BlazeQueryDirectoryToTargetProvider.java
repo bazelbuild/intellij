@@ -75,17 +75,19 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
       }
     }
 
+    String query = String.format("attr('tags', '^((?!no-ide).)*$', %s)", targets);
+
     if (allowManualTargetsSync) {
-      return targets.toString();
+      return query;
     }
 
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
     if (SystemInfo.isWindows) {
       // TODO(b/201974254): Windows support for Bazel sync (see
       // https://github.com/bazelbuild/intellij/issues/113).
-      return String.format("attr('tags', '^((?!manual).)*$', %s)", targets);
+      return String.format("attr('tags', '^((?!manual).)*$', %s)", query);
     }
-    return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", targets);
+    return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", query);
   }
 
   /**

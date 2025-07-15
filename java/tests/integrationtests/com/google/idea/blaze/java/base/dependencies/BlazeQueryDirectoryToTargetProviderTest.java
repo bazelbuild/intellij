@@ -54,7 +54,11 @@ public class BlazeQueryDirectoryToTargetProviderTest extends BlazeIntegrationTes
         true,
         workspacePathResolver);
 
+    String expQueryString = String.format(
+        "attr('tags', '^((?!no-ide).)*$', %s - %s)",
+        TargetExpression.allFromPackageRecursive(included),
+        TargetExpression.allFromPackageRecursive(excluded));
 
-    assertThat(queryString).isEqualTo(TargetExpression.allFromPackageRecursive(included) + " - " + TargetExpression.allFromPackageRecursive(excluded));
+    assertThat(queryString).isEqualTo(expQueryString);
   }
 }
