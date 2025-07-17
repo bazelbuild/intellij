@@ -1,15 +1,12 @@
 # An IntelliJ plugin for [Bazel](http://bazel.build) projects
 
-This project uses binary bundles licensed under JetBrains User Agreement (https://www.jetbrains.com/legal/docs/toolbox/user/).
+As of July 1, 2025, the Bazel for IntelliJ and Bazel for CLion plugins are maintained by JetBrains. These plugins are not offered by nor affiliated with Google. The Bazel trademark and logo are the property of Google LLC.
 
-This is an early-access version of our Bazel plugins for IntelliJ and CLion.
+This project uses binary bundles licensed under [JetBrains User Agreement](https://www.jetbrains.com/legal/docs/toolbox/user/).
 
-The Bazel plugin uploaded to the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel) 
+The Bazel plugin is uploaded to the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel) 
 regularly from the state of this repository. See the [releases](https://github.com/bazelbuild/intellij/releases) 
 tab for more information.
-
-**Please see our latest community update for Bazel IntelliJ plugin:**
-[Announcing Bazel & JetBrains co-maintenance of IntelliJ IDEA Bazel Plugin](https://blog.bazel.build/2022/07/11/Bazel-IntelliJ-Update.html#announcing-bazel-jetbrains-co-maintenance-of-intellij-idea-bazel).
 
 ## Community
 The Bazel project is hosting a Special Interest Group (SIG) for Bazel IntelliJ IDE plug-in. Details about the SIG and 
