@@ -114,8 +114,8 @@ private fun collectHeaderRoots(
   val result = mutableListOf<Path>()
   for (directory in possibleDirectories) {
     val add = when {
-      // never allow the bazel-bin as a header search path
-      path.isBazelBin(projectData.blazeInfo) && !allowBazelBin -> false
+      // only allow bazel-bin as a header search path when the registry key is set
+      path.isBazelBin(projectData.blazeInfo) -> allowBazelBin
 
       // if it is not an output directory, there should be now big binary artifacts
       !path.isOutputDirectory(projectData.blazeInfo) -> true
