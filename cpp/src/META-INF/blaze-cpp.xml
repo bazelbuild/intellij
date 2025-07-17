@@ -88,6 +88,9 @@
     <registryKey defaultValue="true"
                  description="Use _cpp_use_get_tool_for_action to get compiler executable"
                  key="bazel.cc.aspect.use_get_tool_for_action"/>
+      <registryKey defaultValue="true"
+                   description="Whether to allow bazel-bin as a header search path; directly using bazel-bin as a header search path could cause performance problems"
+                   key="bazel.cpp.sync.allow.bazel.bin.header.search.path"/>
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
