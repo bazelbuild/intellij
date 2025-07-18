@@ -51,15 +51,15 @@ class VirtualIncludesCacheService(private val project: Project) {
     fun of(project: Project): VirtualIncludesCacheService = project.service()
 
     @JvmStatic
-    val enabled: Boolean get() = Registry.`is`("bazel.cc.virtual.includes.cache")
+    val enabled: Boolean get() = Registry.`is`("bazel.cc.virtual.includes.cache.enabled")
   }
 
   val cacheDirectory: Path by lazy {
+    // TODO: do we need a read action here? is the lazy initialization a race?
     val importSettings = BlazeImportSettingsManager.getInstance(project).importSettings
 
     if (importSettings != null) {
-      BlazeDataStorage.getProjectDataDir(importSettings).toPath()
-        .resolve(VIRTUAL_INCLUDES_CACHE_DIR)
+      BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve(VIRTUAL_INCLUDES_CACHE_DIR)
     } else {
       Path.of(project.basePath, VIRTUAL_INCLUDES_CACHE_DIR)
     }

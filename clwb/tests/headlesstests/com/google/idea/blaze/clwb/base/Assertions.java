@@ -6,6 +6,8 @@ import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.common.truth.StringSubject;
 import com.google.idea.blaze.base.util.VfsUtil;
+import com.google.idea.blaze.cpp.sync.VirtualIncludesCacheService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -108,5 +110,15 @@ public class Assertions {
       final var roots = allowedRoots.stream().map(Object::toString).collect(Collectors.joining(";"));
       abort(String.format("%s not in allowed roots: [%s], debug with: '-Dfile.system.trace.loading=%s'", child, roots, child));
     }
+  }
+
+  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project) {
+    final var header = TestUtils.resolveHeader(fileName, settings);
+    assertThat(header).isNotNull();
+
+    final var service = VirtualIncludesCacheService.of(project);
+    assertThat(VirtualIncludesCacheService.getEnabled()).isTrue();
+
+    assertThat(header.getPath()).startsWith(service.getCacheDirectory().toString());
   }
 }

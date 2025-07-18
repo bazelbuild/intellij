@@ -95,7 +95,7 @@
                  key="bazel.cpp.sync.allow.bazel.bin.header.search.path"/>
     <registryKey defaultValue="false"
                  description="Use enables the VirtualIncludesCacheService"
-                 key="bazel.cc.virtual.includes.cache"/>
+                 key="bazel.cc.virtual.includes.cache.enabled"/>
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
