@@ -42,6 +42,7 @@
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
     <FileCache implementation="com.google.idea.blaze.cpp.sync.VirtualIncludesFileCache"/>
+    <LoggedDirectoryProvider implementation="com.google.idea.blaze.cpp.sync.VirtualIncludesCacheLoggedDirectory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp.copts">
