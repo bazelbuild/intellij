@@ -1,34 +1,32 @@
 package com.google.idea.blaze.cpp.sync
 
-import com.google.common.collect.ImmutableList
+import com.google.common.hash.HashCode
+import com.google.common.hash.HashFunction
+import com.google.common.hash.Hashing
 import com.google.idea.blaze.base.filecache.FileCache
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
+import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider
 import com.google.idea.blaze.base.model.BlazeProjectData
+import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.projectview.ProjectViewSet
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
-import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager
 import com.google.idea.blaze.base.sync.SyncMode
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
-import com.google.common.hash.Hashing
-import com.google.common.hash.HashFunction
-import com.google.common.hash.HashCode
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
-import com.google.idea.blaze.base.ideinfo.TargetKey
-import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.jetbrains.rd.util.getOrCreate
 import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -36,7 +34,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.stream.Stream
-import kotlin.collections.iterator
 import kotlin.streams.asStream
 
 private val LOG = logger<VirtualIncludesCacheService>()
@@ -52,10 +49,11 @@ class VirtualIncludesCacheService(private val project: Project) {
     @JvmStatic
     fun of(project: Project): VirtualIncludesCacheService = project.service()
 
+    @JvmStatic
     val enabled: Boolean get() = Registry.`is`("bazel.cc.virtual.includes.cache")
   }
 
-  private val cacheDirectory: Path by lazy {
+  val cacheDirectory: Path by lazy {
     val importSettings = BlazeImportSettingsManager.getInstance(project).importSettings
 
     if (importSettings != null) {
@@ -91,64 +89,83 @@ class VirtualIncludesCacheService(private val project: Project) {
     cacheTracker.clear()
 
     if (Files.exists(cacheDirectory)) {
+      // I have a feeling, that this will be really slow on Windows, so let's try to avoid this
       NioFiles.deleteRecursively(cacheDirectory)
     }
+
+    LOG.trace("cleared virtual includes cache")
   }
 
   @Synchronized
   @RequiresReadLockAbsence
   @RequiresBackgroundThread
-  @Throws(IOException::class)
   fun refresh(projectData: BlazeProjectData, nonInc: Boolean) {
-    if (nonInc) clear()
-
-    val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
+    if (nonInc) {
+      clear()
+    } else {
+      // only reset in memory data on incremental sync
+      dependencyCache.clear()
+      cacheTracker.clear()
+    }
 
     for ((key, target) in projectData.targetMap.map()) {
-      val info = target.getcIdeInfo() ?: continue
+      refreshTarget(projectData, key, target)
+    }
 
-      dependencyCache
-        .getOrPut(key.cacheHashCode()) { mutableSetOf() }
-        .addAll(target.dependencies.asSequence().map { it.targetKey.cacheHashCode() })
+    // one could consider removing unused directories on an incremental sync, but it's faster not to do so :)
+  }
 
-      if (!info.includePrefix.isEmpty() || !info.stripIncludePrefix.isEmpty()) {
-        val virtualIncludesDir = findVirtualIncludesDirectory(bazelBin, key.label)
+  private fun refreshTarget(projectData: BlazeProjectData, key: TargetKey, target: TargetIdeInfo) {
+    val info = target.getcIdeInfo() ?: return
 
-        if (virtualIncludesDir != null) {
-          val targetCacheDirectory = key.cacheDirectory()
-          Files.createDirectories(targetCacheDirectory)
+    dependencyCache
+      .getOrPut(key.cacheHashCode()) { mutableSetOf() }
+      .addAll(target.dependencies.asSequence().map { it.targetKey.cacheHashCode() })
 
-          NioFiles.copyRecursively(virtualIncludesDir, targetCacheDirectory)
-          cacheTracker.add(key.cacheHashCode())
-        } else {
-          // TODO: warn
-        }
+    val targetCacheDirectory = key.cacheDirectory()
 
-        continue
+    if (!info.includePrefix.isEmpty() || !info.stripIncludePrefix.isEmpty()) {
+      // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
+      val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
+
+      // if there is no _virtual_includes directory the target most likely has no headers
+      val virtualIncludesDir = findVirtualIncludesDirectory(bazelBin, key.label) ?: return
+
+      try {
+        Files.createDirectories(targetCacheDirectory)
+        NioFiles.copyRecursively(virtualIncludesDir, targetCacheDirectory)
+      } catch (e: IOException) {
+        LOG.warn("failed to copy _virtual_includes directory for ${key.label}", e)
       }
 
-      val headers =
-        (info.headers.asSequence() + info.textualHeaders.asSequence()).filter { it.isGenerated }
-          .toList()
-      if (headers.isEmpty()) continue
-
-      val targetCacheDirectory = key.cacheDirectory()
       cacheTracker.add(key.cacheHashCode())
+      LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied _virtual_includes directory" }
+    } else {
+      // if there is no _virtual_include directory, adopt all generated headers
+      val headers = (info.headers.asSequence() + info.textualHeaders.asSequence()).filter { it.isGenerated }.toList()
+      if (headers.isEmpty()) return
 
       for (header in headers) {
         val path = targetCacheDirectory.resolve(header.relativePath)
-        Files.createDirectories(path.parent)
 
-        Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-          .use { dstStream ->
-            projectData.artifactLocationDecoder.resolveOutput(header).inputStream.use { srcStream ->
-              srcStream.transferTo(dstStream)
+        try {
+          Files.createDirectories(path.parent)
+          Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { dst ->
+            projectData.artifactLocationDecoder.resolveOutput(header).inputStream.use { src ->
+              src.transferTo(dst)
             }
           }
+        } catch (e: IOException) {
+          LOG.warn("failed to copy generated header ${header.relativePath} for ${key.label}", e)
+        }
       }
+
+      cacheTracker.add(key.cacheHashCode())
+      LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied generated headers (${headers.size})" }
     }
   }
 
+  @Synchronized
   fun collectVirtualIncludes(targetIdeInfo: TargetIdeInfo): Stream<String> {
     val visited = mutableSetOf<HashCode>()
     val frontier = mutableListOf(targetIdeInfo.key.cacheHashCode())
@@ -195,16 +212,11 @@ private class VirtualIncludesFileCache : FileCache {
     syncMode: SyncMode,
   ) {
     if (!VirtualIncludesCacheService.enabled) return
+    LOG.trace("refresh requested onSync: $syncMode")
 
     Scope.push(parentCtx) { ctx ->
       ctx.push(TimingScope(name, TimingScope.EventType.Other))
-
-      try {
-        VirtualIncludesCacheService.of(project)
-          .refresh(projectData, nonInc = syncMode == SyncMode.FULL)
-      } catch (e: IOException) {
-        IssueOutput.warn("$name refresh failed").withDescription(e.toString()).submit(ctx)
-      }
+      VirtualIncludesCacheService.of(project).refresh(projectData, nonInc = syncMode == SyncMode.FULL)
     }
   }
 
@@ -214,14 +226,10 @@ private class VirtualIncludesFileCache : FileCache {
     buildOutputs: BlazeBuildOutputs,
   ) {
     if (!VirtualIncludesCacheService.enabled) return
+    LOG.trace("refresh files requested")
 
     val projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData() ?: return
-
-    try {
-      VirtualIncludesCacheService.of(project).refresh(projectData, nonInc = false)
-    } catch (e: IOException) {
-      IssueOutput.warn("$name refresh failed").withDescription(e.toString()).submit(context)
-    }
+    VirtualIncludesCacheService.of(project).refresh(projectData, nonInc = false)
   }
 
   override fun initialize(project: Project) {}
@@ -229,7 +237,15 @@ private class VirtualIncludesFileCache : FileCache {
 
 private class VirtualIncludesCacheLoggedDirectory : LoggedDirectoryProvider {
 
-  override fun getLoggedDirectory(project: Project?): Optional<LoggedDirectoryProvider.LoggedDirectory?> {
-    TODO("Not yet implemented")
+  override fun getLoggedDirectory(project: Project): Optional<LoggedDirectoryProvider.LoggedDirectory> {
+    if (!VirtualIncludesCacheService.enabled) return Optional.empty()
+
+    return Optional.of(
+      LoggedDirectoryProvider.LoggedDirectory.builder()
+        .setPath(VirtualIncludesCacheService.of(project).cacheDirectory)
+        .setOriginatingIdePart("CLwB Virtual Includes Cache")
+        .setPurpose("Cache _virtual_includes directories and generated headers")
+        .build()
+    )
   }
 }
