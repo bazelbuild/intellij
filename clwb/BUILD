@@ -166,6 +166,12 @@ clwb_headless_test(
 )
 
 clwb_headless_test(
+    name = "virtual_includes_cache_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/VirtualIncludesCacheTest.java"],
+    project = "virtual_includes",
+)
+
+clwb_headless_test(
     name = "llvm_toolchain_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
     project = "llvm_toolchain",
@@ -221,23 +227,24 @@ test_suite(
         ":example_headless_test",
         ":execution_headless_test",
         ":external_includes_headless_test",
+        ":lib_cpp_headless_test",
         ":llvm_toolchain_headless_test",
         ":query_sync_headless_test",
         ":simple_headless_test",
         ":target_compatible_headless_test",
-        ":virtual_includes_headless_test",
-        ":lib_cpp_headless_test",
+        ":virtual_includes_cache_headless_test",
+        ":virtual_includes_compat_headless_test",
     ],
 )
 
 clwb_integration_test(
-  name = "copts_processor",
-  srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/CoptsProcessorTest.kt"],
+    name = "copts_processor",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/CoptsProcessorTest.kt"],
 )
 
 test_suite(
     name = "integration_tests",
     tests = [
-      ":copts_processor",
+        ":copts_processor",
     ],
 )
