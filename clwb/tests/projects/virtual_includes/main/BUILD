@@ -1,9 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 cc_binary(
-    name = "hello-world",
+    name = "virtual_includes",
     srcs = [
-        "hello-world.cc",
+        "virtual_includes.cc",
         "//lib/raw_files:lib",
     ],
     # basically manual strip absolut, different flags required for MSVC
@@ -24,5 +24,15 @@ cc_binary(
         "//lib/strip_absolut:gen",
         "//lib/strip_absolut:lib",
         "//lib/strip_relative:lib",
+    ],
+)
+
+cc_binary(
+    name = "proto",
+    srcs = ["proto.cc"],
+    deps = [
+        "//proto:addressbook_cc_proto",
+        "@protobuf//:protobuf",
+        "@protobuf//src/google/protobuf/util:time_util",
     ],
 )

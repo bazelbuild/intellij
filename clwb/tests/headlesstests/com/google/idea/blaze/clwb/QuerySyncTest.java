@@ -27,10 +27,6 @@ public class QuerySyncTest extends ClwbHeadlessTestCase {
   @Rule
   public final OSRule osRule = new OSRule(OS.Linux);
 
-  // query sync requires bazel 6+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(6, 0);
-
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     return super.projectViewText(version).useQuerySync(true);
