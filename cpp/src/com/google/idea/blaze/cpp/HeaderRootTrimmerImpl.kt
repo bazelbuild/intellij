@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
 import kotlinx.coroutines.*
 import java.io.File
@@ -65,7 +66,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
             }
           }
 
-          results.map { it.await() }.forEach(builder::addAll)
+          results.awaitAll().forEach(builder::addAll)
         }
       }.join()
     }
@@ -108,11 +109,13 @@ private fun collectHeaderRoots(
 ): List<Path> {
   val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
 
+  val allowBazelBin = Registry.`is`("bazel.cpp.sync.allow.bazel.bin.header.search.path")
+
   val result = mutableListOf<Path>()
   for (directory in possibleDirectories) {
     val add = when {
-      // never allow the bazel-bin as a header search path
-      path.isBazelBin(projectData.blazeInfo) -> false
+      // only allow bazel-bin as a header search path when the registry key is set
+      path.isBazelBin(projectData.blazeInfo) -> allowBazelBin
 
       // if it is not an output directory, there should be now big binary artifacts
       !path.isOutputDirectory(projectData.blazeInfo) -> true
