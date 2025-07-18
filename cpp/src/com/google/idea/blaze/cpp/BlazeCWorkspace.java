@@ -259,9 +259,12 @@ public final class BlazeCWorkspace implements ProjectComponent {
         targetIdeInfo.getcIdeInfo().getTransitiveDefines()
             .forEach(compilerSwitchesBuilder::withMacro);
 
-        Function<ExecutionRootPath, Stream<File>> resolver =
-            executionRootPath ->
-                executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
+        Function<ExecutionRootPath, Stream<File>> resolver;
+        if (VirtualIncludesCacheService.getEnabled()) {
+          resolver = (path) -> Stream.of(executionRootPathResolver.resolveExecutionRootPath(path));
+        } else {
+          resolver = (path) -> executionRootPathResolver.resolveToIncludeDirectories(path).stream();
+        }
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
         targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()

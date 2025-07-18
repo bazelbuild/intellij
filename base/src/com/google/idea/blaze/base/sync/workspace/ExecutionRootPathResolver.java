@@ -71,6 +71,9 @@ public interface ExecutionRootPathResolver {
    * This method should be used for directories. Returns all workspace files corresponding to the given
    * execution-root-relative path. If the file does not exist inside a workspace (e.g. for blaze output files), returns
    * the path rooted in the execution root.
+   *
+   * This function should not be used i.e. should not be necessary when VirtualIncludesService is enabled. But since
+   * this is in base, it is not possible to check in the implementation that whether the service is enabled or not.
    */
   ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath path);
 

@@ -61,9 +61,7 @@ abstract class IncludeProcessor(private val prefix: String) : CoptsProcessor {
     if (file.isAbsolute) {
       apply(file, sink)
     } else {
-      resolver.resolveToIncludeDirectories(ExecutionRootPath(file)).forEach {
-        apply(it, sink)
-      }
+      apply(resolver.resolveExecutionRootPath(ExecutionRootPath(file)), sink)
     }
   }
 

@@ -121,7 +121,11 @@ private fun collectHeaderRoots(
   path: ExecutionRootPath,
   projectData: BlazeProjectData,
 ): List<Path> {
-  val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
+  val possibleDirectories = if (VirtualIncludesCacheService.enabled) {
+    listOf(executionRootPathResolver.resolveExecutionRootPath(path).toPath())
+  } else {
+    executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
+  }
 
   val allowBazelBin = Registry.`is`("bazel.cpp.sync.allow.bazel.bin.header.search.path")
 
