@@ -90,7 +90,6 @@
         order="after JavaTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.java.run.producers.JavaBinaryContextProvider"/>
     <OutputsProvider implementation="com.google.idea.blaze.java.sync.JavaOutputsProvider"/>
-    <base.qsync.GeneratedSourcesStripperProvider implementation="com.google.idea.blaze.java.qsync.GeneratedSourcesStripper$Provider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
