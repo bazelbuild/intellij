@@ -31,6 +31,7 @@ public final class JavaBlazeRules implements Kind.Provider {
 
   /** Java-specific blaze rules. */
   public enum RuleTypes {
+    EXECUTABLE_JAR("executable_jar", LanguageClass.JAVA, RuleType.BINARY),
     JAVA_LIBRARY("java_library", LanguageClass.JAVA, RuleType.LIBRARY),
     JAVA_TEST("java_test", LanguageClass.JAVA, RuleType.TEST),
     JAVA_JUNIT5_TEST("java_junit5_test", LanguageClass.JAVA, RuleType.TEST),
