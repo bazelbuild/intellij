@@ -3,7 +3,6 @@
 #
 
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "IJWB_PACKAGES_VISIBILITY",
@@ -60,12 +59,9 @@ stamped_plugin_xml(
     version = VERSION,
 )
 
-kt_jvm_library(
+java_library(
     name = "ijwb_lib",
-    srcs = glob([
-        "src/**/*.java",
-        "src/**/*.kt",
-    ]),
+    srcs = glob(["src/**/*.java"]),
     visibility = IJWB_PACKAGES_VISIBILITY,
     deps = [
         "//base",
