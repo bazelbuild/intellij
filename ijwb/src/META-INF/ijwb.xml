@@ -27,5 +27,6 @@
       description="Mark execroot as dirty before refresh after sync"
       key="bazel.sync.mark.dirty"
       overrides="true"/>
+    <pluginReplacement implementation="com.google.idea.blaze.ijwb.deprecation.BazelPluginReplacement"/>
   </extensions>
 </idea-plugin>
