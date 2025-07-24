@@ -160,7 +160,7 @@ final class BlazeConfigurationResolver {
           return CFileExtensions.SOURCE_EXTENSIONS.contains(locationExtension);
         };
     return target.getcIdeInfo() != null
-        && target.getcIdeInfo().getSources().stream()
+          && target.getcIdeInfo().sources().stream()
             .filter(ArtifactLocation::isSource)
             .anyMatch(isCompiled);
   }
