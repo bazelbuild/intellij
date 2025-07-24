@@ -13,15 +13,15 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "collect_cc_deps")
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 load(":flag_hack.bzl", "FlagHackInfo")
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
+load(":java_info.bzl", "get_java_info", "get_provider_from_target", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -517,22 +517,20 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-sources-go", depset(sources))
     return True
 
-def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, cc_deps):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
     if CcInfo not in target:
-        return False
-
-    # ignore cc_proto_library, attach to proto_library with aspect attached instead
-    if ctx.rule.kind == "cc_proto_library":
         return False
 
     # Go targets always provide CcInfo. Usually it's empty, but even if it isn't we don't handle it
     if ctx.rule.kind.startswith("go_"):
         return False
 
+    compilation_context = target[CcInfo].compilation_context
+
     sources = artifacts_from_target_list_attr(ctx, "srcs")
-    headers = artifacts_from_target_list_attr(ctx, "hdrs")
+    headers = [artifact_location(it) for it in compilation_context.headers.to_list()]
     textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs")
 
     target_copts = []
@@ -546,8 +544,6 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
     target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
 
-    compilation_context = target[CcInfo].compilation_context
-
     # Merge current compilation context with context of implementation dependencies.
     if hasattr(ctx.rule.attr, "implementation_deps"):
         implementation_deps = ctx.rule.attr.implementation_deps
@@ -558,6 +554,12 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
     # external_includes available since bazel 7
     external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
+
+    if cc_deps:
+        aspect_ids = get_aspect_ids(ctx)
+        deps = [make_target_key(it.label, aspect_ids) for it in cc_deps.targets.to_list()]
+    else:
+        deps = []
 
     c_info = struct_omit_none(
         header = headers,
@@ -571,6 +573,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
+        transitive_dependencies = deps,
     )
     ide_info["c_ide_info"] = c_info
     resolve_files = compilation_context.headers
@@ -1293,9 +1296,14 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Collect test info
     ide_info["test_info"] = build_test_info(ctx)
 
+    if collect_cc_deps:
+        cc_deps = collect_cc_deps(target, ctx)
+    else:
+        cc_deps = None
+
     handled = False
     handled = collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, cc_deps) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
@@ -1324,7 +1332,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             target_key = target_key,
         ),
         OutputGroupInfo(**output_groups),
-    ]
+    ] + ([cc_deps] if cc_deps else [])
 
 def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):
