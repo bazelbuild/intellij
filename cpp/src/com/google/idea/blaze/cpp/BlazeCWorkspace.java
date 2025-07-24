@@ -307,8 +307,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
               .forEach(compilerSwitchesBuilder::withSystemIncludePath);
         }
 
-        VirtualIncludesCacheService.of(project).collectVirtualIncludes(targetIdeInfo)
-            .forEach(compilerSwitchesBuilder::withQuoteIncludePath);
+        if (VirtualIncludesCacheService.getEnabled()) {
+          VirtualIncludesCacheService.of(project)
+              .collectVirtualIncludes(targetIdeInfo)
+              .forEach(compilerSwitchesBuilder::withIncludePath);
+        }
 
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
