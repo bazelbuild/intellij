@@ -96,12 +96,12 @@ public class VirtualIncludesHandler {
       return ImmutableList.of();
     }
 
-    if (!cIdeInfo.getIncludePrefix().isEmpty()) {
+    if (!cIdeInfo.includePrefix().isEmpty()) {
       // it is not possible to handle include prefixes here, fallback to virtual include directory
       return ImmutableList.of();
     }
 
-    var stripPrefix = cIdeInfo.getStripIncludePrefix();
+    var stripPrefix = cIdeInfo.stripIncludePrefix();
     if (stripPrefix == null || stripPrefix.isBlank()) {
       return ImmutableList.of();
     }

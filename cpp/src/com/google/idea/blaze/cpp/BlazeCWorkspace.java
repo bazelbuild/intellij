@@ -249,14 +249,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
         final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
         CoptsProcessor.apply(
-            /* options = */ targetIdeInfo.getcIdeInfo().getLocalCopts(),
+            /* options = */ targetIdeInfo.getcIdeInfo().localCopts(),
             /* kind = */ compilerSettings.getCompilerKind(),
             /* sink = */ compilerSwitchesBuilder,
             /* resolve = */ executionRootPathResolver
         );
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
-        targetIdeInfo.getcIdeInfo().getTransitiveDefines()
+        targetIdeInfo.getcIdeInfo().transitiveDefines()
             .forEach(compilerSwitchesBuilder::withMacro);
 
         Function<ExecutionRootPath, Stream<File>> resolver;
@@ -267,7 +267,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         }
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
-        targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
+        targetIdeInfo.getcIdeInfo().transitiveIncludeDirectories().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
@@ -276,7 +276,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
         final var quoteIncludePaths = targetIdeInfo.getcIdeInfo()
-            .getTransitiveQuoteIncludeDirectories()
+            .transitiveQuoteIncludeDirectories()
             .stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
@@ -288,7 +288,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // CcSkylarkApiProvider.system_include_directories
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
-        targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
+        targetIdeInfo.getcIdeInfo().transitiveSystemIncludeDirectories().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)

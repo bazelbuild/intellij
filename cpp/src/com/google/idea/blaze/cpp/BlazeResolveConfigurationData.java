@@ -47,11 +47,11 @@ public abstract class BlazeResolveConfigurationData {
     return builder()
         .setCompilerSettings(compilerSettings)
         .setToolchainIdeInfo(toolchainIdeInfo)
-        .setLocalCopts(cIdeInfo.getLocalCopts())
-        .setTransitiveIncludeDirectories(cIdeInfo.getTransitiveIncludeDirectories())
-        .setTransitiveQuoteIncludeDirectories(cIdeInfo.getTransitiveQuoteIncludeDirectories())
-        .setTransitiveDefines(cIdeInfo.getTransitiveDefines())
-        .setTransitiveSystemIncludeDirectories(cIdeInfo.getTransitiveSystemIncludeDirectories())
+        .setLocalCopts(cIdeInfo.localCopts())
+        .setTransitiveIncludeDirectories(cIdeInfo.transitiveIncludeDirectories())
+        .setTransitiveQuoteIncludeDirectories(cIdeInfo.transitiveQuoteIncludeDirectories())
+        .setTransitiveDefines(cIdeInfo.transitiveDefines())
+        .setTransitiveSystemIncludeDirectories(cIdeInfo.transitiveSystemIncludeDirectories())
         .build();
   }
 
