@@ -120,9 +120,9 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     CIdeInfo cIdeInfo = null;
     if (proto.hasCIdeInfo()) {
       cIdeInfo = CIdeInfo.fromProto(proto.getCIdeInfo());
-      sourcesBuilder.addAll(cIdeInfo.getSources());
-      sourcesBuilder.addAll(cIdeInfo.getHeaders());
-      sourcesBuilder.addAll(cIdeInfo.getTextualHeaders());
+      sourcesBuilder.addAll(cIdeInfo.sources());
+      sourcesBuilder.addAll(cIdeInfo.headers());
+      sourcesBuilder.addAll(cIdeInfo.textualHeaders());
     }
     JavaIdeInfo javaIdeInfo = null;
     if (proto.hasJavaIdeInfo()) {
@@ -471,9 +471,9 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     @CanIgnoreReturnValue
     public Builder setCInfo(CIdeInfo.Builder cInfoBuilder) {
       this.cIdeInfo = cInfoBuilder.build();
-      this.sources.addAll(cIdeInfo.getSources());
-      this.sources.addAll(cIdeInfo.getHeaders());
-      this.sources.addAll(cIdeInfo.getTextualHeaders());
+      this.sources.addAll(cIdeInfo.sources());
+      this.sources.addAll(cIdeInfo.headers());
+      this.sources.addAll(cIdeInfo.textualHeaders());
       return this;
     }
 
