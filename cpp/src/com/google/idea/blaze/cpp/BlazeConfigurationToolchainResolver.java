@@ -159,27 +159,24 @@ public final class BlazeConfigurationToolchainResolver {
                   Collectors.partitioningBy(
                       BlazeConfigurationToolchainResolver::usesAppleCcToolchain));
       if (!partitionedTargets.get(Boolean.FALSE).isEmpty()) {
-        String warningMessage =
-            String.format(
-                "cc target is expected to depend on exactly 1 cc toolchain. "
-                    + "Found %d toolchains for these targets: %s",
-                entry.getKey(),
-                partitionedTargets.get(Boolean.FALSE).stream()
-                    .map(TargetIdeInfo::getKey)
-                    .map(TargetKey::toString)
-                    .collect(joining(", ")));
-        IssueOutput.warn(warningMessage).submit(context);
+        final var targets = partitionedTargets.get(Boolean.FALSE).stream()
+            .map(TargetIdeInfo::getKey)
+            .map(TargetKey::toString)
+            .collect(joining("\n"));
+
+        IssueOutput.warn(String.format("cc target depends on %d cc toolchains", entry.getKey()))
+            .withDescription(targets)
+            .submit(context);
       }
       if (!partitionedTargets.get(Boolean.TRUE).isEmpty()) {
-        logger.warn(
-            String.format(
-                "cc target is expected to depend on exactly 1 cc toolchain. "
-                    + "Found %d toolchains for these targets with apple_cc_toolchain: %s.",
-                entry.getKey(),
-                partitionedTargets.get(Boolean.TRUE).stream()
-                    .map(TargetIdeInfo::getKey)
-                    .map(TargetKey::toString)
-                    .collect(joining(", "))));
+        final var targets = partitionedTargets.get(Boolean.TRUE).stream()
+            .map(TargetIdeInfo::getKey)
+            .map(TargetKey::toString)
+            .collect(joining("\n"));
+
+        IssueOutput.warn(String.format("cc target depends on %d apple cc toolchains", entry.getKey()))
+            .withDescription(targets)
+            .submit(context);
       }
     }
   }
