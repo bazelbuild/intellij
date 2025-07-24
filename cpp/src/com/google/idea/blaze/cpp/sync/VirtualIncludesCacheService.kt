@@ -40,6 +40,7 @@ private val LOG = logger<VirtualIncludesCacheService>()
 
 private const val VIRTUAL_INCLUDES_CACHE_DIR = "_virtual_includes_cache"
 private const val VIRTUAL_INCLUDES_BAZEL_DIR = "_virtual_includes"
+private const val VIRTUAL_IMPORTS_BAZEL_DIR = "_virtual_imports"
 
 @Service(Service.Level.PROJECT)
 @Suppress("UnstableApiUsage")
@@ -67,9 +68,6 @@ class VirtualIncludesCacheService(private val project: Project) {
   // tracks targets which are actually stored in the cache
   private val cacheTracker: MutableSet<HashCode> = mutableSetOf()
 
-  // recursive dependency cache to resolve all includes required for target
-  private val dependencyCache: MutableMap<HashCode, MutableSet<HashCode>> = mutableMapOf()
-
   private val sha256: HashFunction by lazy { Hashing.sha256() }
 
   private fun TargetKey.cacheHashCode(): HashCode {
@@ -85,7 +83,6 @@ class VirtualIncludesCacheService(private val project: Project) {
   @RequiresBackgroundThread
   @Throws(IOException::class)
   fun clear() {
-    dependencyCache.clear()
     cacheTracker.clear()
 
     if (Files.exists(cacheDirectory)) {
@@ -104,7 +101,6 @@ class VirtualIncludesCacheService(private val project: Project) {
       clear()
     } else {
       // only reset in memory data on incremental sync
-      dependencyCache.clear()
       cacheTracker.clear()
     }
 
@@ -118,13 +114,9 @@ class VirtualIncludesCacheService(private val project: Project) {
   private fun refreshTarget(projectData: BlazeProjectData, key: TargetKey, target: TargetIdeInfo) {
     val info = target.getcIdeInfo() ?: return
 
-    dependencyCache
-      .getOrPut(key.cacheHashCode()) { mutableSetOf() }
-      .addAll(target.dependencies.asSequence().map { it.targetKey.cacheHashCode() })
-
     val targetCacheDirectory = key.cacheDirectory()
 
-    if (!info.includePrefix.isEmpty() || !info.stripIncludePrefix.isEmpty()) {
+    if (!info.includePrefix().isEmpty() || !info.stripIncludePrefix().isEmpty()) {
       // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
       val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
 
@@ -142,11 +134,12 @@ class VirtualIncludesCacheService(private val project: Project) {
       LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied _virtual_includes directory" }
     } else {
       // if there is no _virtual_include directory, adopt all generated headers
-      val headers = (info.headers.asSequence() + info.textualHeaders.asSequence()).filter { it.isGenerated }.toList()
+      val headers = (info.headers().asSequence() + info.textualHeaders().asSequence()).filter { it.isGenerated }.toList()
       if (headers.isEmpty()) return
 
       for (header in headers) {
-        val path = targetCacheDirectory.resolve(header.relativePath)
+        val relativePath = stripVirtualPrefix(header.relativePath) ?: continue
+        val path = targetCacheDirectory.resolve(relativePath)
 
         try {
           Files.createDirectories(path.parent)
@@ -167,22 +160,16 @@ class VirtualIncludesCacheService(private val project: Project) {
 
   @Synchronized
   fun collectVirtualIncludes(targetIdeInfo: TargetIdeInfo): Stream<String> {
-    val visited = mutableSetOf<HashCode>()
-    val frontier = mutableListOf(targetIdeInfo.key.cacheHashCode())
+    val info = targetIdeInfo.getcIdeInfo() ?: return Stream.empty()
 
     return sequence {
-      while (frontier.isNotEmpty()) {
-        val code = frontier.removeFirst()
-        if (!visited.add(code)) continue
+      for (dep in info.transitiveDependencies()) {
+        val hash = dep.cacheHashCode()
+        if (!cacheTracker.contains(hash)) continue
 
-        yield(code)
-
-        frontier.addAll(dependencyCache[code] ?: continue)
+        yield(cacheDirectory.resolve(hash.toString()).toString())
       }
-    }
-      .filter { cacheTracker.contains(it) }
-      .map { cacheDirectory.resolve(it.toString()).toString() }
-      .asStream()
+    }.asStream()
   }
 
   private fun findVirtualIncludesDirectory(bazelBin: Path, label: Label): Path? {
@@ -196,6 +183,26 @@ class VirtualIncludesCacheService(private val project: Project) {
     }
 
     return path
+  }
+
+  /**
+   * If the CcInfo was not created by a cc_xxx rule the include prefix and
+   * strip include prefix will not be populated. This heuristic tries to
+   * detect these cases and adjust the path accordingly.
+   */
+  private fun stripVirtualPrefix(path: String): String? {
+    val elements = path.split('/')
+
+    // drop virtual imports, they are not supported yet
+    if (elements.contains(VIRTUAL_IMPORTS_BAZEL_DIR)) return null
+
+    val index = elements.indexOf(VIRTUAL_INCLUDES_BAZEL_DIR)
+
+    // no virtual includes or invalid index
+    if (index < 0 || index + 2 >= elements.size) return path
+
+    // +2 to drop the _virtual_include directory and the target name
+    return elements.subList(index + 2, elements.size).joinToString("/")
   }
 }
 
@@ -211,7 +218,7 @@ private class VirtualIncludesFileCache : FileCache {
     oldProjectData: BlazeProjectData?,
     syncMode: SyncMode,
   ) {
-    if (!VirtualIncludesCacheService.enabled) return
+    if (!VirtualIncludesCacheService.enabled || !syncMode.involvesBlazeBuild()) return
     LOG.trace("refresh requested onSync: $syncMode")
 
     Scope.push(parentCtx) { ctx ->
