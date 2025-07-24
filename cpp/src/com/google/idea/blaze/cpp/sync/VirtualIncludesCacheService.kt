@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import java.io.IOException
@@ -174,6 +175,7 @@ class VirtualIncludesCacheService(private val project: Project) {
 
   private fun findVirtualIncludesDirectory(bazelBin: Path, label: Label): Path? {
     val path = bazelBin
+      .applyIf(label.externalWorkspaceName() != null) { resolve("external").resolve(label.externalWorkspaceName()) }
       .resolve(label.blazePackage().relativePath())
       .resolve(VIRTUAL_INCLUDES_BAZEL_DIR)
       .resolve(label.targetName().toString())

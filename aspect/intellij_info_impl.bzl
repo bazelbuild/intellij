@@ -530,7 +530,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     compilation_context = target[CcInfo].compilation_context
 
     sources = artifacts_from_target_list_attr(ctx, "srcs")
-    headers = [artifact_location(it) for it in compilation_context.headers.to_list()]
+    headers = [artifact_location(it) for it in compilation_context.direct_headers]
     textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs")
 
     target_copts = []
