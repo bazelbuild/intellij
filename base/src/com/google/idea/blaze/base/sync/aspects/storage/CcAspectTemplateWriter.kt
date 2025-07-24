@@ -30,7 +30,8 @@ class CcAspectTemplateWriter : AspectWriter {
 
   override fun writeDumb(dst: Path, project: Project) {
     val options = mapOf(
-      getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", true)
+      getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", default = true),
+      getRegistryOption("bazel.cc.virtual.includes.cache.enabled", default = false, aka = "collect_dependencies"),
     )
 
     TemplateWriter.evaluate(
@@ -42,9 +43,9 @@ class CcAspectTemplateWriter : AspectWriter {
     )
   }
 
-  private fun getRegistryOption(key: String, default: Boolean): Pair<String, String> {
+  private fun getRegistryOption(key: String, default: Boolean, aka: String? = null): Pair<String, String> {
     val value = Registry.`is`(key, default)
-    val name = key.split('.').last()
+    val name = aka ?: key.split('.').last()
     return Pair(name, if (value) "True" else "False")
   }
 }

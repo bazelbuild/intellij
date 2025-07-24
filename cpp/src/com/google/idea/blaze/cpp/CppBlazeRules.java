@@ -37,7 +37,8 @@ public class CppBlazeRules implements Kind.Provider {
     CC_INC_LIBRARY("cc_inc_library", LanguageClass.C, RuleType.LIBRARY),
     CC_TOOLCHAIN("cc_toolchain", LanguageClass.C, RuleType.UNKNOWN),
     CC_TOOLCHAIN_ALIAS("cc_toolchain_alias", LanguageClass.C, RuleType.UNKNOWN),
-    CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN);
+    CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN),
+    CC_PROTO_LIBRARY("cc_proto_library", LanguageClass.C, RuleType.LIBRARY),;
 
     private final String name;
     private final LanguageClass languageClass;
