@@ -1,6 +1,8 @@
 """Implementation of IntelliJ-specific information collecting aspect."""
 
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
+load("//third_party/bazel_rules/rules_cc/cc/common:cc_common.bzl", "cc_common")
+load("//third_party/bazel_rules/rules_cc/cc/common:cc_info.bzl", "CcInfo")
 load(
     ":artifacts.bzl",
     "artifact_location",
