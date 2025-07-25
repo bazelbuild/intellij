@@ -17,19 +17,14 @@ package com.google.idea.blaze.clwb
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType
 import com.google.idea.blaze.base.settings.Blaze
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.wizard2.BazelImportCurrentProjectAction
-import com.google.idea.blaze.base.wizard2.BazelNotificationProvider
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationProvider
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
 import com.jetbrains.cidr.project.ui.convertStatus
 import com.jetbrains.cidr.project.ui.isProjectAwareFile
@@ -37,97 +32,65 @@ import com.jetbrains.cidr.project.ui.notifications.EditorNotificationWarningProv
 import com.jetbrains.cidr.project.ui.notifications.ProjectNotification
 import com.jetbrains.cidr.project.ui.popup.ProjectFixesProvider
 import com.jetbrains.cidr.project.ui.widget.*
+import java.io.File
 
-private fun isBazelAwareFile(project: Project, file: VirtualFile): Boolean {
-  if (Blaze.isBlazeProject(project)) {
-    return false
+/// This function is a little overloaded, ensures the project could be imported
+// and returns the potential workspace root.
+@RequiresReadLock
+private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
+  if (file == null || !file.isValid) {
+    return null
   }
 
-  if (!isProjectAwareFile(file, project) && file.fileType !== BuildFileType.INSTANCE) {
-    return false
+  if (Blaze.isBlazeProject(project)) {
+    return null
+  }
+
+  if (!isProjectAwareFile(file, project) && file.fileType != BuildFileType.INSTANCE) {
+    return null
   }
 
   if (getProjectSourceLocationKind(project, file).isInProject()) {
-    return false
+    return null
   }
 
-  if (!BazelImportCurrentProjectAction.projectCouldBeImported(project)) {
-    return false
-  }
+  val workspaceRoot = project.basePath ?: return null
 
-  return project.basePath != null
+  // if some how the project was open in .clwb but is not imported as a blaze project
+  return workspaceRoot.removeSuffix(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
 }
 
-@Service(Service.Level.APP)
-class CLionNotificationProvider : ProjectFixesProvider, WidgetStatusProvider, EditorNotificationWarningProvider,
-  Disposable.Default {
-
-  companion object {
-    @JvmStatic
-    fun register(project: Project) {
-      service<CLionNotificationProvider>().unregisterGenericProvider(project)
-    }
+@RequiresReadLock
+private fun guessWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
+  if (Blaze.isBlazeProject(project)) {
+    return DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured")
   }
 
-  init {
-    registerSpecificProvider();
+  if (currentFile == null || guessWorkspaceRoot(project, currentFile) == null) {
+    return null
   }
 
-  private fun registerSpecificProvider() {
-    val projectFixes = ProjectFixesProvider.Companion.EP_NAME.point
-    projectFixes.registerExtension(this, this)
+  return DefaultWidgetStatus(Status.Warning, Scope.Project, "Project is not configured")
+}
 
-    val projectNotifications = EditorNotificationWarningProvider.EP_NAME.point
-    projectNotifications.registerExtension(this, this)
+class BazelProjectFixesProvider : ProjectFixesProvider {
 
-    val widgetStatus = WidgetStatusProvider.EP_NAME.point
-    widgetStatus.registerExtension(this, this)
+  override suspend fun collectFixes(project: Project, file: VirtualFile?, context: DataContext): List<AnAction> {
+    val workspaceRoot = readAction { guessWorkspaceRoot(project, file) } ?: return emptyList()
+    return listOf(BazelImportCurrentProjectAction(File(workspaceRoot)))
   }
+}
 
-  private fun unregisterGenericProvider(project: Project) {
-    val extensionPoint = EditorNotificationProvider.EP_NAME.getPoint(project)
+class BazelWidgetStatusProvider : WidgetStatusProvider {
 
-    // Note: We need to remove the default style of showing project status and fixes used in
-    // Android Studio and IDEA to introduce CLion's PSW style.
-    for (extension in extensionPoint.extensions) {
-      if (extension is BazelNotificationProvider) {
-        extensionPoint.unregisterExtension(extension)
-      }
-    }
+  override suspend fun computeWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
+    return readAction { guessWidgetStatus(project, currentFile) }
   }
+}
 
-  override suspend fun collectFixes(project: Project, file: VirtualFile?, dataContext: DataContext): List<AnAction> {
-    if (file == null) {
-      return emptyList()
-    }
+class BazelEditorNotificationProvider : EditorNotificationWarningProvider {
 
-    val isBazelFile = readAction { isBazelAwareFile(project, file) }
-    if (!isBazelFile) {
-      return emptyList()
-    }
-
-    return listOf(ImportBazelAction(project.basePath ?: return emptyList()))
-  }
-
-  private class ImportBazelAction(private val root: String) : AnAction("Import Bazel project") {
-    override fun actionPerformed(anActionEvent: AnActionEvent) {
-      BazelImportCurrentProjectAction.createAction(root).run()
-    }
-  }
-
-  override fun getProjectNotification(project: Project, virtualFile: VirtualFile): ProjectNotification? {
-    return convertStatus(getWidgetStatus(project, virtualFile))
-  }
-
-  override fun getWidgetStatus(project: Project, file: VirtualFile?): WidgetStatus? {
-    if (Blaze.isBlazeProject(project)) {
-      return DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured")
-    }
-
-    if (file == null || !isBazelAwareFile(project, file)) {
-      return null
-    }
-
-    return DefaultWidgetStatus(Status.Warning, Scope.Project, "Project is not configured")
+  override suspend fun computeProjectNotification(project: Project, file: VirtualFile): ProjectNotification? {
+    return convertStatus(readAction { guessWidgetStatus(project, file) })
   }
 }

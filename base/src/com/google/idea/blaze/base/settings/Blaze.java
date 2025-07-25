@@ -39,13 +39,9 @@ public class Blaze {
 
   /**
    * Returns whether this project was imported from blaze.
-   *
-   * @deprecated use {@link #getProjectType(Project)}.
    */
-  @Deprecated
   public static boolean isBlazeProject(@Nullable Project project) {
-    return project != null
-        && BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
+    return project != null && BlazeImportSettingsManager.getInstance(project).getImportSettings() != null;
   }
 
   public static BlazeProjectData getProjectData(@Nullable Project project) {

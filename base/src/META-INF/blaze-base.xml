@@ -442,7 +442,6 @@
     <registryKey defaultValue="false"
                  description="Mark execroot as dirty before refresh after sync"
                  key="bazel.sync.mark.dirty"/>
-    <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
 
     <notificationGroup id="com.google.idea.blaze.base.ide.TransferNotificationActivity" displayType="BALLOON"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.ide.TransferNotificationActivity"/>
