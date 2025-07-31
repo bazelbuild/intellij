@@ -29,14 +29,14 @@ jobs:
 
       - name: Update version.bzl
         run: |
-          bazel build //intellij_platform_sdk:build_name --define=ij_product=${{ matrix.product }}
-          echo "VERSION = '$(cat bazel-bin/intellij_platform_sdk/build_name.txt)-${{ inputs.version }}'" > version.bzl
+          echo "VERSION = '${{ inputs.version }}'" > version.bzl
 
       - name: Build Plugin Zip
         run: bazel build //clwb:clwb_bazel_zip --define=ij_product=${{ matrix.product }}
 
       - name: Rename Plugin Zip
         run: |
+          bazel build //intellij_platform_sdk:build_name --define=ij_product=${{ matrix.product }}
           mkdir out
           mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
 
@@ -93,4 +93,4 @@ jobs:
 
       - name: Upload Releases
         run: |
-          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin \;
+          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin \; 1> /dev/null
