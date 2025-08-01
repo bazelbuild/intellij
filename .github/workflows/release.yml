@@ -93,4 +93,4 @@ jobs:
 
       - name: Upload Releases
         run: |
-          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin \; 1> /dev/null
+          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin -o /dev/null \;
