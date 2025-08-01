@@ -254,6 +254,15 @@ def select_from_plugin_api_version_directory(params):
 
     return _do_select_for_plugin_api(params)
 
+def select_build_name():
+    """Returns a select for name of the current build target, e.g. clion-2025.2"""
+
+    params = dict()
+    for ij_product, value in DIRECT_IJ_PRODUCTS.items():
+        params[ij_product] = ["%s-%s" % (value.ide, value.version)]
+
+    return _do_select_for_plugin_api(params)
+
 def get_versions_to_build(product):
     """"Returns a set of unique product version aliases to test and build during regular release process.
 

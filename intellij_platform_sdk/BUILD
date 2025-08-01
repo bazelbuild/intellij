@@ -14,7 +14,9 @@ load(
 load(
     ":build_defs.bzl",
     "select_from_plugin_api_directory",
+    "select_build_name"
 )
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
@@ -540,4 +542,10 @@ filegroup(
         clion = [":application_info_json"],
         intellij = [":application_info_json"],
     ),
+)
+
+write_file(
+    name = "build_name",
+    out = "build_name.txt",
+    content = select_build_name(),
 )
