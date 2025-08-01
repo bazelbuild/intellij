@@ -9,23 +9,6 @@ cc_binary(
     ],
 )
 
-cc_binary(
-    name = "echo0",
-    srcs = ["echo.cc"],
-)
-
-cc_binary(
-    name = "echo1",
-    srcs = ["echo.cc"],
-    args = ["BUILD_FILE_STRING"],
-)
-
-cc_binary(
-    name = "echo2",
-    srcs = ["echo.cc"],
-    args = ["$(location :echo.cc)"],
-)
-
 cc_test(
     name = "test",
     srcs = ["test.cc"],

@@ -57,10 +57,10 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
   }
 
   private void checkRun() throws Exception {
-    final var run = execute(Label.of("//main:hello-world"), DefaultRunExecutor.EXECUTOR_ID, "");
+    final var run = execute(Label.of("//main:echo0"), DefaultRunExecutor.EXECUTOR_ID, "");
     run.assertSuccess();
 
-    final var debug = execute(Label.of("//main:hello-world"), DefaultDebugExecutor.EXECUTOR_ID, "");
+    final var debug = execute(Label.of("//main:echo0"), DefaultDebugExecutor.EXECUTOR_ID, "");
     debug.assertSuccess();
   }
 
