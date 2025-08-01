@@ -55,10 +55,9 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
 
   /** Flags ready to be used directly as args for external processes. */
   public List<String> getFlagsForExternalProcesses() {
-    List<String> processedFlags =
-        flags.stream()
-            .map(s -> ParametersListUtil.parse(s, false, true).get(0))
-            .collect(Collectors.toList());
+    final var processedFlags = flags.stream()
+        .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
+        .collect(Collectors.toList());
     return BlazeFlags.expandBuildFlags(processedFlags);
   }
 
