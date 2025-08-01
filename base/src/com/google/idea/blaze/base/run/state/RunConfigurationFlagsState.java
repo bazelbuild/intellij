@@ -21,7 +21,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.execution.ParametersListUtil;
 import java.awt.Container;
@@ -39,14 +42,14 @@ import org.jdom.Element;
 /** State for a list of user-defined flags. */
 public final class RunConfigurationFlagsState implements RunConfigurationState {
 
-  private final String tag;
+  private final DataKey<String[]> key;
   private final String fieldLabel;
 
   /** Unprocessed flags, as the user entered them, tokenised on unquoted whitespace. */
   private ImmutableList<String> flags = ImmutableList.of();
 
-  public RunConfigurationFlagsState(String tag, String fieldLabel) {
-    this.tag = tag;
+  public RunConfigurationFlagsState(DataKey<String[]> key, String fieldLabel) {
+    this.key = key;
     this.fieldLabel = fieldLabel;
   }
 
@@ -69,15 +72,15 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
   }
 
   public RunConfigurationFlagsState copy() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState(tag, fieldLabel);
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, fieldLabel);
     state.setRawFlags(getRawFlags());
     return state;
   }
 
   @Override
   public void readExternal(Element element) {
-    ImmutableList.Builder<String> flagsBuilder = ImmutableList.builder();
-    for (Element e : element.getChildren(tag)) {
+    final var flagsBuilder = ImmutableList.<String>builder();
+    for (Element e : element.getChildren(key.getName())) {
       String flag = e.getTextTrim();
       if (flag != null && !flag.isEmpty()) {
         flagsBuilder.add(flag);
@@ -87,10 +90,19 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
   }
 
   @Override
+  public void readContext(DataContext ctx) throws InvalidDataException {
+    final var data = ctx.getData(key);
+
+    if (data != null) {
+      flags = ImmutableList.copyOf(data);
+    }
+  }
+
+  @Override
   public void writeExternal(Element element) {
-    element.removeChildren(tag);
+    element.removeChildren(key.getName());
     for (String flag : flags) {
-      Element child = new Element(tag);
+      Element child = new Element(key.getName());
       child.setText(flag);
       element.addContent(child);
     }
