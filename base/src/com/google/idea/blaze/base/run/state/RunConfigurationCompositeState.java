@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.state;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -43,6 +44,13 @@ public abstract class RunConfigurationCompositeState implements RunConfiguration
       states = initializeStates();
     }
     return states;
+  }
+
+  @Override
+  public final void readContext(DataContext context) throws InvalidDataException {
+    for (RunConfigurationState state : getStates()) {
+      state.readContext(context);
+    }
   }
 
   @Override

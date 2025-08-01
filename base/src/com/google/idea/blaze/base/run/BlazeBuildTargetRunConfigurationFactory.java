@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -58,7 +59,7 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
   }
 
   @Override
-  public void setupConfiguration(RunConfiguration configuration, Label label) {
+  public void setupConfiguration(DataContext context, RunConfiguration configuration, Label label) {
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) configuration;
     TargetInfo target = findProjectTarget(configuration.getProject(), label);
     blazeConfig.setTargetInfo(target);
@@ -66,11 +67,12 @@ public class BlazeBuildTargetRunConfigurationFactory extends BlazeRunConfigurati
       return;
     }
 
-    BlazeCommandRunConfigurationCommonState state =
-        blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    final var state = blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (state != null) {
+      state.readContext(context);
       state.getCommandState().setCommand(commandForRuleType(target.getRuleType()));
     }
+
     blazeConfig.setGeneratedName();
   }
 
