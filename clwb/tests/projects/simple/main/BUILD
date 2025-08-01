@@ -10,12 +10,20 @@ cc_binary(
 )
 
 cc_binary(
-    name = "echo",
+    name = "echo0",
     srcs = ["echo.cc"],
-    args = [
-        "BUILD_FILE_STRING",
-        "$(location :echo.cc)",
-    ],
+)
+
+cc_binary(
+    name = "echo1",
+    srcs = ["echo.cc"],
+    args = ["BUILD_FILE_STRING"],
+)
+
+cc_binary(
+    name = "echo2",
+    srcs = ["echo.cc"],
+    args = ["$(location :echo.cc)"],
 )
 
 cc_test(

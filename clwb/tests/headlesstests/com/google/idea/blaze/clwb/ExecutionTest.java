@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebuggerManager;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
@@ -51,17 +52,60 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     errors.assertNoErrors();
 
     checkRun();
-    checkEcho();
     checkTest();
+    checkArgs();
   }
 
   private void checkRun() throws Exception {
-    final var result = execute(Label.of("//main:hello-world"), DefaultRunExecutor.EXECUTOR_ID, new String[]{});
-    result.assertSuccess();
+    final var run = execute(Label.of("//main:hello-world"), DefaultRunExecutor.EXECUTOR_ID, "");
+    run.assertSuccess();
+
+    final var debug = execute(Label.of("//main:hello-world"), DefaultDebugExecutor.EXECUTOR_ID, "");
+    debug.assertSuccess();
   }
 
-  private void checkEcho() throws Exception {
-    final var result = execute(Label.of("//main:echo"), DefaultDebugExecutor.EXECUTOR_ID, new String[]{"CONFIG_STRING"});
+  private void checkTest() throws Exception {
+    final var run = execute(Label.of("//main:test"), DefaultRunExecutor.EXECUTOR_ID, "");
+    run.assertSuccess();
+
+    final var debug = execute(Label.of("//main:test"), DefaultDebugExecutor.EXECUTOR_ID, "");
+    debug.assertSuccess();
+  }
+
+  private void checkArgs() throws Exception {
+    checkRunConfigArgs("'one argument with spaces'", List.of("one argument with spaces"));
+    checkRunConfigArgs("'one argument' 'another argument'", List.of("one argument", "another argument"));
+
+    assertThat(executeEcho("echo1", DefaultRunExecutor.EXECUTOR_ID, "CONFIG_RUN")).containsExactly(
+        "BUILD_FILE_STRING",
+        "CONFIG_RUN"
+    );
+    assertThat(executeEcho("echo1", DefaultDebugExecutor.EXECUTOR_ID, "CONFIG_DEBUG")).containsExactly(
+        "BUILD_FILE_STRING",
+        "CONFIG_DEBUG"
+    );
+
+    assertThat(executeEcho("echo2", DefaultRunExecutor.EXECUTOR_ID, "CONFIG_RUN")).containsExactly(
+        "main/echo.cc",
+        "CONFIG_RUN"
+    );
+    assertThat(executeEcho("echo2", DefaultDebugExecutor.EXECUTOR_ID, "CONFIG_DEBUG")).containsExactly(
+        "main/echo.cc",
+        "CONFIG_DEBUG"
+    );
+  }
+
+  private void checkRunConfigArgs(String args, List<String> expected) throws Exception {
+    assertThat(executeEcho("echo0", DefaultRunExecutor.EXECUTOR_ID, args)).containsExactly(expected.toArray());
+    assertThat(executeEcho("echo0", DefaultDebugExecutor.EXECUTOR_ID, args)).containsExactly(expected.toArray());
+  }
+
+  /**
+   * Executes the echo program and returns the programs output lines. The
+   * program simply writes all received arguments to a file.
+   */
+  private List<String> executeEcho(String target, String executorId, String args) throws Exception {
+    final var result = execute(Label.of("//main:" + target), executorId, args);
     result.assertSuccess();
 
     final var line = result.output().lines().filter((it) -> it.startsWith(ECHO_OUTPUT_MARKER)).findFirst();
@@ -70,27 +114,23 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     final var path = Path.of(line.get().substring(ECHO_OUTPUT_MARKER.length()));
     assertThat(Files.exists(path)).isTrue();
 
-    final var output = Files.readAllLines(path);
-    assertThat(output).containsExactly(
-        "BUILD_FILE_STRING",
-        "main/echo.cc",
-        "CONFIG_STRING"
-    );
+    return Files.readAllLines(path);
   }
 
-  private void checkTest() throws Exception {
-    final var result = execute(Label.of("//main:test"), DefaultRunExecutor.EXECUTOR_ID, new String[]{});
-    result.assertSuccess();
-  }
-
-  private ExecutionResult execute(Label label, String executorId, String[] bazelFlags) throws Exception {
+  /**
+   * Executes the run configuration for the given label with the given executor.
+   * The flags are set on the run configuration. Supported executors:
+   * - DefaultRunExecutor: just runs the binary or test
+   * - DefaultDebugExecutor: debugs the binary or test
+   */
+  private ExecutionResult execute(Label label, String executorId, String args) throws Exception {
     final var element = findRule(label);
 
     final var context = ConfigurationContext.getFromContext(SimpleDataContext.builder()
         .add(CommonDataKeys.PROJECT, getProject())
         .add(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element))
         .add(Location.DATA_KEY, PsiLocation.fromPsiElement(element))
-        .add(BlazeCommandRunConfigurationCommonState.USER_EXE_FLAG, bazelFlags)
+        .add(BlazeCommandRunConfigurationCommonState.USER_EXE_FLAG, new String[]{args})
         .build(), ActionPlaces.UNKNOWN);
 
     final var executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
