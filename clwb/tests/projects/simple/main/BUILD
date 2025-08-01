@@ -9,6 +9,15 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "echo",
+    srcs = ["echo.cc"],
+    args = [
+        "BUILD_FILE_STRING",
+        "$(location :echo.cc)",
+    ],
+)
+
 cc_test(
     name = "test",
     srcs = ["test.cc"],

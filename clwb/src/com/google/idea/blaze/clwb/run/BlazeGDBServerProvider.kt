@@ -13,144 +13,142 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run;
+package com.google.idea.blaze.clwb.run
 
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.run.state.RunConfigurationState;
-import com.google.idea.blaze.clwb.ToolchainUtils;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.PathUtil;
-import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
-import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
-import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager;
-import java.io.File;
-import javax.annotation.Nullable;
+import com.google.common.collect.ImmutableList
+import com.google.idea.blaze.base.command.BlazeCommandName
+import com.google.idea.blaze.base.command.BlazeFlags
+import com.google.idea.blaze.base.run.state.RunConfigurationState
+import com.google.idea.blaze.clwb.ToolchainUtils
+import com.google.idea.common.experiments.BoolExperiment
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.PathUtil
+import com.jetbrains.cidr.cpp.toolchains.CPPDebugger
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
+import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
-/** CLion-specific class that provides the slightly customized Toolchain for use with gdbserver */
-public class BlazeGDBServerProvider {
-  private static final Logger logger = Logger.getInstance(BlazeGDBServerProvider.class);
+private val LOG = logger<BlazeGDBServerProvider>()
+
+private val USE_REMOTE_DEBUGGING_WRAPPER: BoolExperiment = BoolExperiment("cc.remote.debugging.wrapper", true)
+
+private const val GDB_SERVER_PROPERTY = "clwb.gdbserverPath"
+
+/** CLion-specific class that provides the slightly customized Toolchain for use with gdbserver  */
+object BlazeGDBServerProvider {
 
   /**
    * This is a script distributed with the plugin that makes gdbserver behave more like how the
    * environment expects. It will respond to signals, exit with the same exit code as the inferior,
    * and escape the parameters correctly.
    */
-  private static final NotNullLazyValue<String> GDBSERVER_WRAPPER =
-      new NotNullLazyValue<String>() {
-        @Override
-        protected String compute() {
-          String jarPath = PathUtil.getJarPathForClass(BlazeCidrLauncher.class);
-          File pluginrootDirectory = new File(jarPath).getParentFile().getParentFile();
-          return new File(pluginrootDirectory, "gdb/gdbserver").getPath();
-        }
-      };
-
-  private static final BoolExperiment useRemoteDebuggingWrapper =
-      new BoolExperiment("cc.remote.debugging.wrapper", true);
+  private val GDBSERVER_WRAPPER: String by lazy {
+    if (System.getProperty(GDB_SERVER_PROPERTY) != null) {
+      Path.of(System.getProperty(GDB_SERVER_PROPERTY)).absolutePathString()
+    } else {
+      val jarPath = Path.of(PathUtil.getJarPathForClass(BlazeCidrLauncher::class.java))
+      jarPath.parent.parent.resolve("gdb").resolve("gdbserver").toString()
+    }
+  }
 
   // These flags are used when debugging cc_binary targets when remote debugging
   // is enabled (cc.remote.debugging)
-  private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_RUN =
-      ImmutableList.of(
-          "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off");
+  private val EXTRA_FLAGS_FOR_DEBUG_RUN = ImmutableList.of<String>(
+    "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off"
+  )
 
   // These flags are used when debugging cc_test targets when remote debugging
   // is enabled (cc.remote.debugging)
-  private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_TEST =
-      ImmutableList.of(
-          "--compilation_mode=dbg",
-          "--strip=never",
-          "--dynamic_mode=off",
-          "--test_timeout=3600",
-          BlazeFlags.NO_CACHE_TEST_RESULTS,
-          BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
-          BlazeFlags.DISABLE_TEST_SHARDING);
+  private val EXTRA_FLAGS_FOR_DEBUG_TEST = ImmutableList.of<String>(
+    "--compilation_mode=dbg",
+    "--strip=never",
+    "--dynamic_mode=off",
+    "--test_timeout=3600",
+    BlazeFlags.NO_CACHE_TEST_RESULTS,
+    BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
+    BlazeFlags.DISABLE_TEST_SHARDING
+  )
 
   // Allows the fission flag to be disabled as workaround for
-  // https://github.com/bazelbuild/intellij/issues/5604
-  static ImmutableList<String> getOptionalFissionArguments() {
-    if(Registry.is("bazel.clwb.debug.fission.disabled")) {
-      return ImmutableList.of();
+  @JvmStatic
+  fun getOptionalFissionArguments(): ImmutableList<String> {
+    return if (Registry.`is`("bazel.clwb.debug.fission.disabled")) {
+      ImmutableList.of()
     } else {
-      return ImmutableList.of("--fission=yes");
+      ImmutableList.of("--fission=yes")
     }
   }
 
-  static ImmutableList<String> getFlagsForDebugging(RunConfigurationState state) {
-    if (!(state instanceof BlazeCidrRunConfigState)) {
-      return ImmutableList.of();
-    }
-    BlazeCidrRunConfigState handlerState = (BlazeCidrRunConfigState) state;
-    BlazeCommandName commandName = handlerState.getCommandState().getCommand();
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-
-    CPPToolchains.Toolchain toolchain = ToolchainUtils.getToolchain();
-    String gdbServerPath = BlazeGDBServerProvider.getGDBServerPath(toolchain);
-    if (gdbServerPath == null) {
-      // couldn't find it, fall back to trying PATH
-      gdbServerPath = "gdbserver";
+  @JvmStatic
+  fun getFlagsForDebugging(state: RunConfigurationState?): ImmutableList<String> {
+    if (state !is BlazeCidrRunConfigState) {
+      return ImmutableList.of()
     }
 
-    if (useRemoteDebuggingWrapper.getValue()) {
-      String runUnderOption =
-          String.format(
-              "--run_under='%s' '%s' '%s' --once localhost:%d --target",
-              "bash",
-              GDBSERVER_WRAPPER.getValue(),
-              gdbServerPath,
-              handlerState.getDebugPortState().port);
-      builder.add(runUnderOption);
+    val commandName = state.commandState.command
+    val builder = ImmutableList.builder<String>()
+
+    val toolchain = ToolchainUtils.getToolchain()
+
+    // if gdbserver could not be found, fall back to trying PATH
+    val gdbServerPath = getGDBServerPath(toolchain) ?: "gdbserver"
+
+    if (USE_REMOTE_DEBUGGING_WRAPPER.value) {
+      builder.add(
+        String.format(
+          "--run_under='bash' '%s' '%s' --once localhost:%d --target",
+          GDBSERVER_WRAPPER,
+          gdbServerPath,
+          state.getDebugPortState().port,
+        )
+      )
     } else {
-      String runUnderOption =
-          String.format(
-              "--run_under='%s' --once localhost:%d",
-              gdbServerPath, handlerState.getDebugPortState().port);
-      builder.add(runUnderOption);
+      builder.add(
+        String.format(
+          "--run_under='%s' --once localhost:%d",
+          gdbServerPath,
+          state.getDebugPortState().port,
+        )
+      )
     }
-    if (BlazeCommandName.RUN.equals(commandName)) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN);
-      builder.addAll(getOptionalFissionArguments());
-      return builder.build();
+
+    if (BlazeCommandName.RUN == commandName) {
+      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN)
+      builder.addAll(getOptionalFissionArguments())
+      return builder.build()
     }
-    if (BlazeCommandName.TEST.equals(commandName)) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST);
-      builder.addAll(getOptionalFissionArguments());
-      return builder.build();
+
+    if (BlazeCommandName.TEST == commandName) {
+      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST)
+      builder.addAll(getOptionalFissionArguments())
+      return builder.build()
     }
-    return ImmutableList.of();
+
+    return ImmutableList.of()
   }
 
-  @Nullable
-  private static String getGDBServerPath(CPPToolchains.Toolchain toolchain) {
-    String gdbPath;
-
+  private fun getGDBServerPath(toolchain: CPPToolchains.Toolchain): String? {
     // TODO: this still depends on the default toolchain
-    CPPDebugger.Kind debuggerKind = toolchain.getDebuggerKind();
-    switch (debuggerKind) {
-      case CUSTOM_GDB:
-        gdbPath = toolchain.getCustomGDBExecutablePath();
-        break;
-      case BUNDLED_GDB:
-        gdbPath = CidrDebuggerPathManager.getBundledGDBBinary().getPath();
-        break;
-      default:
-        logger.error("Trying to resolve gdbserver executable for " + debuggerKind.toString());
-        return null;
+    val gdbPath = when (toolchain.debuggerKind) {
+      CPPDebugger.Kind.CUSTOM_GDB -> toolchain.customGDBExecutablePath
+      CPPDebugger.Kind.BUNDLED_GDB -> CidrDebuggerPathManager.getBundledGDBBinary().path
+
+      else -> {
+        LOG.error("Trying to resolve gdbserver executable for ${toolchain.debuggerKind}")
+        return null
+      }
     }
 
     // We are going to just try to append "server" to the gdb executable path - it would be nicer
     // to have this stored as part of the toolchain configuration, but it isn't.
-    File gdbServer = new File(gdbPath + "server");
-    if (!gdbServer.exists()) {
-      return null;
+    val gdbServer = Path.of(gdbPath + "server")
+    if (!Files.exists(gdbServer)) {
+      return null
     }
-    return gdbServer.getAbsolutePath();
-  }
 
+    return gdbServer.absolutePathString()
+  }
 }
