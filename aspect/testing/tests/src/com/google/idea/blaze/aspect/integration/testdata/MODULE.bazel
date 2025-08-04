@@ -1,2 +1,2 @@
-bazel_dep(name = "rules_shell", version = "0.5.0")
+bazel_dep(name = "rules_shell", version = "0.5.1")
 
