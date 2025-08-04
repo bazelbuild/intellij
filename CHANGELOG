@@ -1,3 +1,9 @@
+v2025.08.04
+===========
+* This is the first release by JetBrains.
+* Updated vendor information in plugin.xml #7819
+* In IDE notification to inform about the transfer #7812
+
 v2025.07.24
 ===========
 * This is the last release for this plugin from Google. Starting from the following release this plugin is not offered by nor affiliated with Google. 
