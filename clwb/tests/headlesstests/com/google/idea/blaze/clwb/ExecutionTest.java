@@ -3,6 +3,7 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer;
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.common.Label;
 import com.intellij.execution.ExecutionListener;
@@ -12,6 +13,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,6 +25,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.testFramework.PlatformTestUtil;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
@@ -33,17 +36,29 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ExecutionTest extends ClwbHeadlessTestCase {
 
+  @Override
+  protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
+    super.addAllowedVfsRoots(roots);
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "bazel-out/darwin_arm64-dbg/bin/main/hello-world"));
+  }
+
   @Test
   public void testClwb() throws Exception {
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
     checkRun();
+    checkDebug();
     checkTest();
   }
 
   private void checkRun() throws Exception {
     final var result = execute(Label.of("//main:hello-world"), DefaultRunExecutor.EXECUTOR_ID);
+    assertThat(result).isEqualTo(0);
+  }
+
+  private void checkDebug() throws Exception {
+    final var result = execute(Label.of("//main:hello-world"), DefaultDebugExecutor.EXECUTOR_ID);
     assertThat(result).isEqualTo(0);
   }
 
@@ -61,7 +76,7 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
         .add(Location.DATA_KEY, PsiLocation.fromPsiElement(element))
         .build(), ActionPlaces.UNKNOWN);
 
-    final var executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+    final var executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     assertThat(executor).isNotNull();
 
     final var producer = RunConfigurationProducer.getInstance(BlazeBuildFileRunConfigurationProducer.class);
