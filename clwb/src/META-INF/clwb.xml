@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <vendor>Google</vendor>
+  <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.clion</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>

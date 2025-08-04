@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <vendor>Google</vendor>
+  <vendor>JetBrains</vendor>
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
