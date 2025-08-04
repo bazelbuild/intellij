@@ -10,6 +10,10 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      actions: write
+
     strategy:
       matrix:
         product: [clion-oss-latest-stable, clion-oss-oldest-stable]
@@ -48,6 +52,10 @@ jobs:
           retention-days: 1
 
   gh-release:
+    permissions:
+      contents: write
+      actions: read
+
     needs: build
 
     runs-on: ubuntu-latest
@@ -76,6 +84,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   jb-release:
+    permissions:
+      contents: none
+      actions: read
+
     needs: build
 
     runs-on: ubuntu-latest
