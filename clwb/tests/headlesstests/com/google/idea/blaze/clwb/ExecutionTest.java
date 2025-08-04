@@ -39,7 +39,11 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "bazel-out/darwin_arm64-dbg/bin/main/hello-world"));
+
+    // use flat?
+    var fastBuildRoot = AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "main/hello-world");
+    var debugBuildRoot = AllowedVfsRoot.recursive(fastBuildRoot.toString().replace("fastbuild", "dbg"));
+    roots.add(debugBuildRoot);
   }
 
   @Test
