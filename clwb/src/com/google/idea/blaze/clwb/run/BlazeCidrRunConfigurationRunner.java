@@ -44,6 +44,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 
+import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
@@ -110,22 +114,39 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     }
 
     final var flagsBuilder = ImmutableList.<String>builder();
-
-    if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
-      flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
-
-      if (SystemInfo.isMac) {
-        flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
-      }
+    if (Registry.is("bazel.clwb.debug.enforce.dbg.compilation.mode")) {
+      flagsBuilder.add("--compilation_mode=dbg");
+      flagsBuilder.add("--strip=never");
+      flagsBuilder.add("--dynamic_mode=off");
     }
 
-    flagsBuilder.add("--compilation_mode=dbg");
-    flagsBuilder.add("--copt=-O0");
-    flagsBuilder.add("--copt=-g");
-    flagsBuilder.add("--strip=never");
-    flagsBuilder.add("--dynamic_mode=off");
-    flagsBuilder.addAll(BlazeGDBServerProvider.getOptionalFissionArguments());
+    var compilerKind = RunConfigurationUtils.getCompilerKind(configuration);
+    if (compilerKind == ClangClCompilerKind.INSTANCE || compilerKind == MSVCCompilerKind.INSTANCE) {
+      var sb = new CidrSwitchBuilder();
+      var sb2 = compilerKind.getSwitchBuilder(sb);
+      sb2
+          .withDebugInfo(-1) // ignored for msvc/clangcl
+          .withDisableOptimization();
 
+      sb2.buildRaw().forEach((opt) -> {
+        flagsBuilder.add("--copt=" + opt);
+      });
+
+    } else {
+      if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is(
+          "bazel.trim.absolute.path.disabled")) {
+        flagsBuilder.add(
+            "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
+
+        if (SystemInfo.isMac) {
+          flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
+        }
+      }
+
+      flagsBuilder.add("--copt=-O0");
+      flagsBuilder.add("--copt=-g");
+      flagsBuilder.addAll(BlazeGDBServerProvider.getOptionalFissionArguments());
+    }
     return flagsBuilder.build();
   }
 
