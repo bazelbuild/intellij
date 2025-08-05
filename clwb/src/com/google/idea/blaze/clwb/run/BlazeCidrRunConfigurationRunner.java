@@ -114,7 +114,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
 
       if (SystemInfo.isMac) {
-        flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.", "--linkopt=-Wl,-reproducible", "--remote_download_all");
+        flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.", "--linkopt=-Wl,-reproducible", "--remote_download_regex='.*_objs/.*.o$'");
       }
     }
 
