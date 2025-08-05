@@ -24,7 +24,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.system.OS;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +43,14 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     super.addAllowedVfsRoots(roots);
 
     // use flat?
-    var fastBuildRoot = AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "main/hello-world");
+    String path;
+    if (SystemInfo.isWindows) {
+      path = "main/hello-world.exe";
+    } else {
+      path = "main/hello-world";
+    }
+
+    var fastBuildRoot = AllowedVfsRoot.bazelBinRecursive(myBazelInfo, path);
     var debugBuildRoot = AllowedVfsRoot.recursive(fastBuildRoot.toString().replace("fastbuild", "dbg"));
     roots.add(debugBuildRoot);
   }
