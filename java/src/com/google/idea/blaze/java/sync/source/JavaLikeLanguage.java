@@ -96,6 +96,7 @@ public interface JavaLikeLanguage {
     @Override
     public ImmutableSet<Kind> getDebuggableKinds() {
       return ImmutableSet.of(
+          JavaBlazeRules.RuleTypes.EXECUTABLE_JAR.getKind(),
           JavaBlazeRules.RuleTypes.JAVA_BINARY.getKind(),
           JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
           JavaBlazeRules.RuleTypes.JAVA_TEST_SUITE.getKind());
