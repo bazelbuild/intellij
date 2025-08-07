@@ -1,1 +1,1 @@
-bazel_dep(name = "rules_java", version = "8.14.0")
+bazel_dep(name = "rules_java", version = "8.15.1")
