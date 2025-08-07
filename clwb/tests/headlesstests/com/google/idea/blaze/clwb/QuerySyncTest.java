@@ -8,7 +8,6 @@ import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.OSRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -51,7 +50,7 @@ public class QuerySyncTest extends ClwbHeadlessTestCase {
 
   private void checkAnalysis() throws ExecutionException {
     final var result = enableAnalysisFor(findProjectFile("main/hello-world.cc"));
-    result.assertNoErrors();
+    result.assertNoIssues();
   }
 
   private void checkCompiler() {
@@ -72,7 +71,7 @@ public class QuerySyncTest extends ClwbHeadlessTestCase {
 
   private void checkTest() throws ExecutionException {
     final var result = enableAnalysisFor(findProjectFile("main/test.cc"));
-    result.assertNoErrors();
+    result.assertNoIssues();
 
     final var compilerSettings = findFileCompilerSettings("main/test.cc");
 

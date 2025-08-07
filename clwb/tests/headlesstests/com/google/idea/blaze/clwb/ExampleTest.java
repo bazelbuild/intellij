@@ -20,7 +20,7 @@ public class ExampleTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     assertThat(getSyncStatus("src/hello_world.cc")).isEqualTo(SyncStatus.SYNCED);
     assertThat(getSyncStatus("src/lib/greeting_lib.cc")).isEqualTo(SyncStatus.SYNCED);
