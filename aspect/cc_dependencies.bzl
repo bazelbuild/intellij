@@ -4,6 +4,7 @@ DEPS = [
     "_stl",  # from cc rules
     "malloc",  # from cc_binary rules
     "deps",
+    "implementation_deps",
 ]
 
 CcDepInfo = provider(
