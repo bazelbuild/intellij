@@ -37,22 +37,22 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-private val LOG = logger<VirtualIncludesCacheService>()
+private val LOG = logger<CcIncludesCacheService>()
 
-private const val VIRTUAL_INCLUDES_CACHE_DIR = "_virtual_includes_cache"
+private const val CC_INCLUDES_CACHE_DIR = "_cc_includes_cache"
 private const val VIRTUAL_INCLUDES_BAZEL_DIR = "_virtual_includes"
 private const val VIRTUAL_IMPORTS_BAZEL_DIR = "_virtual_imports"
 
 @Service(Service.Level.PROJECT)
 @Suppress("UnstableApiUsage")
-class VirtualIncludesCacheService(private val project: Project) {
+class CcIncludesCacheService(private val project: Project) {
 
   companion object {
     @JvmStatic
-    fun of(project: Project): VirtualIncludesCacheService = project.service()
+    fun of(project: Project): CcIncludesCacheService = project.service()
 
     @JvmStatic
-    val enabled: Boolean get() = Registry.`is`("bazel.cc.virtual.includes.cache.enabled")
+    val enabled: Boolean get() = Registry.`is`("bazel.cc.includes.cache.enabled")
   }
 
   val cacheDirectory: Path by lazy {
@@ -60,9 +60,9 @@ class VirtualIncludesCacheService(private val project: Project) {
     val importSettings = BlazeImportSettingsManager.getInstance(project).importSettings
 
     if (importSettings != null) {
-      BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve(VIRTUAL_INCLUDES_CACHE_DIR)
+      BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve(CC_INCLUDES_CACHE_DIR)
     } else {
-      Path.of(project.basePath, VIRTUAL_INCLUDES_CACHE_DIR)
+      Path.of(project.basePath, CC_INCLUDES_CACHE_DIR)
     }
   }
 
@@ -87,11 +87,11 @@ class VirtualIncludesCacheService(private val project: Project) {
     cacheTracker.clear()
 
     if (Files.exists(cacheDirectory)) {
-      // I have a feeling, that this will be really slow on Windows, so let's try to avoid this
+      // I have a feeling that this will be really slow on Windows, so let's try to avoid this
       NioFiles.deleteRecursively(cacheDirectory)
     }
 
-    LOG.trace("cleared virtual includes cache")
+    LOG.trace("cleared cc includes cache")
   }
 
   @Synchronized
@@ -117,11 +117,11 @@ class VirtualIncludesCacheService(private val project: Project) {
 
     val targetCacheDirectory = key.cacheDirectory()
 
-    if (!info.includePrefix().isEmpty() || !info.stripIncludePrefix().isEmpty()) {
+    if (info.includePrefix().isNotEmpty() || info.stripIncludePrefix().isNotEmpty()) {
       // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
       val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
 
-      // if there is no _virtual_includes directory the target most likely has no headers
+      // if there is no _virtual_includes directory, the target most likely has no headers
       val virtualIncludesDir = findVirtualIncludesDirectory(bazelBin, key.label) ?: return
 
       try {
@@ -160,7 +160,7 @@ class VirtualIncludesCacheService(private val project: Project) {
   }
 
   @Synchronized
-  fun collectVirtualIncludes(targetIdeInfo: TargetIdeInfo): Stream<String> {
+  fun getIncludePaths(targetIdeInfo: TargetIdeInfo): Stream<String> {
     val info = targetIdeInfo.getcIdeInfo() ?: return Stream.empty()
 
     return sequence {
@@ -208,9 +208,9 @@ class VirtualIncludesCacheService(private val project: Project) {
   }
 }
 
-private class VirtualIncludesFileCache : FileCache {
+private class CcIncludesFileCache : FileCache {
 
-  override fun getName(): String = "Virtual Includes Cache"
+  override fun getName(): String = "Cc Includes Cache"
 
   override fun onSync(
     project: Project,
@@ -220,12 +220,12 @@ private class VirtualIncludesFileCache : FileCache {
     oldProjectData: BlazeProjectData?,
     syncMode: SyncMode,
   ) {
-    if (!VirtualIncludesCacheService.enabled || !syncMode.involvesBlazeBuild()) return
+    if (!CcIncludesCacheService.enabled || !syncMode.involvesBlazeBuild()) return
     LOG.trace("refresh requested onSync: $syncMode")
 
     Scope.push(parentCtx) { ctx ->
       ctx.push(TimingScope(name, TimingScope.EventType.Other))
-      VirtualIncludesCacheService.of(project).refresh(projectData, nonInc = syncMode == SyncMode.FULL)
+      CcIncludesCacheService.of(project).refresh(projectData, nonInc = syncMode == SyncMode.FULL)
     }
   }
 
@@ -234,26 +234,26 @@ private class VirtualIncludesFileCache : FileCache {
     context: BlazeContext,
     buildOutputs: BlazeBuildOutputs,
   ) {
-    if (!VirtualIncludesCacheService.enabled) return
+    if (!CcIncludesCacheService.enabled) return
     LOG.trace("refresh files requested")
 
     val projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData() ?: return
-    VirtualIncludesCacheService.of(project).refresh(projectData, nonInc = false)
+    CcIncludesCacheService.of(project).refresh(projectData, nonInc = false)
   }
 
   override fun initialize(project: Project) {}
 }
 
-private class VirtualIncludesCacheLoggedDirectory : LoggedDirectoryProvider {
+private class CcIncludesCacheLoggedDirectory : LoggedDirectoryProvider {
 
   override fun getLoggedDirectory(project: Project): Optional<LoggedDirectoryProvider.LoggedDirectory> {
-    if (!VirtualIncludesCacheService.enabled) return Optional.empty()
+    if (!CcIncludesCacheService.enabled) return Optional.empty()
 
     return Optional.of(
       LoggedDirectoryProvider.LoggedDirectory.builder()
-        .setPath(VirtualIncludesCacheService.of(project).cacheDirectory)
-        .setOriginatingIdePart("CLwB Virtual Includes Cache")
-        .setPurpose("Cache _virtual_includes directories and generated headers")
+        .setPath(CcIncludesCacheService.of(project).cacheDirectory)
+        .setOriginatingIdePart("CLwB Cc Includes Cache")
+        .setPurpose("Cache includes from the execution root")
         .build()
     )
   }
