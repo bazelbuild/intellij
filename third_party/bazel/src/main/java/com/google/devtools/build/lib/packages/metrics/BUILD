@@ -25,6 +25,7 @@ java_library(
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/cmdline",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/collect:extrema",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/packages",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/pkgcache:package_options",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/vfs",
         "//third_party/bazel/src/main/java/com/google/devtools/common/options",
         "//third_party/bazel/src/main/java/net/starlark/java/eval",
