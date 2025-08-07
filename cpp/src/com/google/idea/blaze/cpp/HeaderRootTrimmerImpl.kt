@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.Scope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
-import com.google.idea.blaze.cpp.sync.VirtualIncludesCacheService
+import com.google.idea.blaze.cpp.sync.CcIncludesCacheService
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
@@ -100,8 +100,8 @@ private fun collectExecutionRootPaths(
     paths.addAll(toolchain.builtInIncludeDirectories())
   }
 
-  if (VirtualIncludesCacheService.enabled) {
     removeVirtualIncludes(paths, targetMap)
+  if (CcIncludesCacheService.enabled) {
   }
 
   return paths
