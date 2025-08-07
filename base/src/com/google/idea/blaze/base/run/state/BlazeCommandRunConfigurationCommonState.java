@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -32,8 +33,9 @@ import javax.annotation.Nullable;
  * com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler} types.
  */
 public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCompositeState {
-  private static final String USER_BLAZE_FLAG_TAG = "blaze-user-flag";
-  private static final String USER_EXE_FLAG_TAG = "blaze-user-exe-flag";
+  public static final DataKey<String[]> USER_BLAZE_FLAG = DataKey.create("blaze-user-flag");
+  public static final DataKey<String[]> USER_EXE_FLAG = DataKey.create("blaze-user-exe-flag");
+
   private static final String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + '=';
 
   protected final BlazeCommandState command;
@@ -44,8 +46,8 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
 
   public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
-    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
-    exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
+    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG, buildSystemName + " flags:");
+    exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG, "Executable flags:");
     envVars = new EnvironmentVariablesState();
     blazeBinary = new BlazeBinaryState();
   }

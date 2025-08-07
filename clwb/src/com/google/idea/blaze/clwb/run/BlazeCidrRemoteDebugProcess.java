@@ -21,7 +21,6 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.util.SystemProperties;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
@@ -87,5 +86,9 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
         new File(remoteDebugParameters.getSymbolFile()),
         new File(remoteDebugParameters.getSysroot()),
         remoteDebugParameters.driverPathMapping());
+  }
+
+  public ProcessHandler getTargetProcess() {
+    return targetProcess;
   }
 }
