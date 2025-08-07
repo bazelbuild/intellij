@@ -62,12 +62,12 @@ jobs:
 
     steps:
       - name: Download Latest Plugin Zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: clion-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: clion-oss-oldest-stable
 
@@ -94,12 +94,12 @@ jobs:
 
     steps:
       - name: Download Latest Plugin Zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: clion-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: clion-oss-oldest-stable
 
