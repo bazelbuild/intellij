@@ -19,7 +19,7 @@ public class ExternalIncludesTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkTest();
   }
