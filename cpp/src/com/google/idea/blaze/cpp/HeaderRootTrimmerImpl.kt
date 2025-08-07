@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.command.info.BlazeInfo
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
-import com.google.idea.blaze.base.ideinfo.TargetMap
 import com.google.idea.blaze.base.model.BlazeProjectData
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath
 import com.google.idea.blaze.base.scope.BlazeContext
@@ -55,7 +54,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
   ): ImmutableSet<Path> = Scope.push<ImmutableSet<Path>>(parentContext) { ctx ->
     ctx.push(TimingScope("Resolve header include roots", TimingScope.EventType.Other))
 
-    val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
+    val paths = collectExecutionRootPaths(projectData, targetFilter, toolchainLookupMap)
 
     val builder = ImmutableSet.builder<Path>()
     runBlocking {
@@ -77,13 +76,13 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
 }
 
 private fun collectExecutionRootPaths(
-  targetMap: TargetMap,
+  projectData: BlazeProjectData,
   targetFilter: Predicate<TargetIdeInfo>,
   toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
 ): Set<ExecutionRootPath> {
   val paths = mutableSetOf<ExecutionRootPath>()
 
-  for (target in targetMap.targets()) {
+  for (target in projectData.targetMap.targets()) {
     if (!targetFilter.test(target)) continue
     val ideInfo = target.getcIdeInfo() ?: continue
 
@@ -100,20 +99,11 @@ private fun collectExecutionRootPaths(
     paths.addAll(toolchain.builtInIncludeDirectories())
   }
 
-    removeVirtualIncludes(paths, targetMap)
   if (CcIncludesCacheService.enabled) {
+    paths.removeIf { it.inBazelBin(projectData.blazeInfo) }
   }
 
   return paths
-}
-
-private fun removeVirtualIncludes(paths: MutableSet<ExecutionRootPath>, targetMap: TargetMap) {
-  for ((key, target) in targetMap.map()) {
-    target.getcIdeInfo() ?: continue
-    paths.remove(key.label.executionRootPath())
-  }
-
-  paths.removeIf { it.isVirtualInclude() }
 }
 
 private fun collectHeaderRoots(
@@ -121,13 +111,14 @@ private fun collectHeaderRoots(
   path: ExecutionRootPath,
   projectData: BlazeProjectData,
 ): List<Path> {
-  val possibleDirectories = if (VirtualIncludesCacheService.enabled) {
+  val possibleDirectories = if (CcIncludesCacheService.enabled) {
     listOf(executionRootPathResolver.resolveExecutionRootPath(path).toPath())
   } else {
     executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
   }
 
-  val allowBazelBin = Registry.`is`("bazel.cpp.sync.allow.bazel.bin.header.search.path")
+  val allowBazelBin =
+    Registry.`is`("bazel.cpp.sync.allow.bazel.bin.header.search.path") && !CcIncludesCacheService.enabled
 
   val result = mutableListOf<Path>()
   for (directory in possibleDirectories) {
@@ -192,11 +183,11 @@ private fun ExecutionRootPath.isBazelBin(info: BlazeInfo): Boolean {
   return ExecutionRootPath.pathsEqual(info.blazeBin, this)
 }
 
+private fun ExecutionRootPath.inBazelBin(info: BlazeInfo): Boolean {
+  return ExecutionRootPath.isAncestor(info.blazeBin, this, false)
+}
+
 private fun ExecutionRootPath.isOutputDirectory(info: BlazeInfo): Boolean {
   return ExecutionRootPath.isAncestor(info.blazeGenfiles, this, false)
       || ExecutionRootPath.isAncestor(info.blazeBin, this, false)
-}
-
-private fun ExecutionRootPath.isVirtualInclude(): Boolean {
-  return this.absoluteOrRelativeFile.parentFile?.name == "_virtual_includes"
 }
