@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
-import com.google.idea.blaze.cpp.sync.VirtualIncludesCacheService;
+import com.google.idea.blaze.cpp.sync.CcIncludesCacheService;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -44,7 +44,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -68,7 +67,6 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -260,7 +258,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .forEach(compilerSwitchesBuilder::withMacro);
 
         Function<ExecutionRootPath, Stream<File>> resolver;
-        if (VirtualIncludesCacheService.getEnabled()) {
+        if (CcIncludesCacheService.getEnabled()) {
           resolver = (path) -> Stream.of(executionRootPathResolver.resolveExecutionRootPath(path));
         } else {
           resolver = (path) -> executionRootPathResolver.resolveToIncludeDirectories(path).stream();
@@ -307,9 +305,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
               .forEach(compilerSwitchesBuilder::withSystemIncludePath);
         }
 
-        if (VirtualIncludesCacheService.getEnabled()) {
-          VirtualIncludesCacheService.of(project)
-              .collectVirtualIncludes(targetIdeInfo)
+        if (CcIncludesCacheService.getEnabled()) {
+          CcIncludesCacheService.of(project)
+              .getIncludePaths(targetIdeInfo)
               .forEach(compilerSwitchesBuilder::withIncludePath);
         }
 
