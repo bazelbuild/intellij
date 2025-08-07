@@ -32,7 +32,7 @@ public class LibCppTest extends ClwbHeadlessTestCase {
     assertExists(new File("/usr/bin/clang"));
 
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkCompiler();
     checkLibCpp();

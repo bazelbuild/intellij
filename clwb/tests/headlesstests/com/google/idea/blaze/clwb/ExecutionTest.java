@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.testFramework.PlatformTestUtil;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() throws Exception {
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkRun();
     checkTest();

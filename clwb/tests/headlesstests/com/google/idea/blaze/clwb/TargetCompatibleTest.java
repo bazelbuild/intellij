@@ -21,7 +21,7 @@ public class TargetCompatibleTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() throws Exception {
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkTargets();
   }

@@ -8,10 +8,7 @@ import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.clwb.base.TestUtils;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import java.util.ArrayList;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,10 +24,10 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() {
     Registry.get("bazel.cpp.sync.allow.bazel.bin.header.search.path").setValue(true);
-    Registry.get("bazel.cc.virtual.includes.cache.enabled").setValue(false);
+    Registry.get("bazel.cc.includes.cache.enabled").setValue(false);
 
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkIncludes();
     checkImplDeps();

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.common.PrintOutput;
+import com.intellij.build.events.MessageEvent.Kind;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -73,9 +74,15 @@ public class SyncOutput {
     return builder.toString();
   }
 
-  public void assertNoErrors() {
+  public void assertNoIssues() {
     assertWithMessage("sync contains issues, refer to 'PROJECT SYNC LOG' above")
         .that(issues)
+        .isEmpty();
+  }
+
+  public void assertNoErrors() {
+    assertWithMessage("sync contains errors, refer to 'PROJECT SYNC LOG' above")
+        .that(issues.stream().filter(it -> it.getKind() == Kind.ERROR))
         .isEmpty();
   }
 }

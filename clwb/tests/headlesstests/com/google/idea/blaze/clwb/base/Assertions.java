@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.common.truth.StringSubject;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.util.VfsUtil;
 import com.google.idea.blaze.cpp.sync.CcIncludesCacheService;
 import com.intellij.openapi.project.Project;
@@ -120,5 +121,15 @@ public class Assertions {
     assertThat(CcIncludesCacheService.getEnabled()).isTrue();
 
     assertThat(header.getPath()).startsWith(service.getCacheDirectory().toString());
+  }
+
+  public static void assertWorkspaceHeader(String fileName, OCCompilerSettings compilerSettings, Project project) {
+    final var header = TestUtils.resolveHeader(fileName, compilerSettings);
+    assertThat(header).isNotNull();
+
+    final var importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    assertThat(importSettings).isNotNull();
+
+    assertThat(header.getPath()).startsWith(importSettings.getWorkspaceRoot());
   }
 }
