@@ -13,170 +13,126 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp;
+package com.google.idea.blaze.cpp
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.cidr.lang.CLanguageKind;
-import com.jetbrains.cidr.lang.OCFileTypeHelpers;
-import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import javax.annotation.Nullable;
+import com.google.common.base.Preconditions
+import com.google.common.collect.ImmutableList
+import com.google.common.collect.ImmutableMap
+import com.google.idea.blaze.base.ideinfo.TargetKey
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider
+import com.google.idea.blaze.base.model.BlazeProjectData
+import com.google.idea.blaze.cpp.sync.CcIncludesCacheService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.cidr.lang.CLanguageKind
+import com.jetbrains.cidr.lang.OCFileTypeHelpers
+import com.jetbrains.cidr.lang.OCLanguageKind
 
-/** A clustering of "equivalent" Blaze targets for creating {@link OCResolveConfiguration}. */
-final class BlazeResolveConfiguration {
+private val DEFAULT_LANGUAGE_KIND = CLanguageKind.CPP
 
-  private final Project project;
-  private final BlazeResolveConfigurationData configurationData;
+/** A clustering of "equivalent" Blaze targets for creating [OCResolveConfiguration].  */
+data class BlazeResolveConfiguration(
+  private val configurationData: BlazeResolveConfigurationData,
+  val displayName: String,
+  val targets: ImmutableList<TargetKey>,
+  val sources: ImmutableMap<TargetKey, ImmutableList<VirtualFile>>
+) {
 
-  private final String displayNameIdentifier;
-  private final ImmutableList<TargetKey> targets;
-  private final ImmutableMap<TargetKey, ImmutableList<VirtualFile>> targetSources;
-
-  private BlazeResolveConfiguration(
-      Project project,
-      BlazeResolveConfigurationData configurationData,
-      String displayName,
-      ImmutableList<TargetKey> targets,
-      ImmutableMap<TargetKey, ImmutableList<VirtualFile>> targetSources) {
-    this.project = project;
-    this.configurationData = configurationData;
-    this.displayNameIdentifier = displayName;
-    this.targets = ImmutableList.copyOf(targets);
-    this.targetSources = targetSources;
+  companion object {
+    @JvmStatic
+    fun create(
+      project: Project,
+      blazeProjectData: BlazeProjectData,
+      configurationData: BlazeResolveConfigurationData,
+      targets: Collection<TargetKey>
+    ): BlazeResolveConfiguration = BlazeResolveConfiguration(
+      configurationData,
+      computeDisplayName(targets),
+      ImmutableList.copyOf(targets),
+      computeTargetToSources(project, blazeProjectData, targets)
+    )
   }
 
-  static BlazeResolveConfiguration createForTargets(
-      Project project,
-      BlazeProjectData blazeProjectData,
-      BlazeResolveConfigurationData configurationData,
-      Collection<TargetKey> targets) {
-    return new BlazeResolveConfiguration(
-        project,
-        configurationData,
-        computeDisplayName(targets),
-        ImmutableList.copyOf(targets),
-        computeTargetToSources(blazeProjectData, targets));
+  val compilerSettings: BlazeCompilerSettings get() = configurationData.compilerSettings()
+
+  fun getSources(targetKey: TargetKey): ImmutableList<VirtualFile> {
+    return sources[targetKey] ?: ImmutableList.of()
   }
 
-  public Collection<TargetKey> getTargets() {
-    return targets;
-  }
-
-  private static String computeDisplayName(Collection<TargetKey> targets) {
-    TargetKey minTargetKey = targets.stream().min(TargetKey::compareTo).orElse(null);
-    Preconditions.checkNotNull(minTargetKey);
-    String minTarget = minTargetKey.toString();
-    if (targets.size() == 1) {
-      return minTarget;
-    } else {
-      return String.format("%s and %d other target(s)", minTarget, targets.size() - 1);
-    }
-  }
-
-  public String getDisplayName() {
-    return displayNameIdentifier;
-  }
-
-  boolean isEquivalentConfigurations(BlazeResolveConfiguration other) {
-    return configurationData.equals(other.configurationData)
-        && displayNameIdentifier.equals(other.displayNameIdentifier)
-        && targets.equals(other.targets)
-        && targetSources.equals(other.targetSources);
-  }
-
-  @Nullable
-  OCLanguageKind getDeclaredLanguageKind(VirtualFile sourceOrHeaderFile) {
-    String fileName = sourceOrHeaderFile.getName();
+  fun getDeclaredLanguageKind(project: Project, sourceOrHeaderFile: VirtualFile): OCLanguageKind? {
+    val fileName = sourceOrHeaderFile.name
     if (OCFileTypeHelpers.isSourceFile(fileName)) {
-      return getLanguageKind(sourceOrHeaderFile);
+      return getLanguageKind(sourceOrHeaderFile)
     }
 
     if (OCFileTypeHelpers.isHeaderFile(fileName)) {
-      return getLanguageKind(SourceFileFinder.findAndGetSourceFileForHeaderFile(project, sourceOrHeaderFile));
+      return getLanguageKind(SourceFileFinder.findAndGetSourceFileForHeaderFile(project, sourceOrHeaderFile))
     }
 
-    return null;
+    return null
   }
 
-  private OCLanguageKind getLanguageKind(@Nullable VirtualFile sourceFile) {
-    if (sourceFile == null)
-      return getMaximumLanguageKind();
+  private fun getLanguageKind(sourceFile: VirtualFile?): OCLanguageKind {
+    if (sourceFile == null) return DEFAULT_LANGUAGE_KIND
 
-    OCLanguageKind kind = OCFileTypeHelpers.getLanguageKind(sourceFile.getName());
-    return kind != null ? kind : getMaximumLanguageKind();
+    val kind = OCFileTypeHelpers.getLanguageKind(sourceFile.name)
+    return kind ?: DEFAULT_LANGUAGE_KIND
   }
 
-  private static OCLanguageKind getMaximumLanguageKind() {
-    return CLanguageKind.CPP;
+}
+
+private fun computeDisplayName(targets: Collection<TargetKey>): String {
+  val minTargetKey = targets.minOrNull()
+  Preconditions.checkNotNull(minTargetKey)
+
+  return if (targets.size == 1) {
+    minTargetKey.toString()
+  } else {
+    String.format("%s and %d other target(s)", minTargetKey, targets.size - 1)
+  }
+}
+
+
+private fun computeTargetToSources(
+  project: Project,
+  blazeProjectData: BlazeProjectData,
+  targets: Collection<TargetKey>,
+): ImmutableMap<TargetKey, ImmutableList<VirtualFile>> {
+  val builder = ImmutableMap.builder<TargetKey, ImmutableList<VirtualFile>>()
+
+  for (targetKey in targets) {
+    builder.put(targetKey, computeSources(project, blazeProjectData, targetKey))
   }
 
-  @VisibleForTesting
-  List<ExecutionRootPath> getLibraryHeadersRootsInternal() {
-    ImmutableList.Builder<ExecutionRootPath> roots = ImmutableList.builder();
-    roots.addAll(configurationData.transitiveQuoteIncludeDirectories());
-    roots.addAll(configurationData.transitiveIncludeDirectories());
-    roots.addAll(configurationData.transitiveSystemIncludeDirectories());
-    return roots.build();
+  return builder.build()
+}
+
+private fun computeSources(
+  project: Project,
+  blazeProjectData: BlazeProjectData,
+  targetKey: TargetKey,
+): ImmutableList<VirtualFile> {
+  val builder = ImmutableList.builder<VirtualFile>()
+
+  val ideInfo = blazeProjectData.targetMap[targetKey]
+  if (ideInfo?.getcIdeInfo() == null) {
+    return ImmutableList.of()
   }
 
-  @VisibleForTesting
-  ImmutableCollection<String> getTargetCopts() {
-    return configurationData.localCopts();
-  }
+  for (source in ideInfo.sources) {
+    val path = if (source.isGenerated && CcIncludesCacheService.enabled) {
+      CcIncludesCacheService.of(project).resolve(targetKey, source)
+    } else {
+      blazeProjectData.artifactLocationDecoder.decode(source).toPath()
+    } ?: continue
 
-  BlazeCompilerSettings getCompilerSettings() {
-    return configurationData.compilerSettings();
-  }
-
-  ImmutableList<VirtualFile> getSources(TargetKey targetKey) {
-    return targetSources.get(targetKey);
-  }
-
-  private static ImmutableMap<TargetKey, ImmutableList<VirtualFile>> computeTargetToSources(
-      BlazeProjectData blazeProjectData, Collection<TargetKey> targets) {
-    ImmutableMap.Builder<TargetKey, ImmutableList<VirtualFile>> targetSourcesBuilder =
-        ImmutableMap.builder();
-    for (TargetKey targetKey : targets) {
-      targetSourcesBuilder.put(targetKey, computeSources(blazeProjectData, targetKey));
+    val virtualFile = VirtualFileSystemProvider.getInstance().system.findFileByNioFile(path)
+    if (virtualFile == null || !OCFileTypeHelpers.isSourceFile(virtualFile.name)) {
+      continue
     }
-    return targetSourcesBuilder.build();
+
+    builder.add(virtualFile)
   }
 
-  private static ImmutableList<VirtualFile> computeSources(
-      BlazeProjectData blazeProjectData, TargetKey targetKey) {
-    ImmutableList.Builder<VirtualFile> builder = ImmutableList.builder();
-
-    TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
-    if (targetIdeInfo.getcIdeInfo() == null) {
-      return ImmutableList.of();
-    }
-
-    for (ArtifactLocation sourceArtifact : targetIdeInfo.getSources()) {
-      File file = blazeProjectData.getArtifactLocationDecoder().decode(sourceArtifact);
-      VirtualFile vf = VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(file);
-      if (vf == null) {
-        continue;
-      }
-      if (!OCFileTypeHelpers.isSourceFile(vf.getName())) {
-        continue;
-      }
-      builder.add(vf);
-    }
-    return builder.build();
-  }
+  return builder.build()
 }

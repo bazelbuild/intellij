@@ -4,6 +4,7 @@ import com.google.common.hash.HashCode
 import com.google.common.hash.HashFunction
 import com.google.common.hash.Hashing
 import com.google.idea.blaze.base.filecache.FileCache
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider
@@ -187,8 +188,18 @@ class CcIncludesCacheService(private val project: Project) {
     return path
   }
 
+  @Synchronized
+  fun resolve(target: TargetKey, artifact: ArtifactLocation): Path? {
+    if (!artifact.isGenerated) return null
+
+    val path = target.cacheDirectory().resolve(stripVirtualPrefix(artifact.relativePath))
+    if (!Files.exists(path)) return null
+
+    return path
+  }
+
   /**
-   * If the CcInfo was not created by a cc_xxx rule the include prefix and
+   * If the CcInfo was not created by a cc_xxx rule, the include prefix and
    * strip include prefix will not be populated. This heuristic tries to
    * detect these cases and adjust the path accordingly.
    */
