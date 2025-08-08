@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -239,6 +240,9 @@ public final class BlazeCWorkspace implements ProjectComponent {
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
         TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
         if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
+          continue;
+        }
+        if (!targetIdeInfo.getKind().hasLanguage(LanguageClass.C)) {
           continue;
         }
 

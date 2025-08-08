@@ -79,10 +79,4 @@ public class SyncOutput {
         .that(issues)
         .isEmpty();
   }
-
-  public void assertNoErrors() {
-    assertWithMessage("sync contains errors, refer to 'PROJECT SYNC LOG' above")
-        .that(issues.stream().filter(it -> it.getKind() == Kind.ERROR))
-        .isEmpty();
-  }
 }
