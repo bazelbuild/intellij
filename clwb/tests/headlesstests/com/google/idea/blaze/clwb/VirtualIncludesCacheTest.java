@@ -26,7 +26,7 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     Registry.get("bazel.cc.includes.cache.enabled").setValue(true);
 
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkIncludes();
     checkImplDeps();

@@ -232,8 +232,8 @@ test_suite(
         ":query_sync_headless_test",
         ":simple_headless_test",
         ":target_compatible_headless_test",
+        ":virtual_includes_headless_test",
         ":virtual_includes_cache_headless_test",
-        ":virtual_includes_compat_headless_test",
     ],
 )
 
