@@ -234,7 +234,7 @@ final class BlazeConfigurationResolver {
       Collection<TargetKey> targets = entry.getValue();
       dataToConfiguration.put(
           data,
-          BlazeResolveConfiguration.createForTargets(project, blazeProjectData, data, targets));
+          BlazeResolveConfiguration.create(project, blazeProjectData, data, targets));
     }
     context.output(
         PrintOutput.log(
