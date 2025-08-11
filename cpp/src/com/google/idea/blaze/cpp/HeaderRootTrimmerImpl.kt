@@ -84,11 +84,11 @@ private fun collectExecutionRootPaths(
 
   for (target in projectData.targetMap.targets()) {
     if (!targetFilter.test(target)) continue
-    val ideInfo = target.getcIdeInfo() ?: continue
+    val compilationCtx = target.getcIdeInfo()?.compilationContext() ?: continue
 
-    paths.addAll(ideInfo.transitiveSystemIncludeDirectories())
-    paths.addAll(ideInfo.transitiveIncludeDirectories())
-    paths.addAll(ideInfo.transitiveQuoteIncludeDirectories())
+    paths.addAll(compilationCtx.includes())
+    paths.addAll(compilationCtx.quoteIncludes())
+    paths.addAll(compilationCtx.systemIncludes())
   }
 
   // Builtin includes should not be added to the switch builder, because CLion discovers builtin include paths during
