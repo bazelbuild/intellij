@@ -3,11 +3,14 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.clwb.base.TestUtils;
 import com.google.idea.testing.headless.BazelVersionRule;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.system.OS;
 import java.util.ArrayList;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +35,18 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     checkIncludes();
     checkImplDeps();
     checkProto();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    if (OS.CURRENT == OS.Windows) {
+      // TODO: separate protobuf tests, since protobuf will be dropping support for MSVC + Bazel in 34.0
+      builder.addBuildFlag("--define=protobuf_allow_msvc=true");
+    }
+
+    return builder;
   }
 
   @Override
