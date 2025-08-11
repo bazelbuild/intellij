@@ -193,7 +193,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
   public static Builder builder() {
     return new AutoValue_CIdeInfo.Builder()
         .setRuleContext(RuleContext.EMPTY)
-        .setCompilationContext(CompilationContext.EMPTY);
+        .setCompilationContext(CompilationContext.EMPTY)
+        .setDependencies(ImmutableList.of());
   }
 
   @AutoValue.Builder
