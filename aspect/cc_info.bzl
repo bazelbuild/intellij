@@ -1,5 +1,5 @@
 # TEMPLATE-IGNORE-BEGIN
-load(":cc_dependencies.bzl", _collect_cc_deps = "collect_cc_deps")
+_collect_cc_deps = None
 CC_USE_GET_TOOL_FOR_ACTION = True
 # TEMPLATE-IGNORE-END
 
