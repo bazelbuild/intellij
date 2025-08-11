@@ -1,6 +1,6 @@
 # TEMPLATE-IGNORE-BEGIN
-CC_USE_GET_TOOL_FOR_ACTION = True
 load(":cc_dependencies.bzl", _collect_cc_deps = "collect_cc_deps")
+CC_USE_GET_TOOL_FOR_ACTION = True
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
