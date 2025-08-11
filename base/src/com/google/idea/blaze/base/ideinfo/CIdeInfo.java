@@ -26,96 +26,104 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 @AutoValue
 public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
 
-  public abstract ImmutableList<ArtifactLocation> sources();
+  @AutoValue
+  public static abstract class RuleContext implements ProtoWrapper<IntellijIdeInfo.CIdeInfo.RuleContext> {
 
-  public abstract ImmutableList<ArtifactLocation> headers();
+    public abstract ImmutableList<ArtifactLocation> sources();
 
-  public abstract ImmutableList<ArtifactLocation> textualHeaders();
+    public abstract ImmutableList<ArtifactLocation> headers();
 
-  public abstract ImmutableList<String> localCopts();
+    public abstract ImmutableList<ArtifactLocation> textualHeaders();
 
-  public abstract ImmutableList<ExecutionRootPath> transitiveIncludeDirectories();
+    public abstract ImmutableList<String> copts();
 
-  public abstract ImmutableList<ExecutionRootPath> transitiveQuoteIncludeDirectories();
+    public abstract String includePrefix();
 
-  public abstract ImmutableList<String> transitiveDefines();
+    public abstract String stripIncludePrefix();
 
-  public abstract ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories();
+    public static CIdeInfo.RuleContext fromProto(IntellijIdeInfo.CIdeInfo.RuleContext proto) {
+      return new AutoValue_CIdeInfo_RuleContext(
+          ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
+          ProtoWrapper.map(proto.getHeadersList(), ArtifactLocation::fromProto),
+          ProtoWrapper.map(proto.getTextualHeadersList(), ArtifactLocation::fromProto),
+          ProtoWrapper.internStrings(proto.getCoptsList()),
+          ProtoWrapper.internString(proto.getIncludePrefix()),
+          ProtoWrapper.internString(proto.getStripIncludePrefix())
+      );
+    }
 
-  public abstract ImmutableList<TargetKey> transitiveDependencies();
+    @Override
+    public IntellijIdeInfo.CIdeInfo.RuleContext toProto() {
+      return IntellijIdeInfo.CIdeInfo.RuleContext.newBuilder()
+          .addAllSources(ProtoWrapper.mapToProtos(sources()))
+          .addAllHeaders(ProtoWrapper.mapToProtos(headers()))
+          .addAllTextualHeaders(ProtoWrapper.mapToProtos(textualHeaders()))
+          .addAllCopts(copts())
+          .setIncludePrefix(includePrefix())
+          .setStripIncludePrefix(stripIncludePrefix())
+          .build();
+    }
+  }
 
-  public abstract String includePrefix();
+  @AutoValue
+  public static abstract class CompilationContext implements ProtoWrapper<IntellijIdeInfo.CIdeInfo.CompilationContext> {
 
-  public abstract String stripIncludePrefix();
+    public abstract ImmutableList<ArtifactLocation> directHeaders();
+
+    public abstract ImmutableList<String> defines();
+
+    public abstract ImmutableList<ExecutionRootPath> includes();
+
+    public abstract ImmutableList<ExecutionRootPath> quoteIncludes();
+
+    public abstract ImmutableList<ExecutionRootPath> systemIncludes();
+
+    public static CIdeInfo.CompilationContext fromProto(IntellijIdeInfo.CIdeInfo.CompilationContext proto) {
+      return new AutoValue_CIdeInfo_CompilationContext(
+          ProtoWrapper.map(proto.getDirectHeadersList(), ArtifactLocation::fromProto),
+          ProtoWrapper.internStrings(proto.getDefinesList()),
+          ProtoWrapper.map(proto.getIncludesList(), ExecutionRootPath::fromProto),
+          ProtoWrapper.map(proto.getQuoteIncludesList(), ExecutionRootPath::fromProto),
+          ProtoWrapper.map(proto.getSystemIncludesList(), ExecutionRootPath::fromProto)
+      );
+    }
+
+    @Override
+    public IntellijIdeInfo.CIdeInfo.CompilationContext toProto() {
+      return IntellijIdeInfo.CIdeInfo.CompilationContext.newBuilder()
+          .addAllDirectHeaders(ProtoWrapper.mapToProtos(directHeaders()))
+          .addAllDefines(defines())
+          .addAllIncludes(ProtoWrapper.mapToProtos(includes()))
+          .addAllQuoteIncludes(ProtoWrapper.mapToProtos(quoteIncludes()))
+          .addAllSystemIncludes(ProtoWrapper.mapToProtos(systemIncludes()))
+          .build();
+    }
+  }
+
+  public abstract RuleContext ruleContext();
+
+  public abstract CompilationContext compilationContext();
+
+  public abstract ImmutableList<TargetKey> dependencies();
 
   static CIdeInfo fromProto(IntellijIdeInfo.CIdeInfo proto) {
-    return CIdeInfo.builder()
-        .setSources(ProtoWrapper.map(proto.getSourceList(), ArtifactLocation::fromProto))
-        .setHeaders(ProtoWrapper.map(proto.getHeaderList(), ArtifactLocation::fromProto))
-        .setTextualHeaders(ProtoWrapper.map(proto.getTextualHeaderList(), ArtifactLocation::fromProto))
-        .setLocalCopts(ProtoWrapper.internStrings(proto.getTargetCoptList()))
-        .setTransitiveDefines(ProtoWrapper.internStrings(proto.getTransitiveDefineList()))
-        .setTransitiveIncludeDirectories(
-            ProtoWrapper.map(proto.getTransitiveIncludeDirectoryList(), ExecutionRootPath::fromProto))
-        .setTransitiveQuoteIncludeDirectories(
-            ProtoWrapper.map(proto.getTransitiveQuoteIncludeDirectoryList(), ExecutionRootPath::fromProto))
-        .setTransitiveSystemIncludeDirectories(
-            ProtoWrapper.map(proto.getTransitiveSystemIncludeDirectoryList(), ExecutionRootPath::fromProto))
-        .setIncludePrefix(proto.getIncludePrefix())
-        .setStripIncludePrefix(proto.getStripIncludePrefix())
-        .setTransitiveDependencies(ProtoWrapper.map(proto.getTransitiveDependenciesList(), TargetKey::fromProto))
-        .build();
+    return new AutoValue_CIdeInfo(
+        RuleContext.fromProto(proto.getRuleContext()),
+        CompilationContext.fromProto(proto.getCompilationContext()),
+        ProtoWrapper.map(proto.getDependenciesList(), TargetKey::fromProto)
+    );
   }
 
   @Override
   public IntellijIdeInfo.CIdeInfo toProto() {
-    return IntellijIdeInfo.CIdeInfo.newBuilder()
-        .addAllSource(ProtoWrapper.mapToProtos(sources()))
-        .addAllHeader(ProtoWrapper.mapToProtos(headers()))
-        .addAllTextualHeader(ProtoWrapper.mapToProtos(textualHeaders()))
-        .addAllTargetCopt(localCopts())
-        .addAllTransitiveIncludeDirectory(ProtoWrapper.mapToProtos(transitiveIncludeDirectories()))
-        .addAllTransitiveQuoteIncludeDirectory(ProtoWrapper.mapToProtos(transitiveQuoteIncludeDirectories()))
-        .addAllTransitiveDefine(transitiveDefines())
-        .addAllTransitiveSystemIncludeDirectory(ProtoWrapper.mapToProtos(transitiveSystemIncludeDirectories()))
-        .setIncludePrefix(includePrefix())
-        .setStripIncludePrefix(stripIncludePrefix())
-        .addAllTransitiveDependencies(ProtoWrapper.mapToProtos(transitiveDependencies()))
-        .build();
-  }
+    final var builder = IntellijIdeInfo.CIdeInfo.newBuilder()
+        .setCompilationContext(compilationContext().toProto())
+        .addAllDependencies(ProtoWrapper.mapToProtos(dependencies()));
 
-  public static Builder builder() {
-    return new AutoValue_CIdeInfo.Builder();
-  }
+    if (ruleContext() != null) {
+      builder.setRuleContext(ruleContext().toProto());
+    }
 
-  /**
-   * Builder for c rule info
-   */
-  @AutoValue.Builder
-  public abstract static class Builder {
-
-    public abstract Builder setSources(ImmutableList<ArtifactLocation> value);
-
-    public abstract Builder setHeaders(ImmutableList<ArtifactLocation> value);
-
-    public abstract Builder setTextualHeaders(ImmutableList<ArtifactLocation> value);
-
-    public abstract Builder setLocalCopts(ImmutableList<String> value);
-
-    public abstract Builder setTransitiveIncludeDirectories(ImmutableList<ExecutionRootPath> value);
-
-    public abstract Builder setTransitiveQuoteIncludeDirectories(ImmutableList<ExecutionRootPath> value);
-
-    public abstract Builder setTransitiveDefines(ImmutableList<String> value);
-
-    public abstract Builder setTransitiveSystemIncludeDirectories(ImmutableList<ExecutionRootPath> value);
-
-    public abstract Builder setTransitiveDependencies(ImmutableList<TargetKey> value);
-
-    public abstract Builder setIncludePrefix(String value);
-
-    public abstract Builder setStripIncludePrefix(String value);
-
-    public abstract CIdeInfo build();
+    return builder.build();
   }
 }

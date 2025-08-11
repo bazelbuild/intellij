@@ -238,28 +238,31 @@ public final class BlazeCWorkspace implements ProjectComponent {
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages = new HashMap<>();
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles = new HashMap<>();
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
-        TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
-        if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
+        final var targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
+        if (targetIdeInfo == null || !targetIdeInfo.getKind().hasLanguage(LanguageClass.C)) {
           continue;
         }
-        if (!targetIdeInfo.getKind().hasLanguage(LanguageClass.C)) {
+
+        final var cIdeInfo = targetIdeInfo.getcIdeInfo();
+        if (cIdeInfo == null) {
           continue;
         }
+
+        final var compilationCtx = cIdeInfo.compilationContext();
 
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
         final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
         CoptsProcessor.apply(
-            /* options = */ targetIdeInfo.getcIdeInfo().localCopts(),
+            /* options = */ cIdeInfo.ruleContext().copts(),
             /* kind = */ compilerSettings.getCompilerKind(),
             /* sink = */ compilerSwitchesBuilder,
             /* resolve = */ executionRootPathResolver
         );
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
-        targetIdeInfo.getcIdeInfo().transitiveDefines()
-            .forEach(compilerSwitchesBuilder::withMacro);
+        compilationCtx.defines().forEach(compilerSwitchesBuilder::withMacro);
 
         Function<ExecutionRootPath, Stream<File>> resolver;
         if (CcIncludesCacheService.getEnabled()) {
@@ -269,7 +272,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         }
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
-        targetIdeInfo.getcIdeInfo().transitiveIncludeDirectories().stream()
+        compilationCtx.includes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
@@ -277,9 +280,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
-        final var quoteIncludePaths = targetIdeInfo.getcIdeInfo()
-            .transitiveQuoteIncludeDirectories()
-            .stream()
+        final var quoteIncludePaths = compilationCtx.quoteIncludes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
@@ -290,7 +291,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // CcSkylarkApiProvider.system_include_directories
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
-        targetIdeInfo.getcIdeInfo().transitiveSystemIncludeDirectories().stream()
+        compilationCtx.systemIncludes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)

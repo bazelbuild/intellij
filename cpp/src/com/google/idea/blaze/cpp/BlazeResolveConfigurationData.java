@@ -43,15 +43,19 @@ public abstract class BlazeResolveConfigurationData {
   static BlazeResolveConfigurationData create(
       CIdeInfo cIdeInfo,
       CToolchainIdeInfo toolchainIdeInfo,
-      BlazeCompilerSettings compilerSettings) {
+      BlazeCompilerSettings compilerSettings
+  ) {
+    final var ruleCtx = cIdeInfo.ruleContext();
+    final var compilationCtx = cIdeInfo.compilationContext();
+
     return builder()
         .setCompilerSettings(compilerSettings)
         .setToolchainIdeInfo(toolchainIdeInfo)
-        .setLocalCopts(cIdeInfo.localCopts())
-        .setTransitiveIncludeDirectories(cIdeInfo.transitiveIncludeDirectories())
-        .setTransitiveQuoteIncludeDirectories(cIdeInfo.transitiveQuoteIncludeDirectories())
-        .setTransitiveDefines(cIdeInfo.transitiveDefines())
-        .setTransitiveSystemIncludeDirectories(cIdeInfo.transitiveSystemIncludeDirectories())
+        .setLocalCopts(ruleCtx.copts())
+        .setTransitiveIncludeDirectories(compilationCtx.includes())
+        .setTransitiveQuoteIncludeDirectories(compilationCtx.quoteIncludes())
+        .setTransitiveDefines(compilationCtx.defines())
+        .setTransitiveSystemIncludeDirectories(compilationCtx.systemIncludes())
         .build();
   }
 

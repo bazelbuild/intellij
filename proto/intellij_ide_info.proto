@@ -53,21 +53,32 @@ message JavaIdeInfo {
 }
 
 message CIdeInfo {
-  repeated ArtifactLocation source = 1;
+  // Information collected from cc_xxx rule attributes.
+  message RuleContext {
+    repeated ArtifactLocation sources = 1;
+    repeated ArtifactLocation headers = 2;
+    repeated ArtifactLocation textual_headers = 3;
 
-  repeated string transitive_include_directory = 3;
-  repeated string transitive_quote_include_directory = 4;
-  repeated string transitive_define = 5;
-  repeated string transitive_system_include_directory = 6;
+    repeated string copts = 4;
 
-  repeated string target_copt = 7;
-  repeated ArtifactLocation header = 8;
-  repeated ArtifactLocation textual_header = 9;
+    string include_prefix = 5;
+    string strip_include_prefix = 6;
+  }
 
-  string include_prefix = 10;
-  string strip_include_prefix = 11;
+  // Information collected from CcInfo provider.
+  message CompilationContext {
+    repeated ArtifactLocation direct_headers = 1;
 
-  repeated TargetKey transitive_dependencies = 12;
+    repeated string defines = 2;
+    repeated string includes = 3;
+    repeated string quote_includes = 4;
+    repeated string system_includes = 5;
+  }
+
+  RuleContext rule_context = 1;
+  CompilationContext compilation_context = 2;
+
+  repeated TargetKey dependencies = 3;
 }
 
 message AndroidIdeInfo {

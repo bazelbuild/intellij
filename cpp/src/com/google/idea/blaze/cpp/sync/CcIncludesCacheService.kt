@@ -118,7 +118,7 @@ class CcIncludesCacheService(private val project: Project) {
 
     val targetCacheDirectory = key.cacheDirectory()
 
-    if (info.includePrefix().isNotEmpty() || info.stripIncludePrefix().isNotEmpty()) {
+    if (info.ruleContext().includePrefix().isNotEmpty() || info.ruleContext().stripIncludePrefix().isNotEmpty()) {
       // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
       val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
 
@@ -136,7 +136,7 @@ class CcIncludesCacheService(private val project: Project) {
       LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied _virtual_includes directory" }
     } else {
       // if there is no _virtual_include directory, adopt all generated headers
-      val headers = (info.headers().asSequence() + info.textualHeaders().asSequence()).filter { it.isGenerated }.toList()
+      val headers = (info.compilationContext().directHeaders()).filter { it.isGenerated }.toList()
       if (headers.isEmpty()) return
 
       for (header in headers) {
@@ -165,7 +165,7 @@ class CcIncludesCacheService(private val project: Project) {
     val info = targetIdeInfo.getcIdeInfo() ?: return Stream.empty()
 
     return sequence {
-      for (dep in info.transitiveDependencies()) {
+      for (dep in info.dependencies()) {
         val hash = dep.cacheHashCode()
         if (!cacheTracker.contains(hash)) continue
 
