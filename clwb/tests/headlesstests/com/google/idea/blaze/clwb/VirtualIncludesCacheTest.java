@@ -5,9 +5,12 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertCachedHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertWorkspaceHeader;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.system.OS;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +34,18 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     checkIncludes();
     checkImplDeps();
     checkProto();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    if (OS.CURRENT == OS.Windows) {
+      // TODO: separate protobuf tests, since protobuf will be dropping support for MSVC + Bazel in 34.0
+      builder.addBuildFlag("--define=protobuf_allow_msvc=true");
+    }
+
+    return builder;
   }
 
   private void checkIncludes() {

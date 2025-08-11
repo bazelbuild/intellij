@@ -12,6 +12,7 @@ cc_binary(
             "/Ilib/raw_files/default",
             "/external:Ilib/raw_files/system",
             "/external:Ilib/raw_files/quote",
+            "/external:W0",
         ],
         "//conditions:default": [
             "-Ilib/raw_files/default",
@@ -32,7 +33,7 @@ cc_binary(
     srcs = ["proto.cc"],
     deps = [
         "//proto:addressbook_cc_proto",
-        "@protobuf//:protobuf",
+        "@protobuf",
         "@protobuf//src/google/protobuf/util:time_util",
     ],
 )
