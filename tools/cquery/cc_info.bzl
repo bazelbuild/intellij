@@ -3,10 +3,14 @@
 
 CC_INFO = "CcInfo"
 
+def file_list_to_paths(files):
+    return [getattr(f, "path", f) for f in files]
+
 def compilation_context_to_struct(ctx):
     return struct(
         defines = ctx.defines.to_list(),
-        direct_headers = ctx.direct_headers,
+        headers = file_list_to_paths(ctx.headers.to_list()),
+        direct_headers = file_list_to_paths(ctx.direct_headers),
         direct_private_headers = ctx.direct_private_headers,
         derect_textutal_headers = ctx.direct_textual_headers,
         external_includes = ctx.external_includes.to_list(),
