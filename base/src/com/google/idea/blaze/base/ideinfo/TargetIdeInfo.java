@@ -468,6 +468,17 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @CanIgnoreReturnValue
+    public Builder setCInfo(CIdeInfo.Builder cInfoBuilder) {
+      this.cIdeInfo = cInfoBuilder.build();
+      this.sources.addAll(cIdeInfo.ruleContext().sources());
+      this.sources.addAll(cIdeInfo.ruleContext().headers());
+      this.sources.addAll(cIdeInfo.ruleContext().textualHeaders());
+
+      // TODO: add compilation context direct headers here too? (they can contain duplicates, filter?)
+
+      return this;
+    }
 
     @CanIgnoreReturnValue
     public Builder setCToolchainInfo(CToolchainIdeInfo.Builder info) {
