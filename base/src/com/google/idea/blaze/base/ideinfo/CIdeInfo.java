@@ -38,6 +38,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
   private final String includePrefix;
   private final String stripIncludePrefix;
 
+  private final ImmutableList<String> args;
+
   private CIdeInfo(
       ImmutableList<ArtifactLocation> sources,
       ImmutableList<ArtifactLocation> headers,
@@ -48,7 +50,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
       ImmutableList<String> transitiveDefines,
       ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories,
       String includePrefix,
-      String stripIncludePrefix) {
+      String stripIncludePrefix,
+      ImmutableList<String> args) {
     this.sources = sources;
     this.headers = headers;
     this.textualHeaders = textualHeaders;
@@ -59,6 +62,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     this.transitiveSystemIncludeDirectories = transitiveSystemIncludeDirectories;
     this.includePrefix = includePrefix;
     this.stripIncludePrefix = stripIncludePrefix;
+    this.args = args;
   }
 
   static CIdeInfo fromProto(IntellijIdeInfo.CIdeInfo proto) {
@@ -74,7 +78,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
         ProtoWrapper.map(
             proto.getTransitiveSystemIncludeDirectoryList(), ExecutionRootPath::fromProto),
         proto.getIncludePrefix(),
-        proto.getStripIncludePrefix());
+        proto.getStripIncludePrefix(),
+        ProtoWrapper.internStrings(proto.getArgsList()));
   }
 
   @Override
@@ -90,6 +95,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
         .addAllTransitiveDefine(transitiveDefines)
         .addAllTransitiveSystemIncludeDirectory(
             ProtoWrapper.mapToProtos(transitiveSystemIncludeDirectories))
+        .addAllArgs(args)
         .build();
   }
 
@@ -133,6 +139,10 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     return stripIncludePrefix;
   }
 
+  public ImmutableList<String> getArgs() {
+    return args;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -154,6 +164,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
 
     private String includePrefix = "";
     private String stripIncludePrefix = "";
+
+    private final ImmutableList.Builder<String> args = ImmutableList.builder();
 
     @CanIgnoreReturnValue
     public Builder addSources(Iterable<ArtifactLocation> sources) {
@@ -247,7 +259,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
           transitiveDefines.build(),
           transitiveSystemIncludeDirectories.build(),
           includePrefix,
-          stripIncludePrefix);
+          stripIncludePrefix,
+          args.build());
     }
   }
 
@@ -279,6 +292,9 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
         + "  transitiveSystemIncludeDirectories="
         + getTransitiveSystemIncludeDirectories()
         + "\n"
+        + "  args="
+        + getArgs()
+        + "\n"
         + '}';
   }
 
@@ -300,7 +316,8 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
             transitiveQuoteIncludeDirectories, cIdeInfo.transitiveQuoteIncludeDirectories)
         && Objects.equals(transitiveDefines, cIdeInfo.transitiveDefines)
         && Objects.equals(
-            transitiveSystemIncludeDirectories, cIdeInfo.transitiveSystemIncludeDirectories);
+            transitiveSystemIncludeDirectories, cIdeInfo.transitiveSystemIncludeDirectories)
+        && Objects.equals(args, cIdeInfo.args);
   }
 
   @Override
@@ -313,6 +330,7 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
         transitiveIncludeDirectories,
         transitiveQuoteIncludeDirectories,
         transitiveDefines,
-        transitiveSystemIncludeDirectories);
+        transitiveSystemIncludeDirectories,
+        args);
   }
 }

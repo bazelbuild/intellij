@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -101,7 +102,7 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
   }
 
   /**
-   * Executes the echo program and returns the programs output lines. The
+   * Executes the echo program and returns the program's output lines. The
    * program simply writes all received arguments to a file.
    */
   private List<String> executeEcho(String target, String executorId, String args) throws Exception {
@@ -169,7 +170,13 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
           final var session = XDebuggerManager.getInstance(myProject).getCurrentSession();
           assertThat(session).isNotNull();
 
-          ((BlazeCidrRemoteDebugProcess) session.getDebugProcess()).getTargetProcess().addProcessListener(listener);
+          if (session.getDebugProcess() instanceof BlazeCidrRemoteDebugProcess process) {
+            process.getTargetProcess().addProcessListener(listener);
+          } else if (session.getDebugProcess() instanceof CidrLocalDebugProcess process) {
+            process.getProcessHandler().addProcessListener(listener);
+          } else {
+            future.completeExceptionally(new IllegalStateException("unexpected debug process type"));
+          }
         }
       }
 
