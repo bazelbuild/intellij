@@ -4,9 +4,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.TestUtils.setIncludesCacheEnabled;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.util.system.OS;
 import java.util.ArrayList;
 import org.junit.Rule;
@@ -33,6 +35,18 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
     errors.assertNoIssues();
 
     checkProto();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    if (OS.CURRENT.equals(OS.Windows)) {
+      builder.addBuildFlag("--extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl");
+      builder.addBuildFlag("--extra_execution_platforms=//:x64_windows-clang-cl");
+    }
+
+    return builder;
   }
 
   @Override
