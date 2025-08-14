@@ -102,6 +102,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
+import kotlinx.coroutines.JobCancellationException;
 
 /** Manages sync execution, coordinating the possibly-separate build/update phases. */
 public final class SyncPhaseCoordinator {
@@ -881,6 +882,9 @@ public final class SyncPhaseCoordinator {
         return;
       }
       if (cause instanceof SyncCanceledException) {
+        return;
+      }
+      if (cause instanceof JobCancellationException) {
         return;
       }
       if (cause instanceof SyncFailedException) {
