@@ -3,11 +3,13 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutorRegistry;
@@ -61,6 +63,20 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
       checkRun(DefaultDebugExecutor.EXECUTOR_ID);
       checkArgs(DefaultDebugExecutor.EXECUTOR_ID);
     }
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    // required for building with bazel 6
+    if (OS.CURRENT.equals(OS.Windows)) {
+      builder.addBuildFlag("--cxxopt=/std:c++17");
+    } else {
+      builder.addBuildFlag("--cxxopt=-std=c++17");
+    }
+
+    return builder;
   }
 
   private void checkRun(String executorId) throws Exception {
