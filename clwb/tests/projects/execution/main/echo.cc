@@ -1,28 +1,19 @@
-#include <cstdio>
-#include <cerrno>
-#include <climits>
-#include <unistd.h>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
 
-int main(const int argc, const char **argv) {
-    FILE* f = fopen("output.txt", "w+");
-    if (f == NULL) {
-        return errno;
-    }
+int main(int argc, char* argv[]) {
+   std::ofstream outputFile("output.txt");
+   if (!outputFile) {
+       return 1;
+   }
 
-    for (int i = 1; i < argc; i++) {
-        fprintf(f, "%s\n", argv[i]);
-    }
+   for (int i = 1; i < argc; ++i) {
+       outputFile << argv[i] << std::endl;
+   }
 
-    if (fclose(f) != 0) {
-        return errno;
-    }
-
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
-        return errno;
-    }
-
-    fprintf(stdout, "ECHO_OUTPUT_FILE: %s/output.txt\n", cwd);
+    auto fullPath = std::filesystem::current_path() / "output.txt";
+    std::cout << "ECHO_OUTPUT_FILE: " << fullPath.string() << std::endl;
 
     return 0;
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.system.OS;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import java.nio.file.Files;
@@ -52,53 +53,42 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
-    checkRun();
-    checkTest();
-    checkArgs();
+    checkRun(DefaultRunExecutor.EXECUTOR_ID);
+    checkArgs(DefaultRunExecutor.EXECUTOR_ID);
+
+    // debugging on macOS requires special permissions which the CI agents do not have
+    if (!OS.CURRENT.equals(OS.macOS)) {
+      checkRun(DefaultDebugExecutor.EXECUTOR_ID);
+      checkArgs(DefaultDebugExecutor.EXECUTOR_ID);
+    }
   }
 
-  private void checkRun() throws Exception {
-    final var run = execute(Label.of("//main:echo0"), DefaultRunExecutor.EXECUTOR_ID, "");
-    run.assertSuccess();
+  private void checkRun(String executorId) throws Exception {
+    final var echo = execute(Label.of("//main:echo0"), executorId, "");
+    echo.assertSuccess();
 
-    final var debug = execute(Label.of("//main:echo0"), DefaultDebugExecutor.EXECUTOR_ID, "");
-    debug.assertSuccess();
+    final var test = execute(Label.of("//main:test"), DefaultRunExecutor.EXECUTOR_ID, "");
+    test.assertSuccess();
   }
 
-  private void checkTest() throws Exception {
-    final var run = execute(Label.of("//main:test"), DefaultRunExecutor.EXECUTOR_ID, "");
-    run.assertSuccess();
+  private void checkArgs(String executorId) throws Exception {
+    assertThat(executeEcho("echo0", executorId, "'one argument with spaces'")).containsExactly(
+        "one argument with spaces"
+    );
+    assertThat(executeEcho("echo0", executorId, "'one argument' 'another argument'")).containsExactly(
+        "one argument",
+        "another argument"
+    );
 
-    final var debug = execute(Label.of("//main:test"), DefaultDebugExecutor.EXECUTOR_ID, "");
-    debug.assertSuccess();
-  }
-
-  private void checkArgs() throws Exception {
-    checkRunConfigArgs("'one argument with spaces'", List.of("one argument with spaces"));
-    checkRunConfigArgs("'one argument' 'another argument'", List.of("one argument", "another argument"));
-
-    assertThat(executeEcho("echo1", DefaultRunExecutor.EXECUTOR_ID, "CONFIG_RUN")).containsExactly(
+    assertThat(executeEcho("echo1", executorId, "CONFIG_ARGUMENT")).containsExactly(
         "BUILD_FILE_STRING",
-        "CONFIG_RUN"
-    );
-    assertThat(executeEcho("echo1", DefaultDebugExecutor.EXECUTOR_ID, "CONFIG_DEBUG")).containsExactly(
-        "BUILD_FILE_STRING",
-        "CONFIG_DEBUG"
+        "CONFIG_ARGUMENT"
     );
 
-    assertThat(executeEcho("echo2", DefaultRunExecutor.EXECUTOR_ID, "CONFIG_RUN")).containsExactly(
+    assertThat(executeEcho("echo2", executorId, "CONFIG_ARGUMENT")).containsExactly(
         "main/echo.cc",
-        "CONFIG_RUN"
+        "CONFIG_ARGUMENT"
     );
-    assertThat(executeEcho("echo2", DefaultDebugExecutor.EXECUTOR_ID, "CONFIG_DEBUG")).containsExactly(
-        "main/echo.cc",
-        "CONFIG_DEBUG"
-    );
-  }
-
-  private void checkRunConfigArgs(String args, List<String> expected) throws Exception {
-    assertThat(executeEcho("echo0", DefaultRunExecutor.EXECUTOR_ID, args)).containsExactly(expected.toArray());
-    assertThat(executeEcho("echo0", DefaultDebugExecutor.EXECUTOR_ID, args)).containsExactly(expected.toArray());
   }
 
   /**
