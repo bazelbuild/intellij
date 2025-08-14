@@ -2,17 +2,12 @@ package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
+import static com.google.idea.blaze.clwb.base.TestUtils.setIncludesCacheEnabled;
 
-import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.clwb.base.TestUtils;
-import com.google.idea.testing.headless.BazelVersionRule;
-import com.google.idea.testing.headless.ProjectViewBuilder;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.system.OS;
 import java.util.ArrayList;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -20,33 +15,15 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class VirtualIncludesTest extends ClwbHeadlessTestCase {
 
-  // protobuf requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Test
   public void testClwb() {
-    Registry.get("bazel.cpp.sync.allow.bazel.bin.header.search.path").setValue(true);
-    Registry.get("bazel.cc.includes.cache.enabled").setValue(false);
+    setIncludesCacheEnabled(false);
 
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoIssues();
 
     checkIncludes();
     checkImplDeps();
-    checkProto();
-  }
-
-  @Override
-  protected ProjectViewBuilder projectViewText(BazelVersion version) {
-    final var builder = super.projectViewText(version);
-
-    if (OS.CURRENT == OS.Windows) {
-      // TODO: separate protobuf tests, since protobuf will be dropping support for MSVC + Bazel in 34.0
-      builder.addBuildFlag("--define=protobuf_allow_msvc=true");
-    }
-
-    return builder;
   }
 
   @Override
@@ -54,7 +31,6 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     super.addAllowedVfsRoots(roots);
     roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
     roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/transitive"));
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "proto"));
   }
 
   private void checkIncludes() {
@@ -94,14 +70,5 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertThat(headersSearchRoots).isNotEmpty();
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-  }
-
-  private void checkProto() {
-    final var compilerSettings = findFileCompilerSettings("main/proto.cc");
-
-    final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
-    assertThat(headersSearchRoots).isNotEmpty();
-
-    assertContainsHeader("proto/addressbook.pb.h", compilerSettings);
   }
 }

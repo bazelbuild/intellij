@@ -27,13 +27,3 @@ cc_binary(
         "//lib/strip_relative:lib",
     ],
 )
-
-cc_binary(
-    name = "proto",
-    srcs = ["proto.cc"],
-    deps = [
-        "//proto:addressbook_cc_proto",
-        "@protobuf",
-        "@protobuf//src/google/protobuf/util:time_util",
-    ],
-)
