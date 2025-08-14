@@ -9,7 +9,7 @@ import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
@@ -30,11 +30,14 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
   }
 
   @Override
-  protected void tearDown() {
+  protected void tearDown() throws Exception {
     final var roots = new ArrayList<AllowedVfsRoot>();
     addAllowedVfsRoots(roots);
 
     Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
+    HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
+
+    super.tearDown();
   }
 
   private void setupSandboxBin() {
@@ -52,7 +55,9 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     assertExists(sdkBinPath.toFile());
 
     try {
-      Files.createSymbolicLink(Path.of(PathManager.getBinPath()), sdkBinPath);
+      final var link = Path.of(PathManager.getBinPath());
+      Files.deleteIfExists(link);
+      Files.createSymbolicLink(link, sdkBinPath);
     } catch (IOException e) {
       abort("could not create bin path symlink", e);
     }

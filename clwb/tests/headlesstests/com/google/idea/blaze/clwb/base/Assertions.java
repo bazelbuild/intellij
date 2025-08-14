@@ -120,7 +120,9 @@ public class Assertions {
     final var service = CcIncludesCacheService.of(project);
     assertThat(CcIncludesCacheService.getEnabled()).isTrue();
 
-    assertThat(header.getPath()).startsWith(service.getCacheDirectory().toString());
+    assertWithMessage(String.format("file does not reside in the include cache: %s", header.getPath()))
+        .that(header.toNioPath().startsWith(service.getCacheDirectory()))
+        .isTrue();
   }
 
   public static void assertWorkspaceHeader(String fileName, OCCompilerSettings compilerSettings, Project project) {
@@ -130,6 +132,8 @@ public class Assertions {
     final var importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     assertThat(importSettings).isNotNull();
 
-    assertThat(header.getPath()).startsWith(importSettings.getWorkspaceRoot());
+    assertWithMessage(String.format("file does not reside in the workspace: %s", header.getPath()))
+        .that(header.toNioPath().startsWith(importSettings.getWorkspaceRoot()))
+        .isTrue();
   }
 }
