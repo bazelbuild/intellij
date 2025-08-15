@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.state;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -22,6 +23,9 @@ import org.jdom.Element;
 
 /** Supports managing part of a run configuration's state. */
 public interface RunConfigurationState {
+
+  /** Loads this handler's state from the context data. */
+  default void readContext(DataContext ctx) throws InvalidDataException {}
 
   /** Loads this handler's state from the external data. */
   void readExternal(Element element) throws InvalidDataException;

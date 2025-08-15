@@ -26,8 +26,10 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -45,6 +47,7 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
@@ -76,6 +79,7 @@ import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -227,6 +231,24 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     commandLine.getEnvironment().putAll(envState.getEnvs());
   }
 
+  private ImmutableList<String> getTargetArguments(TargetExpression target) {
+    if (!(target instanceof Label label)) {
+      return ImmutableList.of();
+    }
+
+    final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return ImmutableList.of();
+    }
+
+    return projectData.getTargetMap().get(label)
+        .stream()
+        .map(TargetIdeInfo::getcIdeInfo)
+        .filter(Objects::nonNull)
+        .flatMap(it -> it.getArgs().stream())
+        .collect(ImmutableList.toImmutableList());
+  }
+
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
@@ -255,6 +277,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       GeneralCommandLine commandLine =
           new GeneralCommandLine(runner.executableToDebug.getPath()).withWorkDirectory(workingDir);
 
+      commandLine.addParameters(getTargetArguments(target));
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
 

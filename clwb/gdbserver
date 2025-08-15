@@ -92,8 +92,8 @@ gdbserver_wrapper::parse_args() {
       # the rest are params for inferior
       inferior=2
     else
-      # do shell escaping via printf '%q'
-      new_args+=("$(printf "%q" "${old_arg}")")
+      # pass through
+      new_args+=("${old_arg}")
     fi
   done
 }

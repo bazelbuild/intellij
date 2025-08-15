@@ -545,6 +545,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         target_copts += semantics.cc.get_default_copts(ctx)
 
     target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
+    args = _do_starlark_string_expansion(ctx, "args", getattr(ctx.rule.attr, "args", []), extra_targets)
 
     compilation_context = target[CcInfo].compilation_context
 
@@ -571,6 +572,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
         include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
+        args = args,
     )
     ide_info["c_ide_info"] = c_info
     resolve_files = compilation_context.headers
