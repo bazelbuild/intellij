@@ -41,6 +41,8 @@
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
     <TargetKindProvider implementation="com.google.idea.blaze.cpp.CppBlazeRules"/>
+    <FileCache implementation="com.google.idea.blaze.cpp.sync.CcIncludesFileCache"/>
+    <LoggedDirectoryProvider implementation="com.google.idea.blaze.cpp.sync.CcIncludesCacheLoggedDirectory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp.copts">
@@ -88,9 +90,12 @@
     <registryKey defaultValue="true"
                  description="Use _cpp_use_get_tool_for_action to get compiler executable"
                  key="bazel.cc.aspect.use_get_tool_for_action"/>
-      <registryKey defaultValue="true"
-                   description="Whether to allow bazel-bin as a header search path; directly using bazel-bin as a header search path could cause performance problems"
-                   key="bazel.cpp.sync.allow.bazel.bin.header.search.path"/>
+    <registryKey defaultValue="true"
+                 description="Whether to allow bazel-bin as a header search path; directly using bazel-bin as a header search path could cause performance problems"
+                 key="bazel.cpp.sync.allow.bazel.bin.header.search.path"/>
+    <registryKey defaultValue="false"
+                 description="Use enables the CcIncludesCacheService"
+                 key="bazel.cc.includes.cache.enabled"/>
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>

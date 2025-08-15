@@ -39,7 +39,7 @@ public class CcTestTest extends BazelIntellijAspectTest {
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
 
-    assertThat(cTargetIdeInfo.getTargetCoptList()).isEmpty();
+    assertThat(cTargetIdeInfo.getRuleContext().getCoptsList()).isEmpty();
 
     // Can't test for this because the cc code stuffs source
     // artifacts into the output group
