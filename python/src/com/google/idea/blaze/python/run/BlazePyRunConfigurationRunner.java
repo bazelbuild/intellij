@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.python.PySdkUtils;
+import com.google.idea.sdkcompat.python.BlazePyUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -234,7 +235,18 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     BlazeCommandRunConfiguration configuration =
         BlazeCommandRunConfigurationRunner.getConfiguration(env);
     env.putCopyableUserData(EXECUTABLE_KEY, new AtomicReference<>());
-    return new BlazePyDummyRunProfileState(configuration);
+    return BlazePyUtils.getApiSpecificRunProfileState(
+        new BlazePyDummyRunProfileState(configuration),
+        state -> {
+          try {
+            PyExecutionInfo executionInfo = getExecutableToDebug(env);
+            env.getCopyableUserData(EXECUTABLE_KEY).set(executionInfo);
+            return ((BlazePyDummyRunProfileState)state).toNativeState(env);
+          } catch (ExecutionException e) {
+            throw new RuntimeException("Unable to set runtime environment: " + e.getMessage(), e);
+          }
+        }
+    );
   }
 
   @Override
