@@ -95,7 +95,7 @@ use_repo(
 
 bazel_dep(name = "rules_jvm_external", version = "6.8")
 
-bazel_dep(name = "rules_scala", version = "7.0.0")
+bazel_dep(name = "rules_scala", version = "7.1.1")
 
 scala_dev_deps = use_extension(
     "@rules_scala//scala/extensions:deps.bzl",
