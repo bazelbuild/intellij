@@ -57,7 +57,7 @@ register_toolchains("//third_party/kotlin:toolchain")
 
 bazel_dep(
     name = "rules_shell",
-    version = "0.5.1",
+    version = "0.6.0",
     dev_dependency = True,
 )
 bazel_dep(
