@@ -48,9 +48,9 @@
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.ClangClEnvironmentProvider" />
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>
-    </component>
-  </project-components>
+  <extensions defaultExtensionNs="cidr.project">
+    <popup.projectFixesProvider implementation="com.google.idea.blaze.clwb.BazelProjectFixesProvider"/>
+    <notifications.editorNotificationWarningProvider implementation="com.google.idea.blaze.clwb.BazelEditorNotificationProvider"/>
+    <widget.widgetStatusProvider implementation="com.google.idea.blaze.clwb.BazelWidgetStatusProvider"/>
+  </extensions>
 </idea-plugin>
