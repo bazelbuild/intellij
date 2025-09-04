@@ -30,10 +30,10 @@ fun main(args: Array<String>) {
     val out = Paths.get("${args[0]}.out")
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
 
-    bumpPlugins("252", out)
-    bumpEap("252", out)
-    // bumpRelease("2023.1", "231", out)
-    // bumpMavenPackages("junit:junit", "JUNIT", out)
+    // Example for 252:
+    // bumpEap("252", out)
+    // bumpPlugins("252", out)
+    // bumpRelease("2025.2", "252", out)
 }
 
 fun bumpMavenPackages(coordinates: String, variablePrefix: String, out: Path) {
@@ -58,48 +58,20 @@ private fun latestVersion(coordinates: String): String {
 fun bumpRelease(version: String, major: String, out: Path) {
     val releasesPage = URL("https://www.jetbrains.com/intellij-repository/releases").readText();
     val clionRelease = latestRelease(version, releasesPage, "clion")
-    val icRelease = latestRelease(version, releasesPage, "ideaIC")
-    val iuRelease = latestRelease(version, releasesPage, "ideaIU")
 
-    bump(
-        workspaceShaVarName = "IC_${major}_SHA",
-        workspaceUrlVarName = "IC_${major}_URL",
-        downloadUrl = icRelease,
-        workspace = out,
-    )
-    bump(
-        workspaceShaVarName = "IU_${major}_SHA",
-        workspaceUrlVarName = "IU_${major}_URL",
-        downloadUrl = iuRelease,
-        workspace = out,
-    )
     bump(
         workspaceShaVarName = "CLION_${major}_SHA",
         workspaceUrlVarName = "CLION_${major}_URL",
         downloadUrl = clionRelease,
         workspace = out,
     )
-    println("$clionRelease, $icRelease, $iuRelease")
+    println(clionRelease)
 }
 
 private fun bumpEap(intellijMajorVersion: String, out: Path) {
-    val ijLatestVersion = getLatestVersion("idea", intellijMajorVersion)
     val clionLatestVersion = getLatestVersion("clion", intellijMajorVersion)
 
-    println(ijLatestVersion)
     println(clionLatestVersion)
-    bump(
-        workspaceShaVarName = "IC_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "IC_${intellijMajorVersion}_URL",
-        downloadUrl = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/${ijLatestVersion}-EAP-SNAPSHOT/ideaIC-${ijLatestVersion}-EAP-SNAPSHOT.zip",
-        workspace = out,
-    )
-    bump(
-        workspaceShaVarName = "IU_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "IU_${intellijMajorVersion}_URL",
-        downloadUrl = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/${ijLatestVersion}-EAP-SNAPSHOT/ideaIU-${ijLatestVersion}-EAP-SNAPSHOT.zip",
-        workspace = out,
-    )
     bump(
         workspaceShaVarName = "CLION_${intellijMajorVersion}_SHA",
         workspaceUrlVarName = "CLION_${intellijMajorVersion}_URL",
@@ -111,9 +83,6 @@ private fun bumpEap(intellijMajorVersion: String, out: Path) {
 
 private fun bumpPlugins(intellijMajorVersion: String, out: Path) {
     bumpPluginVersion(intellijMajorVersion, out, "PythonCore", "PYTHON_PLUGIN")
-    bumpPluginVersion(intellijMajorVersion, out,  "org.jetbrains.plugins.go", "GO_PLUGIN" )
-    bumpPluginVersion(intellijMajorVersion, out, "org.intellij.scala", "SCALA_PLUGIN")
-    bumpPluginVersion(intellijMajorVersion, out, "DevKit", "DEVKIT")
     bumpPluginVersion(intellijMajorVersion, out, "org.toml.lang", "TOML_PLUGIN")
 }
 
@@ -167,8 +136,6 @@ private fun getLatestVersion(product: String, major: String): String {
 
 private fun latestRelease(version: String, releasesPage: String, product: String): String {
     val productFamily = when(product) {
-        "ideaIC" -> "idea"
-        "ideaIU" -> "idea"
         "clion" -> "clion"
         else -> throw RuntimeException("No such product: $product")
     }

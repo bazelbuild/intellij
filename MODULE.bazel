@@ -234,9 +234,9 @@ http_archive(
     url = IU_252_URL,
 )
 
-CLION_251_SHA = "5e441b2ddb22811f2f2d3a2db4c177398b6c70bd149c66c4f3fd1915ff8d3c71"
+CLION_251_SHA = "0f3ae5c8536a009e985b3a91485ef0e9856db3ca980d5fb3fb12f2f4ed08d8d1"
 
-CLION_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.1/clion-2025.1.1.zip"
+CLION_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.5.1/clion-2025.1.5.1.zip"
 
 http_archive(
     name = "clion_2025_1",
@@ -245,9 +245,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "bca48ff2184f8b93801241a761c273b7016e5f9c3ea5cee44fbcc4c7f559e08b"
+CLION_252_SHA = "a33d7cff3297ecc28f83dc161d069ee8c2009ecb7bee42c913f25814810e3785"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/252.23892.173-EAP-SNAPSHOT/clion-252.23892.173-EAP-SNAPSHOT.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.1/clion-2025.2.1.zip"
 
 http_archive(
     name = "clion_2025_2",
@@ -299,9 +299,9 @@ filegroup(
 )
 """
 
-PYTHON_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.25410.109/PythonCore-251.25410.109.zip"
+PYTHON_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.28293.39/PythonCore-251.28293.39.zip"
 
-PYTHON_PLUGIN_251_SHA = "ce124234cd71fd05162c0c2fb872822b5fdf16656dda58783f7457472e60fd5e"
+PYTHON_PLUGIN_251_SHA = "4a0a3da885df2c7069f56b64ea7ef15d5ec4fb0242eb5e2fcac6082c92972c03"
 
 http_archive(
     name = "python_2025_1",
@@ -310,9 +310,9 @@ http_archive(
     url = PYTHON_PLUGIN_251_URL,
 )
 
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.23892.248/PythonCore-252.23892.248.zip"
+PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.26199.7/PythonCore-252.26199.7.zip"
 
-PYTHON_PLUGIN_252_SHA = "b5d402d7d73c004a7fa3811caf373c9e24cecf328cfb934718fbe0bac61fa06c"
+PYTHON_PLUGIN_252_SHA = "947613a11270043584b16b06a4e946746dd0bbd289f59765711df6427cad817b"
 
 http_archive(
     name = "python_2025_2",
@@ -389,9 +389,9 @@ java_import(
 )
 """
 
-TOML_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/251.25410.123/org.toml.lang-251.25410.123.zip"
+TOML_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/251.26927.47/org.toml.lang-251.26927.47.zip"
 
-TOML_PLUGIN_251_SHA = "177c42c536b3fdc764400d49991162652b7c0f52b1dcdebbeaee8225df953089"
+TOML_PLUGIN_251_SHA = "7395b6c4b93dc91a259b1ee0b088a852e8a89c2b36b280a544e847b3571edfd3"
 
 http_archive(
     name = "toml_2025_1",
@@ -400,9 +400,9 @@ http_archive(
     url = TOML_PLUGIN_251_URL,
 )
 
-TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.23892.253/org.toml.lang-252.23892.253.zip"
+TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.26199.11/org.toml.lang-252.26199.11.zip"
 
-TOML_PLUGIN_252_SHA = "d927b6b8dd6ce2239c71d5001303eb6dd9d05e581cd2f09cb75416cb60334ce8"
+TOML_PLUGIN_252_SHA = "4730c39bc882ec65d14d21e0125fda24deaf8d051c1e8ce5dc740aa25b4aa1fc"
 
 http_archive(
     name = "toml_2025_2",
