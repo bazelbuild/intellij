@@ -43,6 +43,7 @@ private val LOG = logger<CcIncludesCacheService>()
 private const val CC_INCLUDES_CACHE_DIR = "_cc_includes_cache"
 private const val VIRTUAL_INCLUDES_BAZEL_DIR = "_virtual_includes"
 private const val VIRTUAL_IMPORTS_BAZEL_DIR = "_virtual_imports"
+private const val EXTERNAL_BAZEL_DIR = "external"
 
 @Service(Service.Level.PROJECT)
 @Suppress("UnstableApiUsage")
@@ -204,18 +205,24 @@ class CcIncludesCacheService(private val project: Project) {
    * detect these cases and adjust the path accordingly.
    */
   private fun stripVirtualPrefix(path: String): String? {
-    val elements = path.split('/')
+    var elements = path.split('/')
 
     // drop virtual imports, they are not supported yet
     if (elements.contains(VIRTUAL_IMPORTS_BAZEL_DIR)) return null
 
+    // drop the external directory and the repository name
+    if (elements.size > 2 && elements[0] == EXTERNAL_BAZEL_DIR) {
+      elements = elements.drop(2)
+    }
+
     val index = elements.indexOf(VIRTUAL_INCLUDES_BAZEL_DIR)
 
-    // no virtual includes or invalid index
-    if (index < 0 || index + 2 >= elements.size) return path
+    // drop the _virtual_include directory and the package name
+    if (index >= 0 && index + 2 < elements.size) {
+      elements = elements.drop(2)
+    }
 
-    // +2 to drop the _virtual_include directory and the target name
-    return elements.subList(index + 2, elements.size).joinToString("/")
+    return elements.joinToString("/")
   }
 }
 
