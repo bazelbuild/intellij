@@ -30,7 +30,6 @@ import com.google.idea.blaze.common.artifact.BuildArtifactCache;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.QuerySyncProjectSnapshot;
 import com.google.idea.blaze.qsync.artifacts.ArtifactDirectoryUpdate;
-import com.google.idea.blaze.qsync.artifacts.FileTransform;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectories;
 import com.google.idea.blaze.qsync.project.ProjectProto.ArtifactDirectoryContents;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,20 +56,17 @@ public class ProjectArtifactStore {
   private final Path workspacePath;
   private final BuildArtifactCache artifactCache;
   private final FileRefresher fileRefresher;
-  private final FileTransform sourcesStripper;
   private final Path projectDirectoriesFile;
 
   public ProjectArtifactStore(
       Path projectDir,
       Path workspacePath,
       BuildArtifactCache artifactCache,
-      FileRefresher fileRefresher,
-      FileTransform sourcesStripper) {
+      FileRefresher fileRefresher) {
     this.projectDir = projectDir;
     this.workspacePath = workspacePath;
     this.artifactCache = artifactCache;
     this.fileRefresher = fileRefresher;
-    this.sourcesStripper = sourcesStripper;
     this.projectDirectoriesFile = projectDir.resolve(".project-artifact-dirs");
   }
 
@@ -115,9 +111,7 @@ public class ProjectArtifactStore {
               artifactCache,
               workspacePath,
               root,
-              entry.getValue(),
-              sourcesStripper,
-              BazelDependencyBuilder.buildGeneratedSrcJars.getValue());
+              entry.getValue());
       try {
         incompleteTargets.addAll(dirUpdate.update());
       } catch (IOException e) {
