@@ -1,0 +1,4 @@
+module(name = "external_proto")
+
+bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "protobuf", version = "31.1")

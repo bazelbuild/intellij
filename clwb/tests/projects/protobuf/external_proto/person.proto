@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package tutorial;
+package external;
 
 message Person {
   optional string name = 1;
@@ -21,8 +21,3 @@ message Person {
 
   repeated PhoneNumber phones = 4;
 }
-
-message AddressBook {
-  repeated Person people = 1;
-}
-

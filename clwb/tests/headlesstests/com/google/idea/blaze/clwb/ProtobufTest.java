@@ -52,7 +52,8 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "proto"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "local_proto"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "external/external_proto+"));
   }
 
   private void checkProto() {
@@ -61,6 +62,7 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
     final var headersSearchRoots = compilerSettings.getHeadersSearchRoots().getAllRoots();
     assertThat(headersSearchRoots).isNotEmpty();
 
-    assertContainsHeader("proto/addressbook.pb.h", compilerSettings);
+    assertContainsHeader("local_proto/animal.pb.h", compilerSettings);
+    assertContainsHeader("person.pb.h", compilerSettings);
   }
 }

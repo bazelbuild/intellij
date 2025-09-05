@@ -4,7 +4,8 @@ cc_binary(
     name = "main",
     srcs = ["main.cc"],
     deps = [
-        "//proto:addressbook_cc_proto",
+        "//local_proto:animal_cc_proto",
+        "@external_proto//:person_cc_proto",
         "@protobuf//:protobuf",
         "@protobuf//src/google/protobuf/util:time_util",
     ],

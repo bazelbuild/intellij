@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package local;
+
+message Animal {
+  optional string name = 1;
+  optional int32 size = 2;
+
+  enum Color {
+    ANIMAL_COLOR_BLUE = 0;
+    ANIMAL_COLOR_ORANGE = 1;
+    ANIMAL_COLOR_OTHER = 2;
+  }
+
+  optional Color color = 3;
+}
+
