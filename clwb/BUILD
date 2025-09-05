@@ -187,7 +187,7 @@ clwb_headless_test(
 clwb_headless_test(
     name = "execution_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExecutionTest.java"],
-    project = "simple",
+    project = "execution",
 )
 
 clwb_headless_test(

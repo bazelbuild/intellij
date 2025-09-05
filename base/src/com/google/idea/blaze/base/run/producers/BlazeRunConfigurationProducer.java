@@ -26,16 +26,14 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 
 /** Base class for Blaze run configuration producers. */
-public abstract class BlazeRunConfigurationProducer<T extends RunConfiguration>
-    extends RunConfigurationProducer<T> {
+public abstract class BlazeRunConfigurationProducer<T extends RunConfiguration> extends RunConfigurationProducer<T> {
 
   protected BlazeRunConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 
   @Override
-  public boolean isPreferredConfiguration(
-      ConfigurationFromContext self, ConfigurationFromContext other) {
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return Blaze.isBlazeProject(self.getConfiguration().getProject());
   }
 
@@ -58,7 +56,9 @@ public abstract class BlazeRunConfigurationProducer<T extends RunConfiguration>
   }
 
   protected abstract boolean doSetupConfigFromContext(
-      T configuration, ConfigurationContext context, Ref<PsiElement> sourceElement);
+      T configuration,
+      ConfigurationContext context,
+      Ref<PsiElement> sourceElement);
 
   @Override
   public final boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {

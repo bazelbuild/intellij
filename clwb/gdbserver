@@ -35,6 +35,25 @@ if [[ -r ~/.gdbserver_wrapper_options ]]; then
   source ~/.gdbserver_wrapper_options
 fi
 
+gdbserver_wrapper::version_lt() {
+  # compare versions like 9.1 < 10.1 using sort -V
+  [[ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$2" ]]
+}
+
+gdbserver_wrapper::detect_version() {
+  # try running `gdbserver --version`, then grep the first X or X.Y occurrence
+  if ver="$("$1" --version 2>/dev/null | grep -Eo '[0-9]+(\.[0-9]+)?' | head -n1)"; then
+    if [[ -n "$ver" ]]; then
+      echo "$ver"
+      return 0
+    fi
+  fi
+
+  # fallback to "0.0" if detection fails (to be conservative and enable escaping)
+  echo "0.0"
+  return 0
+}
+
 gdbserver_wrapper::setup() {
   # create work directory for all temporary files
   work_directory="$(mktemp --tmpdir --directory "gdbserver_wrapper.XXXXXXXX")"
@@ -92,8 +111,12 @@ gdbserver_wrapper::parse_args() {
       # the rest are params for inferior
       inferior=2
     else
-      # do shell escaping via printf '%q'
-      new_args+=("$(printf "%q" "${old_arg}")")
+      # for inferior args, optionally shell-escape them for older gdbserver versions
+      if [[ "${need_shell_escaping}" -eq 1 ]]; then
+        new_args+=("$(printf "%q" "${old_arg}")")
+      else
+        new_args+=("${old_arg}")
+      fi
     fi
   done
 }
@@ -160,10 +183,22 @@ gdbserver_wrapper::main() {
   local inferior_stderr inferior_stdout
   local redirection_wrapper
   local keep_work_directory verbose
+  local gdbserver_version need_shell_escaping
+
   keep_work_directory="${GDBSERVER_WRAPPER_KEEP_WORK_DIRECTORY}"
   verbose="${GDB_WRAPPER_VERBOSE}"
 
   original_args=("$@")
+
+  # detect version from the first arg (gdbserver binary)
+  gdbserver_version="$(gdbserver_wrapper::detect_version "${original_args[0]}")"
+
+  # enable shell escaping for gdbserver versions older than 10.1
+  if gdbserver_wrapper::version_lt "${gdbserver_version}" "10.1"; then
+    need_shell_escaping=1
+  else
+    need_shell_escaping=0
+  fi
 
   gdbserver_wrapper::setup
 

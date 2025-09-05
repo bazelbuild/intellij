@@ -58,12 +58,6 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
 
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) { }
 
-  @Override
-  protected ProjectViewBuilder projectViewText(BazelVersion version) {
-    // required for Bazel 6 integration tests
-    return super.projectViewText(version).addBuildFlag("--cxxopt=-std=c++17");
-  }
-
   protected OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(myProject);
   }
