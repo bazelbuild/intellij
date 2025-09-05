@@ -63,6 +63,10 @@ public interface ProtoWrapper<P> {
     return map(iterable, ProjectDataInterner::intern);
   }
 
+  static String internString(String string) {
+    return ProjectDataInterner.intern(string);
+  }
+
   static <P> void unwrapAndSetIfNotNull(Consumer<P> setter, @Nullable ProtoWrapper<P> wrapper) {
     if (wrapper != null) {
       setter.accept(wrapper.toProto());

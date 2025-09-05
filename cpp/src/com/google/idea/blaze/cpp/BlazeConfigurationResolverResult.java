@@ -86,7 +86,7 @@ final class BlazeConfigurationResolverResult {
       BlazeResolveConfiguration config = mapEntry.getValue();
       BlazeResolveConfiguration otherConfig =
           other.uniqueResolveConfigurations.get(mapEntry.getKey());
-      if (otherConfig == null || !config.isEquivalentConfigurations(otherConfig)) {
+      if (!config.equals(otherConfig)) {
         return false;
       }
     }

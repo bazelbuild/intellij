@@ -159,9 +159,12 @@
       class="com.google.idea.blaze.base.wizard2.BazelDisableImportNotification$Action"
       text="Dismiss import notification"/>
 
-    <action id="BazelDumpVFSAction"
+    <action id="Bazel.DumpVFSAction"
       class="com.google.idea.blaze.base.actions.BazelDumpVFSAction"
       text="Bazel dump execroot VFS"/>
+    <action id="Bazel.DumpCacheDirectories"
+      class="com.google.idea.blaze.base.actions.BazelDumpCacheDirectories"
+      text="Bazel dump cache directories"/>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup" popup="true">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
