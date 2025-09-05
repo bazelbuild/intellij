@@ -31,9 +31,14 @@ java_library(
     srcs = select_for_ide(
         clion = glob([
             "com/google/idea/sdkcompat/javascript/**",  #api223
+            "com/google/idea/sdkcompat/python/**",
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/javascript/**",  #api223
+            "com/google/idea/sdkcompat/python/**",
+        ]),
+        default = glob([
+            "com/google/idea/sdkcompat/python/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
