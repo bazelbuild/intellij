@@ -22,6 +22,7 @@ load(
     "expand_make_variables",
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
+load(":modules/foreign_cc.bzl", "module_foreign_cc_collect_dependencies")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -581,6 +582,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         rule_context = collect_cc_rule_context(ctx),
         compilation_context = collect_cc_compilation_context(ctx, target),
         dependencies = deps,
+        foreign_dependencies = module_foreign_cc_collect_dependencies(ctx, target),
     )
 
     resolve_files = target[CcInfo].compilation_context.headers

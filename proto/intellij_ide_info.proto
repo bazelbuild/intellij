@@ -53,7 +53,7 @@ message JavaIdeInfo {
 }
 
 message CIdeInfo {
-  // Information collected from cc_xxx rule attributes.
+  // Information collected from rules_cc rule attributes.
   message RuleContext {
     repeated ArtifactLocation sources = 1;
     repeated ArtifactLocation headers = 2;
@@ -75,10 +75,18 @@ message CIdeInfo {
     repeated string system_includes = 5;
   }
 
+  // Information collected from ForeignCcArtifactInfo provider.
+  message ForeignDependency {
+    string gen_dir = 1;
+    string include_dir_name = 2;
+  }
+
   RuleContext rule_context = 1;
   CompilationContext compilation_context = 2;
 
   repeated TargetKey dependencies = 3;
+
+  repeated ForeignDependency foreign_dependencies = 4;
 }
 
 message AndroidIdeInfo {

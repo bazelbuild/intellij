@@ -8,24 +8,6 @@ load(":flag_hack.bzl", "define_flag_hack")
 
 licenses(["notice"])
 
-# Files needed at runtime for blaze-invoking integration tests
-filegroup(
-    name = "integration_test_files",
-    srcs = [
-        "artifacts.bzl",
-        "cc_dependencies.bzl",
-        "intellij_info_impl.bzl",
-        "java_classpath.bzl",
-        "make_variables.bzl",
-        "xcode_query.bzl",
-        ":BUILD.bazel",
-        "//aspect/tools:CreateAar",
-        "//aspect/tools:JarFilter_deploy.jar",
-        "//aspect/tools:PackageParser_deploy.jar",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 # the aspect files that will be bundled with the final plugin zip
 aspect_library(
     name = "aspect_lib",
@@ -53,6 +35,7 @@ aspect_files(
     ],
 )
 
+
 aspect_files(
     name = "aspect_tools",
     jars = [
@@ -72,6 +55,13 @@ aspect_library(
         "build_dependencies_deps.bzl",
     ],
     namespace = "aspect/qsync",
+    visibility = ["//visibility:public"],
+)
+
+aspect_library(
+    name = "aspect_modules",
+    files = glob(["modules/*.bzl"]),
+    namespace = "aspect/modules",
     visibility = ["//visibility:public"],
 )
 

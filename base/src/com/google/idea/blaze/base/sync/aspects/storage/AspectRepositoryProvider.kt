@@ -22,6 +22,7 @@ object AspectRepositoryProvider {
   const val ASPECT_DIRECTORY: String = "aspect/default"
   const val ASPECT_TEMPLATE_DIRECTORY: String = "aspect/template"
   const val ASPECT_QSYNC_DIRECTORY: String = "aspect/qsync"
+  const val ASPECT_MODULE_DIRECTORY: String = "aspect/modules"
 
   @JvmStatic
   fun aspectQSyncFile(file: String): ByteSource {

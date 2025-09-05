@@ -25,5 +25,6 @@ cc_binary(
         "//lib/strip_absolut:gen",
         "//lib/strip_absolut:lib",
         "//lib/strip_relative:lib",
+        "@sqlite",
     ],
 )

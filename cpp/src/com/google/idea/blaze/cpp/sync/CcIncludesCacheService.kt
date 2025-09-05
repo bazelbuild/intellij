@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.sync.SyncMode
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -107,20 +108,49 @@ class CcIncludesCacheService(private val project: Project) {
       cacheTracker.clear()
     }
 
+    val execrootPathResolver = ExecutionRootPathResolver.fromProjectData(project, projectData)
     for ((key, target) in projectData.targetMap.map()) {
-      refreshTarget(projectData, key, target)
+      refreshTarget(projectData, execrootPathResolver, key, target)
     }
 
     // one could consider removing unused directories on an incremental sync, but it's faster not to do so :)
   }
 
-  private fun refreshTarget(projectData: BlazeProjectData, key: TargetKey, target: TargetIdeInfo) {
+  private fun refreshTarget(
+    projectData: BlazeProjectData,
+    execrootPathResolver: ExecutionRootPathResolver,
+    key: TargetKey,
+    target: TargetIdeInfo
+  ) {
     val info = target.getcIdeInfo() ?: return
 
     val targetCacheDirectory = key.cacheDirectory()
 
+    // if there are foreign dependencies, copy all of them to the cache
+    if (info.foreignDependencies().isNotEmpty()) {
+      Files.createDirectories(targetCacheDirectory)
+
+      for (dep in info.foreignDependencies()) {
+        val includeDir = execrootPathResolver
+          .resolveExecutionRootPath(dep.genDir())
+          .toPath()
+          .resolve(dep.includeDirName())
+
+        try {
+          NioFiles.copyRecursively(includeDir, targetCacheDirectory)
+        } catch (e: IOException) {
+          LOG.warn("failed to copy external include directory for $includeDir", e)
+        }
+      }
+
+      cacheTracker.add(key.cacheHashCode())
+      LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied foreign dependencies" }
+
+      return;
+    }
+
+    // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
     if (info.ruleContext().includePrefix().isNotEmpty() || info.ruleContext().stripIncludePrefix().isNotEmpty()) {
-      // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
       val bazelBin = projectData.blazeInfo.blazeBinDirectory.toPath()
 
       // if there is no _virtual_includes directory, the target most likely has no headers
@@ -135,30 +165,32 @@ class CcIncludesCacheService(private val project: Project) {
 
       cacheTracker.add(key.cacheHashCode())
       LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied _virtual_includes directory" }
-    } else {
-      // if there is no _virtual_include directory, adopt all generated headers
-      val headers = (info.compilationContext().directHeaders()).filter { it.isGenerated }.toList()
-      if (headers.isEmpty()) return
 
-      for (header in headers) {
-        val relativePath = stripVirtualPrefix(header.relativePath) ?: continue
-        val path = targetCacheDirectory.resolve(relativePath)
-
-        try {
-          Files.createDirectories(path.parent)
-          Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { dst ->
-            projectData.artifactLocationDecoder.resolveOutput(header).inputStream.use { src ->
-              src.transferTo(dst)
-            }
-          }
-        } catch (e: IOException) {
-          LOG.warn("failed to copy generated header ${header.relativePath} for ${key.label}", e)
-        }
-      }
-
-      cacheTracker.add(key.cacheHashCode())
-      LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied generated headers (${headers.size})" }
+      return;
     }
+
+    // if there is no _virtual_include directory nor foreign dependencies, adopt all generated headers
+    val headers = (info.compilationContext().directHeaders()).filter { it.isGenerated }.toList()
+    if (headers.isEmpty()) return
+
+    for (header in headers) {
+      val relativePath = stripVirtualPrefix(header.relativePath) ?: continue
+      val path = targetCacheDirectory.resolve(relativePath)
+
+      try {
+        Files.createDirectories(path.parent)
+        Files.newOutputStream(path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { dst ->
+          projectData.artifactLocationDecoder.resolveOutput(header).inputStream.use { src ->
+            src.transferTo(dst)
+          }
+        }
+      } catch (e: IOException) {
+        LOG.warn("failed to copy generated header ${header.relativePath} for ${key.label}", e)
+      }
+    }
+
+    cacheTracker.add(key.cacheHashCode())
+    LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied generated headers (${headers.size})" }
   }
 
   @Synchronized

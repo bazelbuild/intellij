@@ -87,6 +87,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.time.Duration;
 import java.time.Instant;
@@ -888,15 +889,13 @@ public final class SyncPhaseCoordinator {
         return;
       }
       if (cause instanceof SyncFailedException) {
-        if (cause.getMessage() != null) {
-          IssueOutput.error(cause.getMessage()).submit(context);
-        }
+        IssueOutput.error(cause.getMessage()).withException(cause).submit(context);
         logger.warn("Sync failed", cause);
         return;
       }
       cause = cause.getCause();
     }
     logger.error(e);
-    IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
+    IssueOutput.error("Internal error: " + e.getMessage()).withException(e).submit(context);
   }
 }

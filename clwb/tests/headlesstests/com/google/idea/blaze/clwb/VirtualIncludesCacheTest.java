@@ -28,18 +28,6 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     checkImplDeps();
   }
 
-  @Override
-  protected ProjectViewBuilder projectViewText(BazelVersion version) {
-    final var builder = super.projectViewText(version);
-
-    if (OS.CURRENT == OS.Windows) {
-      // TODO: separate protobuf tests, since protobuf will be dropping support for MSVC + Bazel in 34.0
-      builder.addBuildFlag("--define=protobuf_allow_msvc=true");
-    }
-
-    return builder;
-  }
-
   private void checkIncludes() {
     final var compilerSettings = findFileCompilerSettings("main/virtual_includes.cc");
 
@@ -64,6 +52,8 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertContainsHeader("lib/transitive/generated.h", compilerSettings);
     assertCachedHeader("lib/transitive/generated.h", compilerSettings, myProject);
 
+    assertContainsHeader("sqlite3.h", compilerSettings);
+    assertCachedHeader("sqlite3.h", compilerSettings, myProject);
   }
 
   private void checkImplDeps() {

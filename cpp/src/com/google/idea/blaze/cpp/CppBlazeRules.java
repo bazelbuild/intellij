@@ -31,6 +31,7 @@ public class CppBlazeRules implements Kind.Provider {
 
   /** C++-specific blaze rule types. */
   public enum RuleTypes {
+    // ruleset: rules_cc
     CC_LIBRARY("cc_library", LanguageClass.C, RuleType.LIBRARY),
     CC_BINARY("cc_binary", LanguageClass.C, RuleType.BINARY),
     CC_TEST("cc_test", LanguageClass.C, RuleType.TEST),
@@ -38,7 +39,16 @@ public class CppBlazeRules implements Kind.Provider {
     CC_TOOLCHAIN("cc_toolchain", LanguageClass.C, RuleType.UNKNOWN),
     CC_TOOLCHAIN_ALIAS("cc_toolchain_alias", LanguageClass.C, RuleType.UNKNOWN),
     CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN),
-    CC_PROTO_LIBRARY("cc_proto_library", LanguageClass.GENERIC, RuleType.LIBRARY);
+
+    // ruleset: protobuf
+    CC_PROTO_LIBRARY("cc_proto_library", LanguageClass.GENERIC, RuleType.LIBRARY),
+
+    // ruleset: rules_foreign_cc
+    FOREIGN_CMAKE("cmake", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_MAKE("make", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_CONFITURE_MAKE("configure_make", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_MESON("meson", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_NINJA("ninja", LanguageClass.GENERIC, RuleType.LIBRARY);
 
     private final String name;
     private final LanguageClass languageClass;

@@ -78,18 +78,19 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     @AutoValue.Builder
     public abstract static class Builder {
+
       public abstract Builder setSources(ImmutableList<ArtifactLocation> value);
-      
+
       public abstract Builder setHeaders(ImmutableList<ArtifactLocation> value);
-      
+
       public abstract Builder setTextualHeaders(ImmutableList<ArtifactLocation> value);
-      
+
       public abstract Builder setCopts(ImmutableList<String> value);
-      
+
       public abstract Builder setIncludePrefix(String value);
-      
+
       public abstract Builder setStripIncludePrefix(String value);
-      
+
       public abstract RuleContext build();
     }
   }
@@ -143,16 +144,53 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     public abstract static class Builder {
       
       public abstract Builder setDirectHeaders(ImmutableList<ArtifactLocation> value);
-      
+
       public abstract Builder setDefines(ImmutableList<String> value);
-      
+
       public abstract Builder setIncludes(ImmutableList<ExecutionRootPath> value);
-      
+
       public abstract Builder setQuoteIncludes(ImmutableList<ExecutionRootPath> value);
-      
+
       public abstract Builder setSystemIncludes(ImmutableList<ExecutionRootPath> value);
-      
+
       public abstract CompilationContext build();
+    }
+  }
+
+  @AutoValue
+  public static abstract class ForeignDependency implements ProtoWrapper<IntellijIdeInfo.CIdeInfo.ForeignDependency> {
+
+    public abstract ExecutionRootPath genDir();
+
+    public abstract String includeDirName();
+
+    public static CIdeInfo.ForeignDependency fromProto(IntellijIdeInfo.CIdeInfo.ForeignDependency proto) {
+      return builder()
+          .setGenDir(ExecutionRootPath.fromNullableProto(proto.getGenDir()))
+          .setIncludeDirName(ProtoWrapper.internString(proto.getIncludeDirName()))
+          .build();
+    }
+
+    @Override
+    public IntellijIdeInfo.CIdeInfo.ForeignDependency toProto() {
+      return IntellijIdeInfo.CIdeInfo.ForeignDependency.newBuilder()
+          .setGenDir(genDir().toProto())
+          .setIncludeDirName(includeDirName())
+          .build();
+    }
+
+    public static Builder builder() {
+      return new AutoValue_CIdeInfo_ForeignDependency.Builder();
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+
+      public abstract Builder setGenDir(ExecutionRootPath value);
+
+      public abstract Builder setIncludeDirName(String value);
+
+      public abstract ForeignDependency build();
     }
   }
 
@@ -161,6 +199,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
   public abstract CompilationContext compilationContext();
 
   public abstract ImmutableList<TargetKey> dependencies();
+
+  public abstract ImmutableList<ForeignDependency> foreignDependencies();
 
   public static CIdeInfo fromProto(IntellijIdeInfo.CIdeInfo proto) {
     final var builder = builder();
@@ -173,6 +213,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     }
 
     builder.setDependencies(ProtoWrapper.map(proto.getDependenciesList(), TargetKey::fromProto));
+    builder.setForeignDependencies(ProtoWrapper.map(proto.getForeignDependenciesList(), ForeignDependency::fromProto));
 
     return builder.build();
   }
@@ -194,7 +235,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     return new AutoValue_CIdeInfo.Builder()
         .setRuleContext(RuleContext.EMPTY)
         .setCompilationContext(CompilationContext.EMPTY)
-        .setDependencies(ImmutableList.of());
+        .setDependencies(ImmutableList.of())
+        .setForeignDependencies(ImmutableList.of());
   }
 
   @AutoValue.Builder
@@ -205,6 +247,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     public abstract Builder setCompilationContext(CompilationContext value);
 
     public abstract Builder setDependencies(ImmutableList<TargetKey> value);
+
+    public abstract Builder setForeignDependencies(ImmutableList<ForeignDependency> value);
 
     public abstract CIdeInfo build();
   }
