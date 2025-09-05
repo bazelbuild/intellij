@@ -43,7 +43,7 @@ bazel_dep(
 # custom configuration for rules kotlin, patches are required
 bazel_dep(
     name = "rules_kotlin",
-    version = "2.1.8",
+    version = "2.1.9",
 )
 single_version_override(
     module_name = "rules_kotlin",
