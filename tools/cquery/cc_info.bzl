@@ -11,8 +11,8 @@ def compilation_context_to_struct(ctx):
         defines = ctx.defines.to_list(),
         headers = file_list_to_paths(ctx.headers.to_list()),
         direct_headers = file_list_to_paths(ctx.direct_headers),
-        direct_private_headers = ctx.direct_private_headers,
-        derect_textutal_headers = ctx.direct_textual_headers,
+        direct_private_headers = file_list_to_paths(ctx.direct_private_headers),
+        derect_textutal_headers = file_list_to_paths(ctx.direct_textual_headers),
         external_includes = ctx.external_includes.to_list(),
         framework_includes = ctx.framework_includes.to_list(),
         includes = ctx.includes.to_list(),
@@ -44,7 +44,7 @@ def format_cc_info(info):
 def format(target):
     buffer = "%s: " % target.label
 
-    if CC_INFO in providers(target):
+    if CC_INFO in (providers(target) or []):
         buffer += format_cc_info(providers(target)[CC_INFO])
     else:
         buffer += "NO CcInfo"
