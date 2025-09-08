@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,6 +40,10 @@ abstract class AspectModuleWriter : AspectWriter {
 
   protected fun ruleSetDependency(name: String) = Dependency { state ->
     state.externalWorkspaceData?.getByRepoName(name) != null
+  }
+
+  protected fun registryKeyDependency(key: String) = Dependency {
+    Registry.`is`(key)
   }
 
   protected fun bazelDependency(minVersion: Int) = Dependency { state ->

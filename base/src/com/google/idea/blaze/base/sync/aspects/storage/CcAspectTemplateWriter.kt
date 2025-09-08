@@ -31,7 +31,6 @@ class CcAspectTemplateWriter : AspectWriter {
   override fun writeDumb(dst: Path, project: Project) {
     val options = mapOf(
       getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", default = true),
-      getRegistryOption("bazel.cc.virtual.includes.cache.enabled", default = false, aka = "collect_dependencies"),
     )
 
     TemplateWriter.evaluate(

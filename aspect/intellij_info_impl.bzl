@@ -13,7 +13,7 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "collect_cc_deps")
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 load(":flag_hack.bzl", "FlagHackInfo")
 load(":java_info.bzl", "get_java_info", "get_provider_from_target", "java_info_in_target", "java_info_reference")
@@ -23,6 +23,7 @@ load(
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
 load(":modules/foreign_cc.bzl", "module_foreign_cc_collect_dependencies")
+load(":modules/transitive_cc_dependencies.bzl", "module_transitive_cc_dependencies_collect")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -561,7 +562,7 @@ def collect_cc_compilation_context(ctx, target):
         system_includes = compilation_context.system_includes.to_list() + external_includes,
     )
 
-def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, cc_deps):
+def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, dependencies):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
     if CcInfo not in target:
@@ -571,17 +572,12 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if ctx.rule.kind.startswith("go_"):
         return False
 
-    # Collect transtive dependencies if cc_deps is defined
-    if cc_deps:
-        aspect_ids = get_aspect_ids(ctx)
-        deps = [make_target_key(it.label, aspect_ids) for it in cc_deps.targets.to_list()]
-    else:
-        deps = []
+    aspect_ids = get_aspect_ids(ctx)
 
     ide_info["c_ide_info"] = struct(
         rule_context = collect_cc_rule_context(ctx),
         compilation_context = collect_cc_compilation_context(ctx, target),
-        dependencies = deps,
+        dependencies = [make_target_key(it.label, aspect_ids) for it in dependencies],
         foreign_dependencies = module_foreign_cc_collect_dependencies(ctx, target),
     )
 
@@ -1305,14 +1301,11 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Collect test info
     ide_info["test_info"] = build_test_info(ctx)
 
-    if collect_cc_deps:
-        cc_deps = collect_cc_deps(target, ctx)
-    else:
-        cc_deps = None
+    cc_dependencies = module_transitive_cc_dependencies_collect(ctx, target)
 
     handled = False
     handled = collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, cc_deps) or handled
+    handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, cc_dependencies.targets) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
@@ -1341,7 +1334,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             target_key = target_key,
         ),
         OutputGroupInfo(**output_groups),
-    ] + ([cc_deps] if cc_deps else [])
+    ] + cc_dependencies.providers
 
 def semantics_extra_deps(base, semantics, name):
     if not hasattr(semantics, name):

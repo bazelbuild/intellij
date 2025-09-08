@@ -30,13 +30,18 @@ def _attr_get_targets(attr, names):
     """Returns the value of multiple target attributes as a list."""
     return _flatten([_attr_get_target(attr, name) for name in names])
 
-def collect_cc_deps(target, ctx):
+def module_transitive_cc_dependencies_collect(ctx, target):
     """Collects all transitive dependencies in of a target."""
-    deps = [dep[CcDepInfo].targets for dep in _attr_get_targets(ctx.rule.attr, DEPS) if CcDepInfo in dep]
+    transitive = [dep[CcDepInfo].targets for dep in _attr_get_targets(ctx.rule.attr, DEPS) if CcDepInfo in dep]
 
     if CcInfo in target:
         local = [target]
     else:
         local = []
 
-    return CcDepInfo(targets = depset(local, transitive = deps))
+    targets = depset(local, transitive = transitive)
+
+    return struct(
+      providers = [CcDepInfo(targets = targets)],
+      targets = targets.to_list(),
+    )

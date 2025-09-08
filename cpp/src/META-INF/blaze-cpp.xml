@@ -44,6 +44,7 @@
     <FileCache implementation="com.google.idea.blaze.cpp.sync.CcIncludesFileCache"/>
     <LoggedDirectoryProvider implementation="com.google.idea.blaze.cpp.sync.CcIncludesCacheLoggedDirectory"/>
     <AspectWriter implementation="com.google.idea.blaze.cpp.sync.aspect.ForeignCcModule"/>
+    <AspectWriter implementation="com.google.idea.blaze.cpp.sync.aspect.TransitiveCcDependenciesModule"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp.copts">
