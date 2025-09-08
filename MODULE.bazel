@@ -13,7 +13,7 @@ bazel_dep(
 )
 bazel_dep(
     name = "rules_python",
-    version = "1.6.0",
+    version = "1.6.1",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
