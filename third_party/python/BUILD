@@ -1,5 +1,5 @@
 load("@rules_java//java:java_library.bzl", "java_library")
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_version")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -8,25 +8,17 @@ licenses(["notice"])
 java_library(
     name = "python_internal",
     visibility = ["//visibility:private"],
-    exports = select_for_plugin_api({
-        "intellij-2025.1": ["@python_2025_1//:python"],
-        "intellij-2025.2": ["@python_2025_2//:python"],
-        "intellij-ue-2025.1": ["@python_2025_1//:python"],
-        "intellij-ue-2025.2": ["@python_2025_2//:python"],
-        "clion-2025.1": ["@python_2025_1//:python"],
-        "clion-2025.2": ["@python_2025_2//:python"],
+    exports = select_for_version({
+        "2025.1": ["@python_2025_1//:python"],
+        "2025.2": ["@python_2025_2//:python"],
     }),
 )
 
 filegroup(
     name = "python_helpers",
-    srcs = select_for_plugin_api({
-        "intellij-2025.1": ["@python_2025_1//:python_helpers"],
-        "intellij-2025.2": ["@python_2025_2//:python_helpers"],
-        "intellij-ue-2025.2": ["@python_2025_2//:python_helpers"],
-        "intellij-ue-2025.1": ["@python_2025_1//:python_helpers"],
-        "clion-2025.1": ["@python_2025_1//:python_helpers"],
-        "clion-2025.2": ["@python_2025_2//:python_helpers"],
+    srcs = select_for_version({
+        "2025.1": ["@python_2025_1//:python_helpers"],
+        "2025.2": ["@python_2025_2//:python_helpers"],
     }),
     visibility = ["//visibility:private"],
 )

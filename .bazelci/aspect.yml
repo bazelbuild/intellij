@@ -1,42 +1,42 @@
 ---
 tasks:
   Aspect-OSS-oldest-stable:
-    name: Aspect Tests for IJ OSS Oldest Stable
+    name: Aspect Tests for CLion OSS Oldest Stable
     platform: ubuntu2204
     build_flags:
-      - --define=ij_product=intellij-oss-oldest-stable
+      - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //aspect:aspect_files
     test_flags:
-      - --define=ij_product=intellij-oss-oldest-stable
+      - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
     skip_use_bazel_version_for_test: true
   Aspect-OSS-latest-stable:
-    name: Aspect Tests for IJ OSS Latest Stable
+    name: Aspect Tests for CLion OSS Latest Stable
     platform: ubuntu2204
     build_flags:
-      - --define=ij_product=intellij-oss-latest-stable
+      - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //aspect:aspect_files
     test_flags:
-      - --define=ij_product=intellij-oss-latest-stable
+      - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
     skip_use_bazel_version_for_test: true
   Aspect-OSS-under-dev:
-    name: Aspect Tests for IJ OSS Under Development
+    name: Aspect Tests for CLion OSS Under Development
     platform: ubuntu2204
     build_flags:
-      - --define=ij_product=intellij-oss-under-dev
+      - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //aspect:aspect_files
     test_flags:
-      - --define=ij_product=intellij-oss-under-dev
+      - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
       - --notrim_test_configuration
     test_targets:

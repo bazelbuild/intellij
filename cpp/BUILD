@@ -12,7 +12,7 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_version")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_version")
 load("//testing:test_defs.bzl", "intellij_unit_test_suite")
 
 kt_jvm_library(
@@ -102,16 +102,14 @@ java_library(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
-    class_rules = select_for_ide(
-        clion = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
-        default = [],
-    ),
+    class_rules = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
     tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.cpp",
     visibility = DEFAULT_TEST_VISIBILITY,
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
+        ":clion_sysprop_rule",
         ":cpp",
         ":mock_xcode_settings_provider",
         "//base",
@@ -123,8 +121,5 @@ intellij_unit_test_suite(
         "//third_party/java/junit",
         "@com_google_guava_guava//jar",
         "@maven//:org_mockito_mockito_core",
-    ] + select_for_ide(
-        clion = [":clion_sysprop_rule"],
-        default = [],
-    ),
+    ],
 )

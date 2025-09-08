@@ -5,6 +5,7 @@
 #   plugin apis to known packages that build plugins. Only packages
 #   listed here may depend on these libraries.
 
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build-visibility.bzl",
@@ -23,114 +24,6 @@ package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 licenses(["notice"])
 
 create_test_libs_visibility_package()
-
-config_setting(
-    name = "intellij-oss-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-oss-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-oss-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-oss-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-oss-latest-stable",
-    values = {
-        "define": "ij_product=intellij-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-oss-latest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-oss-under-dev",
-    values = {
-        "define": "ij_product=intellij-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-oss-under-dev",
-    values = {
-        "define": "ij_product=intellij-ue-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-under-dev",
-    values = {
-        "define": "ij_product=intellij-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-under-dev",
-    values = {
-        "define": "ij_product=intellij-ue-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-2025.1",
-    values = {"define": "ij_product=intellij-2025.1"},
-)
-
-config_setting(
-    name = "intellij-2025.2",
-    values = {"define": "ij_product=intellij-2025.2"},
-)
-
-config_setting(
-    name = "intellij-2025.1-mac",
-    values = {
-        "define": "ij_product=intellij-2025.1",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-2025.2-mac",
-    values = {
-        "define": "ij_product=intellij-2025.2",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2025.1",
-    values = {"define": "ij_product=intellij-ue-2025.1"},
-)
-
-config_setting(
-    name = "intellij-ue-2025.2",
-    values = {"define": "ij_product=intellij-ue-2025.2"},
-)
-
-config_setting(
-    name = "intellij-ue-2025.1-mac",
-    values = {
-        "define": "ij_product=intellij-ue-2025.1",
-        "cpu": "darwin_x86_64",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2025.2-mac",
-    values = {
-        "define": "ij_product=intellij-ue-2025.2",
-        "cpu": "darwin_x86_64",
-    },
-)
 
 config_setting(
     name = "clion-oss-oldest-stable",
@@ -185,18 +78,10 @@ config_setting(
 java_library(
     name = "plugin_api_internal",
     visibility = ["//visibility:private"],
-    exports = select_from_plugin_api_directory(
-        clion = [
-            ":sdk",
-            ":clion_plugins",
-        ],
-        intellij = [
-            ":sdk",
-            ":java",
-            ":kotlin",
-            ":platform_images",
-        ],
-    ),
+    exports = select_from_plugin_api_directory([
+        ":clion_plugins",
+        ":sdk",
+    ]),
 )
 
 # The outward facing plugin api
@@ -210,14 +95,7 @@ java_library(
 java_library(
     name = "plugin_api_for_tests",
     testonly = 1,
-    data = select_from_plugin_api_directory(
-        # Provide access to clion bundled tools to tests (like debugers).
-        clion = [":clion_tools"],
-        # From 2022.1 forward, the version of kotlinc will be obtained
-        # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
-        # so we need to provide this to our tests
-        intellij = [":kotlinc_version"],
-    ),
+    data = select_from_plugin_api_directory([":clion_tools"]),
     exports = [":plugin_api_internal"],
 )
 
@@ -240,10 +118,7 @@ java_library(
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
     name = "guava",
-    exports = select_from_plugin_api_directory(
-        clion = [":guava"],
-        intellij = [":guava"],
-    ),
+    exports = select_from_plugin_api_directory([":guava"]),
 )
 
 java_library(
@@ -265,283 +140,32 @@ java_library(
 java_library(
     name = "hg4idea",
     neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [":hg4idea"],
-        intellij = [":hg4idea"],
-    ),
-)
-
-# IntelliJ Kotlin plugin
-java_library(
-    name = "kotlin",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":kotlin"],
-    ),
-)
-
-# IntelliJ Kotlin plugin
-java_library(
-    name = "kotlin_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":kotlin"],
-    ),
-)
-
-# IntelliJ JUnit plugin
-java_library(
-    name = "junit",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":junit"],
-    ),
+    exports = select_from_plugin_api_directory([":hg4idea"]),
 )
 
 # terminal plugin
 java_library(
     name = "terminal",
     neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [":terminal"],
-        intellij = [":terminal"],
-    ),
+    exports = select_from_plugin_api_directory([":terminal"]),
 )
 
 java_library(
     name = "terminal_for_tests",
     testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [":terminal"],
-        intellij = [":terminal"],
-    ),
+    exports = select_from_plugin_api_directory([":terminal"]),
 )
 
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
     testonly = 1,
-    runtime_deps = select_from_plugin_api_directory(
-        clion = [":bundled_plugins"],
-        intellij = [":bundled_plugins"],
-    ),
-)
-
-# IntelliJ Shared Indexes plugin
-java_library(
-    name = "shared_indexes",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":shared_indexes"],
-        intellij_ue = [":shared_indexes"],
-    ),
-)
-
-# IntelliJ Shared Indexes plugin
-java_library(
-    name = "shared_indexes_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":shared_indexes"],
-        intellij_ue = [":shared_indexes"],
-    ),
-)
-
-# IntelliJ Git4Idea plugin
-java_library(
-    name = "git4idea",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":git4idea"],
-    ),
-)
-
-java_library(
-    name = "git4idea_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":git4idea"],
-    ),
-)
-
-# JetBrains com.jetbrains.codeWithMe plugin
-java_library(
-    name = "cwm",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":cwm"],
-    ),
-)
-
-java_library(
-    name = "cwm_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":cwm"],
-    ),
-)
-
-# IntelliJ maven plugin
-java_library(
-    name = "maven",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":maven"],
-    ),
-)
-
-java_library(
-    name = "maven_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":maven_bundled_plugins"],
-    ),
-)
-
-# IntelliJ maven model plugin
-java_library(
-    name = "maven_model",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":maven_model"],
-    ),
-)
-
-java_library(
-    name = "maven_model_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":maven_model"],
-    ),
-)
-
-# IntelliJ yaml plugin
-java_library(
-    name = "yaml",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":yaml"],
-    ),
-)
-
-java_library(
-    name = "yaml_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":yaml"],
-    ),
-)
-
-# IntelliJ gradle plugin
-java_library(
-    name = "gradle",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":gradle"],
-    ),
-)
-
-java_library(
-    name = "gradle_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":gradle"],
-    ),
-)
-
-# IntelliJ DatabaseTools plugin
-java_library(
-    name = "database_tools",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [],
-        intellij_ue = [":database_tools"],
-    ),
-)
-
-java_library(
-    name = "database_tools_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [],
-        intellij_ue = [":database_tools"],
-    ),
-)
-
-# IntelliJ JavaEE plugin
-java_library(
-    name = "javaee",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [],
-        intellij_ue = [":javaee"],
-    ),
-)
-
-java_library(
-    name = "javaee_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [],
-        intellij_ue = [":javaee"],
-    ),
-)
-
-# IntelliJ Markdown plugin
-java_library(
-    name = "markdown",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":markdown"],
-    ),
-)
-
-java_library(
-    name = "markdown_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":markdown"],
-    ),
-)
-
-java_library(
-    name = "json_for_tests",
-    testonly = 1,
-    exports = select_from_plugin_api_directory(
-        clion = [],
-        intellij = [":json"],
-    ),
+    runtime_deps = select_from_plugin_api_directory([":bundled_plugins"]),
 )
 
 filegroup(
     name = "application_info_json",
-    srcs = select_from_plugin_api_directory(
-        clion = [":application_info_json"],
-        intellij = [":application_info_json"],
-    ),
+    srcs = select_from_plugin_api_directory([":application_info_json"]),
 )
 
 write_file(
