@@ -16,19 +16,15 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolverImpl;
+import com.google.idea.blaze.cpp.sync.CcIncludesCacheService;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /** Resolve execution root relative -I${rel_path}, -isystem, etc. compiler flags to be absolute. */
 public class IncludeRootFlagsProcessor implements BlazeCompilerFlagsProcessor {
@@ -81,11 +77,10 @@ public class IncludeRootFlagsProcessor implements BlazeCompilerFlagsProcessor {
   }
 
   private void collectPathFlags(ImmutableList.Builder<String> builder, String iflag, String path) {
-    ImmutableList<File> includeDirs =
-        executionRootPathResolver.resolveToIncludeDirectories(new ExecutionRootPath(path));
-    for (File f : includeDirs) {
-      builder.add(iflag);
-      builder.add(f.getAbsolutePath());
-    }
+    final var includeDirs = CcIncludesCacheService.getEnabled()
+        ? Stream.of(executionRootPathResolver.resolveExecutionRootPath(new ExecutionRootPath(path)))
+        : executionRootPathResolver.resolveToIncludeDirectories(new ExecutionRootPath(path)).stream();
+
+    includeDirs.forEach(f -> builder.add(iflag).add(f.getAbsolutePath()));
   }
 }

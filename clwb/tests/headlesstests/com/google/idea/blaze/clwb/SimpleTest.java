@@ -25,7 +25,7 @@ public class SimpleTest extends ClwbHeadlessTestCase {
   @Test
   public void testClwb() throws IOException {
     final var errors = runSync(defaultSyncParams().build());
-    errors.assertNoErrors();
+    errors.assertNoIssues();
 
     checkCompiler();
     checkTest();

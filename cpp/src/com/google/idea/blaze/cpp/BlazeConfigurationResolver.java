@@ -154,15 +154,20 @@ final class BlazeConfigurationResolver {
   }
 
   private static boolean containsCompiledSources(TargetIdeInfo target) {
-    Predicate<ArtifactLocation> isCompiled =
-        location -> {
-          String locationExtension = FileUtilRt.getExtension(location.getRelativePath());
-          return CFileExtensions.SOURCE_EXTENSIONS.contains(locationExtension);
-        };
-    return target.getcIdeInfo() != null
-        && target.getcIdeInfo().getSources().stream()
-            .filter(ArtifactLocation::isSource)
-            .anyMatch(isCompiled);
+    Predicate<ArtifactLocation> isCompiled = location -> {
+      String locationExtension = FileUtilRt.getExtension(location.getRelativePath());
+      return CFileExtensions.SOURCE_EXTENSIONS.contains(locationExtension);
+    };
+
+    final var cIdeInfo = target.getcIdeInfo();
+    if (cIdeInfo == null) {
+      return false;
+    }
+
+    return cIdeInfo.ruleContext().sources()
+        .stream()
+        .filter(ArtifactLocation::isSource)
+        .anyMatch(isCompiled);
   }
 
   private void buildBlazeConfigurationData(
@@ -234,7 +239,7 @@ final class BlazeConfigurationResolver {
       Collection<TargetKey> targets = entry.getValue();
       dataToConfiguration.put(
           data,
-          BlazeResolveConfiguration.createForTargets(project, blazeProjectData, data, targets));
+          BlazeResolveConfiguration.create(project, blazeProjectData, data, targets));
     }
     context.output(
         PrintOutput.log(

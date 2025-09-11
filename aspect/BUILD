@@ -13,6 +13,7 @@ filegroup(
     name = "integration_test_files",
     srcs = [
         "artifacts.bzl",
+        "cc_dependencies.bzl",
         "intellij_info_impl.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
@@ -41,6 +42,7 @@ aspect_files(
     name = "aspect_files",
     files = [
         "artifacts.bzl",
+        "cc_dependencies.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
         "intellij_info_impl_bundled.bzl",
@@ -128,6 +130,8 @@ define_flag_hack()
 aspect_library(
     name = "aspect_template_lib",
     files = [
+        "cc_info.bzl",
+        "cc_info.template.bzl",
         "code_generator_info.bzl",
         "code_generator_info.template.bzl",
         "intellij_info.template.bzl",
@@ -136,8 +140,6 @@ aspect_library(
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
-        "cc_info.bzl",
-        "cc_info.template.bzl",
     ],
     namespace = "aspect/template",
     visibility = ["//visibility:public"],

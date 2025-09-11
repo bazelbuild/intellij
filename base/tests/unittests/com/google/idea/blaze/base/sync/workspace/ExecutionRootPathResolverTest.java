@@ -98,14 +98,14 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   private static TargetIdeInfo getTargetIdeInfo(TargetName targetName) {
     String stripPrefix = getStripPrefix(targetName);
 
-    CIdeInfo.Builder cIdeInfoBuilder = CIdeInfo.builder().setStripIncludePrefix(stripPrefix);
+    final var ruleContextBuilder = CIdeInfo.RuleContext.builder();
+    ruleContextBuilder.setStripIncludePrefix(stripPrefix);
+
     if (targetName.equals(TARGET_WITH_INCLUDE_PREFIX)) {
-      cIdeInfoBuilder.setIncludePrefix(INCLUDE_PREFIX);
+      ruleContextBuilder.setIncludePrefix(INCLUDE_PREFIX);
     }
 
-    return TargetIdeInfo.builder()
-        .setCInfo(cIdeInfoBuilder)
-        .build();
+    return TargetIdeInfo.builder().setCInfo(CIdeInfo.builder().setRuleContext(ruleContextBuilder.build())).build();
   }
 
   @NotNull
