@@ -178,10 +178,18 @@ public final class BlazeCWorkspace implements ProjectComponent {
   private static CidrCompilerSwitches buildSwitchBuilder(
       BlazeCompilerSettings compilerSettings,
       CompilerSpecificSwitchBuilder builder,
-      OCLanguageKind language) {
-    final var combinedBuilder = new CidrSwitchBuilder();
-    combinedBuilder.addAllRaw(compilerSettings.getCompilerSwitches(language, null));
-    combinedBuilder.addAll(builder.build());
+      ExecutionRootPathResolver resolver,
+      OCLanguageKind language
+  ) {
+    final var combinedBuilder = compilerSettings.createSwitchBuilder();
+    combinedBuilder.withSwitches(builder.build());
+
+    CoptsProcessor.apply(
+        /* options = */ compilerSettings.getCompilerSwitches(language),
+        /* kind = */ compilerSettings.getCompilerKind(),
+        /* sink = */ combinedBuilder,
+        /* resolver = */ resolver
+    );
 
     return combinedBuilder.build();
   }
@@ -250,7 +258,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             /* options = */ targetIdeInfo.getcIdeInfo().getLocalCopts(),
             /* kind = */ compilerSettings.getCompilerKind(),
             /* sink = */ compilerSwitchesBuilder,
-            /* resolve = */ executionRootPathResolver
+            /* resolver = */ executionRootPathResolver
         );
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
@@ -289,23 +297,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        // add includes from a custom sysroot as system includes
-        // Note: Only add includes from a custom sysroot manually, CLion can derive the other
-        // bulletin includes during the compiler info collection. Manually adding all builtin
-        // includes can lead to headers being resolved into the wrong include directory.
-        final var sysroot = compilerSettings.sysroot();
-        if (sysroot != null) {
-          compilerSettings.builtInIncludes().stream()
-              .filter((it) -> ExecutionRootPath.isAncestor(sysroot, it, false))
-              .flatMap(resolver)
-              .map(File::getAbsolutePath)
-              .forEach(compilerSwitchesBuilder::withSystemIncludePath);
-        }
-
         final var cCompilerSwitches =
-            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.C);
+            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.C);
         final var cppCompilerSwitches =
-            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, CLanguageKind.CPP);
+            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.CPP);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
@@ -436,7 +431,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     File executable = compilerSettings.getCompilerExecutable(language);
 
     final var switchBuilder = compilerSettings.createSwitchBuilder();
-    switchBuilder.withSwitches(compilerSettings.getCompilerSwitches(language, null));
+    switchBuilder.withSwitches(compilerSettings.getCompilerSwitches(language));
     quoteIncludePaths.forEach(switchBuilder::withQuoteIncludePath);
 
     PerLanguageCompilerOpts perLanguageCompilerOpts =

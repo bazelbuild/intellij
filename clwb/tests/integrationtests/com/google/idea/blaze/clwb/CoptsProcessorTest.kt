@@ -142,4 +142,17 @@ class CoptsProcessorTest : BasePlatformTestCase() {
       "/I/path/to/project/include/default",
     ),
   )
+
+  @Test
+  fun `expand sysroot`() = doTest(
+    compilers = listOf(GCCCompilerKind, ClangCompilerKind),
+    copts = listOf(
+      "--sysroot=/absolut/path/to/sysroot",
+      "--sysroot=path/to/sysroot",
+    ),
+    expected = listOf(
+      "--sysroot=/absolut/path/to/sysroot",
+      "--sysroot=/path/to/project/path/to/sysroot",
+    ),
+  )
 }

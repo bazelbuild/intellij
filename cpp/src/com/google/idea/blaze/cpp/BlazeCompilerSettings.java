@@ -102,7 +102,7 @@ public abstract class BlazeCompilerSettings {
     return null;
   }
 
-  public ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
+  public ImmutableList<String> getCompilerSwitches(OCLanguageKind lang) {
     if (lang == CLanguageKind.C) {
       return cSwitches();
     }

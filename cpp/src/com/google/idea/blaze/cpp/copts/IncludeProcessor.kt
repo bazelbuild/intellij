@@ -21,41 +21,9 @@ import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 import com.jetbrains.cidr.lang.workspace.compiler.*
 import java.io.File
 
-abstract class IncludeProcessor(private val prefix: String) : CoptsProcessor {
+abstract class IncludeProcessor : CoptsProcessor.Transform() {
 
-  override fun process(
-    options: ImmutableList<String>,
-    sink: CompilerSpecificSwitchBuilder,
-    resolver: ExecutionRootPathResolver,
-  ): ImmutableList<String> {
-    val unprocessed = ImmutableList.builder<String>()
-
-    var consumeNext = false
-    for (option in options) {
-      when {
-        consumeNext -> {
-          apply(option, sink, resolver)
-          consumeNext = false
-        }
-
-        option == prefix -> {
-          consumeNext = true
-        }
-
-        option.startsWith(prefix) -> {
-          apply(option.substring(prefix.length), sink, resolver)
-        }
-
-        else -> {
-          unprocessed.add(option)
-        }
-      }
-    }
-
-    return unprocessed.build()
-  }
-
-  private fun apply(path: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
+  override fun apply(path: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
     val file = File(path)
 
     if (file.isAbsolute) {
@@ -68,4 +36,51 @@ abstract class IncludeProcessor(private val prefix: String) : CoptsProcessor {
   }
 
   protected abstract fun apply(file: File, sink: CompilerSpecificSwitchBuilder)
+
+  class Default : IncludeProcessor() {
+
+    override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
+      return when (kind) {
+        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-I")
+        MSVCCompilerKind -> ImmutableList.of("/I")
+        ClangClCompilerKind -> ImmutableList.of("/I", "/clang:-I")
+        else -> ImmutableList.of()
+      }
+    }
+
+    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
+      sink.withIncludePath(file.path)
+    }
+  }
+
+  class System : IncludeProcessor() {
+
+    override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
+      return when (kind) {
+        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-isystem")
+        MSVCCompilerKind -> ImmutableList.of("/external:I")
+        ClangClCompilerKind -> ImmutableList.of("/external:I", "/clang:-isystem")
+        else -> ImmutableList.of()
+      }
+    }
+
+    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
+      sink.withSystemIncludePath(file.path)
+    }
+  }
+
+  class Quote : IncludeProcessor() {
+
+    override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
+      return when (kind) {
+        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-iquote")
+        ClangClCompilerKind -> ImmutableList.of("/clang:-iquote")
+        else -> ImmutableList.of()
+      }
+    }
+
+    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
+      sink.withQuoteIncludePath(file.path)
+    }
+  }
 }
