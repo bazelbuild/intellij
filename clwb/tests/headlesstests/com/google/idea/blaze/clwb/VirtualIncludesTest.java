@@ -3,9 +3,12 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import java.util.ArrayList;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +26,19 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
 
     checkIncludes();
     checkImplDeps();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    // required for com.google.idea.blaze.base.sync.workspace.VirtualIncludesHandler to guess the target key
+    // this will eventually be replaced by the some kind of includes cache on our side
+    if (OS.CURRENT == OS.Windows) {
+      builder.addBuildFlag("--features=-shorten_virtual_includes");
+    }
+
+    return builder;
   }
 
   @Override
