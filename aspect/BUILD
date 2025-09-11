@@ -24,7 +24,6 @@ aspect_files(
     name = "aspect_files",
     files = [
         "artifacts.bzl",
-        "cc_dependencies.bzl",
         "fast_build_info_bundled.bzl",
         "flag_hack.bzl",
         "intellij_info_impl_bundled.bzl",
@@ -32,7 +31,7 @@ aspect_files(
         "make_variables.bzl",
         "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
         ":BUILD.bazel",
-    ],
+    ] + glob(["modules/*.bzl"]),
 )
 
 
