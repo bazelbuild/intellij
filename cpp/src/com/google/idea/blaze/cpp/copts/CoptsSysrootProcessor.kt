@@ -24,7 +24,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
 import java.io.File
 
-class SysrootProcessor : CoptsProcessor.Transform() {
+class CoptsSysrootProcessor : CoptsProcessor.Transform() {
 
   override fun flags(kind: OCCompilerKind): ImmutableList<String> {
     return when (kind) {

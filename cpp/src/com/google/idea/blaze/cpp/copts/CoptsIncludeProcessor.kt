@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 import com.jetbrains.cidr.lang.workspace.compiler.*
 import java.io.File
 
-abstract class IncludeProcessor : CoptsProcessor.Transform() {
+abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
   override fun apply(path: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
     val file = File(path)
@@ -37,7 +37,7 @@ abstract class IncludeProcessor : CoptsProcessor.Transform() {
 
   protected abstract fun apply(file: File, sink: CompilerSpecificSwitchBuilder)
 
-  class Default : IncludeProcessor() {
+  class Default : CoptsIncludeProcessor() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {
@@ -53,7 +53,7 @@ abstract class IncludeProcessor : CoptsProcessor.Transform() {
     }
   }
 
-  class System : IncludeProcessor() {
+  class System : CoptsIncludeProcessor() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {
@@ -69,7 +69,7 @@ abstract class IncludeProcessor : CoptsProcessor.Transform() {
     }
   }
 
-  class Quote : IncludeProcessor() {
+  class Quote : CoptsIncludeProcessor() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {

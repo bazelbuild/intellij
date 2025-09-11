@@ -40,12 +40,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp.copts">
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.LegacyIncludeFilter"/>
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.EmptyOptionsFilter"/>
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.IncludeProcessor$Default"/>
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.IncludeProcessor$System"/>
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.IncludeProcessor$Quote"/>
-    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.SysrootProcessor"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsLegacyIncludeFilter"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsEmptyOptionsFilter"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsIncludeProcessor$Default"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsIncludeProcessor$System"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsIncludeProcessor$Quote"/>
+    <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsSysrootProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
