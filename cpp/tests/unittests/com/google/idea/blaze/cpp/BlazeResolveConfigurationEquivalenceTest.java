@@ -133,9 +133,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                 getBuildSystemProvider().getBuildSystem().getName(),
                 ProjectType.ASPECT_SYNC));
 
-    registerExtensionPoint(
-        BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
-
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     resolver = new BlazeConfigurationResolver(project);

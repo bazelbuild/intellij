@@ -140,9 +140,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 getBuildSystemProvider().getBuildSystem().getName(),
                 ProjectType.ASPECT_SYNC));
 
-    registerExtensionPoint(
-        BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
-
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
