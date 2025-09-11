@@ -95,15 +95,6 @@ use_repo(
 
 bazel_dep(name = "rules_jvm_external", version = "6.8")
 
-bazel_dep(name = "rules_scala", version = "7.0.0")
-
-scala_dev_deps = use_extension(
-    "@rules_scala//scala/extensions:deps.bzl",
-    "scala_deps",
-)
-scala_dev_deps.scala()
-scala_dev_deps.scalatest()
-
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = "maven",
@@ -167,72 +158,9 @@ use_repo(
     truth = "com_google_truth_truth",
 )
 
-bazel_dep(name = "rules_go", version = "0.56.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.45.0", repo_name = "bazel_gazelle")
-
-go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
-
-# gRPC is used to generate Go from proto in the aspect tests, in
-# //aspect/testing/tests/src/com/google/idea/blaze/aspect/go/...
-go_repository(
-    name = "org_golang_google_grpc",
-    build_file_proto_mode = "disable",
-    importpath = "google.golang.org/grpc",
-    sum = "h1:zvIju4sqAGvwKspUQOhwnpcqSbzi7/H6QomNNjTL4sk=",
-    version = "v1.27.1",
-)
-
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
-
-# The plugin api for intellij_ce_2025_1. This is required to build IJwB and run integration tests.
-IC_251_SHA = "ac530ab969378d739b080989bb726bf24d9971f8942922ab13ddb3bc94f13f3d"
-
-IC_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2025.1.1/ideaIC-2025.1.1.zip"
-
-http_archive(
-    name = "intellij_ce_2025_1",
-    build_file = "@//intellij_platform_sdk:BUILD.idea251",
-    sha256 = IC_251_SHA,
-    url = IC_251_URL,
-)
-
-# The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IC_252_SHA = "021015293706ebe45624215fcad59269a0852e6251d00c277396cf64b2b3c108"
-
-IC_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/252.23892.248-EAP-SNAPSHOT/ideaIC-252.23892.248-EAP-SNAPSHOT.zip"
-
-http_archive(
-    name = "intellij_ce_2025_2",
-    build_file = "@//intellij_platform_sdk:BUILD.idea252",
-    sha256 = IC_252_SHA,
-    url = IC_252_URL,
-)
-
-# The plugin api for intellij_ce_2025_1. This is required to build IJwB and run integration tests.
-IU_251_SHA = "6437eb50dcaebecc34c454370c693184f39fbded99ba9a7059f5189badfe4a7b"
-
-IU_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2025.1.1/ideaIU-2025.1.1.zip"
-
-http_archive(
-    name = "intellij_ue_2025_1",
-    build_file = "@//intellij_platform_sdk:BUILD.ue251",
-    sha256 = IU_251_SHA,
-    url = IU_251_URL,
-)
-
-# The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IU_252_SHA = "25e5cd4246afab86913b4c3377cf62ffdd85a8484df1e04c47faf57baf97dc03"
-
-IU_252_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/252.23892.248-EAP-SNAPSHOT/ideaIU-252.23892.248-EAP-SNAPSHOT.zip"
-
-http_archive(
-    name = "intellij_ue_2025_2",
-    build_file = "@//intellij_platform_sdk:BUILD.ue252",
-    sha256 = IU_252_SHA,
-    url = IU_252_URL,
-)
 
 CLION_251_SHA = "0f3ae5c8536a009e985b3a91485ef0e9856db3ca980d5fb3fb12f2f4ed08d8d1"
 
@@ -254,36 +182,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion252",
     sha256 = CLION_252_SHA,
     url = CLION_252_URL,
-)
-
-DEVKIT_BUILD_FILE = """
-java_import(
-    name = "devkit",
-    jars = glob(["devkit/lib/devkit.jar", "devkit/lib/modules/*.jar"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-DEVKIT_251_SHA = "53f0a27963f37c80a12d142cfa5fa019e268585fa13f17f09683be747a5fb8c7"
-
-DEVKIT_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/251.25410.59/DevKit-251.25410.59.zip"
-
-http_archive(
-    name = "devkit_2025_1",
-    build_file_content = DEVKIT_BUILD_FILE,
-    sha256 = DEVKIT_251_SHA,
-    url = DEVKIT_251_URL,
-)
-
-DEVKIT_252_SHA = "e237df12b6d2522364c0109519ef6c1cf64df349642eb383f1144a4871f43172"
-
-DEVKIT_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/252.23892.248/DevKit-252.23892.248.zip"
-
-http_archive(
-    name = "devkit_2025_2",
-    build_file_content = DEVKIT_BUILD_FILE,
-    sha256 = DEVKIT_252_SHA,
-    url = DEVKIT_252_URL,
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -319,96 +217,6 @@ http_archive(
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = PYTHON_PLUGIN_252_SHA,
     url = PYTHON_PLUGIN_252_URL,
-)
-
-_GO_BUILD_FILE = """
-java_import(
-    name = "go",
-    jars = glob(["go-plugin/lib/*.jar", "go-plugin/lib/modules/*.jar"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-GO_PLUGIN_251_SHA = "aa1657029527713c1e3a612e1f83ca60e128c553ef1e07ab1440256d4c2d53dc"
-
-GO_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/251.25410.59/org.jetbrains.plugins.go-251.25410.59.zip"
-
-http_archive(
-    name = "go_2025_1",
-    build_file_content = _GO_BUILD_FILE,
-    sha256 = GO_PLUGIN_251_SHA,
-    url = GO_PLUGIN_251_URL,
-)
-
-GO_PLUGIN_252_SHA = "4f805bbe5bf8f8379a95958d441c62ff102173759f900546e9a1586b85d081a8"
-
-GO_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/252.23892.248/org.jetbrains.plugins.go-252.23892.248.zip"
-
-http_archive(
-    name = "go_2025_2",
-    build_file_content = _GO_BUILD_FILE,
-    sha256 = GO_PLUGIN_252_SHA,
-    url = GO_PLUGIN_252_URL,
-)
-
-_SCALA_BUILD_FILE = """
-java_import(
-    name = "scala",
-    jars = glob(["Scala/lib/*.jar", "Scala/lib/modules/*.jar"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-SCALA_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.1.23/org.intellij.scala-2025.1.23.zip"
-
-SCALA_PLUGIN_251_SHA = "a2eab9536ef9495e0be806d0013ba5d2239c57ca457d7b9afccf09240896b8e9"
-
-http_archive(
-    name = "scala_2025_1",
-    build_file_content = _SCALA_BUILD_FILE,
-    sha256 = SCALA_PLUGIN_251_SHA,
-    url = SCALA_PLUGIN_251_URL,
-)
-
-SCALA_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.2.19/org.intellij.scala-2025.2.19.zip"
-
-SCALA_PLUGIN_252_SHA = "486efcbd5e35f369fdb187cb432a0bfdf5abcf25e040dc67f9dd3975636caf85"
-
-http_archive(
-    name = "scala_2025_2",
-    build_file_content = _SCALA_BUILD_FILE,
-    sha256 = SCALA_PLUGIN_252_SHA,
-    url = SCALA_PLUGIN_252_URL,
-)
-
-_TOML_BUILD_FILE = """
-java_import(
-    name = "toml",
-    jars = glob(["toml/lib/toml.jar", "toml/lib/modules/*.jar"]),
-    visibility = ["//visibility:public"],
-)
-"""
-
-TOML_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/251.26927.47/org.toml.lang-251.26927.47.zip"
-
-TOML_PLUGIN_251_SHA = "7395b6c4b93dc91a259b1ee0b088a852e8a89c2b36b280a544e847b3571edfd3"
-
-http_archive(
-    name = "toml_2025_1",
-    build_file_content = _TOML_BUILD_FILE,
-    sha256 = TOML_PLUGIN_251_SHA,
-    url = TOML_PLUGIN_251_URL,
-)
-
-TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.26199.11/org.toml.lang-252.26199.11.zip"
-
-TOML_PLUGIN_252_SHA = "4730c39bc882ec65d14d21e0125fda24deaf8d051c1e8ce5dc740aa25b4aa1fc"
-
-http_archive(
-    name = "toml_2025_2",
-    build_file_content = _TOML_BUILD_FILE,
-    sha256 = TOML_PLUGIN_252_SHA,
-    url = TOML_PLUGIN_252_URL,
 )
 
 # needed for cpp tests

@@ -1,1 +1,0 @@
-bazel_dep(name = "rules_java", version = "8.15.2")

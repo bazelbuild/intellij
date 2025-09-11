@@ -15,31 +15,19 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
 load("@rules_java//java:java_library.bzl", "java_library")
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 licenses(["notice"])
 
 java_library(
+    name = "v252",
+    srcs = glob([
+        "com/google/idea/sdkcompat/javascript/**",  #api223
+        "com/google/idea/sdkcompat/python/**",
+    ]),
+    visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/go",  #api231
         "//third_party/javascript",  #api223
-        "//third_party/scala",
     ],
-    name = "v252",
-    srcs = select_for_ide(
-        clion = glob([
-            "com/google/idea/sdkcompat/javascript/**",  #api223
-            "com/google/idea/sdkcompat/python/**",
-        ]),
-        intellij_ue = glob([
-            "com/google/idea/sdkcompat/javascript/**",  #api223
-            "com/google/idea/sdkcompat/python/**",
-        ]),
-        default = glob([
-            "com/google/idea/sdkcompat/python/**",
-        ]),
-    ),
-    visibility = ["//sdkcompat:__pkg__"],
 )

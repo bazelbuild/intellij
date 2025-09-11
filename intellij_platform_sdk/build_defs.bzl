@@ -4,12 +4,6 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-oss-oldest-stable": "intellij-2025.1",
-    "intellij-oss-latest-stable": "intellij-2025.2",
-    "intellij-oss-under-dev": "intellij-2025.2",
-    "intellij-ue-oss-oldest-stable": "intellij-ue-2025.1",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2025.2",
-    "intellij-ue-oss-under-dev": "intellij-ue-2025.2",
     "clion-oss-oldest-stable": "clion-2025.1",
     "clion-oss-latest-stable": "clion-2025.2",
     "clion-oss-under-dev": "clion-2025.2",
@@ -19,12 +13,6 @@ INDIRECT_IJ_PRODUCTS = {
 
 INDIRECT_PRODUCT_CHANNELS = {
     # Channel mapping for Bazel Plugin OSS
-    "intellij-oss-oldest-stable": CHANNEL_STABLE,
-    "intellij-oss-latest-stable": CHANNEL_STABLE,
-    "intellij-oss-under-dev": CHANNEL_CANARY,
-    "intellij-ue-oss-oldest-stable": CHANNEL_STABLE,
-    "intellij-ue-oss-latest-stable": CHANNEL_STABLE,
-    "intellij-ue-oss-under-dev": CHANNEL_CANARY,
     "clion-oss-oldest-stable": CHANNEL_STABLE,
     "clion-oss-latest-stable": CHANNEL_STABLE,
     "clion-oss-under-dev": CHANNEL_CANARY,
@@ -54,42 +42,11 @@ def _build_ij_product(ide, directory, version):
 def _build_ij_product_dict(versions):
     result = {}
     for version in versions:
-        result["intellij-%s" % version] = _build_ij_product("intellij", "intellij_ce", version)
-        result["intellij-ue-%s" % version] = _build_ij_product("intellij-ue", "intellij_ue", version)
         result["clion-%s" % version] = _build_ij_product("clion", "clion", version)
 
     return result
 
 DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.1", "2025.2"])
-
-def select_for_plugin_api(params):
-    """Selects for a plugin_api.
-
-    Args:
-        params: A dict with ij_product -> value.
-                You may only include direct ij_products here,
-                not indirects (eg. intellij-latest).
-    Returns:
-        A select statement on all plugin_apis. Unless you include a "default",
-        a non-matched plugin_api will result in an error.
-
-    Example:
-      java_library(
-        name = "foo",
-        srcs = select_for_plugin_api({
-            "intellij-2016.3.1": [...my intellij 2016.3 sources ....],
-            "intellij-2012.2.4": [...my intellij 2016.2 sources ...],
-        }),
-      )
-    """
-    for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
-        if indirect_ij_product in params:
-            error_message = "".join([
-                "Do not select on indirect ij_product %s. " % indirect_ij_product,
-                "Instead, select on an exact ij_product.",
-            ])
-            fail(error_message)
-    return _do_select_for_plugin_api(params)
 
 def _do_select_for_plugin_api(params):
     """A version of select_for_plugin_api which accepts indirect products."""
@@ -124,46 +81,8 @@ def _do_select_for_plugin_api(params):
 
     return select(
         select_params,
-        no_match_error = "define an intellij product version, e.g. --define=ij_product=intellij-latest",
+        no_match_error = "define an intellij product version, e.g. --define=ij_product=clion-oss-latest",
     )
-
-def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = []):
-    """Selects for the supported IDEs.
-
-    Args:
-        intellij: Files to use for IntelliJ. If None, will use default.
-        intellij_ue: Files to use for IntelliJ UE. If None, will use value chosen for 'intellij'.
-        clion: Files to use for CLion. If None will use default.
-        default: Files to use for any IDEs not passed.
-    Returns:
-        A select statement on all plugin_apis to lists of files, sorted into IDEs.
-
-    Example:
-      java_library(
-        name = "foo",
-        srcs = select_for_ide(
-            clion = [":cpp_only_sources"],
-            default = [":java_only_sources"],
-        ),
-      )
-    """
-    intellij = intellij if intellij != None else default
-    intellij_ue = intellij_ue if intellij_ue != None else intellij
-    clion = clion if clion != None else default
-
-    ide_to_value = {
-        "intellij": intellij,
-        "intellij-ue": intellij_ue,
-        "clion": clion,
-    }
-
-    # Map (direct ij_product) -> corresponding ide value
-    params = dict()
-    for ij_product, value in DIRECT_IJ_PRODUCTS.items():
-        params[ij_product] = ide_to_value[value.ide]
-    params["default"] = default
-
-    return select_for_plugin_api(params)
 
 def select_for_version(versions, default = []):
     """Selects for the supported IDEs.
@@ -190,16 +109,12 @@ def select_for_version(versions, default = []):
             params[ij_product] = versions[value.version]
     params["default"] = default
 
-    return select_for_plugin_api(params)
+    return _do_select_for_plugin_api(params)
 
 def _plugin_api_directory(value):
-    if hasattr(value, "oss_workspace"):
-        directory = value.oss_workspace
-    else:
-        directory = value.directory
-    return "@" + directory + "//"
+    return "@" + value.directory + "//"
 
-def select_from_plugin_api_directory(intellij, clion, intellij_ue = None):
+def select_from_plugin_api_directory(targets):
     """Internal convenience method to generate select statement from the IDE's plugin_api directories.
 
     Args:
@@ -212,45 +127,10 @@ def select_from_plugin_api_directory(intellij, clion, intellij_ue = None):
 
     """
 
-    ide_to_value = {
-        "intellij": intellij,
-        "intellij-ue": intellij_ue if intellij_ue else intellij,
-        "clion": clion,
-    }
-
     # Map (direct ij_product) -> corresponding product directory
     params = dict()
     for ij_product, value in DIRECT_IJ_PRODUCTS.items():
-        params[ij_product] = [_plugin_api_directory(value) + item for item in ide_to_value[value.ide]]
-
-    # No ij_product == intellij-latest
-    params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-oss-latest-stable"]]
-
-    return select_for_plugin_api(params)
-
-def select_from_plugin_api_version_directory(params):
-    """Selects for a plugin_api direct version based on its directory.
-
-    Args:
-        params: A dict with ij_product -> value.
-                You may only include direct ij_products here,
-                not indirects (eg. intellij-latest).
-    Returns:
-        A select statement on all plugin_apis. Unless you include a "default",
-        a non-matched plugin_api will result in an error.
-    """
-    for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
-        if indirect_ij_product in params:
-            error_message = "".join([
-                "Do not select on indirect ij_product %s. " % indirect_ij_product,
-                "Instead, select on an exact ij_product.",
-            ])
-            fail(error_message)
-
-    # Map (direct ij_product) -> corresponding value relative to product directory
-    for ij_product, value in params.items():
-        if ij_product != "default":
-            params[ij_product] = [_plugin_api_directory(DIRECT_IJ_PRODUCTS[ij_product]) + item for item in value]
+        params[ij_product] = [_plugin_api_directory(value) + item for item in targets]
 
     return _do_select_for_plugin_api(params)
 
@@ -262,71 +142,6 @@ def select_build_name():
         params[ij_product] = ["%s-%s" % (value.ide, value.version)]
 
     return _do_select_for_plugin_api(params)
-
-def get_versions_to_build(product):
-    """"Returns a set of unique product version aliases to test and build during regular release process.
-
-    For each product, we care about four versions aliases to build and release to JetBrains
-    repository; -latest, -beta, -oss-oldest-stable and oss-latest-stable.
-    However, some of these aliases can point to the same IDE version and this can lead
-    to conflicts if we attempt to blindly build and upload the four versions.
-    This function is used to return only the aliases that point to different
-    IDE versions of the given product.
-
-    Args:
-        product: name of the product; android-studio, clion, intellij-ue
-
-    Returns:
-        A space separated list of product version aliases to build, the values can be
-        oss-oldest-stable, oss-latest-stable, internal-stable and internal-beta.
-    """
-    aliases_to_build = []
-    plugin_api_versions = []
-    for alias in ["oss-oldest-stable", "latest", "oss-latest-stable", "beta"]:
-        indirect_ij_product = product + "-" + alias
-        if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
-            fail(
-                "Product-version alias %s not found." % indirect_ij_product,
-                "Invalid product: %s only android-studio, clion and intellij-ue are accepted." % product,
-            )
-
-        version = INDIRECT_IJ_PRODUCTS[indirect_ij_product]
-        if version not in plugin_api_versions:
-            plugin_api_versions.append(version)
-            if alias == "latest":
-                aliases_to_build.append("internal-stable")
-            elif alias == "beta":
-                aliases_to_build.append("internal-beta")
-            else:
-                aliases_to_build.append(alias)
-
-    return " ".join(aliases_to_build)
-
-def get_unique_supported_oss_ide_versions(product):
-    """"Returns the unique supported IDE versions for the given product in the OSS Bazel plugin
-
-    Args:
-        product: name of the product; android-studio, clion, intellij-ue
-
-    Returns:
-        A space separated list of the aliases of the unique IDE versions for the
-        OSS Bazel plugin.
-    """
-    supported_versions = []
-    unique_aliases = []
-    for alias in ["oss-oldest-stable", "oss-latest-stable"]:
-        indirect_ij_product = product + "-" + alias
-        if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
-            fail(
-                "Product-version alias %s not found." % indirect_ij_product,
-                "Invalid product: %s, only android-studio, clion and intellij-ue are accepted." % product,
-            )
-        ver = INDIRECT_IJ_PRODUCTS[indirect_ij_product]
-        if ver not in supported_versions:
-            supported_versions.append(ver)
-            unique_aliases.append(alias)
-
-    return " ".join(unique_aliases)
 
 def no_mockito_extensions(name, jars, **kwargs):
     """Removes mockito extensions from jars.
