@@ -19,23 +19,23 @@ import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 import com.jetbrains.cidr.lang.workspace.compiler.*
-import java.io.File
+import java.nio.file.Path
 
 abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
-  override fun apply(path: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
-    val file = File(path)
+  override fun apply(value: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
+    val path = Path.of(value)
 
-    if (file.isAbsolute) {
-      apply(file, sink)
+    if (path.isAbsolute) {
+      apply(path, sink)
     } else {
-      resolver.resolveToIncludeDirectories(ExecutionRootPath(file)).forEach {
-        apply(it, sink)
+      resolver.resolveToIncludeDirectories(ExecutionRootPath.create(path)).forEach {
+        apply(it.toPath(), sink)
       }
     }
   }
 
-  protected abstract fun apply(file: File, sink: CompilerSpecificSwitchBuilder)
+  protected abstract fun apply(path: Path, sink: CompilerSpecificSwitchBuilder)
 
   class Default : CoptsIncludeProcessor() {
 
@@ -48,8 +48,8 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
       }
     }
 
-    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
-      sink.withIncludePath(file.path)
+    override fun apply(path: Path, sink: CompilerSpecificSwitchBuilder) {
+      sink.withIncludePath(path.toString())
     }
   }
 
@@ -64,8 +64,8 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
       }
     }
 
-    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
-      sink.withSystemIncludePath(file.path)
+    override fun apply(path: Path, sink: CompilerSpecificSwitchBuilder) {
+      sink.withSystemIncludePath(path.toString())
     }
   }
 
@@ -79,8 +79,8 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
       }
     }
 
-    override fun apply(file: File, sink: CompilerSpecificSwitchBuilder) {
-      sink.withQuoteIncludePath(file.path)
+    override fun apply(path: Path, sink: CompilerSpecificSwitchBuilder) {
+      sink.withQuoteIncludePath(path.toString())
     }
   }
 }

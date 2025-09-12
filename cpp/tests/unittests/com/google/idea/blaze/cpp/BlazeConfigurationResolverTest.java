@@ -163,8 +163,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
   private static CToolchainIdeInfo.Builder createToolchainIdeInfoBuilder(String compiler) {
     return CToolchainIdeInfo.builder()
-        .setCCompiler(new ExecutionRootPath(compiler))
-        .setCppCompiler(new ExecutionRootPath(compiler))
+        .setCCompiler(ExecutionRootPath.create(compiler))
+        .setCppCompiler(ExecutionRootPath.create(compiler))
         .setCompilerName(compiler)
         .setBuiltInIncludeDirectories(ImmutableList.of())
         .setCCompilerOptions(ImmutableList.of())

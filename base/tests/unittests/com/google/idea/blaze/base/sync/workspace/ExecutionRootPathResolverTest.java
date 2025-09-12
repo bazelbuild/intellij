@@ -154,7 +154,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   @Test
   public void testExternalWorkspacePathRelativeToOutputBase() {
     ImmutableList<File> files =
-        pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("external/guava/src"));
+        pathResolver.resolveToIncludeDirectories(ExecutionRootPath.create("external/guava/src"));
     assertThat(files).containsExactly(new File(OUTPUT_BASE, "external/guava/src"));
   }
 
@@ -162,7 +162,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   public void testGenfilesPathRelativeToExecRoot() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("bazel-out/crosstool/genfiles/res/normal"));
+            ExecutionRootPath.create("bazel-out/crosstool/genfiles/res/normal"));
     assertThat(files)
         .containsExactly(new File(EXECUTION_ROOT, "bazel-out/crosstool/genfiles/res/normal"));
   }
@@ -170,7 +170,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   @Test
   public void testMainWorkspacePathsRelativeToWorkspaceRoot() {
     ImmutableList<File> files =
-        pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast"));
+        pathResolver.resolveToIncludeDirectories(ExecutionRootPath.create("tools/fast"));
     assertThat(files).containsExactly(WORKSPACE_ROOT.fileForPath(new WorkspacePath("tools/fast")));
   }
 
@@ -178,7 +178,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   public void testGenfilesPathWithDifferentConfigSettingStillResolves() {
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(
-            new ExecutionRootPath("bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
+            ExecutionRootPath.create("bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
     assertThat(files)
         .containsExactly(
             new File(EXECUTION_ROOT, "bazel-out/arm-linux-fastbuild/genfiles/res/normal"));
@@ -187,7 +187,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   @Test
   public void testIllegalWorkspacePaths() {
     ImmutableList<File> files =
-        pathResolver.resolveToIncludeDirectories(new ExecutionRootPath("tools/fast/:include"));
+        pathResolver.resolveToIncludeDirectories(ExecutionRootPath.create("tools/fast/:include"));
     assertThat(files).isEmpty();
   }
 
@@ -198,7 +198,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         for (TargetName targetName : TARGET_NAMES) {
           String workspaceNameString = workspaceName != null ? workspaceName : "";
 
-          ExecutionRootPath generatedPath = new ExecutionRootPath(Path.of(
+          ExecutionRootPath generatedPath = ExecutionRootPath.create(Path.of(
               "bazel-out/k8-fastbuild/bin",
               (workspaceName == null ? "" : ExecutionRootPathResolver.externalPath.getPath()),
               workspaceNameString,
@@ -237,7 +237,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     for (String workspaceName : WORKSPACES) {
       String workspaceNameString = workspaceName != null ? workspaceName : "";
 
-      ExecutionRootPath generatedPath = new ExecutionRootPath(Path.of(
+      ExecutionRootPath generatedPath = ExecutionRootPath.create(Path.of(
           "bazel-out/k8-fastbuild/bin",
           (workspaceName == null ? "" : ExecutionRootPathResolver.externalPath.getPath()),
           workspaceNameString,
@@ -273,7 +273,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
         TARGET_WITH_INCLUDE_PREFIX.toString(),
         INCLUDE_PREFIX).toFile();
 
-    ExecutionRootPath generatedPath = new ExecutionRootPath(fileToBeResolved);
+    ExecutionRootPath generatedPath = ExecutionRootPath.create(fileToBeResolved);
 
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(generatedPath);
@@ -297,7 +297,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     when(output.isAbsolute()).thenReturn(false, true);
     when(output.toPath()).thenReturn(pathMock);
 
-    ExecutionRootPath pathUnderTest = new ExecutionRootPath(output);
+    ExecutionRootPath pathUnderTest = ExecutionRootPath.create(output);
 
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(pathUnderTest);

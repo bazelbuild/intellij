@@ -22,14 +22,13 @@ import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
-import java.io.File
+import java.nio.file.Path
 
 class CoptsSysrootProcessor : CoptsProcessor.Transform() {
 
   override fun flags(kind: OCCompilerKind): ImmutableList<String> {
     return when (kind) {
       GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("--sysroot")
-      // TODO: add support for MSVC
       else -> ImmutableList.of()
     }
   }
@@ -39,12 +38,12 @@ class CoptsSysrootProcessor : CoptsProcessor.Transform() {
     sink: CompilerSpecificSwitchBuilder,
     resolver: ExecutionRootPathResolver
   ) {
-    val file = File(value)
+    val path = Path.of(value)
 
-    if (file.isAbsolute) {
-      sink.withSysroot(file.path)
+    if (path.isAbsolute) {
+      sink.withSysroot(path.toString())
     } else {
-      sink.withSysroot(resolver.resolveExecutionRootPath(ExecutionRootPath(file)).path)
+      sink.withSysroot(resolver.resolveExecutionRootPath(ExecutionRootPath.create(path)).path)
     }
   }
 }

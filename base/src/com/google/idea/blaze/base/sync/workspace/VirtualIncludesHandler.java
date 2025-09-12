@@ -130,7 +130,7 @@ public class VirtualIncludesHandler {
         .resolve(externalWorkspace)
         .resolve(workspacePath.toString()).toString();
 
-    return ImmutableList.of(new ExecutionRootPath(externalRoot).getFileRootedAt(externalWorkspacePath));
+    return ImmutableList.of(ExecutionRootPath.create(externalRoot).getFileRootedAt(externalWorkspacePath));
   }
 
   /**

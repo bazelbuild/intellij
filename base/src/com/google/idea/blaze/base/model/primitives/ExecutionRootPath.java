@@ -15,68 +15,54 @@
  */
 package com.google.idea.blaze.base.model.primitives;
 
-import com.google.common.base.Objects;
+import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /**
- * An absolute or relative path returned from Blaze. If it is a relative path, it is relative to the
- * execution root.
+ * An absolute or relative path returned from Blaze. If it is a relative path, it is relative to the execution root.
  */
-public final class ExecutionRootPath implements ProtoWrapper<String> {
-  private final File path;
+@AutoValue
+public abstract class ExecutionRootPath implements ProtoWrapper<String> {
 
-  public ExecutionRootPath(String path) {
-    this.path = new File(path);
+  public abstract Path path();
+
+  public static ExecutionRootPath create(Path path) {
+    return new AutoValue_ExecutionRootPath(path);
   }
 
-  public ExecutionRootPath(File path) {
-    this.path = path;
+  public static ExecutionRootPath create(String path) {
+    return create(Path.of(path));
   }
 
+  public static ExecutionRootPath create(File file) {
+    return create(file.toPath());
+  }
+
+  @Deprecated
   public File getAbsoluteOrRelativeFile() {
-    return path;
+    return path().toFile();
   }
 
   public boolean isAbsolute() {
-    return path.isAbsolute();
+    return path().isAbsolute();
   }
 
   public File getFileRootedAt(File absoluteRoot) {
+    final var path = path();
     if (path.isAbsolute()) {
-      return path;
+      return path.toFile();
     }
-    return new File(absoluteRoot, path.getPath());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ExecutionRootPath that = (ExecutionRootPath) o;
-    return Objects.equal(path, that.path);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(path);
-  }
-
-  @Override
-  public String toString() {
-    return "ExecutionRootPath{" + "path='" + path + '\'' + '}';
+    return new File(absoluteRoot, path.toString());
   }
 
   /**
-   * Returns the relative {@link ExecutionRootPath} if {@code root} is an ancestor of {@code path}
-   * otherwise returns null.
+   * Returns the relative {@link ExecutionRootPath} if {@code root} is an ancestor of {@code path} otherwise returns
+   * null.
    */
   @Nullable
   public static ExecutionRootPath createAncestorRelativePath(File root, File path) {
@@ -89,58 +75,40 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
     if (!isAncestor(root.getPath(), path.getPath(), /* strict= */ false)) {
       return null;
     }
-    String relativePath =
-        FileUtil.getRelativePath(
-            root.getAbsolutePath(), path.getAbsolutePath(), File.separatorChar);
+    String relativePath = FileUtil.getRelativePath(root.getAbsolutePath(), path.getAbsolutePath(), File.separatorChar);
     if (relativePath == null) {
       return null;
     }
-    return ProjectDataInterner.intern(new ExecutionRootPath(new File(relativePath)));
+    return ProjectDataInterner.intern(ExecutionRootPath.create(relativePath));
   }
 
   /**
-   * @param possibleParent
-   * @param possibleChild
-   * @param strict if {@code false} then this method returns {@code true} if {@code possibleParent}
-   *     equals to {@code possibleChild}.
+   * If strict is false then this method returns true if the possibleParent is equal to possibleChild.
    */
-  public static boolean isAncestor(
-      ExecutionRootPath possibleParent, ExecutionRootPath possibleChild, boolean strict) {
+  public static boolean isAncestor(ExecutionRootPath possibleParent, ExecutionRootPath possibleChild, boolean strict) {
     return isAncestor(
         possibleParent.getAbsoluteOrRelativeFile().getPath(),
         possibleChild.getAbsoluteOrRelativeFile().getPath(),
-        strict);
+        strict
+    );
   }
 
   /**
-   * @param possibleParentPath
-   * @param possibleChild
-   * @param strict if {@code false} then this method returns {@code true} if {@code possibleParent}
-   *     equals to {@code possibleChild}.
+   * If strict is false then this method returns true if the possibleParent is equal to possibleChild.
    */
-  public static boolean isAncestor(
-      String possibleParentPath, ExecutionRootPath possibleChild, boolean strict) {
-    return isAncestor(
-        possibleParentPath, possibleChild.getAbsoluteOrRelativeFile().getPath(), strict);
+  public static boolean isAncestor(String possibleParentPath, ExecutionRootPath possibleChild, boolean strict) {
+    return isAncestor(possibleParentPath, possibleChild.getAbsoluteOrRelativeFile().getPath(), strict);
   }
 
   /**
-   * @param possibleParent
-   * @param possibleChildPath
-   * @param strict if {@code false} then this method returns {@code true} if {@code possibleParent}
-   *     equals to {@code possibleChild}.
+   * If strict is false then this method returns true if the possibleParent is equal to possibleChild.
    */
-  public static boolean isAncestor(
-      ExecutionRootPath possibleParent, String possibleChildPath, boolean strict) {
-    return isAncestor(
-        possibleParent.getAbsoluteOrRelativeFile().getPath(), possibleChildPath, strict);
+  public static boolean isAncestor(ExecutionRootPath possibleParent, String possibleChildPath, boolean strict) {
+    return isAncestor(possibleParent.getAbsoluteOrRelativeFile().getPath(), possibleChildPath, strict);
   }
 
   /**
-   * @param possibleParentPath
-   * @param possibleChildPath
-   * @param strict if {@code false} then this method returns {@code true} if {@code possibleParent}
-   *     equals to {@code possibleChild}.
+   * If strict is false then this method returns true if the possibleParent is equal to possibleChild.
    */
   public static boolean isAncestor(
       String possibleParentPath, String possibleChildPath, boolean strict) {
@@ -152,7 +120,7 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
   }
 
   public static ExecutionRootPath fromProto(String proto) {
-    return ProjectDataInterner.intern(new ExecutionRootPath(proto));
+    return ProjectDataInterner.intern(ExecutionRootPath.create(proto));
   }
 
   public static @Nullable ExecutionRootPath fromNullableProto(@Nullable String proto) {
@@ -165,6 +133,6 @@ public final class ExecutionRootPath implements ProtoWrapper<String> {
 
   @Override
   public String toProto() {
-    return path.getPath();
+    return path().toString();
   }
 }
