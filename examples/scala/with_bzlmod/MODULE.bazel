@@ -1,4 +1,4 @@
-bazel_dep(name = "rules_scala", version = "7.0.0")
+bazel_dep(name = "rules_scala", version = "7.1.1")
 
 scala_config = use_extension(
     "@rules_scala//scala/extensions:config.bzl",
