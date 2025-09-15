@@ -289,15 +289,13 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
     Path expectedPath = Path.of(WORKSPACE_ROOT.toString(), "guava", "src");
 
     Path pathMock = mock(Path.class);
+    when(pathMock.toString()).thenReturn("external/guava/src");
     when(pathMock.toRealPath()).thenReturn(expectedPath);
 
-    File output = spy(new File("external/guava/src"));
-
     // some hacky mocking to bypass several ifs
-    when(output.isAbsolute()).thenReturn(false, true);
-    when(output.toPath()).thenReturn(pathMock);
+    when(pathMock.isAbsolute()).thenReturn(false, true);
 
-    ExecutionRootPath pathUnderTest = ExecutionRootPath.create(output);
+    ExecutionRootPath pathUnderTest = ExecutionRootPath.create(pathMock);
 
     ImmutableList<File> files =
         pathResolver.resolveToIncludeDirectories(pathUnderTest);

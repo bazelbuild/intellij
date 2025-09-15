@@ -52,12 +52,21 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
     return path().isAbsolute();
   }
 
+  @Deprecated
   public File getFileRootedAt(File absoluteRoot) {
     final var path = path();
     if (path.isAbsolute()) {
       return path.toFile();
     }
     return new File(absoluteRoot, path.toString());
+  }
+
+  public Path getRootedAt(Path absoluteRoot) {
+    final var path = path();
+    if (path.isAbsolute()) {
+      return path;
+    }
+    return absoluteRoot.resolve(path);
   }
 
   /**
