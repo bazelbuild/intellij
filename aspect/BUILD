@@ -4,7 +4,6 @@
 
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load(":build_defs.bzl", "aspect_files", "aspect_library")
-load(":flag_hack.bzl", "define_flag_hack")
 
 licenses(["notice"])
 
@@ -123,11 +122,11 @@ genrule(
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
-define_flag_hack()
-
 aspect_library(
     name = "aspect_template_lib",
     files = [
+        "cc_info.bzl",
+        "cc_info.template.bzl",
         "code_generator_info.bzl",
         "code_generator_info.template.bzl",
         "intellij_info.template.bzl",
@@ -136,8 +135,6 @@ aspect_library(
         "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
-        "cc_info.bzl",
-        "cc_info.template.bzl",
     ],
     namespace = "aspect/template",
     visibility = ["//visibility:public"],

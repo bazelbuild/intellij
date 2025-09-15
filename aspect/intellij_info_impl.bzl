@@ -320,14 +320,7 @@ def _get_output_mnemonic(ctx):
     return ctx.bin_dir.path.split("/")[1]
 
 def _get_python_version(ctx):
-    if ctx.attr._flag_hack[FlagHackInfo].incompatible_py2_outputs_are_suffixed:
-        if _get_output_mnemonic(ctx).find("-py2-") != -1:
-            return PY2
-        return PY3
-    else:
-        if _get_output_mnemonic(ctx).find("-py3-") != -1:
-            return PY3
-        return PY2
+    return PY3
 
 _SRCS_VERSION_MAPPING = {
     "PY2": SRC_PY2,
@@ -1352,9 +1345,6 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
         "_jar_filter": attr.label(
             default = tool_label("JarFilter_deploy.jar"),
             allow_single_file = True,
-        ),
-        "_flag_hack": attr.label(
-            default = flag_hack_label,
         ),
         "_create_aar": attr.label(
             default = tool_label("CreateAar_deploy.jar"),
