@@ -1,2 +1,0 @@
-common --legacy_external_runfiles #https://github.com/bazelbuild/rules_kotlin/issues/1241
-common --java_language_version=21 --java_runtime_version=21
