@@ -250,7 +250,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       PsiManager psiManager,
       String path) {
     return Optional.of(path)
-        .map(ExecutionRootPath::new)
+        .map(ExecutionRootPath::create)
         .map(pathResolver::resolveExecutionRootPath)
         .map(lfs::findFileByIoFile)
         .map(psiManager::findFile)

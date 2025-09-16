@@ -18,13 +18,19 @@ package com.google.idea.blaze.cpp.copts
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
 
-class EmptyOptionsFilter : CoptsProcessor.Filter() {
+/**
+ * Legacy filter, disabled by default. Only kept for compatibility reasons.
+ *
+ * "-include somefile.h" doesn't seem to work for some reason. E.g., "-include cstddef" results in "clang: error: no
+ * such file or directory: 'cstddef'"
+ */
+class CoptsLegacyIncludeFilter : CoptsProcessor.Filter() {
 
   override fun enabled(kind: OCCompilerKind): Boolean {
-    return Registry.`is`("bazel.cpp.sync.workspace.filter.out.empty.flags")
+    return Registry.`is`("bazel.cpp.sync.workspace.filter.out.incompatible.flags")
   }
 
   override fun drop(option: String): Boolean {
-    return option.isBlank()
+    return option.startsWith("-include ")
   }
 }
