@@ -78,42 +78,42 @@ public class ExecutionRootPathResolverImpl implements ExecutionRootPathResolver 
   }
 
   @Override
-  public ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath path) {
-    if (path.isAbsolute()) {
-      return ImmutableList.of(path.getAbsoluteOrRelativeFile());
+  public ImmutableList<File> resolveToIncludeDirectories(ExecutionRootPath executionRootPath) {
+    if (executionRootPath.isAbsolute()) {
+      return ImmutableList.of(executionRootPath.path().toFile());
     }
-    String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
+    String firstPathComponent = getFirstPathComponent(executionRootPath.path().toString());
     if (buildArtifactDirectories.contains(firstPathComponent)) {
       // Build artifacts accumulate under the execution root, independent of symlink settings
 
-      if(VirtualIncludesHandler.useHeuristic() && VirtualIncludesHandler.containsVirtualInclude(path)) {
+      if(VirtualIncludesHandler.useHeuristic() && VirtualIncludesHandler.containsVirtualInclude(executionRootPath)) {
         // Resolve virtual_include from execution root either to local or external workspace for correct code insight
         ImmutableList<File> resolved = ImmutableList.of();
         try {
           resolved = VirtualIncludesHandler.resolveVirtualInclude(
-              path,
+              executionRootPath,
               outputBase,
               workspacePathResolver,
               targetMap);
         } catch (Throwable throwable) {
-          LOG.error("Failed to resolve virtual includes for " + path, throwable);
+          LOG.error("Failed to resolve virtual includes for " + executionRootPath, throwable);
         }
 
         return resolved.isEmpty()
-                ? ImmutableList.of(path.getFileRootedAt(executionRoot))
+                ? ImmutableList.of(executionRootPath.getFileRootedAt(executionRoot))
                 : resolved;
       } else {
-        return ImmutableList.of(path.getFileRootedAt(executionRoot));
+        return ImmutableList.of(executionRootPath.getFileRootedAt(executionRoot));
       }
     }
     if (firstPathComponent.equals(externalPrefix)) { // In external workspace
       // External workspaces accumulate under the output base.
       // The symlinks to them under the execution root are unstable, and only linked per build.
-      return resolveToExternalWorkspaceWithSymbolicLinkResolution(path);
+      return resolveToExternalWorkspaceWithSymbolicLinkResolution(executionRootPath);
     }
     // Else, in main workspace
     WorkspacePath workspacePath =
-        WorkspacePath.createIfValid(path.getAbsoluteOrRelativeFile().getPath());
+        WorkspacePath.createIfValid(executionRootPath.path().toString());
     if (workspacePath != null) {
       return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
     } else {
@@ -123,20 +123,19 @@ public class ExecutionRootPathResolverImpl implements ExecutionRootPathResolver 
 
   @Override
   @NotNull
-  public ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(
-      ExecutionRootPath path) {
-    File fileInExecutionRoot = path.getFileRootedAt(outputBase);
+  public ImmutableList<File> resolveToExternalWorkspaceWithSymbolicLinkResolution(ExecutionRootPath path) {
+    final var pathInExecutionRoot = path.getRootedAt(outputBase.toPath());
 
     try {
-      File realPath = fileInExecutionRoot.toPath().toRealPath().toFile();
+      File realPath = pathInExecutionRoot.toRealPath().toFile();
       if (workspacePathResolver.getWorkspacePath(realPath) != null) {
         return ImmutableList.of(realPath);
       }
     } catch (IOException ioException) {
-      LOG.warn("Failed to resolve real path for " + fileInExecutionRoot, ioException);
+      LOG.warn("Failed to resolve real path for " + pathInExecutionRoot, ioException);
     }
 
-    return ImmutableList.of(fileInExecutionRoot);
+    return ImmutableList.of(pathInExecutionRoot.toFile());
   }
 
   @Override

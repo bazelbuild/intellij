@@ -3,6 +3,7 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
+import static com.google.idea.blaze.clwb.base.Utils.lookupCompilerSwitch;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
@@ -11,6 +12,7 @@ import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.google.idea.testing.headless.OSRule;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import java.io.File;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +49,9 @@ public class LlvmToolchainTest extends ClwbHeadlessTestCase {
     assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     assertDefine("__llvm__", compilerSettings).isNotEmpty();
     assertDefine("__VERSION__", compilerSettings).startsWith("\"Clang 19.1.0");
+
+    final var sysroot = lookupCompilerSwitch("sysroot", compilerSettings).getFirst();
+    assertExists(new File(sysroot));
 
     assertContainsHeader("stdlib.h", compilerSettings);
     assertContainsHeader("wasi/wasip2.h", compilerSettings);

@@ -133,9 +133,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
                 getBuildSystemProvider().getBuildSystem().getName(),
                 ProjectType.ASPECT_SYNC));
 
-    registerExtensionPoint(
-        BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
-
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     resolver = new BlazeConfigurationResolver(project);
@@ -543,7 +540,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private static List<ExecutionRootPath> includes(String... paths) {
-    return Arrays.stream(paths).map(ExecutionRootPath::new).collect(Collectors.toList());
+    return Arrays.stream(paths).map(ExecutionRootPath::create).collect(Collectors.toList());
   }
 
   private static TargetIdeInfo.Builder createCcTarget(
@@ -567,8 +564,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .setLabel("//:toolchain")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(CToolchainIdeInfo.builder()
-            .setCCompiler(new ExecutionRootPath("cc"))
-            .setCppCompiler(new ExecutionRootPath("cc"))
+            .setCCompiler(ExecutionRootPath.create("cc"))
+            .setCppCompiler(ExecutionRootPath.create("cc"))
             .setCompilerName("cc")
             .setCCompilerOptions(ImmutableList.of())
             .setCppCompilerOptions(ImmutableList.of())
@@ -631,7 +628,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private ExecutionRootPath header(String path) {
-    return new ExecutionRootPath(path);
+    return ExecutionRootPath.create(path);
   }
 
   private static List<ExecutionRootPath> getHeaders(BlazeResolveConfiguration configuration) {
