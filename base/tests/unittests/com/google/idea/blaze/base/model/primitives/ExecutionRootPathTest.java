@@ -30,32 +30,32 @@ import org.mockito.stubbing.Answer;
 public class ExecutionRootPathTest extends BlazeTestCase {
   @Test
   public void testSingleLevelPathEndInSlash() {
-    ExecutionRootPath executionRootPath = new ExecutionRootPath("foo");
+    ExecutionRootPath executionRootPath = ExecutionRootPath.create("foo");
     assertThat(executionRootPath.getAbsoluteOrRelativeFile()).isEqualTo(new File("foo/"));
 
-    ExecutionRootPath executionRootPath2 = new ExecutionRootPath("foo/");
+    ExecutionRootPath executionRootPath2 = ExecutionRootPath.create("foo/");
     assertThat(executionRootPath2.getAbsoluteOrRelativeFile()).isEqualTo(new File("foo/"));
   }
 
   @Test
   public void testMultiLevelPathEndInSlash() {
-    ExecutionRootPath executionRootPath = new ExecutionRootPath("foo/bar");
+    ExecutionRootPath executionRootPath = ExecutionRootPath.create("foo/bar");
     assertThat(executionRootPath.getAbsoluteOrRelativeFile()).isEqualTo(new File("foo/bar/"));
 
-    ExecutionRootPath executionRootPath2 = new ExecutionRootPath("foo/bar/");
+    ExecutionRootPath executionRootPath2 = ExecutionRootPath.create("foo/bar/");
     assertThat(executionRootPath2.getAbsoluteOrRelativeFile()).isEqualTo(new File("foo/bar/"));
   }
 
   @Test
   public void testAbsoluteFileDoesNotGetRerooted() {
-    ExecutionRootPath executionRootPath = new ExecutionRootPath("/root/foo/bar");
+    ExecutionRootPath executionRootPath = ExecutionRootPath.create("/root/foo/bar");
     File rootedFile = executionRootPath.getFileRootedAt(new File("/core/dev"));
     assertThat(rootedFile).isEqualTo(new File("/root/foo/bar"));
   }
 
   @Test
   public void testRelativeFileGetsRerooted() {
-    ExecutionRootPath executionRootPath = new ExecutionRootPath("foo/bar");
+    ExecutionRootPath executionRootPath = ExecutionRootPath.create("foo/bar");
     File rootedFile = executionRootPath.getFileRootedAt(new File("/root"));
     assertThat(rootedFile).isEqualTo(new File("/root/foo/bar"));
   }
