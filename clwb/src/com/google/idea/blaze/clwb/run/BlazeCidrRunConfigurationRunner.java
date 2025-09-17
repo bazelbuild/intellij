@@ -40,7 +40,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 
@@ -162,7 +161,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                 "More than 1 executable was produced when building %s; don't know which to debug",
                 target));
       }
-      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
+
       return file;
     } catch (InterruptedException | CancellationException e) {
       streamProviderFuture.cancel(true);

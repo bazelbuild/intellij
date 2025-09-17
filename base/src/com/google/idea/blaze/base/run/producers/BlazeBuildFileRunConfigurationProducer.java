@@ -64,7 +64,7 @@ public class BlazeBuildFileRunConfigurationProducer
       return false;
     }
     sourceElement.set(target.rule());
-    setupConfiguration(configuration.getProject(), blazeProjectData, configuration, target);
+    setupConfiguration(configuration.getProject(), context, blazeProjectData, configuration, target);
     return configuration.getHandler().getCommandName() != null;
   }
 
@@ -89,20 +89,20 @@ public class BlazeBuildFileRunConfigurationProducer
     // we consider it close enough. The suggested name is checked because it tends
     // to cover what the handler considers important,
     // and ignores changes the user may have made to the name.
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
+    final var blazeProjectData = BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
     if (blazeProjectData == null) {
       return false;
     }
-    BlazeCommandRunConfiguration generatedConfiguration =
-        new BlazeCommandRunConfiguration(
-            configuration.getProject(), configuration.getFactory(), configuration.getName());
-    setupConfiguration(
-        configuration.getProject(), blazeProjectData, generatedConfiguration, target);
+
+    final var generatedConfiguration = new BlazeCommandRunConfiguration(
+        configuration.getProject(),
+        configuration.getFactory(),
+        configuration.getName()
+    );
+    setupConfiguration(configuration.getProject(), context, blazeProjectData, generatedConfiguration, target);
 
     // ignore filtered test configs, produced by other configuration producers.
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    final var handlerState = configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     if (handlerState != null && handlerState.getTestFilterFlag() != null) {
       return false;
     }
@@ -134,17 +134,21 @@ public class BlazeBuildFileRunConfigurationProducer
 
   private static void setupConfiguration(
       Project project,
+      ConfigurationContext context,
       BlazeProjectData blazeProjectData,
       BlazeCommandRunConfiguration configuration,
       BuildTarget target) {
     // First see if a BlazeRunConfigurationFactory can give us a specialized setup.
-    for (BlazeRunConfigurationFactory configurationFactory :
-        BlazeRunConfigurationFactory.EP_NAME.getExtensions()) {
-      if (configurationFactory.handlesTarget(project, blazeProjectData, target.label())
-          && configurationFactory.handlesConfiguration(configuration)) {
-        configurationFactory.setupConfiguration(configuration, target.label());
-        return;
+    for (final var configurationFactory : BlazeRunConfigurationFactory.EP_NAME.getExtensionList()) {
+      if (!configurationFactory.handlesTarget(project, blazeProjectData, target.label())) {
+        continue;
       }
+      if (!configurationFactory.handlesConfiguration(configuration)) {
+        continue;
+      }
+
+      configurationFactory.setupConfiguration(context.getDataContext(), configuration, target.label());
+      return;
     }
 
     // If no factory exists, directly set up the configuration.

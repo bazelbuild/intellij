@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.state;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState.RunConfigurationFlagsStateEditor;
@@ -30,12 +31,15 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link RunConfigurationFlagsState}. */
 @RunWith(JUnit4.class)
 public class RunConfigurationFlagStateTest {
+
+  private static final DataKey<String[]> key = DataKey.create("tag");
+
   @Test
   public void testEscapedDoubleQuotesRetainedAfterReserialization() {
     // previously, we were removing escape chars and quotes during ParametersListUtil.parse, then
     // not putting them back when converting back to a string.
     ImmutableList<String> flags = ImmutableList.of("--flag=\\\"Hello_world!\\\"", "--flag2");
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
@@ -51,7 +55,7 @@ public class RunConfigurationFlagStateTest {
   @Test
   public void testEscapedSingleQuotesRetainedAfterReserialization() {
     ImmutableList<String> flags = ImmutableList.of("--flag=\\'Hello_world!\\'", "--flag2");
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
@@ -67,7 +71,7 @@ public class RunConfigurationFlagStateTest {
   @Test
   public void testQuotesRetainedAfterReserialization() {
     ImmutableList<String> flags = ImmutableList.of("\"--flag=test\"");
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);
@@ -80,7 +84,7 @@ public class RunConfigurationFlagStateTest {
 
   @Test
   public void testDoubleQuotesInEditor() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     RunConfigurationStateEditor editor = state.getEditor(null);
     JTextArea textArea = getTextField(editor);
 
@@ -106,7 +110,7 @@ public class RunConfigurationFlagStateTest {
 
   @Test
   public void testSingleQuotesInEditor() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     RunConfigurationStateEditor editor = state.getEditor(null);
     JTextArea textArea = getTextField(editor);
 
@@ -131,7 +135,7 @@ public class RunConfigurationFlagStateTest {
 
   @Test
   public void testNestedQuotesRetainedAfterRoundTripSerialization() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     RunConfigurationStateEditor editor = state.getEditor(null);
     JTextArea textArea = getTextField(editor);
 
@@ -148,7 +152,7 @@ public class RunConfigurationFlagStateTest {
 
   @Test
   public void testSplitOnWhitespaceAndNewlines() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     RunConfigurationStateEditor editor = state.getEditor(null);
     JTextArea textArea = getTextField(editor);
 
@@ -172,7 +176,7 @@ public class RunConfigurationFlagStateTest {
 
   @Test
   public void testFlagsContainingQuotedNewlines() {
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     RunConfigurationStateEditor editor = state.getEditor(null);
     JTextArea textArea = getTextField(editor);
 
@@ -200,7 +204,7 @@ public class RunConfigurationFlagStateTest {
             "--experimental_show_artifacts",
             "--test_filter=com.google.idea.blaze.base.run.state.RunConfigurationFlagStateTest#",
             "--define=ij_product=intellij-latest");
-    RunConfigurationFlagsState state = new RunConfigurationFlagsState("tag", "field");
+    RunConfigurationFlagsState state = new RunConfigurationFlagsState(key, "field");
     state.setRawFlags(flags);
 
     RunConfigurationStateEditor editor = state.getEditor(null);

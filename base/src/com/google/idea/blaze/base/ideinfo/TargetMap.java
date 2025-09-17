@@ -17,8 +17,11 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
+import java.util.Map.Entry;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -48,6 +51,14 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
   @Nullable
   public TargetIdeInfo get(TargetKey key) {
     return targetMap.get(key);
+  }
+
+  public ImmutableList<TargetIdeInfo> get(Label label) {
+    return targetMap.entrySet()
+        .stream()
+        .filter(it -> it.getKey().getLabel().equals(label))
+        .map(Entry::getValue)
+        .collect(ImmutableList.toImmutableList());
   }
 
   public boolean contains(TargetKey key) {

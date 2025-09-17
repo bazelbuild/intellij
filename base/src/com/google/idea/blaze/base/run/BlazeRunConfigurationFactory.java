@@ -21,6 +21,8 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -43,7 +45,7 @@ public abstract class BlazeRunConfigurationFactory {
       Project project, RunManager runManager, Label target) {
     ConfigurationFactory factory = getConfigurationFactory();
     RunConfiguration configuration = factory.createTemplateConfiguration(project, runManager);
-    setupConfiguration(configuration, target);
+    setupConfiguration(SimpleDataContext.EMPTY_CONTEXT, configuration, target);
     return runManager.createConfiguration(configuration, factory);
   }
 
@@ -51,5 +53,5 @@ public abstract class BlazeRunConfigurationFactory {
   protected abstract ConfigurationFactory getConfigurationFactory();
 
   /** Initialize the configuration for the given target. */
-  public abstract void setupConfiguration(RunConfiguration configuration, Label target);
+  public abstract void setupConfiguration(DataContext context, RunConfiguration configuration, Label target);
 }
