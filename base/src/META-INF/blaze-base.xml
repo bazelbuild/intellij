@@ -270,6 +270,7 @@
     <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncNotificationProvider"/>
     <!--    Disabled until a fix is introduced in the platform to make InspectionWidgetActionProvider work with remote dev -->
 <!--    <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.QuerySyncInspectionWidgetActionProvider"/>-->
+    <daemon.essentialHighlightingRestarterDisablement implementation="com.google.idea.blaze.base.qsync.analysis.QuerySyncEssentialHighlightingRestarterDisablement"/>
     <daemon.highlightInfoFilter implementation="com.google.idea.blaze.base.qsync.QuerySyncHighlightingFilter"/>
     <trafficLightRendererContributor implementation="com.google.idea.blaze.base.qsync.QuerySyncTrafficLightRendererContributor"/>
     <editorNotificationProvider implementation="com.google.idea.blaze.base.qsync.UnsyncedFileEditorNotificationProvider" />
