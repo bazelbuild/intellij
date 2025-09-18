@@ -1,3 +1,11 @@
+v2025.09.19
+===========
+* Handle cancellation of project sync more gracefully #7805
+* Fix CLionNotificationProvider which provided an invalid workspace location #7813
+* Fix unable to debug Python Bazel targets in 2025.2 #7851
+* Make CPP sysroot execroot relative #7874
+* Fix gdbserver argument parsing #7816
+
 v2025.08.04
 ===========
 * This is the first release by JetBrains.
