@@ -9,6 +9,8 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.scope.BlazeContext
+import com.google.idea.blaze.base.scope.output.StatusOutput
+import com.google.idea.blaze.base.scope.output.SummaryOutput
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
@@ -84,6 +86,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withExePath(cmd.binaryPath)
       .withParameters(cmd.toArgumentList())
       .withWorkDirectory(root.pathString)
+
+    ctx.output(SummaryOutput.error(SummaryOutput.Prefix.INFO, "Command (${cmd.name}): $cmdLine"));
 
     var handler: OSProcessHandler? = null
     val exitCode = try {
