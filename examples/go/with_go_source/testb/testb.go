@@ -1,3 +1,0 @@
-package testb
-
-func OtherFunction() {}
