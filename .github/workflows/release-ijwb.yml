@@ -1,0 +1,128 @@
+name: Release IJwB
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version'
+        required: true
+        type: string
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      actions: write
+
+    strategy:
+      matrix:
+        product: [intellij-oss-latest-stable, intellij-oss-oldest-stable, intellij-ue-oss-latest-stable, intellij-ue-oss-oldest-stable]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Update version.bzl
+        run: |
+          echo "VERSION = '${{ inputs.version }}'" > version.bzl
+
+      - name: Build Plugin Zip
+        run: bazel build //ijwb:ijwb_bazel_zip --define=ij_product=${{ matrix.product }}
+
+      - name: Rename Plugin Zip
+        run: |
+          bazel build //intellij_platform_sdk:build_name --define=ij_product=${{ matrix.product }}
+          mkdir out
+          mv bazel-bin/ijwb/ijwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
+
+      - name: Upload Plugin Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.product }}
+          path: "out/*.zip"
+          retention-days: 1
+
+  gh-release:
+    permissions:
+      contents: write
+      actions: read
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Latest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-oss-latest-stable
+
+      - name: Download Oldest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-oss-oldest-stable
+
+      - name: Download Latest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-latest-stable
+
+      - name: Download Oldest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-oldest-stable
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.zip"
+          tag_name: ${{ inputs.version }}
+          name: "IJwB Release ${{ inputs.version }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  jb-release:
+    permissions:
+      contents: none
+      actions: read
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Latest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-oss-latest-stable
+
+      - name: Download Oldest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-oss-oldest-stable
+
+      - name: Download Latest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-latest-stable
+
+      - name: Download Oldest Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-oldest-stable
+
+      - name: Upload Releases
+        run: |
+          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin -o /dev/null \;
