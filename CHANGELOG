@@ -1,3 +1,10 @@
+v2025.09.19
+===========
+* Changing ijwb plugin name to mark it as legacy #7889
+* Adding implementation for EssentialHighlightingRestarterDisablement #7104
+* Handle cancellation of project sync more gracefully #7805
+* Fix unable to debug Python Bazel targets in 2025.2 #7851
+
 v2025.08.04
 ===========
 * This is the first release by JetBrains.
