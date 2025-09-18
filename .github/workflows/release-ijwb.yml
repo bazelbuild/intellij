@@ -1,4 +1,4 @@
-name: Release
+name: Release IJwB
 
 on:
   workflow_dispatch:
@@ -10,9 +10,13 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      actions: write
+
     strategy:
       matrix:
-        product: [clion-oss-latest-stable, clion-oss-oldest-stable]
+        product: [intellij-oss-latest-stable, intellij-oss-oldest-stable, intellij-ue-oss-latest-stable, intellij-ue-oss-oldest-stable]
 
     runs-on: ubuntu-latest
 
@@ -32,13 +36,13 @@ jobs:
           echo "VERSION = '${{ inputs.version }}'" > version.bzl
 
       - name: Build Plugin Zip
-        run: bazel build //clwb:clwb_bazel_zip --define=ij_product=${{ matrix.product }}
+        run: bazel build //ijwb:ijwb_bazel_zip --define=ij_product=${{ matrix.product }}
 
       - name: Rename Plugin Zip
         run: |
           bazel build //intellij_platform_sdk:build_name --define=ij_product=${{ matrix.product }}
           mkdir out
-          mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
+          mv bazel-bin/ijwb/ijwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
 
       - name: Upload Plugin Zip
         uses: actions/upload-artifact@v4
@@ -48,6 +52,10 @@ jobs:
           retention-days: 1
 
   gh-release:
+    permissions:
+      contents: write
+      actions: read
+
     needs: build
 
     runs-on: ubuntu-latest
@@ -56,19 +64,29 @@ jobs:
       - name: Download Latest Plugin Zip
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-latest-stable
+          name: intellij-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-oldest-stable
+          name: intellij-oss-oldest-stable
+
+      - name: Download Latest UE Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-latest-stable
+
+      - name: Download Oldest UE Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-oldest-stable
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: "*.zip"
           tag_name: ${{ inputs.version }}
-          name: "CLwB Release ${{ inputs.version }}"
+          name: "IJwB Release ${{ inputs.version }}"
           draft: false
           prerelease: false
           generate_release_notes: true
@@ -76,6 +94,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   jb-release:
+    permissions:
+      contents: none
+      actions: read
+
     needs: build
 
     runs-on: ubuntu-latest
@@ -84,13 +106,24 @@ jobs:
       - name: Download Latest Plugin Zip
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-latest-stable
+          name: intellij-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-oldest-stable
+          name: intellij-oss-oldest-stable
+
+      - name: Download Latest UE Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-latest-stable
+
+      - name: Download Oldest UE Plugin Zip
+        uses: actions/download-artifact@v5
+        with:
+          name: intellij-ue-oss-oldest-stable
 
       - name: Upload Releases
         run: |
-          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN }}" -F pluginId=9554 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin -o /dev/null \;
+          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN_IJWB }}" -F pluginId=8609 -F file=@{} -F isHidden=true -F channel=stable https://plugins.jetbrains.com/plugin/uploadPlugin -o /dev/null \; 
+          find . -type f -name "*.zip" -exec curl -i --header "Authorization: Bearer ${{ secrets.MARKETPLACE_TOKEN_IJWB }}" -F pluginId=8609 -F file=@{} -F isHidden=true -F channel=beta https://plugins.jetbrains.com/plugin/uploadPlugin -o /dev/null \;
