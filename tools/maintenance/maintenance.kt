@@ -57,7 +57,6 @@ private fun latestVersion(coordinates: String): String {
 
 fun bumpRelease(version: String, major: String, out: Path) {
     val releasesPage = URL("https://www.jetbrains.com/intellij-repository/releases").readText();
-    val clionRelease = latestRelease(version, releasesPage, "clion")
     val icRelease = latestRelease(version, releasesPage, "ideaIC")
     val iuRelease = latestRelease(version, releasesPage, "ideaIU")
 
@@ -73,21 +72,13 @@ fun bumpRelease(version: String, major: String, out: Path) {
         downloadUrl = iuRelease,
         workspace = out,
     )
-    bump(
-        workspaceShaVarName = "CLION_${major}_SHA",
-        workspaceUrlVarName = "CLION_${major}_URL",
-        downloadUrl = clionRelease,
-        workspace = out,
-    )
-    println("$clionRelease, $icRelease, $iuRelease")
+    println("$icRelease, $iuRelease")
 }
 
 private fun bumpEap(intellijMajorVersion: String, out: Path) {
     val ijLatestVersion = getLatestVersion("idea", intellijMajorVersion)
-    val clionLatestVersion = getLatestVersion("clion", intellijMajorVersion)
 
     println(ijLatestVersion)
-    println(clionLatestVersion)
     bump(
         workspaceShaVarName = "IC_${intellijMajorVersion}_SHA",
         workspaceUrlVarName = "IC_${intellijMajorVersion}_URL",
@@ -98,12 +89,6 @@ private fun bumpEap(intellijMajorVersion: String, out: Path) {
         workspaceShaVarName = "IU_${intellijMajorVersion}_SHA",
         workspaceUrlVarName = "IU_${intellijMajorVersion}_URL",
         downloadUrl = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/${ijLatestVersion}-EAP-SNAPSHOT/ideaIU-${ijLatestVersion}-EAP-SNAPSHOT.zip",
-        workspace = out,
-    )
-    bump(
-        workspaceShaVarName = "CLION_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "CLION_${intellijMajorVersion}_URL",
-        downloadUrl = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/${clionLatestVersion}-EAP-SNAPSHOT/clion-${clionLatestVersion}-EAP-SNAPSHOT.zip",
         workspace = out,
     )
     println(out.toAbsolutePath())
@@ -169,7 +154,6 @@ private fun latestRelease(version: String, releasesPage: String, product: String
     val productFamily = when(product) {
         "ideaIC" -> "idea"
         "ideaIU" -> "idea"
-        "clion" -> "clion"
         else -> throw RuntimeException("No such product: $product")
     }
     return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version\\.?(\\d*)\\.?(\\d*)/$product-$version\\.?(\\d*)\\.?(\\d*).zip".toRegex()
