@@ -6,6 +6,10 @@ bazel-*
 .clwb/
 .idea/
 
+# Generated bazel files in tests
+clwb/tests/projects/**/MODULE.bazel.lock
+clwb/tests/projects/**/bazel-*
+
 # General
 .DS_Store
 .AppleDouble
