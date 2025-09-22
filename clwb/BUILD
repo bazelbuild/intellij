@@ -178,13 +178,6 @@ clwb_headless_test(
 )
 
 clwb_headless_test(
-    name = "query_sync_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/QuerySyncTest.java"],
-    last_green = False,  # do not test query sync against last green
-    project = "query_sync",
-)
-
-clwb_headless_test(
     name = "execution_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExecutionTest.java"],
     project = "execution",
@@ -222,7 +215,6 @@ test_suite(
         ":execution_headless_test",
         ":external_includes_headless_test",
         ":llvm_toolchain_headless_test",
-        ":query_sync_headless_test",
         ":simple_headless_test",
         ":target_compatible_headless_test",
         ":virtual_includes_headless_test",
