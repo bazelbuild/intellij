@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
@@ -8,16 +9,16 @@ licenses(["notice"])
 
 genrule(
     name = "gen_source",
-    outs = ["Gen.java"],
-    cmd = "echo 'package com.google.idea.blaze.aspect.general.artifacts;\nclass Gen {}' > $@",
+    outs = ["gen.cc"],
+    cmd = "echo 'int main() { return 0; }' > $@",
 )
 
-java_library(
+cc_binary(
     name = "source",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
 )
 
-java_library(
+cc_binary(
     name = "gen",
     srcs = [":gen_source"],
 )
