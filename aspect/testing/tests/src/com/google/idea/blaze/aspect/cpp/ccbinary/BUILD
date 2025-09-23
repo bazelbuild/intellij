@@ -5,22 +5,38 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])
-
 cc_binary(
     name = "simple",
     srcs = ["simple/simple.cc"],
 )
 
+cc_binary(
+    name = "expand_datadeps",
+    srcs = ["simple/simple.cc"],
+    args = [
+        "--ARG1=$(location :datadepfile)",
+    ],
+    data = [":datadepfile"],
+)
+
+genrule(
+    name = "datadepfile",
+    outs = ["datadepfile.txt"],
+    cmd = "touch $@",
+)
+
 intellij_aspect_test_fixture(
-    name = "simple_fixture",
-    deps = [":simple"],
+    name = "aspect_fixture",
+    deps = [
+        ":simple",
+        ":expand_datadeps",
+    ],
 )
 
 java_test(
     name = "CcBinaryTest",
     srcs = ["CcBinaryTest.java"],
-    data = [":simple_fixture"],
+    data = [":aspect_fixture"],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

@@ -5,8 +5,6 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])
-
 cc_binary(
     name = "simple_prefined",
     srcs = ["simple/simple.cc"],
@@ -16,9 +14,31 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "empty_variable",
+    srcs = ["simple/simple.cc"],
+    copts = [
+        "-Wall",
+        "$(STACK_FRAME_UNLIMITED)",
+    ],
+)
+
+cc_binary(
+    name = "simple_make_var",
+    srcs = ["simple/simple.cc"],
+    copts = [
+        '-DEXECPATH=\\"$(execpath simple/simple.cc)\\"',
+        '-DROOTPATH=\\"$(rootpath simple/simple.cc)\\"',
+        '-DRLOCATIONPATH=\\"$(rlocationpath simple/simple.cc)\\"',
+        '-DLOCATION=\\"$(location simple/simple.cc)\\"',
+    ],
+)
+
 intellij_aspect_test_fixture(
-    name = "simple_fixture",
+    name = "aspect_fixture",
     deps = [
+        ":empty_variable",
+        ":simple_make_var",
         ":simple_prefined",
     ],
 )
@@ -26,7 +46,7 @@ intellij_aspect_test_fixture(
 java_test(
     name = "CoptsMakeVarsTest",
     srcs = ["CoptsMakeVarsTest.java"],
-    data = [":simple_fixture"],
+    data = [":aspect_fixture"],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",
