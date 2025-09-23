@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
@@ -6,9 +7,9 @@ load(
 
 licenses(["notice"])
 
-java_library(
+cc_binary(
     name = "test",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
     deps = [":alias"],
 )
 
@@ -22,9 +23,9 @@ alias(
     actual = ":real",
 )
 
-java_library(
+cc_binary(
     name = "real",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
 )
 
 intellij_aspect_test_fixture(
