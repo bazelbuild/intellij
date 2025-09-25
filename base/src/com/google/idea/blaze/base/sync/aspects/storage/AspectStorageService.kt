@@ -103,7 +103,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
             ctx.println("Aspects written: ${writer.name()}")
           }
         } catch (e: SyncFailedException) {
-          throw SyncFailedException("Could not writer aspects: ${writer.name()}", e)
+          throw SyncFailedException("Could not write aspects: ${writer.name()}", e)
         }
       }
     }
