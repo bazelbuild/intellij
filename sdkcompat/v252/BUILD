@@ -14,20 +14,22 @@
 
 # Description: Indirections for SDK changes to the underlying platform library.
 
-load("@rules_java//java:java_library.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 licenses(["notice"])
 
-java_library(
+kt_jvm_library(
     name = "v252",
     srcs = glob([
-        "com/google/idea/sdkcompat/javascript/**",  #api223
+        "com/google/idea/sdkcompat/javascript/**",
         "com/google/idea/sdkcompat/python/**",
+        "com/google/idea/sdkcompat/clion/**",  #api252
+        "com/google/idea/sdkcompat/ide/**",  #api252
     ]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/javascript",  #api223
+        "//third_party/javascript",
     ],
 )

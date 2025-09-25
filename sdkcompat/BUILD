@@ -13,10 +13,11 @@ licenses(["notice"])
 create_sdkcompat_visibility_package()
 
 java_library(
-    name = "sdkcompat",
-    visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_version({
         "2025.1": ["//sdkcompat/v251"],
         "2025.2": ["//sdkcompat/v252"],
+        "2025.3": ["//sdkcompat/v253"],
     }),
+    name = "sdkcompat",
+    visibility = SDK_COMPAT_VISIBILITY,
 )

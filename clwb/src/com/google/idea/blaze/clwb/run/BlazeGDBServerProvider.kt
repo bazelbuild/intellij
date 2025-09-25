@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.BlazeFlags
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
 import com.google.idea.common.experiments.BoolExperiment
+import com.google.idea.sdkcompat.clion.debug.CidrDebuggerPathManagerAdapter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathUtil
@@ -134,7 +135,7 @@ object BlazeGDBServerProvider {
     // TODO: this still depends on the default toolchain
     val gdbPath = when (toolchain.debuggerKind) {
       CPPDebugger.Kind.CUSTOM_GDB -> toolchain.customGDBExecutablePath
-      CPPDebugger.Kind.BUNDLED_GDB -> CidrDebuggerPathManager.getBundledGDBBinary().path
+      CPPDebugger.Kind.BUNDLED_GDB -> CidrDebuggerPathManagerAdapter.getBundledGDBBinary().path
 
       else -> {
         LOG.error("Trying to resolve gdbserver executable for ${toolchain.debuggerKind}")

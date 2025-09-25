@@ -19,10 +19,10 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 licenses(["notice"])
 
 kt_jvm_library(
-    name = "v251",
+    name = "v253",
     srcs = glob([
-        "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/javascript/**",
+        "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/clion/**",  #api252
         "com/google/idea/sdkcompat/ide/**",  #api252
     ]),

@@ -1,5 +1,3 @@
-# Copyright 2011 Google Inc.  All rights reserved.
-#
 # Description:
 #   Defines a package group that restricts access to the JetBrains
 #   plugin apis to known packages that build plugins. Only packages
@@ -14,10 +12,9 @@ load(
 )
 load(
     ":build_defs.bzl",
+    "select_build_name",
     "select_from_plugin_api_directory",
-    "select_build_name"
 )
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
@@ -57,6 +54,11 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-2025.3",
+    values = {"define": "ij_product=clion-2025.3"},
+)
+
+config_setting(
     name = "clion-2025.1-mac",
     values = {
         "define": "ij_product=clion-2025.1",
@@ -72,40 +74,45 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2025.3-mac",
+    values = {
+        "define": "ij_product=clion-2025.3",
+        "cpu": "darwin_x86_64",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
 java_library(
-    name = "plugin_api_internal",
-    visibility = ["//visibility:private"],
     exports = select_from_plugin_api_directory([
         ":clion_plugins",
         ":sdk",
     ]),
+    name = "plugin_api_internal",
+    visibility = ["//visibility:private"],
 )
 
 # The outward facing plugin api
 java_library(
+    exports = [":plugin_api_internal"],
     name = "plugin_api",
     neverlink = 1,
-    exports = [":plugin_api_internal"],
 )
 
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
-    name = "plugin_api_for_tests",
-    testonly = 1,
     data = select_from_plugin_api_directory([":clion_tools"]),
     exports = [":plugin_api_internal"],
+    name = "plugin_api_for_tests",
+    testonly = 1,
 )
 
 # These libraries should only be used by open-source plugins.
 # Otherwise, prefer using the google3 versions of these libraries. Note that
 # //third_party/java/truth must be repackaged, because it pulls in Guava.
 java_library(
-    name = "test_libs",
-    testonly = 1,
-    visibility = [":test_libs_visibility"],
     exports = [
         "//third_party/java/truth",
         "@bytebuddy//jar",
@@ -113,54 +120,57 @@ java_library(
         "@mockito//jar",
         "@objenesis//jar",
     ],
+    name = "test_libs",
+    testonly = 1,
+    visibility = [":test_libs_visibility"],
 )
 
 # The version of guava bundled with the IntelliJ plugin API.
 java_library(
-    name = "guava",
     exports = select_from_plugin_api_directory([":guava"]),
+    name = "guava",
 )
 
 java_library(
-    name = "jsr305",
     exports = ["@jsr305_annotations//jar"],
+    name = "jsr305",
 )
 
 # The version of truth bundled with the IntelliJ plugin API.
 java_library(
-    name = "truth",
-    testonly = 1,
     exports = [
         "//third_party/java/truth",
         "@diffutils//jar",
     ],
+    name = "truth",
+    testonly = 1,
 )
 
 # IntelliJ Mercurial plugin
 java_library(
+    exports = select_from_plugin_api_directory([":hg4idea"]),
     name = "hg4idea",
     neverlink = 1,
-    exports = select_from_plugin_api_directory([":hg4idea"]),
 )
 
 # terminal plugin
 java_library(
+    exports = select_from_plugin_api_directory([":terminal"]),
     name = "terminal",
     neverlink = 1,
-    exports = select_from_plugin_api_directory([":terminal"]),
 )
 
 java_library(
+    exports = select_from_plugin_api_directory([":terminal"]),
     name = "terminal_for_tests",
     testonly = 1,
-    exports = select_from_plugin_api_directory([":terminal"]),
 )
 
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
-    testonly = 1,
     runtime_deps = select_from_plugin_api_directory([":bundled_plugins"]),
+    testonly = 1,
 )
 
 filegroup(
@@ -169,7 +179,7 @@ filegroup(
 )
 
 write_file(
+    content = select_build_name(),
     name = "build_name",
     out = "build_name.txt",
-    content = select_build_name(),
 )

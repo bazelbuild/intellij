@@ -34,10 +34,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
           com.jetbrains.python.testing.PyTestsConfigurationProducer.class,
           com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer.class,
           com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer.class,
-          com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer.class,
-          com.jetbrains.python.testing.pytestLegacy.PyTestConfigurationProducer.class,
-          com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class,
-          com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer.class);
+          com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class);
 
   @Override
   public void runActivity(Project project) {
