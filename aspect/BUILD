@@ -13,13 +13,9 @@ filegroup(
     srcs = [
         "artifacts.bzl",
         "intellij_info_impl.bzl",
-        "java_classpath.bzl",
         "make_variables.bzl",
         "xcode_query.bzl",
         ":BUILD.bazel",
-        "//aspect/tools:CreateAar",
-        "//aspect/tools:JarFilter_deploy.jar",
-        "//aspect/tools:PackageParser_deploy.jar",
     ],
     visibility = ["//visibility:public"],
 )
@@ -28,46 +24,13 @@ filegroup(
 aspect_library(
     name = "aspect_lib",
     files = [
-        ":aspect_files",
-        ":aspect_tools",
-    ],
-    namespace = "aspect/default",
-    visibility = ["//visibility:public"],
-)
-
-# Separate different targets as they are put into different directories
-aspect_files(
-    name = "aspect_files",
-    files = [
         "artifacts.bzl",
-        "fast_build_info_bundled.bzl",
         "intellij_info_impl_bundled.bzl",
-        "java_classpath.bzl",
         "make_variables.bzl",
         "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
         ":BUILD.bazel",
     ],
-)
-
-aspect_files(
-    name = "aspect_tools",
-    jars = [
-        "//aspect/tools:JarFilter_deploy.jar",
-        "//aspect/tools:PackageParser_deploy.jar",
-        "//aspect/tools:CreateAar_deploy.jar",
-    ],
-    namespace = "tools",
-)
-
-aspect_library(
-    name = "aspect_qsync_lib",
-    files = [
-        "build_compose_dependencies.bzl",
-        "build_dependencies.bzl",
-        "build_dependencies_android_deps.bzl",
-        "build_dependencies_deps.bzl",
-    ],
-    namespace = "aspect/qsync",
+    namespace = "aspect/default",
     visibility = ["//visibility:public"],
 )
 
@@ -86,14 +49,12 @@ _dev_aspect_path = package_name()
 # Aspect references have different label paths in development vs. when bundled with the plugin.
 # This genrule is required for the aspect to be valid in all three repositories in which it's used.
 # Changes:
-#   //.../aspect/tools:tool_name -> //:tool_name_bin
 #   :intellij_info_impl.bzl -> :intellij_info_impl_bundled.bzl
 genrule(
     name = "modify_tools_path",
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,//%s/tools:\" + tool_name,tools/\" + tool_name,g' $@ && " % _dev_aspect_path +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
@@ -106,17 +67,7 @@ genrule(
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@ && " +
           "sed -i -e '/BUNDLED-INCLUDE-BEGIN/,/BUNDLED-INCLUDE-END/{s/^[#][#]//;}' $@ &&" +
-          "sed -i -e 's,load(\"//aspect_template:,load(\"ASPECT_TEMPLATE_PATH', $@ &&" +
-          "sed -i -e 's,load(\".*/rules_java/,load(\"@rules_java//', $@",
-)
-
-# Makes bundled fast_build_info.bzl use bundled intellij_info_impl.bzl
-genrule(
-    name = "create_fast_build_info_bundle",
-    srcs = ["fast_build_info.bzl"],
-    outs = ["fast_build_info_bundled.bzl"],
-    cmd = "cat $(SRCS) >$@ && " +
-          "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
+          "sed -i -e 's,load(\"//aspect_template:,load(\"ASPECT_TEMPLATE_PATH', $@",
 )
 
 aspect_library(
@@ -128,8 +79,6 @@ aspect_library(
         "code_generator_info.template.bzl",
         "intellij_info.template.bzl",
         "intellij_info_bundled.bzl",
-        "java_info.bzl",
-        "java_info.template.bzl",
         "python_info.bzl",
         "python_info.template.bzl",
     ],
@@ -141,13 +90,6 @@ STRIP_TEMPLATE_SCRIPT = """cat $(SRCS) >$@ &&
 sed -i -e '/TEMPLATE-IGNORE-BEGIN/,/TEMPLATE-IGNORE-END/d' $@ &&
 sed -i -e '/TEMPLATE-INCLUDE-BEGIN/,/TEMPLATE-INCLUDE-END/{s/^[#][#]//;}' $@
 """
-
-genrule(
-    name = "generate_java_info_template",
-    srcs = ["java_info.bzl"],
-    outs = ["java_info.template.bzl"],
-    cmd = STRIP_TEMPLATE_SCRIPT,
-)
 
 genrule(
     name = "generate_py_info_template",

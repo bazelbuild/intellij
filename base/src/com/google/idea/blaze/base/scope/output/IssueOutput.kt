@@ -26,6 +26,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.Navigatable
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.ExceptionUtilRt
 import java.io.File
 
 /** An issue in a blaze operation.  */
@@ -88,6 +90,11 @@ class IssueOutput(
 
     fun withDescription(description: String): Builder {
       this.description = description
+      return this
+    }
+
+    fun withThrowable(throwable: Throwable): Builder {
+      this.description = ExceptionUtil.getThrowableText(throwable)
       return this
     }
 
