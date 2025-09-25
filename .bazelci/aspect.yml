@@ -6,7 +6,7 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
-      - //aspect:aspect_files
+      - //aspect:aspect_lib
     test_flags:
       - --define=ij_product=clion-oss-oldest-stable
       - --test_output=errors
@@ -20,7 +20,7 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
-      - //aspect:aspect_files
+      - //aspect:aspect_lib
     test_flags:
       - --define=ij_product=clion-oss-latest-stable
       - --test_output=errors
@@ -34,7 +34,7 @@ tasks:
     build_flags:
       - --define=ij_product=clion-oss-under-dev
     build_targets:
-      - //aspect:aspect_files
+      - //aspect:aspect_lib
     test_flags:
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
