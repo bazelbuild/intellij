@@ -30,6 +30,7 @@ class AspectWriterImpl : AspectWriter {
   @Throws(SyncFailedException::class)
   override fun writeDumb(dst: Path, project: Project) {
     try {
+      AspectWriter.writeAspectFile(dst.resolve("BUILD"), "")
       AspectWriter.copyAspects(AspectWriterImpl::class.java, dst, AspectRepositoryProvider.ASPECT_DIRECTORY);
     } catch (e: IOException) {
       throw SyncFailedException("Could not copy aspects", e)

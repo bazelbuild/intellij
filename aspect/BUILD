@@ -28,20 +28,9 @@ aspect_library(
         "intellij_info_impl_bundled.bzl",
         "make_variables.bzl",
         "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
-        ":BUILD.bazel",
     ],
     namespace = "aspect/default",
     visibility = ["//visibility:public"],
-)
-
-# BUILD file bundled with the aspect must not override the BUILD file
-# used for development. So we name it BUILD.aspect, and rename prior
-# to bundling with the plugin.
-
-copy_file(
-    name = "rename_files",
-    src = "BUILD.aspect",
-    out = "BUILD.bazel",
 )
 
 _dev_aspect_path = package_name()
