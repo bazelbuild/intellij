@@ -51,18 +51,6 @@ public class QuerySync {
     return LEGACY_EXPERIMENT.getValue();
   }
 
-  /**
-   * Checks if query sync for new project is enabled via experiment or settings page.
-   */
-  public static boolean useForNewProjects() {
-    if (useByDefault()) {
-      return QuerySyncSettings.getInstance().useQuerySync();
-    }
-    else {
-      return isLegacyExperimentEnabled() || QuerySyncSettings.getInstance().useQuerySyncBeta();
-    }
-  }
-
   /** Provides library via BazelAdditionalLibraryRootsProvider instead of library table. */
   public static boolean enableBazelAdditionalLibraryRootsProvider() {
     return useAdditionalLibraryProvider.getValue();
