@@ -889,7 +889,7 @@ public final class SyncPhaseCoordinator {
       }
       if (cause instanceof SyncFailedException) {
         if (cause.getMessage() != null) {
-          IssueOutput.error(cause.getMessage()).submit(context);
+          IssueOutput.error(cause.getMessage()).withThrowable(cause).submit(context);
         }
         logger.warn("Sync failed", cause);
         return;
@@ -897,6 +897,6 @@ public final class SyncPhaseCoordinator {
       cause = cause.getCause();
     }
     logger.error(e);
-    IssueOutput.error("Internal error: " + e.getMessage()).submit(context);
+    IssueOutput.error("Internal error: " + e.getMessage()).withThrowable(cause).submit(context);
   }
 }

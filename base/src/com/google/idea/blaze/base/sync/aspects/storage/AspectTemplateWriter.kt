@@ -28,8 +28,6 @@ import com.intellij.openapi.project.Project
 import java.io.IOException
 import java.nio.file.Path
 
-private const val TEMPLATE_JAVA = "java_info.template.bzl"
-private const val REALIZED_JAVA = "java_info.bzl"
 private const val TEMPLATE_PYTHON = "python_info.template.bzl"
 private const val REALIZED_PYTHON = "python_info.bzl"
 private const val TEMPLATE_CODE_GENERATOR = "code_generator_info.template.bzl"
@@ -76,13 +74,6 @@ class AspectTemplateWriter : AspectWriter {
 
     TemplateWriter.evaluate(
       dst,
-      REALIZED_JAVA,
-      ASPECT_TEMPLATE_DIRECTORY,
-      TEMPLATE_JAVA,
-      templateOptions
-    )
-    TemplateWriter.evaluate(
-      dst,
       REALIZED_PYTHON,
       ASPECT_TEMPLATE_DIRECTORY,
       TEMPLATE_PYTHON,
@@ -105,16 +96,12 @@ class AspectTemplateWriter : AspectWriter {
     val isNotBzlmod = state.blazeInfo.starlarkSemantics?.contains("enable_bzlmod=false") ?: false
     fun hasRepository(name: String) = externalWorkspaceData?.getByRepoName(name) != null
 
-    val isJavaEnabled = activeLanguages.contains(LanguageClass.JAVA) &&
-        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_java")))
-
     val isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_python")))
 
     return ImmutableMap.of(
       "bazel8OrAbove", if (isAtLeastBazel8) "true" else "false",
       "bazel9OrAbove", if (isAtLeastBazel9) "true" else "false",
-      "isJavaEnabled", if (isJavaEnabled) "true" else "false",
       "isPythonEnabled", if (isPythonEnabled) "true" else "false"
     )
   }

@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files
-import java.nio.file.Files.createDirectories
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
@@ -38,6 +37,10 @@ interface AspectWriter {
     @JvmStatic
     @Throws(IOException::class)
     fun copyAspects(ctx: Class<*>, dst: Path, src: String) = copyAspectsImpl(ctx, dst, src)
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun writeAspectFile(dst: Path, content: String) = writeAspectFileImpl(dst, content)
 
     @JvmStatic
     fun readAspect(ctx: Class<*>, dir: String, file: String): ByteSource = readAspectImpl(ctx, dir, file)
@@ -98,4 +101,12 @@ private fun readAspectImpl(ctx: Class<*>, dir: String, file: String): ByteSource
       return classLoader.getResourceAsStream(resource) ?: throw IOException("aspect file not found: $resource")
     }
   }
+}
+
+private fun writeAspectFileImpl(dst: Path, content: String) {
+  Files.newOutputStream(
+    dst,
+    StandardOpenOption.CREATE,
+    StandardOpenOption.TRUNCATE_EXISTING,
+  ).writer().use { it.write(content) }
 }

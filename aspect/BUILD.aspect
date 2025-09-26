@@ -5,8 +5,3 @@
 
 licenses(["notice"])  # Apache 2.0
 
-exports_files([
-    "tools/PackageParser_deploy.jar",
-    "tools/CreateAar_deploy.jar",
-    "tools/JarFilter_deploy.jar",
-])

@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
@@ -6,20 +8,20 @@ load(
 
 licenses(["notice"])
 
-java_library(
+cc_library(
     name = "foo",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
 )
 
-java_library(
+cc_library(
     name = "bar",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
     deps = [":foo"],
 )
 
-java_library(
+cc_library(
     name = "baz",
-    srcs = ["Foo.java"],
+    srcs = ["simple/simple.cc"],
     tags = ["no-ide"],
     deps = [":bar"],
 )
