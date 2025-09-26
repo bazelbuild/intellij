@@ -41,7 +41,6 @@ aspect_files(
     files = [
         "artifacts.bzl",
         "fast_build_info_bundled.bzl",
-        "flag_hack.bzl",
         "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
@@ -88,7 +87,6 @@ _dev_aspect_path = package_name()
 # This genrule is required for the aspect to be valid in all three repositories in which it's used.
 # Changes:
 #   //.../aspect/tools:tool_name -> //:tool_name_bin
-#   //.../aspect:flag_hack -> //:flag_hack
 #   :intellij_info_impl.bzl -> :intellij_info_impl_bundled.bzl
 genrule(
     name = "modify_tools_path",
@@ -96,7 +94,6 @@ genrule(
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e 's,//%s/tools:\" + tool_name,tools/\" + tool_name,g' $@ && " % _dev_aspect_path +
-          "sed -i -e 's,//%s:flag_hack,:flag_hack,g' $@  && " % _dev_aspect_path +
           "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 

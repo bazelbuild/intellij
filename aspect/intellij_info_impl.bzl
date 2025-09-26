@@ -13,15 +13,14 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
-load(":flag_hack.bzl", "FlagHackInfo")
-load(":java_info.bzl", "get_java_info", "java_info_in_target", "java_info_reference", "get_provider_from_target")
+load(":java_info.bzl", "get_java_info", "get_provider_from_target", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -1330,7 +1329,6 @@ def semantics_extra_deps(base, semantics, name):
 def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
     """Creates the aspect given the semantics."""
     tool_label = semantics.tool_label
-    flag_hack_label = semantics.flag_hack_label
     deps = semantics_extra_deps(DEPS, semantics, "extra_deps")
     runtime_deps = RUNTIME_DEPS
     prerequisite_deps = semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites")
