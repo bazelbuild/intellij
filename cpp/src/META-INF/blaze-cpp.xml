@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <depends>com.intellij.modules.cidr.debugger</depends>
+  <depends>com.intellij.nativeDebug</depends>
 
   <project-components>
     <component>
