@@ -43,7 +43,7 @@ import kotlinx.coroutines.CoroutineScope;
  * <p>It will check system properties first, then an experiment file in the user's home directory,
  * then finally all files specified by the system property blaze.experiments.file.
  */
-public class ExperimentServiceImpl implements ApplicationComponent, ExperimentService {
+public class ExperimentServiceImpl implements ExperimentService {
 
   private static final Logger logger = Logger.getInstance(ExperimentServiceImpl.class);
 
@@ -63,18 +63,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   }
 
   @VisibleForTesting
-  ExperimentServiceImpl(CoroutineScope scope, ExperimentLoader... loaders) {
-    this(scope, MorePlatformUtils::getIdeChannel, loaders);
-  }
-
-  @VisibleForTesting
   ExperimentServiceImpl(Supplier<String> channelSupplier, ExperimentLoader... loaders) {
-    this(null, channelSupplier, loaders);
-  }
-
-  @VisibleForTesting
-  ExperimentServiceImpl(@Nullable CoroutineScope scope, Supplier<String> channelSupplier,
-      ExperimentLoader... loaders) {
     services = ImmutableList.copyOf(loaders);
     this.channelSupplier = Suppliers.memoize(channelSupplier::get);
     // Bypass unregistered application service AlarmSharedCoroutineScopeHolder. It's a private service which hard to mock
@@ -82,13 +71,11 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshExperiments();
     }
-  }
 
-  @Override
-  public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       services.forEach(ExperimentLoader::initialize);
     }
+
     // refresh experiments synchronously; some callers require a valid initial state on startup
     refreshExperiments();
 

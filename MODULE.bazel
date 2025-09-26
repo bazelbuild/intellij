@@ -184,6 +184,17 @@ http_archive(
     url = CLION_252_URL,
 )
 
+CLION_253_SHA = "db6985e3cae06c6ba39009dc0afc0a0cfbadc5ca556f11a99d76b1c7bf263034"
+
+CLION_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/253.22441.25-EAP-SNAPSHOT/clion-253.22441.25-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "clion_2025_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion253",
+    sha256 = CLION_253_SHA,
+    url = CLION_253_URL,
+)
+
 _PYTHON_CE_BUILD_FILE = """
 java_import(
     name = "python",
@@ -217,6 +228,17 @@ http_archive(
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = PYTHON_PLUGIN_252_SHA,
     url = PYTHON_PLUGIN_252_URL,
+)
+
+PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.22441.33/PythonCore-253.22441.33.zip"
+
+PYTHON_PLUGIN_253_SHA = "d9f744dc392605981fc9d014b388942edaac7dd2788badd8eb76fab8133b7c72"
+
+http_archive(
+    name = "python_2025_3",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_253_SHA,
+    url = PYTHON_PLUGIN_253_URL,
 )
 
 # needed for cpp tests

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.help.BlazeHelpHandler;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.ide.AbstractWizardAdapter;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
@@ -29,9 +30,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import java.awt.event.ActionListener;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /** Largely copied from AbstractProjectWizard / AddModuleWizard (which aren't in the CLion SDK). */
-abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardStep> {
+abstract class BlazeNewProjectWizard extends AbstractWizardAdapter<ProjectImportWizardStep> {
 
   final WizardContext context;
   final BlazeProjectImportBuilder builder;
@@ -58,16 +60,15 @@ abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardS
 
   @Override
   protected void doHelpAction() {
-    String helpId = getHelpID();
+    String helpId = getHelpId();
     BlazeHelpHandler helpHandler = BlazeHelpHandler.getInstance();
     if (helpId != null && helpHandler != null) {
       helpHandler.handleHelp(helpId);
     }
   }
 
-  @Nullable
   @Override
-  protected String getHelpID() {
+  protected @NonNls @Nullable String getHelpId() {
     ProjectImportWizardStep step = getCurrentStepObject();
     if (step != null) {
       return step.getHelpId();

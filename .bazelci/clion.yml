@@ -91,8 +91,7 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
+    soft_fail: true
   CLion-Windows-OSS-under-dev:
     name: CLion Windows OSS Under Development
     platform: windows
@@ -106,8 +105,7 @@ tasks:
       - --test_output=errors
     test_targets:
       - //clwb:headless_tests
-    soft_fail:
-      - exit_status: 1
+    soft_fail: true
   CLion-MacOS-OSS-under-dev:
     name: CLion MacOS OSS Under Development
     platform: macos_arm64
@@ -121,8 +119,7 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail:
-      - exit_status: 1
+    soft_fail: false
   CLion-last-green:
     name: CLion Headless Tests Last Green
     platform: ubuntu2204

@@ -26,12 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
-import com.jetbrains.cidr.project.ui.convertStatus
-import com.jetbrains.cidr.project.ui.isProjectAwareFile
-import com.jetbrains.cidr.project.ui.notifications.EditorNotificationWarningProvider
-import com.jetbrains.cidr.project.ui.notifications.ProjectNotification
-import com.jetbrains.cidr.project.ui.popup.ProjectFixesProvider
-import com.jetbrains.cidr.project.ui.widget.*
+import com.google.idea.sdkcompat.clion.projectStatus.*
 import java.io.File
 
 /// This function is a little overloaded, ensures the project could be imported

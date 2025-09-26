@@ -1,8 +1,6 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
-      <implementation-class>com.google.idea.common.experiments.MockExperimentService</implementation-class>
-    </component>
-  </application-components>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.google.idea.common.experiments.MockExperimentService"
+                        serviceInterface="com.google.idea.common.experiments.ExperimentService"/>
+  </extensions>
 </idea-plugin>
