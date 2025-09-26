@@ -333,14 +333,6 @@ def _get_python_srcs_version(ctx):
     srcs_version = getattr(ctx.rule.attr, "srcs_version", "PY2AND3")
     return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
 
-def _do_starlark_string_expansion(ctx, name, strings, extra_targets = [], tokenization = True):
-    # first, expand all starlark predefined paths:
-    #   location, locations, rootpath, rootpaths, execpath, execpaths
-    strings = [ctx.expand_location(value, targets = extra_targets) for value in strings]
-
-    # then expand any regular GNU make style variables
-    return expand_make_variables(ctx, tokenization, strings)
-
 ##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -358,7 +350,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     to_build = get_py_info(target).transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
-    args = _do_starlark_string_expansion(ctx, "args", args, data_deps, tokenization = False)
+    args = expand_make_variables(ctx, False, args)
     imports = getattr(ctx.rule.attr, "imports", [])
     is_code_generator = False
 
@@ -536,8 +528,8 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
-    target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
-    args = _do_starlark_string_expansion(ctx, "args", getattr(ctx.rule.attr, "args", []), extra_targets)
+    target_copts = expand_make_variables(ctx, True, target_copts)
+    args = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "args", []))
 
     compilation_context = target[CcInfo].compilation_context
 
