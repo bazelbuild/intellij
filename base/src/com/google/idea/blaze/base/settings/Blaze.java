@@ -53,62 +53,35 @@ public class Blaze {
   }
 
   /**
-   * Returns the ProjectType of this imported project. {@code ProjectType.UNKNOWN} will be returned
-   * if the project is not available, not imported from blaze, or we failed to access its import
-   * settings.
+   * Query sync is no longer supported, CLion only uses aspect sync. This
+   * function always returns ASPECT_SYNC or UNKNOWN to not break legacy code
+   * that relies on this to determine if the project is imported.
    */
+  @Deprecated
   public static ProjectType getProjectType(@Nullable Project project) {
     if (project == null) {
       return ProjectType.UNKNOWN;
     }
 
-    BlazeImportSettingsManager blazeImportSettingsManager =
-        BlazeImportSettingsManager.getInstance(project);
+    final var blazeImportSettingsManager = BlazeImportSettingsManager.getInstance(project);
     if (blazeImportSettingsManager == null) {
       return ProjectType.UNKNOWN;
     }
-    BlazeImportSettings blazeImportSettings = blazeImportSettingsManager.getImportSettings();
+    final var blazeImportSettings = blazeImportSettingsManager.getImportSettings();
     if (blazeImportSettings == null) {
       return ProjectType.UNKNOWN;
     }
-    return blazeImportSettings.getProjectType();
+
+    return ProjectType.ASPECT_SYNC;
   }
 
   /**
-   * This variant allows us to enable and disable Query Sync for already imported project.
-   * com.google.idea.blaze.base.settings.Blaze#getProjectType(com.intellij.openapi.project.Project) is called quite often
-   * so we cannot reload project view from for every of such call.
-   * This is why we have this special case to make sure that Sync respects project view selection if there is any.
+   * Query sync is no longer supported, CLion only uses aspect sync. This
+   * function always returns ASPECT_SYNC or UNKNOWN to not break legacy code
+   * that relies on this to determine if the project is imported.
    */
+  @Deprecated
   public static ProjectType getUpToDateProjectTypeBeforeSync(@Nonnull Project project) {
-    BlazeImportSettingsManager blazeImportSettingsManager =
-            BlazeImportSettingsManager.getInstance(project);
-    if (blazeImportSettingsManager == null) {
-      return ProjectType.UNKNOWN;
-    }
-    BlazeImportSettings blazeImportSettings = blazeImportSettingsManager.getImportSettings();
-    if (blazeImportSettings == null) {
-      return ProjectType.UNKNOWN;
-    }
-    ProjectViewSet projectViewSet = Scope.root(
-            context -> {
-              return ProjectViewManager.getInstance(project).reloadProjectView(context);
-            });
-
-    if (projectViewSet == null) {
-      // fallback existing type if project view file is not valid
-      return blazeImportSettings.getProjectType();
-    }
-
-    Optional<Boolean> querySyncProjectView = projectViewSet.getScalarValue(UseQuerySyncSection.KEY);
-    if (querySyncProjectView.isPresent()) {
-      if (blazeImportSettings.getProjectType() == ProjectType.QUERY_SYNC && !querySyncProjectView.get()) {
-        blazeImportSettings.setProjectType(ProjectType.ASPECT_SYNC);
-      } else if (blazeImportSettings.getProjectType() == ProjectType.ASPECT_SYNC && querySyncProjectView.get()) {
-        blazeImportSettings.setProjectType(ProjectType.QUERY_SYNC);
-      }
-    }
-
     return getProjectType(project);
   }
 
