@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
+import com.google.idea.blaze.base.projectview.section.sections.UseQuerySyncSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
@@ -517,6 +518,21 @@ public class ProjectViewParserTest extends BlazeTestCase {
     ProjectView projectView = projectViewFile.projectView;
     String outputString = ProjectViewParser.projectViewToString(projectView);
     assertThat(outputString).isEqualTo(text);
+  }
+
+  @Test
+  public void testParsersSubset() throws Exception {
+    projectViewStorageManager.add(
+      ".blazeproject",
+      "workspace_type: c",
+            "use_query_sync: compatibility");
+    projectViewParser.parseProjectView(new File(".blazeproject"), List.of(WorkspaceTypeSection.PARSER));
+    // Parser errors are expected from the parsers not included in the parsers list
+
+    ProjectViewSet projectViewSet = projectViewParser.getResult();
+    assertThat(projectViewSet.getScalarValue(WorkspaceTypeSection.KEY)).hasValue(WorkspaceType.C);
+    // Value will not be parsed for the parsers not in the provided list
+    assertThat(projectViewSet.getScalarValue(UseQuerySyncSection.KEY)).isEqualTo(Optional.empty());
   }
 
   @Test
