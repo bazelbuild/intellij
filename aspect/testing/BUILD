@@ -23,3 +23,21 @@ java_library(
         "//aspect/testing/rules:IntellijAspectTest",
     ],
 )
+
+# All aspect tests.
+test_suite(
+    name = "aspect_tests",
+    tests = [
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/ccbinary:CcBinaryTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/cclibrary:CcLibraryTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/cctest:CcTestTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/cctoolchain:CcToolchainTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars:CoptsMakeVarsTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/alias:AliasTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/analysistest:AnalysisTestTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/artifacts:ArtifactTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/build:BuildFileTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/noide:NoIdeTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/tags:TagTest",
+    ],
+)
