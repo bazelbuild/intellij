@@ -7,6 +7,11 @@ on:
         description: 'Release Version'
         required: true
         type: string
+      eap:
+        description: 'EAP build (only release clion-oss-under-dev)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -16,7 +21,8 @@ jobs:
 
     strategy:
       matrix:
-        product: [clion-oss-latest-stable, clion-oss-oldest-stable]
+        # if EAP is true -> ["clion-oss-under-dev"]; else -> ["clion-oss-latest-stable", "clion-oss-oldest-stable"]
+        product: ${{ fromJSON(inputs.eap && '["clion-oss-under-dev"]' || '["clion-oss-latest-stable", "clion-oss-oldest-stable"]') }}
 
     runs-on: ubuntu-latest
 
@@ -28,8 +34,8 @@ jobs:
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
           bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
-          repository-cache: true
+          disk-cache: false
+          repository-cache: false
 
       - name: Update version.bzl
         run: |
@@ -61,24 +67,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Latest Plugin Zip
+      - name: Download Plugin Zips
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-latest-stable
-
-      - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: clion-oss-oldest-stable
+          pattern: clion-oss-*
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: "*.zip"
-          tag_name: ${{ inputs.version }}
-          name: "CLwB Release ${{ inputs.version }}"
+          # if EAP is true -> "<version>-eap"; else -> "<version>"
+          tag_name: ${{ inputs.eap && format('{0}-eap', inputs.version) || inputs.version }}
+          # if EAP is true -> "CLwB-EAP Release <version>"; else -> "CLwB Release <version>"
+          name: ${{ inputs.eap && format('CLwB-EAP Release {0}', inputs.version) || format('CLwB Release {0}', inputs.version) }}
           draft: false
-          prerelease: false
+          prerelease: ${{ inputs.eap }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,15 +97,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Latest Plugin Zip
+      - name: Download Plugin Zips
         uses: actions/download-artifact@v5
         with:
-          name: clion-oss-latest-stable
-
-      - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: clion-oss-oldest-stable
+          pattern: clion-oss-*
+          merge-multiple: true
 
       - name: Upload Releases
         run: |
