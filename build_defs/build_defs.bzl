@@ -30,6 +30,12 @@ def merged_plugin_xml(name, srcs, **kwargs):
 def _optstr(name, value):
     return ("--" + name) if value else ""
 
+def _check_version(version):
+    """Tries to parse the version to ensure it is valid."""
+    for it in version.split("."):
+        # ensure every part of the version can be parsed
+        _ = int(it)
+
 def stamped_plugin_xml(
         name,
         plugin_xml = None,
@@ -38,7 +44,6 @@ def stamped_plugin_xml(
         stamp_since_build = False,
         stamp_until_build = False,
         version = None,
-        version_file = None,
         changelog_file = None,
         description_file = None,
         vendor_file = None,
@@ -91,9 +96,6 @@ def stamped_plugin_xml(
         args.append("--plugin_xml=$(location {plugin_xml})")
         srcs.append(plugin_xml)
 
-    if version and version_file:
-        fail("Cannot supply both version and version_file")
-
     if plugin_id:
         args.append("--plugin_id=%s" % plugin_id)
 
@@ -101,11 +103,8 @@ def stamped_plugin_xml(
         args.append("--plugin_name='%s'" % plugin_name)
 
     if version:
+        _check_version(version)
         args.append("--version='%s'" % version)
-
-    if version_file:
-        args.append("--version_file=$(location {version_file})")
-        srcs.append(version_file)
 
     if changelog_file:
         args.append("--changelog_file=$(location {changelog_file})")
@@ -143,7 +142,6 @@ def stamped_plugin_xml(
             "stamp_until_build",
             stamp_until_build,
         ),
-        version_file = version_file,
         changelog_file = changelog_file,
         description_file = description_file,
         vendor_file = vendor_file,
