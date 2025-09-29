@@ -51,7 +51,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
           .setHeaders(ProtoWrapper.map(proto.getHeadersList(), ArtifactLocation::fromProto))
           .setTextualHeaders(ProtoWrapper.map(proto.getTextualHeadersList(), ArtifactLocation::fromProto))
           .setCopts(ProtoWrapper.internStrings(proto.getCoptsList()))
-          .setCopts(ProtoWrapper.internStrings(proto.getArgsList()))
+          .setArgs(ProtoWrapper.internStrings(proto.getArgsList()))
           .setIncludePrefix(ProtoWrapper.internString(proto.getIncludePrefix()))
           .setStripIncludePrefix(ProtoWrapper.internString(proto.getStripIncludePrefix()))
           .build();
