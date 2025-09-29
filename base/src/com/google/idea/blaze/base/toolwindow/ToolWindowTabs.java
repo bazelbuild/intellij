@@ -103,10 +103,6 @@ final class ToolWindowTabs {
     Content content = createToolWindowContent(model, type);
     getContentManager().addContent(content);
 
-    if (type == Task.Type.SYNC) {
-      BuildViewMigration.addPromotionTooltip(project, content);
-    }
-
     return new Tab(behaviour, content);
   }
 
