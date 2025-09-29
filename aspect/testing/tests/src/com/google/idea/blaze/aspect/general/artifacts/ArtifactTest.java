@@ -33,7 +33,7 @@ public class ArtifactTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":gen_sources_fixture");
     TargetIdeInfo source = findTarget(testFixture, ":source");
     TargetIdeInfo gen = findTarget(testFixture, ":gen");
-    assertThat(getOnlyElement(source.getCIdeInfo().getSourceList()).getIsSource()).isTrue();
-    assertThat(getOnlyElement(gen.getCIdeInfo().getSourceList()).getIsSource()).isFalse();
+    assertThat(getOnlyElement(source.getCIdeInfo().getRuleContext().getSourcesList()).getIsSource()).isTrue();
+    assertThat(getOnlyElement(gen.getCIdeInfo().getRuleContext().getSourcesList()).getIsSource()).isFalse();
   }
 }

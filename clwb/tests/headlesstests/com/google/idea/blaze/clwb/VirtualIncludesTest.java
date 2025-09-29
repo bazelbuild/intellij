@@ -2,6 +2,7 @@ package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
+import static com.google.idea.blaze.clwb.base.TestUtils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
@@ -10,8 +11,8 @@ import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
+import com.google.idea.blaze.clwb.base.TestUtils;
 import java.util.ArrayList;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -21,6 +22,8 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
 
   @Test
   public void testClwb() {
+    setIncludesCacheEnabled(false);
+
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
@@ -45,26 +48,11 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
     roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
-  }
-
-  private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {
-    final var roots = settings.getHeadersSearchRoots().getAllRoots();
-
-    for (final var root : roots) {
-      final var rootFile = root.getVirtualFile();
-      if (rootFile == null) continue;
-
-      final var headerFile = rootFile.findFileByRelativePath(fileName);
-      if (headerFile == null) continue;
-
-      return headerFile;
-    }
-
-    return null;
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/transitive"));
   }
 
   private void checkIncludes() {
-    final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
+    final var compilerSettings = findFileCompilerSettings("main/virtual_includes.cc");
 
     assertContainsHeader("strip_absolut/strip_absolut.h", compilerSettings);
     assertContainsHeader("strip_absolut/generated.h", compilerSettings);
@@ -72,24 +60,25 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertContainsHeader("raw_default.h", compilerSettings);
     assertContainsHeader("raw_system.h", compilerSettings);
     assertContainsHeader("raw_quote.h", compilerSettings);
+    assertContainsHeader("lib/transitive/generated.h", compilerSettings);
 
     assertThat(findProjectFile("lib/strip_absolut/strip_absolut.h"))
-        .isEqualTo(findHeader("strip_absolut/strip_absolut.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("strip_absolut/strip_absolut.h", compilerSettings));
 
     assertThat(findProjectFile("lib/strip_relative/include/strip_relative.h"))
-        .isEqualTo(findHeader("strip_relative.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("strip_relative.h", compilerSettings));
 
     assertThat(findProjectFile("lib/impl_deps/impl.h"))
-        .isEqualTo(findHeader("lib/impl_deps/impl.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("lib/impl_deps/impl.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/default/raw_default.h"))
-        .isEqualTo(findHeader("raw_default.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("raw_default.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/system/raw_system.h"))
-        .isEqualTo(findHeader("raw_system.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("raw_system.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/quote/raw_quote.h"))
-        .isEqualTo(findHeader("raw_quote.h", compilerSettings));
+        .isEqualTo(TestUtils.resolveHeader("raw_quote.h", compilerSettings));
   }
 
   private void checkImplDeps() {

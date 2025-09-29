@@ -42,24 +42,23 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     assertThat(target.hasPyIdeInfo()).isFalse();
 
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getSourceList()))
+    final var ruleContext = target.getCIdeInfo().getRuleContext();
+    final var compilationContext = target.getCIdeInfo().getCompilationContext();
+
+    assertThat(relativePathsForArtifacts(ruleContext.getSourcesList()))
         .containsExactly(testRelative("simple/simple.cc"));
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getHeaderList()))
+    assertThat(relativePathsForArtifacts(ruleContext.getHeadersList()))
         .containsExactly(testRelative("simple/simple.h"));
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getTextualHeaderList()))
+    assertThat(relativePathsForArtifacts(ruleContext.getTextualHeadersList()))
         .containsExactly(testRelative("simple/simple_textual.h"));
 
-    CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
-    assertThat(cTargetIdeInfo.getTargetCoptList())
-        .containsExactly("-DGOPT", "-Ifoo/baz/", "-I", "other/headers");
+    assertThat(ruleContext.getCoptsList()).containsExactly("-DGOPT", "-Ifoo/baz/", "-I", "other/headers");
 
     // Make sure our understanding of where this attributes show up in other providers is correct.
-    assertThat(cTargetIdeInfo.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("foo/bar"));
-    assertThat(cTargetIdeInfo.getTransitiveDefineList()).contains("VERSION2");
+    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationContext.getDefinesList()).contains("VERSION2");
 
-    List<String> transQuoteIncludeDirList = cTargetIdeInfo.getTransitiveQuoteIncludeDirectoryList();
-    assertThat(transQuoteIncludeDirList).contains(".");
+    assertThat(compilationContext.getQuoteIncludesList()).contains(".");
 
     // Can't test for this because the cc code stuffs source artifacts into
     // the output group
@@ -94,16 +93,15 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
 
     assertThat(lib1.hasCIdeInfo()).isTrue();
     assertThat(lib2.hasCIdeInfo()).isTrue();
-    CIdeInfo cIdeInfo1 = lib1.getCIdeInfo();
+    final var ruleContext = lib1.getCIdeInfo().getRuleContext();
+    final var compilationContext = lib1.getCIdeInfo().getCompilationContext();
 
-    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("foo/bar"));
-    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("baz/lib"));
+    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("baz/lib"));
 
-    assertThat(cIdeInfo1.getTargetCoptList()).containsExactly("-DGOPT", "-Ifoo/baz/");
+    assertThat(ruleContext.getCoptsList()).containsExactly("-DGOPT", "-Ifoo/baz/");
 
-    assertThat(cIdeInfo1.getTransitiveDefineList()).contains("VERSION2");
-    assertThat(cIdeInfo1.getTransitiveDefineList()).contains("COMPLEX_IMPL");
+    assertThat(compilationContext.getDefinesList()).contains("VERSION2");
+    assertThat(compilationContext.getDefinesList()).contains("COMPLEX_IMPL");
   }
 }

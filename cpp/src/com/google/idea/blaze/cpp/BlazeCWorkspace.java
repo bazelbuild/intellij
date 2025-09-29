@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -33,6 +34,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
+import com.google.idea.blaze.cpp.sync.CcIncludesCacheService;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -43,7 +45,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
@@ -245,32 +246,41 @@ public final class BlazeCWorkspace implements ProjectComponent {
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages = new HashMap<>();
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles = new HashMap<>();
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
-        TargetIdeInfo targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
-        if (targetIdeInfo == null || targetIdeInfo.getcIdeInfo() == null) {
+        final var targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
+        if (targetIdeInfo == null || !targetIdeInfo.getKind().hasLanguage(LanguageClass.C)) {
           continue;
         }
+
+        final var cIdeInfo = targetIdeInfo.getcIdeInfo();
+        if (cIdeInfo == null) {
+          continue;
+        }
+
+        final var compilationCtx = cIdeInfo.compilationContext();
 
         // defines and include directories are the same for all sources in a given target, so lets
         // collect them once and reuse for each source file's options
         final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
         CoptsProcessor.apply(
-            /* options = */ targetIdeInfo.getcIdeInfo().getLocalCopts(),
+            /* options = */ cIdeInfo.ruleContext().copts(),
             /* kind = */ compilerSettings.getCompilerKind(),
             /* sink = */ compilerSwitchesBuilder,
             /* resolver = */ executionRootPathResolver
         );
 
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
-        targetIdeInfo.getcIdeInfo().getTransitiveDefines()
-            .forEach(compilerSwitchesBuilder::withMacro);
+        compilationCtx.defines().forEach(compilerSwitchesBuilder::withMacro);
 
-        Function<ExecutionRootPath, Stream<File>> resolver =
-            executionRootPath ->
-                executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
+        Function<ExecutionRootPath, Stream<File>> resolver;
+        if (CcIncludesCacheService.getEnabled()) {
+          resolver = (path) -> Stream.of(executionRootPathResolver.resolveExecutionRootPath(path));
+        } else {
+          resolver = (path) -> executionRootPathResolver.resolveToIncludeDirectories(path).stream();
+        }
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
-        targetIdeInfo.getcIdeInfo().getTransitiveIncludeDirectories().stream()
+        compilationCtx.includes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
@@ -278,9 +288,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
         // transitiveQuoteIncludeDirectories are sourced from
         // CcSkylarkApiProvider.quote_include_directories
-        final var quoteIncludePaths = targetIdeInfo.getcIdeInfo()
-            .getTransitiveQuoteIncludeDirectories()
-            .stream()
+        final var quoteIncludePaths = compilationCtx.quoteIncludes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
@@ -291,11 +299,17 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // CcSkylarkApiProvider.system_include_directories
         // Note: We would ideally use -isystem here, but it interacts badly with the switches
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
-        targetIdeInfo.getcIdeInfo().getTransitiveSystemIncludeDirectories().stream()
+        compilationCtx.systemIncludes().stream()
             .flatMap(resolver)
             .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
+
+        if (CcIncludesCacheService.getEnabled()) {
+          CcIncludesCacheService.of(project)
+              .getIncludePaths(targetIdeInfo)
+              .forEach(compilerSwitchesBuilder::withIncludePath);
+        }
 
         final var cCompilerSwitches =
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.C);
@@ -303,7 +317,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.CPP);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
-          OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
+          OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(project, vf);
 
           final PerFileCompilerOpts perFileCompilerOpts;
           if (kind == CLanguageKind.C) {

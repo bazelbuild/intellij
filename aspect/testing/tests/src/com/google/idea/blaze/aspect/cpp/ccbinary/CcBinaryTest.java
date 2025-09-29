@@ -36,7 +36,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     assertThat(target.hasAndroidIdeInfo()).isFalse();
     final var cTargetIdeInfo = target.getCIdeInfo();
 
-    assertThat(cTargetIdeInfo.getTargetCoptList()).isEmpty();
+    assertThat(cTargetIdeInfo.getRuleContext().getCoptsList()).isEmpty();
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-cpp")).isEmpty();
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
@@ -51,7 +51,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     final var target = findTarget(testFixture, ":expand_datadeps");
     assertThat(target.getKindString()).isEqualTo("cc_binary");
 
-    final var args = target.getCIdeInfo().getArgsList();
+    final var args = target.getCIdeInfo().getRuleContext().getArgsList();
     assertThat(args).hasSize(1);
     assertThat(args.get(0)).endsWith(
         "/aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/ccbinary/datadepfile.txt");

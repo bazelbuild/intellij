@@ -21,4 +21,5 @@ cc_library(
     hdrs = ["generated.h"],
     strip_include_prefix = "/lib",
     visibility = ["//visibility:public"],
+    deps = ["//lib/transitive"],
 )
