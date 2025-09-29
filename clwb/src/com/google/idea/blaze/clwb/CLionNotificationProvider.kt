@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
 import com.google.idea.sdkcompat.clion.projectStatus.*
+import com.jetbrains.cidr.project.workspace.CidrWorkspace
 import java.io.File
 
 /// This function is a little overloaded, ensures the project could be imported
@@ -58,14 +59,20 @@ private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
 @RequiresReadLock
 private fun guessWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
   if (Blaze.isBlazeProject(project)) {
-    return DefaultWidgetStatus(Status.OK, Scope.Project, "Project is configured")
+    return DefaultWidgetStatus(Status.OK, Scope.Project, "Bazel project is configured")
   }
 
   if (currentFile == null || guessWorkspaceRoot(project, currentFile) == null) {
     return null
   }
 
-  return DefaultWidgetStatus(Status.Warning, Scope.Project, "Project is not configured")
+  val status = if (CidrWorkspace.getInitializedWorkspaces(project).isEmpty()) {
+    Status.Warning
+  } else {
+    Status.Info
+  }
+
+  return DefaultWidgetStatus(status, Scope.Project, "Bazel project is not configured")
 }
 
 class BazelProjectFixesProvider : ProjectFixesProvider {
