@@ -34,8 +34,8 @@ jobs:
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
           bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
-          repository-cache: true
+          disk-cache: false
+          repository-cache: false
 
       - name: Update version.bzl
         run: |
