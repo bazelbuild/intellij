@@ -77,7 +77,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: "*.zip"
-          tag_name: ${{ inputs.version }}
+          # if EAP is true -> "<version>-eap"; else -> "<version>"
+          tag_name: ${{ inputs.eap && format('{0}-eap', inputs.version) || inputs.version }}
           # if EAP is true -> "CLwB-EAP Release <version>"; else -> "CLwB Release <version>"
           name: ${{ inputs.eap && format('CLwB-EAP Release {0}', inputs.version) || format('CLwB Release {0}', inputs.version) }}
           draft: false
