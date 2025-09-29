@@ -123,8 +123,9 @@ class CcIncludesCacheService(private val project: Project) {
       cacheTracker.clear()
     }
 
+    val execrootPathResolver = ExecutionRootPathResolver.fromProjectData(project, projectData)
     for ((key, target) in projectData.targetMap.map()) {
-      refreshTarget(projectData, key, target)
+      refreshTarget(projectData, execrootPathResolver, key, target)
     }
 
     // one could consider removing unused directories on an incremental sync, but it's faster not to do so :)
@@ -132,12 +133,36 @@ class CcIncludesCacheService(private val project: Project) {
 
   private fun refreshTarget(
     projectData: BlazeProjectData,
+    execrootPathResolver: ExecutionRootPathResolver,
     key: TargetKey,
     target: TargetIdeInfo
   ) {
     val info = target.getcIdeInfo() ?: return
 
     val targetCacheDirectory = key.cacheDirectory()
+
+    // if there are foreign dependencies, copy all of them to the cache
+    if (info.foreignDependencies().isNotEmpty()) {
+      Files.createDirectories(targetCacheDirectory)
+
+      for (dep in info.foreignDependencies()) {
+        val includeDir = execrootPathResolver
+          .resolveExecutionRootPath(dep.genDir())
+          .toPath()
+          .resolve(dep.includeDirName())
+
+        try {
+          NioFiles.copyRecursively(includeDir, targetCacheDirectory)
+        } catch (e: IOException) {
+          LOG.warn("failed to copy external include directory for $includeDir", e)
+        }
+      }
+
+      cacheTracker.add(key.cacheHashCode())
+      LOG.trace { "${key.cacheHashCode()} - ${key.label} -> copied foreign dependencies" }
+
+      return;
+    }
 
     // if there is an include_prefix or a strip_include_prefix there should be _virtual_includes directory
     if (info.ruleContext().includePrefix().isNotEmpty() || info.ruleContext().stripIncludePrefix().isNotEmpty()) {

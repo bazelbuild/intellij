@@ -41,7 +41,14 @@ public class CppBlazeRules implements Kind.Provider {
     CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN),
 
     // ruleset: protobuf
-    CC_PROTO_LIBRARY("cc_proto_library", LanguageClass.GENERIC, RuleType.LIBRARY);
+    CC_PROTO_LIBRARY("cc_proto_library", LanguageClass.GENERIC, RuleType.LIBRARY),
+
+    // ruleset: rules_foreign_cc
+    FOREIGN_CMAKE("cmake", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_MAKE("make", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_CONFITURE_MAKE("configure_make", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_MESON("meson", LanguageClass.GENERIC, RuleType.LIBRARY),
+    FOREIGN_NINJA("ninja", LanguageClass.GENERIC, RuleType.LIBRARY);
 
     private final String name;
     private final LanguageClass languageClass;

@@ -19,6 +19,7 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load(":modules/foreign_cc.bzl", "module_foreign_cc_collect_dependencies")
 load(":modules/transitive_cc_dependencies.bzl", "module_transitive_cc_dependencies_collect")
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
 
@@ -369,6 +370,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         rule_context = collect_cc_rule_context(ctx),
         compilation_context = collect_cc_compilation_context(ctx, target),
         dependencies = [make_target_key(it.label, aspect_ids) for it in dependencies],
+        foreign_dependencies = module_foreign_cc_collect_dependencies(ctx, target),
     )
     resolve_files = target[CcInfo].compilation_context.headers
 
