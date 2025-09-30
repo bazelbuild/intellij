@@ -140,6 +140,7 @@ java_import(
         "plugins/properties/lib/modules/*.jar",
         "plugins/json/lib/*.jar",
         "plugins/json/lib/modules/*.jar",
+        "plugins/platform-langInjection/lib/*.jar",
         "plugins/toml/lib/*.jar",
         "plugins/ultimate-plugin/lib/*.jar",
         "plugins/ultimate-plugin/lib/modules/*.jar",
