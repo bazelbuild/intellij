@@ -122,6 +122,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
 
     Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
+    Registry.get("bazel.cc.includes.cache.enabled").setValue(false);
 
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);

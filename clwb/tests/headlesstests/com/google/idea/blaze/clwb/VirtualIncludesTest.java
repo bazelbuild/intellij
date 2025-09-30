@@ -7,18 +7,22 @@ import static com.google.idea.blaze.clwb.base.TestUtils.setIncludesCacheEnabled;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.system.OS;
-import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.google.idea.blaze.clwb.base.TestUtils;
 import java.util.ArrayList;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class VirtualIncludesTest extends ClwbHeadlessTestCase {
+
+  // use_repo_rule requires bazel 7+
+  @Rule
+  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Test
   public void testClwb() {
