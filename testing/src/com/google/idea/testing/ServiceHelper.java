@@ -108,59 +108,6 @@ public class ServiceHelper {
     registerService(project, key, implementation, parentDisposable);
   }
 
-  public static <T> void registerApplicationComponent(
-      Class<T> key, T implementation, Disposable parentDisposable) {
-    Application application = ApplicationManager.getApplication();
-    if (application instanceof ComponentManagerImpl) {
-      if (!application.hasComponent(key)) {
-        // registers component from scratch
-        ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /* shouldBeRegistered= */ false);
-      }
-      // replaces existing component
-      ServiceContainerUtil.registerComponentInstance(
-          application, key, implementation, parentDisposable);
-    } else if (application instanceof MockApplication) {
-      registerComponentInstance(
-          ((MockApplication) application).getPicoContainer(),
-          key,
-          implementation,
-          parentDisposable);
-    } else {
-      throw new RuntimeException(
-          "Implementation not supported: " + application.getClass().getSimpleName());
-    }
-  }
-
-  public static <T> void registerProjectComponent(
-      Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    if (project instanceof ComponentManagerImpl) {
-      ServiceContainerUtil.registerComponentInstance(
-          project, key, implementation, parentDisposable);
-    } else if (project instanceof MockProject) {
-      registerComponentInstance(
-          ((MockProject) project).getPicoContainer(), key, implementation, parentDisposable);
-    } else {
-      throw new RuntimeException(
-          "Implementation not supported: " + project.getClass().getSimpleName());
-    }
-  }
-
-  private static <T> void registerComponentInstance(
-      MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
-    Object old = container.getComponentInstance(key);
-    container.unregisterComponent(key.getName());
-    container.registerComponentInstance(key.getName(), implementation);
-    Disposer.register(
-        parentDisposable,
-        () -> {
-          container.unregisterComponent(key.getName());
-          if (old != null) {
-            container.registerComponentInstance(key.getName(), old);
-          }
-        });
-  }
-
   private static <T> void registerService(
       ComponentManager componentManager,
       Class<T> key,

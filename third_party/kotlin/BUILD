@@ -1,4 +1,5 @@
 load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain", "kt_kotlinc_options")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 kt_kotlinc_options(
     name = "kotlinc_options",

@@ -23,14 +23,14 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/javascript",  #api223
+        "//third_party/javascript",  #api252
         "//third_party/python",
     ],
-    name = "v252",
+    name = "v253",
     srcs = select_for_ide(
         intellij_ue = glob([
             "com/google/idea/sdkcompat/ide/**",
-            "com/google/idea/sdkcompat/javascript/**",  #api223
+            "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/python/**",
         ]),
         default = glob([

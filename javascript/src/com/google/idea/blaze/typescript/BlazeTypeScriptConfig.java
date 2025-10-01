@@ -29,11 +29,12 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.sdkcompat.javascript.JSModulePathSubstitutionAdapter;
+import com.google.idea.sdkcompat.javascript.TypeScriptConfigAdapter;
 import com.intellij.lang.javascript.config.JSFileImports;
 import com.intellij.lang.javascript.config.JSFileImportsImpl;
 import com.intellij.lang.javascript.config.JSModuleResolution;
 import com.intellij.lang.javascript.config.JSModuleTarget;
+import com.intellij.lang.javascript.frameworks.modules.JSModuleMapping;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathMappings;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
@@ -78,7 +79,7 @@ import java.util.stream.Stream;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig implements TypeScriptConfig {
+class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -736,7 +737,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     return false;
   }
 
-  static class PathSubstitution extends JSModulePathSubstitutionAdapter {
+  static class PathSubstitution implements JSModulePathSubstitution {
     private final String pattern;
     private final ImmutableList<String> mappings;
 
@@ -760,8 +761,8 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     }
 
     @Override
-    public Collection<String> getMappingsAsStrings() {
-      return mappings;
+    public Collection<JSModuleMapping> getMappings() {
+      return mappings.stream().distinct().map(JSModuleMapping::new).collect(ImmutableList.toImmutableList());
     }
 
     @Override
