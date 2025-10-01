@@ -115,6 +115,7 @@ java_import(
         "plugins/properties/lib/*.jar",
         "plugins/json/lib/*.jar",
         "plugins/json/lib/modules/*.jar",
+        "plugins/platform-langInjection/lib/*.jar",
         "plugins/toml/lib/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],

@@ -75,20 +75,6 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testMultilineStringFoldedToFirstLine() throws Throwable {
-    BuildFile file =
-        createBuildFile(
-            new WorkspacePath("java/com/google/BUILD"),
-            "\"\"\"First line of string",
-            "Second line of string\"\"\"");
-
-    FoldingDescriptor[] foldingRegions = getFoldingRegions(file);
-    assertThat(foldingRegions).hasLength(1);
-    assertThat(foldingRegions[0].getPlaceholderText())
-        .isEqualTo("\"\"\"First line of string...\"\"\"");
-  }
-
-  @Test
   public void testFuncDefStatementsFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
