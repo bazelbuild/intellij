@@ -22,17 +22,15 @@ licenses(["notice"])
 java_library(
     name = "v251",
     srcs = select_for_ide(
-        clion = glob([
-            "com/google/idea/sdkcompat/python/**",
-            "com/google/idea/sdkcompat/javascript/**",  #api223
-        ]),
         intellij_ue = glob([
-            "com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/ide/**",
             "com/google/idea/sdkcompat/javascript/**",  #api223
+            "com/google/idea/sdkcompat/python/**",
         ]),
         default = glob([
+            "com/google/idea/sdkcompat/ide/**",
             "com/google/idea/sdkcompat/python/**",
-        ])
+        ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
@@ -41,5 +39,6 @@ java_library(
         "//third_party/go",  #api231
         "//third_party/javascript",  #api223
         "//third_party/scala",
+        "//third_party/python",
     ],
 )

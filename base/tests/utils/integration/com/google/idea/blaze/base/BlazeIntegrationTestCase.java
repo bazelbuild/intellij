@@ -265,7 +265,7 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   protected <T> void registerApplicationComponent(Class<T> key, T implementation) {
-    ServiceHelper.registerApplicationComponent(key, implementation, getTestRootDisposable());
+    ServiceHelper.registerApplicationService(key, implementation, getTestRootDisposable());
   }
 
   protected <T> void registerProjectService(Class<T> key, T implementation) {
@@ -274,7 +274,7 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   public <T> void registerProjectComponent(Class<T> key, T implementation) {
-    ServiceHelper.registerProjectComponent(
+    ServiceHelper.registerProjectService(
         getProject(), key, implementation, getTestRootDisposable());
   }
 
