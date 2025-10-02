@@ -83,7 +83,6 @@ private fun bumpEap(intellijMajorVersion: String, out: Path) {
 
 private fun bumpPlugins(intellijMajorVersion: String, out: Path) {
     bumpPluginVersion(intellijMajorVersion, out, "PythonCore", "PYTHON_PLUGIN")
-    bumpPluginVersion(intellijMajorVersion, out, "org.toml.lang", "TOML_PLUGIN")
 }
 
 private fun bumpPluginVersion(intellijMajorVersion: String, out: Path, mavenCoordinates: String, pythonPluginVarPrefix: String) {

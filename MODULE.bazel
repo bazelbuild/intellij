@@ -162,9 +162,9 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
-CLION_251_SHA = "0f3ae5c8536a009e985b3a91485ef0e9856db3ca980d5fb3fb12f2f4ed08d8d1"
+CLION_251_SHA = "1222a7915371d0f80292215ec63aceed330dd887ce1ad058bfed8384623908a8"
 
-CLION_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.5.1/clion-2025.1.5.1.zip"
+CLION_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.6/clion-2025.1.6.zip"
 
 http_archive(
     name = "clion_2025_1",
@@ -173,9 +173,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "a33d7cff3297ecc28f83dc161d069ee8c2009ecb7bee42c913f25814810e3785"
+CLION_252_SHA = "5d18b7ef0fd46a39e87914a7f54ff8d1e095938e451881fa3f9f5bebaa3037b2"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.1/clion-2025.2.1.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.2/clion-2025.2.2.zip"
 
 http_archive(
     name = "clion_2025_2",
@@ -208,9 +208,9 @@ filegroup(
 )
 """
 
-PYTHON_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.28293.39/PythonCore-251.28293.39.zip"
+PYTHON_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.28774.11/PythonCore-251.28774.11.zip"
 
-PYTHON_PLUGIN_251_SHA = "4a0a3da885df2c7069f56b64ea7ef15d5ec4fb0242eb5e2fcac6082c92972c03"
+PYTHON_PLUGIN_251_SHA = "b9cc64a4c260f7dd41e0c06b1b30ca8893be11370252cb84e6784c87e2585c54"
 
 http_archive(
     name = "python_2025_1",
@@ -219,9 +219,9 @@ http_archive(
     url = PYTHON_PLUGIN_251_URL,
 )
 
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.26199.7/PythonCore-252.26199.7.zip"
+PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.26830.24/PythonCore-252.26830.24.zip"
 
-PYTHON_PLUGIN_252_SHA = "947613a11270043584b16b06a4e946746dd0bbd289f59765711df6427cad817b"
+PYTHON_PLUGIN_252_SHA = "8410233d2b0d0ea38a65c38708a8dbdeb19657970f876487e6775614e4d203c3"
 
 http_archive(
     name = "python_2025_2",
