@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
@@ -41,8 +42,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import org.jetbrains.annotations.NotNull;
 
-/** Allows importing an existing bazel workspace */
+/**
+ * Allows importing an existing bazel workspace
+ */
 public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceOption {
 
   private final JComponent component;
@@ -138,20 +142,24 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
   public void commit() {}
 
   private void chooseDirectory() {
-    FileChooserDescriptor descriptor =
-        new FileChooserDescriptor(false, true, false, false, false, false) {
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            // Default implementation doesn't filter directories,
-            // we want to make sure only workspace roots are selectable
-            return super.isFileSelectable(file) && isWorkspaceRoot(file);
-          }
-        }.withHideIgnored(false)
-            .withTitle("Select Workspace Root")
-            .withDescription("Select the directory of the workspace you want to use.")
-            .withFileFilter(UseExistingBazelWorkspaceOption::isWorkspaceRoot);
-    // File filters are broken for the native Mac file chooser.
-    descriptor.setForcedToUseIdeaFileChooser(true);
+    var descriptor = FileChooserDescriptorFactory.singleDir()
+        .withHideIgnored(false)
+        .withTitle("Select Workspace Root")
+        .withDescription("Select the directory of the workspace you want to use.")
+        .withFileFilter(UseExistingBazelWorkspaceOption::isWorkspaceRoot);
+
+   descriptor = new FileChooserDescriptor(descriptor) {
+     @Override
+     public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
+      for (final var file : files) {
+        if (!isWorkspaceRoot(file)) {
+          throw new ConfigurationException("Invalid workspace root: choose a bazel workspace directory "
+                  + "(containing a WORKSPACE or MODULE.bazel file)");
+        }
+      }
+     }
+   };
+
     FileChooserDialog chooser =
         FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
 
