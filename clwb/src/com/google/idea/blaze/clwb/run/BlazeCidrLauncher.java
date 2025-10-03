@@ -245,7 +245,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         .stream()
         .map(TargetIdeInfo::getcIdeInfo)
         .filter(Objects::nonNull)
-        .flatMap(it -> it.getArgs().stream())
+        .flatMap(it -> it.ruleContext().args().stream())
         .collect(ImmutableList.toImmutableList());
   }
 

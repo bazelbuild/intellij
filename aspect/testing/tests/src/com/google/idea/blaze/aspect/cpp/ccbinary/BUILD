@@ -8,6 +8,7 @@ load(
 cc_binary(
     name = "simple",
     srcs = ["simple/simple.cc"],
+    args = ["simpleArg"],
 )
 
 cc_binary(
@@ -28,8 +29,8 @@ genrule(
 intellij_aspect_test_fixture(
     name = "aspect_fixture",
     deps = [
-        ":simple",
         ":expand_datadeps",
+        ":simple",
     ],
 )
 
