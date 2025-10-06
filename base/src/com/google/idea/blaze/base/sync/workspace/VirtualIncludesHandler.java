@@ -118,10 +118,10 @@ public class VirtualIncludesHandler {
     if (stripPrefix.startsWith("/")) {
       workspacePath = new WorkspacePath(stripPrefix.substring(1));
     } else {
-      workspacePath = new WorkspacePath(key.getLabel().blazePackage(), stripPrefix);
+      workspacePath = new WorkspacePath(key.label().blazePackage(), stripPrefix);
     }
 
-    final var externalWorkspace = key.getLabel().externalWorkspaceName();
+    final var externalWorkspace = key.label().externalWorkspaceName();
     if (externalWorkspace == null) {
       return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
     }

@@ -153,7 +153,7 @@ public class TransitiveDependencyMap {
 
       return target.getDependencies().stream()
           .map(Dependency::getTargetKey)
-          .map(TargetKey::getLabel)
+          .map(TargetKey::label)
           .map(TargetKey::forPlainTarget);
     }
 
