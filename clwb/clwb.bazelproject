@@ -7,6 +7,7 @@ targets:
   //clwb:all
   //clwb:clwb_bazel_dev
   //aspect/testing:aspect_tests
+  //cpp:unit_tests
 
 workspace_type: intellij_plugin
 

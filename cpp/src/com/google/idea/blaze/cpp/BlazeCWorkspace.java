@@ -305,7 +305,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
             buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.CPP);
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
-          OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
+          OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(project, vf);
 
           final PerFileCompilerOpts perFileCompilerOpts;
           if (kind == CLanguageKind.C) {
