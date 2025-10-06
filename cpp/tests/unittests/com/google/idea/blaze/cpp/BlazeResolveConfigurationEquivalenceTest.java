@@ -179,7 +179,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(configurations, "//foo/bar:one and 2 other target(s)")).isNotNull();
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(getHeaders(configuration)).isEmpty();
-      assertThat(configuration.getTargetCopts()).isEmpty();
+      assertThat(configuration.getConfigurationData().localCopts()).isEmpty();
     }
   }
 
@@ -215,9 +215,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getTargetCopts())
+    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getConfigurationData().localCopts())
         .containsExactly("-DSAME=1");
-    assertThat(get(configurations, "//foo/bar:three").getTargetCopts())
+    assertThat(get(configurations, "//foo/bar:three").getConfigurationData().localCopts())
         .containsExactly("-DDIFFERENT=1");
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(getHeaders(configuration)).isEmpty();
@@ -264,7 +264,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(getHeaders(get(configurations, "//foo/bar:three")))
         .containsExactly(header("foo/different"));
     for (BlazeResolveConfiguration configuration : configurations) {
-      assertThat(configuration.getTargetCopts()).isEmpty();
+      assertThat(configuration.getConfigurationData().localCopts()).isEmpty();
     }
   }
 
@@ -552,11 +552,17 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     TargetIdeInfo.Builder targetInfo =
         TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency("//:toolchain");
     sources.forEach(targetInfo::addSource);
-    return targetInfo.setCInfo(
-        CIdeInfo.builder()
-            .addSources(sources)
-            .addLocalCopts(copts)
-            .addTransitiveIncludeDirectories(includes));
+    return targetInfo.setCInfo(CIdeInfo.builder()
+        .setRuleContext(CIdeInfo.RuleContext.builder()
+            .setCopts(ImmutableList.copyOf(copts))
+            .setSources(ImmutableList.copyOf(sources))
+            .build()
+        )
+        .setCompilationContext(CIdeInfo.CompilationContext.builder()
+            .setIncludes(ImmutableList.copyOf(includes))
+            .build()
+        )
+    );
   }
 
   private static TargetIdeInfo.Builder createCcToolchain() {
@@ -632,7 +638,11 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private static List<ExecutionRootPath> getHeaders(BlazeResolveConfiguration configuration) {
-    return configuration.getLibraryHeadersRootsInternal();
+    ImmutableList.Builder<ExecutionRootPath> roots = ImmutableList.builder();
+    roots.addAll(configuration.getConfigurationData().transitiveQuoteIncludeDirectories());
+    roots.addAll(configuration.getConfigurationData().transitiveIncludeDirectories());
+    roots.addAll(configuration.getConfigurationData().transitiveSystemIncludeDirectories());
+    return roots.build();
   }
 
   private void createVirtualFile(String path) {
@@ -652,17 +662,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
       ReusedConfigurationExpectations expected) {
     for (String label : expected.reusedLabels) {
       assertWithMessage(String.format("Checking that %s is reused", label))
-          .that(
-              get(newConfigurations, label)
-                  .isEquivalentConfigurations(get(oldConfigurations, label)))
-          .isTrue();
+          .that(get(newConfigurations, label))
+          .isEqualTo(get(oldConfigurations, label));
     }
     for (String label : expected.notReusedLabels) {
       assertWithMessage(String.format("Checking that %s is NOT reused", label))
-          .that(
-              get(newConfigurations, label)
-                  .isEquivalentConfigurations(get(oldConfigurations, label)))
-          .isFalse();
+          .that(get(newConfigurations, label))
+          .isNotEqualTo(get(oldConfigurations, label));
     }
   }
 

@@ -31,35 +31,35 @@ import org.junit.runners.JUnit4;
 /** Tests cc_library */
 @RunWith(JUnit4.class)
 public class CcLibraryTest extends BazelIntellijAspectTest {
+
   @Test
   public void testCcLibrary() throws Exception {
-    IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
-    TargetIdeInfo target = findTarget(testFixture, ":simple");
-
+    final var testFixture = loadTestFixture(":simple_fixture");
+    final var target = findTarget(testFixture, ":simple");
     assertThat(target.getKindString()).isEqualTo("cc_library");
-    assertThat(target.hasCIdeInfo()).isTrue();
-    assertThat(target.hasJavaIdeInfo()).isFalse();
-    assertThat(target.hasAndroidIdeInfo()).isFalse();
-    assertThat(target.hasPyIdeInfo()).isFalse();
 
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getSourceList()))
+    final var ideInfo = target.getCIdeInfo();
+    assertThat(ideInfo.hasCompilationContext()).isTrue();
+    assertThat(ideInfo.hasRuleContext()).isTrue();
+
+    // rule context
+    final var ruleCtx = target.getCIdeInfo().getRuleContext();
+    assertThat(relativePathsForArtifacts(ruleCtx.getSourcesList()))
         .containsExactly(testRelative("simple/simple.cc"));
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getHeaderList()))
+    assertThat(relativePathsForArtifacts(ruleCtx.getHeadersList()))
         .containsExactly(testRelative("simple/simple.h"));
-    assertThat(relativePathsForArtifacts(target.getCIdeInfo().getTextualHeaderList()))
+    assertThat(relativePathsForArtifacts(ruleCtx.getTextualHeadersList()))
         .containsExactly(testRelative("simple/simple_textual.h"));
-
-    CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
-    assertThat(cTargetIdeInfo.getTargetCoptList())
+    assertThat(ruleCtx.getCoptsList())
         .containsExactly("-DGOPT", "-Ifoo/baz/", "-I", "other/headers");
 
-    // Make sure our understanding of where this attributes show up in other providers is correct.
-    assertThat(cTargetIdeInfo.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("foo/bar"));
-    assertThat(cTargetIdeInfo.getTransitiveDefineList()).contains("VERSION2");
-
-    List<String> transQuoteIncludeDirList = cTargetIdeInfo.getTransitiveQuoteIncludeDirectoryList();
-    assertThat(transQuoteIncludeDirList).contains(".");
+    // compilation context
+    final var compilationCtx = target.getCIdeInfo().getCompilationContext();
+    assertThat(compilationCtx.getDefinesList()).containsExactly("VERSION2");
+    assertThat(compilationCtx.getSystemIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationCtx.getQuoteIncludesList()).contains(".");
+    assertThat(relativePathsForArtifacts(compilationCtx.getDirectHeadersList()))
+        .containsExactly(testRelative("simple/simple.h"));
 
     // Can't test for this because the cc code stuffs source artifacts into
     // the output group
@@ -68,21 +68,14 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
 
   @Test
   public void testCcLibraryHasToolchain() throws Exception {
-    IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
-    List<TargetIdeInfo> toolchains =
-        testFixture.getTargetsList().stream()
-            .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain_alias"))
-            .collect(Collectors.toList());
-    // TODO(b/200011173): Remove once Blaze/Bazel has been released with Starlark cc_library.
-    if (toolchains.isEmpty()) {
-      toolchains =
-          testFixture.getTargetsList().stream()
-              .filter(TargetIdeInfo::hasCToolchainIdeInfo)
-              .collect(toImmutableList());
-    }
+    final var testFixture = loadTestFixture(":simple_fixture");
+    final var toolchains = testFixture.getTargetsList().stream()
+        .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain_alias"))
+        .collect(Collectors.toList());
+
     assertThat(toolchains).hasSize(1);
 
-    TargetIdeInfo target = findTarget(testFixture, ":simple");
+    final var target = findTarget(testFixture, ":simple");
     assertThat(dependenciesForTarget(target)).contains(dep(toolchains.get(0)));
   }
 
@@ -94,16 +87,15 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
 
     assertThat(lib1.hasCIdeInfo()).isTrue();
     assertThat(lib2.hasCIdeInfo()).isTrue();
-    CIdeInfo cIdeInfo1 = lib1.getCIdeInfo();
+    final var ruleContext = lib1.getCIdeInfo().getRuleContext();
+    final var compilationContext = lib1.getCIdeInfo().getCompilationContext();
 
-    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("foo/bar"));
-    assertThat(cIdeInfo1.getTransitiveSystemIncludeDirectoryList())
-        .contains(testRelative("baz/lib"));
+    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("baz/lib"));
 
-    assertThat(cIdeInfo1.getTargetCoptList()).containsExactly("-DGOPT", "-Ifoo/baz/");
+    assertThat(ruleContext.getCoptsList()).containsExactly("-DGOPT", "-Ifoo/baz/");
 
-    assertThat(cIdeInfo1.getTransitiveDefineList()).contains("VERSION2");
-    assertThat(cIdeInfo1.getTransitiveDefineList()).contains("COMPLEX_IMPL");
+    assertThat(compilationContext.getDefinesList()).contains("VERSION2");
+    assertThat(compilationContext.getDefinesList()).contains("COMPLEX_IMPL");
   }
 }
