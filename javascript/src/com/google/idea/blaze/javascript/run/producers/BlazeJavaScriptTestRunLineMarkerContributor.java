@@ -148,7 +148,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
                         TargetIdeInfo target = targetMap.get(key);
                         return target != null && target.getKind().isWebTest();
                       })
-                  .map(TargetKey::getLabel)
+                  .map(TargetKey::label)
                   .collect(ImmutableList.toImmutableList()),
               BlazeSyncModificationTracker.getInstance(project));
         });

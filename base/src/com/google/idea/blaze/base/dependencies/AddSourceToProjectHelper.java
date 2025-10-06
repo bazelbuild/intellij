@@ -371,7 +371,7 @@ class AddSourceToProjectHelper {
       return true;
     }
     ImportRoots roots = context.getImportRoots();
-    return targetsBuildingSource.stream().anyMatch(t -> roots.targetInProject(t.getLabel()));
+    return targetsBuildingSource.stream().anyMatch(t -> roots.targetInProject(t.label()));
   }
 
   static boolean packageCoveredByProjectTargets(LocationContext context) {
