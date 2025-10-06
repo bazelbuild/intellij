@@ -15,8 +15,7 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -24,85 +23,56 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 
-/** A key that uniquely identifies a target in the target map */
-public final class TargetKey
-    implements ProtoWrapper<IntellijIdeInfo.TargetKey>, Comparable<TargetKey> {
-  private final Label label;
-  private final ImmutableList<String> aspectIds;
+/**
+ * A key that uniquely identifies a target in the target map
+ */
+@AutoValue
+public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKey>, Comparable<TargetKey> {
 
-  private TargetKey(Label label, ImmutableList<String> aspectIds) {
-    this.label = label;
-    this.aspectIds = aspectIds;
-  }
+  public abstract Label label();
+
+  public abstract ImmutableList<String> aspectIds();
 
   public static TargetKey fromProto(IntellijIdeInfo.TargetKey proto) {
     return ProjectDataInterner.intern(
-        new TargetKey(
+        new AutoValue_TargetKey(
             Label.fromProto(proto.getLabel()),
-            ProtoWrapper.internStrings(proto.getAspectIdsList())));
+            ProtoWrapper.internStrings(proto.getAspectIdsList())
+        )
+    );
   }
 
   @Override
   public IntellijIdeInfo.TargetKey toProto() {
     return IntellijIdeInfo.TargetKey.newBuilder()
-        .setLabel(label.toProto())
-        .addAllAspectIds(aspectIds)
+        .setLabel(label().toProto())
+        .addAllAspectIds(aspectIds())
         .build();
   }
 
-  public Label getLabel() {
-    return label;
-  }
-
-  private ImmutableList<String> getAspectIds() {
-    return aspectIds;
-  }
-
-  /** Returns a key identifying a plain target */
+  /**
+   * Returns a key identifying a plain target
+   */
   public static TargetKey forPlainTarget(Label label) {
     return forGeneralTarget(label, ImmutableList.of());
   }
 
-  /** Returns a key identifying a general target */
+  /**
+   * Returns a key identifying a general target
+   */
   public static TargetKey forGeneralTarget(Label label, List<String> aspectIds) {
-    return ProjectDataInterner.intern(new TargetKey(label, ProtoWrapper.internStrings(aspectIds)));
+    return ProjectDataInterner.intern(new AutoValue_TargetKey(label, ProtoWrapper.internStrings(aspectIds)));
   }
 
   public boolean isPlainTarget() {
-    return getAspectIds().isEmpty();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    TargetKey key = (TargetKey) o;
-    return Objects.equal(getLabel(), key.getLabel())
-        && Objects.equal(getAspectIds(), key.getAspectIds());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(getLabel(), getAspectIds());
-  }
-
-  @Override
-  public String toString() {
-    if (getAspectIds().isEmpty()) {
-      return getLabel().toString();
-    }
-    return getLabel().toString() + "#" + Joiner.on('#').join(getAspectIds());
+    return aspectIds().isEmpty();
   }
 
   @Override
   public int compareTo(TargetKey o) {
     return ComparisonChain.start()
-        .compare(getLabel(), o.getLabel())
-        .compare(getAspectIds(), o.getAspectIds(), Ordering.natural().lexicographical())
+        .compare(label(), o.label())
+        .compare(aspectIds(), o.aspectIds(), Ordering.natural().lexicographical())
         .result();
   }
 }

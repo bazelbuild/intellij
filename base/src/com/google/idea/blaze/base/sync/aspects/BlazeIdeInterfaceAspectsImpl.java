@@ -495,7 +495,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (null != target.getPyIdeInfo() && target.getPyIdeInfo().isCodeGenerator()) {
       return false;
     }
-    if (importRoots.importAsSource(target.getKey().getLabel())) {
+    if (importRoots.importAsSource(target.getKey().label())) {
       ignoredLanguages.addAll(kind.getLanguageClasses());
     }
     return true;
@@ -516,7 +516,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       return TargetIdeInfo.fromProto(message, syncTime);
     }
     TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
-    if (key != null && importRoots.importAsSource(key.getLabel())) {
+    if (key != null && importRoots.importAsSource(key.label())) {
       ignoredLanguages.addAll(kind.getLanguageClasses());
     }
     return null;

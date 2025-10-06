@@ -56,7 +56,7 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
   public ImmutableList<TargetIdeInfo> get(Label label) {
     return targetMap.entrySet()
         .stream()
-        .filter(it -> it.getKey().getLabel().equals(label))
+        .filter(it -> it.getKey().label().equals(label))
         .map(Entry::getValue)
         .collect(ImmutableList.toImmutableList());
   }
