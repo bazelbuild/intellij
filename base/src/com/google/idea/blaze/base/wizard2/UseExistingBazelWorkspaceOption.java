@@ -142,26 +142,25 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
   public void commit() {}
 
   private void chooseDirectory() {
-    var descriptor = FileChooserDescriptorFactory.singleDir()
+    final var singleDirDescriptor = FileChooserDescriptorFactory.singleDir()
         .withHideIgnored(false)
         .withTitle("Select Workspace Root")
         .withDescription("Select the directory of the workspace you want to use.")
         .withFileFilter(UseExistingBazelWorkspaceOption::isWorkspaceRoot);
 
-   descriptor = new FileChooserDescriptor(descriptor) {
-     @Override
-     public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
-      for (final var file : files) {
-        if (!isWorkspaceRoot(file)) {
-          throw new ConfigurationException("Invalid workspace root: choose a bazel workspace directory "
-                  + "(containing a WORKSPACE or MODULE.bazel file)");
+    final var filteredDescriptor = new FileChooserDescriptor(singleDirDescriptor) {
+      @Override
+      public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception {
+        for (final var file : files) {
+          if (!isWorkspaceRoot(file)) {
+            throw new ConfigurationException("Invalid workspace root: choose a bazel workspace directory "
+                + "(containing a WORKSPACE or MODULE.bazel file)");
+          }
         }
       }
-     }
-   };
+    };
 
-    FileChooserDialog chooser =
-        FileChooserFactory.getInstance().createFileChooser(descriptor, null, null);
+    final var chooser = FileChooserFactory.getInstance().createFileChooser(filteredDescriptor, null, null);
 
     final VirtualFile[] files;
     File existingLocation = new File(getDirectory());
