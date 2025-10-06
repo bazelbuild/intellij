@@ -90,7 +90,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
    */
   private static List<Label> getPlainTargets(Project project, TargetKey target) {
     if (target.isPlainTarget()) {
-      return ImmutableList.of(target.getLabel());
+      return ImmutableList.of(target.label());
     }
     ImmutableList.Builder<Label> output = new ImmutableList.Builder<>();
     Queue<TargetKey> todo = Queues.newArrayDeque();
@@ -104,7 +104,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
         continue;
       }
       if (targetKey.isPlainTarget()) {
-        output.add(targetKey.getLabel());
+        output.add(targetKey.label());
       } else {
         todo.addAll(reverseDependencyMap.get(targetKey));
       }
