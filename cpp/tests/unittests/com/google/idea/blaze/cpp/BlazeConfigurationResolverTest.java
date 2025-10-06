@@ -122,6 +122,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
 
     Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
+    Registry.get("bazel.cc.includes.cache.enabled").setValue(false);
 
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
@@ -403,10 +404,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(ccTarget)
             .build();
     String errMessage =
-        String.format(
-            "cc target is expected to depend on exactly 1 cc toolchain."
-                + " Found 0 toolchains for these targets: %s",
-            ccTarget.getKey());
+        String.format("cc target depends on 0 cc toolchains\n%s", ccTarget.getKey());
     assertThatResolving(projectView, targetMap, errMessage)
         .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
   }
@@ -774,7 +772,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         TargetIdeInfo.builder()
             .setLabel("//foo:native_lib")
             .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
-            .setCInfo(CIdeInfo.builder().addSource(src("foo/native.cc")))
+            .setCInfo(CIdeInfo.builder().setRuleContext(
+                CIdeInfo.RuleContext.builder().setSources(ImmutableList.of(src("foo/native.cc"))).build())
+            )
             .addSource(src("foo/native.cc"))
             .addDependency("//foo:native_lib2")
             .addDependency("//toolchains:armv7a");
@@ -782,7 +782,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         TargetIdeInfo.builder()
             .setLabel("//foo:native_lib2")
             .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
-            .setCInfo(CIdeInfo.builder().addSource(src("foo/native2.cc")))
+            .setCInfo(CIdeInfo.builder().setRuleContext(
+                CIdeInfo.RuleContext.builder().setSources(ImmutableList.of(src("foo/native2.cc"))).build())
+            )
             .addSource(src("foo/native2.cc"))
             .addDependency("//toolchains:aarch64");
     TargetMap targetMap =
@@ -891,7 +893,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     TargetIdeInfo.Builder targetInfo =
         TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency(toolchainDep);
     sources.forEach(targetInfo::addSource);
-    return targetInfo.setCInfo(CIdeInfo.builder().addSources(sources).addLocalCopts(copts));
+
+    final var ruleContext = CIdeInfo.RuleContext.builder()
+        .setSources(sources)
+        .setCopts(copts)
+        .build();
+
+    return targetInfo.setCInfo(CIdeInfo.builder().setRuleContext(ruleContext));
   }
 
   private static TargetIdeInfo.Builder createCcToolchain() {
@@ -942,6 +950,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     when(mockFile.isValid()).thenReturn(true);
     File f = new File(path);
     when(mockFileSystem.findFileByIoFile(f)).thenReturn(mockFile);
+    when(mockFileSystem.findFileByNioFile(f.toPath())).thenReturn(mockFile);
     when(mockFile.getName()).thenReturn(f.getName());
     return mockFile;
   }
@@ -998,16 +1007,14 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             resolverResult.getAllConfigurations();
         for (BlazeResolveConfiguration expectedItem : expectedReused) {
           assertThat(
-                  currentConfigurations.stream()
-                      .anyMatch(actualItem -> actualItem.isEquivalentConfigurations(expectedItem)))
+                  currentConfigurations.stream().anyMatch(actualItem -> actualItem.equals(expectedItem)))
               .isTrue();
         }
         List<String> notReusedTargets =
             currentConfigurations.stream()
                 .filter(
                     configuration ->
-                        expectedReused.stream()
-                            .noneMatch(configuration::isEquivalentConfigurations))
+                        expectedReused.stream().noneMatch(configuration::equals))
                 .map(configuration -> configuration.getDisplayName())
                 .collect(Collectors.toList());
         assertThat(notReusedTargets).containsExactly((Object[]) expectedNotReused);

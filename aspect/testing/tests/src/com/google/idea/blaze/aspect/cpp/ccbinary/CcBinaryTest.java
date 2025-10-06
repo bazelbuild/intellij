@@ -31,18 +31,20 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     final var target = findTarget(testFixture, ":simple");
     assertThat(target.getKindString()).isEqualTo("cc_binary");
 
-    assertThat(target.hasCIdeInfo()).isTrue();
-    assertThat(target.hasJavaIdeInfo()).isFalse();
-    assertThat(target.hasAndroidIdeInfo()).isFalse();
-    final var cTargetIdeInfo = target.getCIdeInfo();
+    final var ideInfo = target.getCIdeInfo();
+    assertThat(ideInfo.hasCompilationContext()).isTrue();
+    assertThat(ideInfo.hasRuleContext()).isTrue();
 
-    assertThat(cTargetIdeInfo.getTargetCoptList()).isEmpty();
+    // rule context
+    final var ruleCtx = ideInfo.getRuleContext();
+    assertThat(ruleCtx.getCoptsList()).isEmpty();
+    assertThat(ruleCtx.getArgs(0)).isEqualTo("simpleArg");
+    assertThat(ruleCtx.getSources(0).getRelativePath()).endsWith("simple/simple.cc");
 
+    // output groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-cpp")).isEmpty();
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
-
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-cpp")).contains(
-        testRelative(intellijInfoFileName("simple")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-cpp")).contains(testRelative(intellijInfoFileName("simple")));
   }
 
   @Test
@@ -51,9 +53,8 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     final var target = findTarget(testFixture, ":expand_datadeps");
     assertThat(target.getKindString()).isEqualTo("cc_binary");
 
-    final var args = target.getCIdeInfo().getArgsList();
+    final var args = target.getCIdeInfo().getRuleContext().getArgsList();
     assertThat(args).hasSize(1);
-    assertThat(args.get(0)).endsWith(
-        "/aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/ccbinary/datadepfile.txt");
+    assertThat(args.get(0)).endsWith("datadepfile.txt");
   }
 }

@@ -7,19 +7,6 @@ load(":build_defs.bzl", "aspect_files", "aspect_library")
 
 licenses(["notice"])
 
-# Files needed at runtime for blaze-invoking integration tests
-filegroup(
-    name = "integration_test_files",
-    srcs = [
-        "artifacts.bzl",
-        "intellij_info_impl.bzl",
-        "make_variables.bzl",
-        "xcode_query.bzl",
-        ":BUILD.bazel",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 # the aspect files that will be bundled with the final plugin zip
 aspect_library(
     name = "aspect_lib",
@@ -30,6 +17,13 @@ aspect_library(
         "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
     ],
     namespace = "aspect/default",
+    visibility = ["//visibility:public"],
+)
+
+aspect_library(
+    name = "aspect_modules",
+    files = glob(["modules/*.bzl"]),
+    namespace = "aspect/modules",
     visibility = ["//visibility:public"],
 )
 

@@ -39,32 +39,32 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
   @Test
   public void testCoptsPrefinedMakeVars() throws IOException {
     final var ideInfo = getCIdeInfo(":simple_prefined");
-    assertThat(ideInfo.getTargetCoptList()).hasSize(2);
+    assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(2);
 
     // These predefined variables' values are dependent on build system and configuration.
-    assertThat(ideInfo.getTargetCoptList().get(0)).containsMatch("^-DPREFINED_BINDIR=bazel-out/[0-9a-z_-]+/bin$");
-    assertThat(ideInfo.getTargetCoptList().get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
+    assertThat(ideInfo.getRuleContext().getCoptsList().get(0)).containsMatch("^-DPREFINED_BINDIR=bazel-out/[0-9a-z_-]+/bin$");
+    assertThat(ideInfo.getRuleContext().getCoptsList().get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
   }
 
   @Test
   public void testCoptsEmptyVariable() throws IOException {
     final var ideInfo = getCIdeInfo(":empty_variable");
-    assertThat(ideInfo.getTargetCoptList()).hasSize(1);
-    assertThat(ideInfo.getTargetCoptList()).contains("-Wall");
+    assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(1);
+    assertThat(ideInfo.getRuleContext().getCoptsList()).contains("-Wall");
   }
 
   @Test
   public void testCoptsMakeVars() throws IOException {
     final var ideInfo = getCIdeInfo(":simple_make_var");
-    assertThat(ideInfo.getTargetCoptList()).hasSize(4);
+    assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(4);
 
-    assertThat(ideInfo.getTargetCopt(0)).isEqualTo(
+    assertThat(ideInfo.getRuleContext().getCopts(0)).isEqualTo(
         "-DEXECPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getTargetCopt(1)).isEqualTo(
+    assertThat(ideInfo.getRuleContext().getCopts(1)).isEqualTo(
         "-DROOTPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getTargetCopt(2)).isEqualTo(
+    assertThat(ideInfo.getRuleContext().getCopts(2)).isEqualTo(
         "-DRLOCATIONPATH=\"_main/aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getTargetCopt(3)).isEqualTo(
+    assertThat(ideInfo.getRuleContext().getCopts(3)).isEqualTo(
         "-DLOCATION=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
   }
 }

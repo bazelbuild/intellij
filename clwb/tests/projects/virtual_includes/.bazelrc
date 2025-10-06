@@ -1,0 +1,2 @@
+# required for sqlite and pkgconfig
+build --repo_env=BAZEL_CONLYOPTS="-std=gnu17"

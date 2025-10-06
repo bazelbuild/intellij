@@ -31,6 +31,7 @@ kt_jvm_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//aspect:aspect_lib",
+        "//aspect:aspect_modules",
         "//aspect:aspect_template_lib",
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",

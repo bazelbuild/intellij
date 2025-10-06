@@ -140,6 +140,14 @@ public final class Label extends TargetExpression {
     return new WorkspacePath(labelStr.substring(startIndex, colonIndex));
   }
 
+  public ExecutionRootPath executionRootPath() {
+    String labelStr = toString();
+    int startIndex = labelStr.indexOf("//") + "//".length();
+    int colonIndex = labelStr.lastIndexOf(':');
+    logger.assertTrue(colonIndex >= 0);
+    return ExecutionRootPath.create(labelStr.substring(startIndex) + "/" + labelStr.substring(colonIndex));
+  }
+
   /** A new label with the same workspace and package paths, but a different target name. */
   @Nullable
   public Label withTargetName(@Nullable String targetName) {
