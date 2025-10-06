@@ -33,11 +33,14 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
 
   public abstract ImmutableList<String> aspectIds();
 
+  public abstract String configurationId();
+
   public static TargetKey fromProto(IntellijIdeInfo.TargetKey proto) {
     return ProjectDataInterner.intern(
         new AutoValue_TargetKey(
             Label.fromProto(proto.getLabel()),
-            ProtoWrapper.internStrings(proto.getAspectIdsList())
+            ProtoWrapper.internStrings(proto.getAspectIdsList()),
+            ProtoWrapper.internString(proto.getConfigurationId())
         )
     );
   }
@@ -47,6 +50,7 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
     return IntellijIdeInfo.TargetKey.newBuilder()
         .setLabel(label().toProto())
         .addAllAspectIds(aspectIds())
+        .setConfigurationId(configurationId())
         .build();
   }
 
@@ -54,14 +58,18 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
    * Returns a key identifying a plain target
    */
   public static TargetKey forPlainTarget(Label label) {
-    return forGeneralTarget(label, ImmutableList.of());
+    return forGeneralTarget(label, ImmutableList.of(), "");
   }
 
   /**
    * Returns a key identifying a general target
    */
-  public static TargetKey forGeneralTarget(Label label, List<String> aspectIds) {
-    return ProjectDataInterner.intern(new AutoValue_TargetKey(label, ProtoWrapper.internStrings(aspectIds)));
+  public static TargetKey forGeneralTarget(Label label, List<String> aspectIds, String configurationId) {
+    return ProjectDataInterner.intern(new AutoValue_TargetKey(
+        label,
+        ProtoWrapper.internStrings(aspectIds),
+        ProtoWrapper.internString(configurationId)
+    ));
   }
 
   public boolean isPlainTarget() {
@@ -73,6 +81,7 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
     return ComparisonChain.start()
         .compare(label(), o.label())
         .compare(aspectIds(), o.aspectIds(), Ordering.natural().lexicographical())
+        .compare(configurationId(), o.configurationId())
         .result();
   }
 }
