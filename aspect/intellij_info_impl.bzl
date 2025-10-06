@@ -311,6 +311,47 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-py", to_build)
     return True
 
+def collect_cc_rule_context(ctx):
+    """Collect additional information from the rule attributes of cc_xxx rules."""
+
+    if not ctx.rule.kind.startswith("cc_"):
+        return struct()
+
+    return struct(
+        sources = artifacts_from_target_list_attr(ctx, "srcs"),
+        headers = artifacts_from_target_list_attr(ctx, "hdrs"),
+        textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs"),
+        copts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "copts", [])),
+        args = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "args", [])),
+        include_prefix = getattr(ctx.rule.attr, "include_prefix", ""),
+        strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", ""),
+    )
+
+def collect_cc_compilation_context(ctx, target):
+    """Collect information from the compilation context provided by the CcInfo provider."""
+
+    compilation_context = target[CcInfo].compilation_context
+
+    # merge current compilation context with context of implementation dependencies
+    if ctx.rule.kind.startswith("cc_") and hasattr(ctx.rule.attr, "implementation_deps"):
+        impl_deps = ctx.rule.attr.implementation_deps
+
+        compilation_context = cc_common.merge_compilation_contexts(
+            compilation_contexts = [compilation_context] + [it[CcInfo].compilation_context for it in impl_deps],
+        )
+
+    # external_includes available since bazel 7
+    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
+
+    return struct(
+        direct_headers = [artifact_location(it) for it in compilation_context.direct_headers],
+        defines = compilation_context.defines.to_list(),
+        includes = compilation_context.includes.to_list(),
+        quote_includes = compilation_context.quote_includes.to_list(),
+        # both system and external includes are added using `-isystem`
+        system_includes = compilation_context.system_includes.to_list() + external_includes,
+    )
+
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
@@ -325,51 +366,11 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if ctx.rule.kind.startswith("go_"):
         return False
 
-    sources = artifacts_from_target_list_attr(ctx, "srcs")
-    headers = artifacts_from_target_list_attr(ctx, "hdrs")
-    textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs")
-
-    target_copts = []
-    if hasattr(ctx.rule.attr, "copts"):
-        target_copts += ctx.rule.attr.copts
-    extra_targets = []
-    if hasattr(ctx.rule.attr, "additional_compiler_inputs"):
-        extra_targets += ctx.rule.attr.additional_compiler_inputs
-    if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
-        target_copts += semantics.cc.get_default_copts(ctx)
-
-    target_copts = expand_make_variables(ctx, True, target_copts)
-    args = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "args", []))
-
-    compilation_context = target[CcInfo].compilation_context
-
-    # Merge current compilation context with context of implementation dependencies.
-    if hasattr(ctx.rule.attr, "implementation_deps"):
-        implementation_deps = ctx.rule.attr.implementation_deps
-        compilation_context = cc_common.merge_compilation_contexts(
-            compilation_contexts =
-                [compilation_context] + [impl[CcInfo].compilation_context for impl in implementation_deps],
-        )
-
-    # external_includes available since bazel 7
-    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
-
-    c_info = struct_omit_none(
-        header = headers,
-        source = sources,
-        target_copt = target_copts,
-        textual_header = textual_headers,
-        transitive_define = compilation_context.defines.to_list(),
-        transitive_include_directory = compilation_context.includes.to_list(),
-        transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        # both system and external includes are add using `-isystem`
-        transitive_system_include_directory = compilation_context.system_includes.to_list() + external_includes,
-        include_prefix = getattr(ctx.rule.attr, "include_prefix", None),
-        strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", None),
-        args = args,
+    ide_info["c_ide_info"] = struct(
+        rule_context = collect_cc_rule_context(ctx),
+        compilation_context = collect_cc_compilation_context(ctx, target),
     )
-    ide_info["c_ide_info"] = c_info
-    resolve_files = compilation_context.headers
+    resolve_files = target[CcInfo].compilation_context.headers
 
     # TODO(brendandouglas): target to cpp files only
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])

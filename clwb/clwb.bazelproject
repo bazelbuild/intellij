@@ -1,17 +1,13 @@
 directories:
   .
-  -ijwb
-  -aswb
-  -plugin_dev
   -examples
-  -java
-  -golang
   -clwb/tests/projects
-  -testing/test_deps/projects
 
 targets:
   //clwb:all
   //clwb:clwb_bazel_dev
+  //aspect/testing:aspect_tests
+  //cpp:unit_tests
 
 workspace_type: intellij_plugin
 

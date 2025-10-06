@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.command.info.BlazeInfo
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
-import com.google.idea.blaze.base.ideinfo.TargetMap
 import com.google.idea.blaze.base.model.BlazeProjectData
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath
 import com.google.idea.blaze.base.scope.BlazeContext
@@ -54,7 +53,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
   ): ImmutableSet<Path> = Scope.push<ImmutableSet<Path>>(parentContext) { ctx ->
     ctx.push(TimingScope("Resolve header include roots", TimingScope.EventType.Other))
 
-    val paths = collectExecutionRootPaths(projectData.getTargetMap(), targetFilter, toolchainLookupMap)
+    val paths = collectExecutionRootPaths(projectData, targetFilter, toolchainLookupMap)
 
     val builder = ImmutableSet.builder<Path>()
     runBlocking {
@@ -76,19 +75,19 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
 }
 
 private fun collectExecutionRootPaths(
-  targetMap: TargetMap,
+  projectData: BlazeProjectData,
   targetFilter: Predicate<TargetIdeInfo>,
   toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
 ): Set<ExecutionRootPath> {
   val paths = mutableSetOf<ExecutionRootPath>()
 
-  for (target in targetMap.targets()) {
+  for (target in projectData.targetMap.targets()) {
     if (!targetFilter.test(target)) continue
-    val ideInfo = target.getcIdeInfo() ?: continue
+    val compilationCtx = target.getcIdeInfo()?.compilationContext() ?: continue
 
-    paths.addAll(ideInfo.transitiveSystemIncludeDirectories)
-    paths.addAll(ideInfo.transitiveIncludeDirectories)
-    paths.addAll(ideInfo.transitiveQuoteIncludeDirectories)
+    paths.addAll(compilationCtx.includes())
+    paths.addAll(compilationCtx.quoteIncludes())
+    paths.addAll(compilationCtx.systemIncludes())
   }
 
   // Builtin includes should not be added to the switch builder, because CLion discovers builtin include paths during
