@@ -73,7 +73,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean expandSyncToWorkingSet = false;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
-  private boolean useNewSyncView = false;
+  private boolean useNewSyncView = true;
 
   private boolean javascriptTestrunnersEnabled = false;
 
