@@ -32,28 +32,62 @@ def %s(ctx, target):
 
 private const val MODULES_DIRECTORY = "modules"
 
+/**
+ * Write for one aspect module.
+ *
+ * An aspect module is a collection of functions that can declare different
+ * dependencies. Only if all dependencies are fulfilled will the aspect module
+ * be written, otherwise only stubs will be generated.
+ */
 abstract class AspectModuleWriter : AspectWriter {
 
+  /**
+   * A dependency that must be fulfilled for the aspect module to be written.
+   * Evaluated over the current sync state of the project.
+   */
   protected fun interface Dependency {
+
     fun isFulfilled(state: SyncProjectState): Boolean
   }
 
+  /**
+   * Dependency on a specific rule set (e.g. rules_cc). Requires bazel 7+ and
+   * only supports bazelmod projects.
+   */
   protected fun ruleSetDependency(name: String) = Dependency { state ->
     state.externalWorkspaceData?.getByRepoName(name) != null
   }
 
+  /**
+   * Dependency on a specific registry key.
+   */
   protected fun registryKeyDependency(key: String) = Dependency {
     Registry.`is`(key)
   }
 
+  /**
+   * Dependency on a specific bazel version.
+   */
   protected fun bazelDependency(minVersion: Int) = Dependency { state ->
     state.blazeVersionData.bazelIsAtLeastVersion(minVersion, 0, 0)
   }
 
+  /**
+   * All dependencies that must be fulfilled for the aspect module to be written.
+   */
   protected abstract fun dependencies(): ImmutableList<Dependency>
 
+  /**
+   * A public function exposed by the module.
+   *
+   * If any dependency is not fulfilled, the provided default value will be used
+   * to generate a stub for the function.
+   */
   protected data class Function(val name: String, val defaultValue: String)
 
+  /**
+   * All functions exposed by the module.
+   */
   protected abstract fun functions(): ImmutableList<Function>
 
   @Throws(IOException::class)
@@ -95,7 +129,7 @@ abstract class AspectModuleWriter : AspectWriter {
   }
 
   @Throws(SyncFailedException::class)
-  override fun writeDumb(dst: Path, project: Project) {
+  final override fun writeDumb(dst: Path, project: Project) {
     try {
       generateDefault(dst)
     } catch (e: IOException) {
@@ -104,7 +138,7 @@ abstract class AspectModuleWriter : AspectWriter {
   }
 
   @Throws(SyncFailedException::class)
-  override fun write(dst: Path, project: Project, state: SyncProjectState) {
+  final override fun write(dst: Path, project: Project, state: SyncProjectState) {
     if (dependencies().any { !it.isFulfilled(state) }) {
       writeDumb(dst, project)
       return
