@@ -103,7 +103,6 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     class_rules = select_for_ide(
-        clion = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
         default = [],
     ),
     tags = ["noci:studio-win"],
@@ -124,7 +123,6 @@ intellij_unit_test_suite(
         "@com_google_guava_guava//jar",
         "@maven//:org_mockito_mockito_core",
     ] + select_for_ide(
-        clion = [":clion_sysprop_rule"],
         default = [],
     ),
 )
