@@ -471,11 +471,11 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     @CanIgnoreReturnValue
     public Builder setCInfo(CIdeInfo.Builder cInfoBuilder) {
       this.cIdeInfo = cInfoBuilder.build();
+
+      // used only for testing, no need to extract additional source from the compilation context
       this.sources.addAll(cIdeInfo.ruleContext().sources());
       this.sources.addAll(cIdeInfo.ruleContext().headers());
       this.sources.addAll(cIdeInfo.ruleContext().textualHeaders());
-
-      // TODO: add compilation context direct headers here too? (they can contain duplicates, filter?)
 
       return this;
     }
