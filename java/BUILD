@@ -165,6 +165,21 @@ java_binary(
     runtime_deps = ["//third_party/java/auto_value"],
 )
 
+filegroup(
+    name = "mockJDK",
+    srcs = glob(
+        [
+            "mockJDK-1.4/**",
+            "mockJDK-1.7/**",
+            "mockJDK-1.8/**",
+            "mockJDK-1.9/**",
+            "jdkAnnotations/**",
+        ],
+        allow_empty = False,
+    ),
+    visibility = ["//visibility:public"],
+)
+
 java_binary(
     name = "guava_lib",
     testonly = True,
@@ -205,6 +220,10 @@ intellij_integration_test_suite(
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
     ),
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     required_plugins = "com.google.idea.blaze.java",
     tags = [
         "noci:studio-win",

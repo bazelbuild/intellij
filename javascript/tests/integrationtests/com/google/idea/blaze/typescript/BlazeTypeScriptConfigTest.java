@@ -28,7 +28,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
-import com.google.idea.sdkcompat.javascript.JSModulePathSubstitutionAdapter;
+import com.intellij.lang.javascript.frameworks.modules.JSModuleMapping;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -258,28 +258,26 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(paths).hasSize(2);
     JSModulePathSubstitution projectPath = paths.get(0);
     assertThat(projectPath.getMappedName()).isEqualTo("workspace");
-    JSModulePathSubstitutionAdapter projectPathAdapter = (JSModulePathSubstitutionAdapter) projectPath;
-    assertThat(projectPathAdapter.getMappingsAsStrings())
+    assertThat(projectPath.getMappings())
         .containsExactly(
-            "../../../../../workspace/*",
-            "../../../../../workspace/bazel-bin/*",
-            "../../../../../workspace/bazel-genfiles/*",
-            "../../*",
-            "../../../genfiles/*",
-            "./tsconfig.runfiles/workspace/*")
+            new JSModuleMapping("../../../../../workspace/*"),
+            new JSModuleMapping("../../../../../workspace/bazel-bin/*"),
+            new JSModuleMapping("../../../../../workspace/bazel-genfiles/*"),
+            new JSModuleMapping("../../*"),
+            new JSModuleMapping("../../../genfiles/*"),
+            new JSModuleMapping("./tsconfig.runfiles/workspace/*"))
         .inOrder();
 
     JSModulePathSubstitution projectFooPath = paths.get(1);
-    JSModulePathSubstitutionAdapter pprojectFooPathAdapter = (JSModulePathSubstitutionAdapter) projectFooPath;
     assertThat(projectFooPath.getMappedName()).isEqualTo("workspace/project/foo");
-    assertThat(pprojectFooPathAdapter.getMappingsAsStrings())
+    assertThat(projectFooPath.getMappings())
         .containsExactly(
-            "../../../../../workspace/project/foo/*",
-            "../../../../../workspace/bazel-bin/project/foo/*",
-            "../../../../../workspace/bazel-genfiles/project/foo/*",
-            "../../project/foo/*",
-            "../../../genfiles/project/foo/*",
-            "./tsconfig.runfiles/workspace/project/foo/*")
+            new JSModuleMapping("../../../../../workspace/project/foo/*"),
+            new JSModuleMapping("../../../../../workspace/bazel-bin/project/foo/*"),
+            new JSModuleMapping("../../../../../workspace/bazel-genfiles/project/foo/*"),
+            new JSModuleMapping("../../project/foo/*"),
+            new JSModuleMapping("../../../genfiles/project/foo/*"),
+            new JSModuleMapping("./tsconfig.runfiles/workspace/project/foo/*"))
         .inOrder();
 
     assertThat(ReadAction.compute(blazeConfig::getRootDirsFiles))

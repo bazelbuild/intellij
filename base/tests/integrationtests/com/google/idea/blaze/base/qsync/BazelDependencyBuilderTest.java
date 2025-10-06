@@ -42,6 +42,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,6 +68,7 @@ public class BazelDependencyBuilderTest extends BlazeIntegrationTestCase {
   @Before
   public void before() {
     // TODO: b/388249589 - reuse com.google.idea.blaze.android.google3.qsync.testrules.QuerySyncEnvironmentRule instead.
+    registerApplicationService(ExperimentService.class, experimentService);
     System.setProperty(
       "qsync.aspect.build_dependencies.bzl.file",
       getRunfilesWorkspaceRoot()

@@ -100,6 +100,10 @@ intellij_integration_test_suite(
         # in a Go plugin release after 213.6461.48 version.
         "NO_FS_ROOTS_ACCESS_CHECK": "true",
     },
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     required_plugins = "com.google.idea.blaze.golang,org.jetbrains.plugins.go",
     test_package_root = "com.google.idea.blaze.golang",
     runtime_deps = [

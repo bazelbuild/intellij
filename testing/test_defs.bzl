@@ -220,6 +220,7 @@ def intellij_integration_test_suite(
     api_version_txt(name = api_version_txt_name, check_eap = False)
     data = kwargs.pop("data", [])
     data.append(api_version_txt_name)
+    data.append("//java:mockJDK")
 
     deps = list(deps)
     deps.extend([

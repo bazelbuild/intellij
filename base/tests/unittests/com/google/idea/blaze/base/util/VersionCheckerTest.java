@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.util;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.TruthJUnit.assume;
 
+import com.google.idea.sdkcompat.base.ApplicationInfoAdapter;
 import com.google.idea.testing.IntellijRule;
 import com.intellij.openapi.util.SystemInfo;
 import java.time.ZonedDateTime;
@@ -59,7 +60,7 @@ public class VersionCheckerTest {
     assertThat(VersionChecker.versionMismatch()).isTrue();
   }
 
-  private static class TestApplicationInfo extends ApplicationInfo {
+  private static class TestApplicationInfo extends ApplicationInfoAdapter {
     private final BuildNumber buildNumber;
 
     TestApplicationInfo(BuildNumber buildNumber) {
@@ -123,16 +124,6 @@ public class VersionCheckerTest {
 
     @Override
     public String getCompanyURL() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @Nullable String getProductUrl() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @Nullable String getJetBrainsTvUrl() {
       throw new UnsupportedOperationException();
     }
 

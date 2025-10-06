@@ -90,6 +90,10 @@ intellij_unit_test_suite(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     required_plugins = "org.intellij.scala,com.google.idea.blaze.scala",
     test_package_root = "com.google.idea.blaze.scala",
     runtime_deps = [":scala_integration_test_plugin"],

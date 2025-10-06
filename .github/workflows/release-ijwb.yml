@@ -7,6 +7,11 @@ on:
         description: 'Release Version'
         required: true
         type: string
+      eap:
+        description: 'EAP build (only release intellij-oss-under-dev and intellij-ue-oss-under-dev)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -16,7 +21,7 @@ jobs:
 
     strategy:
       matrix:
-        product: [intellij-oss-latest-stable, intellij-oss-oldest-stable, intellij-ue-oss-latest-stable, intellij-ue-oss-oldest-stable]
+        product: ${{ fromJSON(inputs.eap && '["intellij-oss-under-dev", "intellij-ue-oss-under-dev"]' || '["intellij-oss-latest-stable", "intellij-oss-oldest-stable", "intellij-ue-oss-latest-stable", "intellij-ue-oss-oldest-stable"]') }}
 
     runs-on: ubuntu-latest
 
@@ -28,8 +33,8 @@ jobs:
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
           bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
-          repository-cache: true
+          disk-cache: false
+          repository-cache: false
 
       - name: Update version.bzl
         run: |
@@ -61,34 +66,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Latest Plugin Zip
+      - name: Download Plugin Zips
         uses: actions/download-artifact@v5
         with:
-          name: intellij-oss-latest-stable
-
-      - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-oss-oldest-stable
-
-      - name: Download Latest UE Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-ue-oss-latest-stable
-
-      - name: Download Oldest UE Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-ue-oss-oldest-stable
+          pattern: intellij-*
+          merge-multiple: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: "*.zip"
-          tag_name: ${{ inputs.version }}
-          name: "IJwB Release ${{ inputs.version }}"
+          tag_name: ${{ inputs.eap && format('{0}-eap', inputs.version) || inputs.version }}
+          name: "${{ inputs.eap && format('IJwB-EAP Release {0}', inputs.version) || format('IJwB Release {0}', inputs.version) }}"
           draft: false
-          prerelease: false
+          prerelease: ${{ inputs.eap }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,25 +94,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Latest Plugin Zip
+      - name: Download Plugin Zips
         uses: actions/download-artifact@v5
         with:
-          name: intellij-oss-latest-stable
-
-      - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-oss-oldest-stable
-
-      - name: Download Latest UE Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-ue-oss-latest-stable
-
-      - name: Download Oldest UE Plugin Zip
-        uses: actions/download-artifact@v5
-        with:
-          name: intellij-ue-oss-oldest-stable
+          pattern: intellij-ue-*
+          merge-multiple: true
 
       - name: Upload Releases
         run: |

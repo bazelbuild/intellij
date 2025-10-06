@@ -334,18 +334,20 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.PrefetchService"
                         serviceImplementation="com.google.idea.blaze.base.prefetch.PrefetchServiceImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher"
-                    serviceImplementation="com.google.idea.blaze.base.prefetch.DefaultPrefetcher"/>
+                        serviceImplementation="com.google.idea.blaze.base.prefetch.DefaultPrefetcher"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.wizard2.BlazeWizardUserSettingsStorage"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider"
                         serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.project.ExtendableBazelProjectCreator"
                         serviceImplementation="com.google.idea.blaze.base.project.TrustAwareProjectCreator"/>
+    <applicationService serviceImplementation="com.google.idea.common.experiments.ExperimentServiceImpl"
+                        serviceInterface="com.google.idea.common.experiments.ExperimentService"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider"
                     serviceImplementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinder$Provider"
                     serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceFileFinderImpl$Provider"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageChecker"
-        serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageCheckerImpl"/>
+                    serviceImplementation="com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageCheckerImpl"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.SyncCache"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BlazeProblemsView"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
@@ -440,7 +442,6 @@
     <registryKey defaultValue="false"
                  description="Mark execroot as dirty before refresh after sync"
                  key="bazel.sync.mark.dirty"/>
-    <editorNotificationProvider implementation="com.google.idea.blaze.base.wizard2.BazelNotificationProvider"/>
 
     <notificationGroup id="com.google.idea.blaze.base.ide.TransferNotificationActivity" displayType="BALLOON"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.ide.TransferNotificationActivity"/>
@@ -498,7 +499,7 @@
     <spellchecker.support language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuildSpellcheckingStrategy"/>
     <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.editor.BazelEditorTabTitleProvider"/>
-   <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
+    <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -548,13 +549,6 @@
       interface="com.google.idea.blaze.base.qsync.AnnotationProcessorOverride"/>
 
   </extensionPoints>
-
-  <application-components>
-    <component>
-      <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
-      <implementation-class>com.google.idea.common.experiments.ExperimentServiceImpl</implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>

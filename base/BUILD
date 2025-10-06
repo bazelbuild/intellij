@@ -548,6 +548,7 @@ intellij_unit_test_suite(
         "//querysync",
         "//querysync/javatests/com/google/idea/blaze/qsync:TestUtils",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
+        "//sdkcompat",
         "//shared",
         "//shared:artifact",
         "//shared/java/com/google/idea/blaze/common",
@@ -577,6 +578,10 @@ intellij_plugin(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     plugins = [":com.google.idea.blaze.base"],
     required_plugins = "com.google.idea.blaze.base",
     tags = ["noci:studio-win"],

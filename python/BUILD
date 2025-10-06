@@ -72,6 +72,10 @@ intellij_plugin(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     required_plugins = "com.google.idea.blaze.python",
     tags = [
         "noci:studio-win",

@@ -18,6 +18,7 @@ package com.google.idea.blaze.python.run.producers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.python.NonBlazeProducersToSuppress;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.project.Project;
@@ -29,15 +30,13 @@ public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
   // PyTestsConfigurationProducer has internal visibility. We need to reference it to suppress it.
   @SuppressWarnings("KotlinInternal")
   private static final ImmutableList<Class<?>> PRODUCERS_TO_SUPPRESS =
-      ImmutableList.of(
-          com.jetbrains.python.run.PythonRunConfigurationProducer.class,
-          com.jetbrains.python.testing.PyTestsConfigurationProducer.class,
-          com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer.class,
-          com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer.class,
-          com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer.class,
-          com.jetbrains.python.testing.pytestLegacy.PyTestConfigurationProducer.class,
-          com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class,
-          com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer.class);
+      new ImmutableList.Builder<Class<?>>().add(
+            com.jetbrains.python.run.PythonRunConfigurationProducer.class,
+            com.jetbrains.python.testing.PyTestsConfigurationProducer.class,
+            com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer.class,
+            com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer.class,
+            com.jetbrains.python.testing.tox.PyToxConfigurationProducer.class)
+          .add(NonBlazeProducersToSuppress.PRODUCERS_TO_SUPPRESS).build();
 
   @Override
   public void runActivity(Project project) {

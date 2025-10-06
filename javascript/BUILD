@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "JAVASCRIPT_PACKAGES_VISIBILITY",
@@ -19,9 +20,12 @@ load(
 
 licenses(["notice"])
 
-java_library(
+kt_jvm_library(
     name = "javascript",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob([
+        "src/**/*.java",
+        "src/**/*.kt",
+    ]),
     visibility = JAVASCRIPT_PACKAGES_VISIBILITY,
     deps = [
         "//base",
@@ -90,6 +94,10 @@ intellij_unit_test_suite(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    jvm_flags = [
+        "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    ],
     required_plugins = "com.google.idea.blaze.javascript,JavaScript",
     test_package_root = "com.google.idea.blaze",
     runtime_deps = [":javascript_integration_test_plugin"],

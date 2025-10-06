@@ -38,7 +38,7 @@ public class VerifyRequiredPluginsEnabled {
       String msg =
           String.format(
               "Required plugin '%s' is not %s",
-              pluginId, pluginInstalled(pluginId) ? "enabled" : "available. " + String.format("Available plugins are: %s",
+              pluginId, (pluginInstalled(pluginId) ? "enabled" : "available. ") + String.format("Available plugins are: %s",
                   Arrays.stream(PluginManager.getPlugins()).sequential().map((PluginDescriptor::getName))
                       .collect(Collectors.joining("', '", "'", "'"))));
       throw new RuntimeException(msg);
