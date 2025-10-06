@@ -1,7 +1,7 @@
 package com.google.idea.sdkcompat.clion.projectStatus
 
-import com.intellij.clion.projectStatus.ui.convertStatus
-import com.intellij.clion.projectStatus.ui.isProjectAwareFile
+import com.intellij.clion.projectStatus.convertStatus
+import com.intellij.clion.projectStatus.isProjectAwareFile
 
 typealias EditorNotificationWarningProvider = com.intellij.clion.projectStatus.notifications.EditorNotificationWarningProvider 
 typealias ProjectNotification = com.intellij.clion.projectStatus.notifications.ProjectNotification 
@@ -15,4 +15,4 @@ typealias DefaultWidgetStatus = com.intellij.clion.projectStatus.widget.DefaultW
 typealias WidgetStatusProvider = com.intellij.clion.projectStatus.widget.WidgetStatusProvider 
 
 val convertStatus = ::convertStatus
-val isProjectAwareFile = ::isProjectAwareFile 
+val isProjectAwareFile = ::isProjectAwareFile
