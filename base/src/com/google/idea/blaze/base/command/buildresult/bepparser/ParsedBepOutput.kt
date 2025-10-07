@@ -146,11 +146,11 @@ interface ParsedBepOutput {
       val EMPTY: Legacy = Legacy(
         "build-id",
         ImmutableMap.of<String, String>(),
-        ImmutableMap.of<String?, FileSet?>(),
+        ImmutableMap.of<String, FileSet>(),
         0,
         0,
         0,
-        ImmutableSet.of<String?>()
+        ImmutableSet.of<String>()
       )
     }
   }

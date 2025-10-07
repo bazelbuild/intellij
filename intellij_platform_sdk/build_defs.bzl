@@ -6,13 +6,10 @@ load("@rules_java//java:defs.bzl", "java_import")
 INDIRECT_IJ_PRODUCTS = {
     "intellij-oss-oldest-stable": "intellij-2025.1",
     "intellij-oss-latest-stable": "intellij-2025.2",
-    "intellij-oss-under-dev": "intellij-2025.2",
+    "intellij-oss-under-dev": "intellij-2025.3",
     "intellij-ue-oss-oldest-stable": "intellij-ue-2025.1",
     "intellij-ue-oss-latest-stable": "intellij-ue-2025.2",
-    "intellij-ue-oss-under-dev": "intellij-ue-2025.2",
-    "clion-oss-oldest-stable": "clion-2025.1",
-    "clion-oss-latest-stable": "clion-2025.2",
-    "clion-oss-under-dev": "clion-2025.2",
+    "intellij-ue-oss-under-dev": "intellij-ue-2025.3",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
@@ -25,9 +22,6 @@ INDIRECT_PRODUCT_CHANNELS = {
     "intellij-ue-oss-oldest-stable": CHANNEL_STABLE,
     "intellij-ue-oss-latest-stable": CHANNEL_STABLE,
     "intellij-ue-oss-under-dev": CHANNEL_CANARY,
-    "clion-oss-oldest-stable": CHANNEL_STABLE,
-    "clion-oss-latest-stable": CHANNEL_STABLE,
-    "clion-oss-under-dev": CHANNEL_CANARY,
 }
 
 def _check_channel_map():
@@ -56,11 +50,10 @@ def _build_ij_product_dict(versions):
     for version in versions:
         result["intellij-%s" % version] = _build_ij_product("intellij", "intellij_ce", version)
         result["intellij-ue-%s" % version] = _build_ij_product("intellij-ue", "intellij_ue", version)
-        result["clion-%s" % version] = _build_ij_product("clion", "clion", version)
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.1", "2025.2"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.1", "2025.2", "2025.3"])
 
 def select_for_plugin_api(params):
     """Selects for a plugin_api.
@@ -127,7 +120,7 @@ def _do_select_for_plugin_api(params):
         no_match_error = "define an intellij product version, e.g. --define=ij_product=intellij-latest",
     )
 
-def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = []):
+def select_for_ide(intellij = None, intellij_ue = None, default = []):
     """Selects for the supported IDEs.
 
     Args:
@@ -149,12 +142,10 @@ def select_for_ide(intellij = None, intellij_ue = None, clion = None, default = 
     """
     intellij = intellij if intellij != None else default
     intellij_ue = intellij_ue if intellij_ue != None else intellij
-    clion = clion if clion != None else default
 
     ide_to_value = {
         "intellij": intellij,
         "intellij-ue": intellij_ue,
-        "clion": clion,
     }
 
     # Map (direct ij_product) -> corresponding ide value
@@ -199,12 +190,11 @@ def _plugin_api_directory(value):
         directory = value.directory
     return "@" + directory + "//"
 
-def select_from_plugin_api_directory(intellij, clion, intellij_ue = None):
+def select_from_plugin_api_directory(intellij, intellij_ue = None):
     """Internal convenience method to generate select statement from the IDE's plugin_api directories.
 
     Args:
       intellij: the items that IntelliJ product to use.
-      clion: the items that clion product to use.
       intellij_ue: the items that intellij ue product to use.
 
     Returns:
@@ -215,7 +205,6 @@ def select_from_plugin_api_directory(intellij, clion, intellij_ue = None):
     ide_to_value = {
         "intellij": intellij,
         "intellij-ue": intellij_ue if intellij_ue else intellij,
-        "clion": clion,
     }
 
     # Map (direct ij_product) -> corresponding product directory

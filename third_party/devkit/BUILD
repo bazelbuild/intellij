@@ -7,8 +7,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2025.1": ["@devkit_2025_1//:devkit"],
         "intellij-2025.2": ["@devkit_2025_2//:devkit"],
+        "intellij-2025.3": ["@devkit_2025_3//:devkit"],
         "intellij-ue-2025.1": ["@devkit_2025_1//:devkit"],
         "intellij-ue-2025.2": ["@devkit_2025_2//:devkit"],
+        "intellij-ue-2025.3": ["@devkit_2025_3//:devkit"],
         "default": [],
     }),
 )

@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
     "JAVASCRIPT_PACKAGES_VISIBILITY",
@@ -19,9 +20,9 @@ load(
 
 licenses(["notice"])
 
-java_library(
+kt_jvm_library(
     name = "javascript",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob(["src/**/*.java", "src/**/*.kt"]),
     visibility = JAVASCRIPT_PACKAGES_VISIBILITY,
     deps = [
         "//base",
