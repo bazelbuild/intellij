@@ -18,7 +18,7 @@ def format_cc_toolchain(toolchain):
 def format(target):
     buffer = "%s: " % target.label
 
-    if CC_TOOLCHAIN_INFO in providers(target):
+    if CC_TOOLCHAIN_INFO in (providers(target) or []):
         buffer += format_cc_toolchain(providers(target)[CC_TOOLCHAIN_INFO])
     else:
         buffer += "NO CcTolchainInfo"
