@@ -68,9 +68,11 @@ private fun collectDirectorySize(path: Path): DirectorySize? {
   var size = 0L
 
   try {
-    for (item in Files.walk(path)) {
-      items++
-      size += Files.size(item)
+    Files.walk(path).use { stream ->
+      stream.forEach { item ->
+        items++
+        size += Files.size(item)
+      }
     }
   } catch (e: IOException) {
     LOG.warn("failed to collect directory size $path", e)
