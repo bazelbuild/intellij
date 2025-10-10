@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /** Abstract base class for Intellij aspect tests. */
 public abstract class IntellijAspectTest {
@@ -69,18 +70,18 @@ public abstract class IntellijAspectTest {
         .collect(toImmutableList());
   }
 
-  protected TargetIdeInfo findTarget(
-      IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
-    String label =
-        isAbsoluteTarget(maybeRelativeLabel)
-            ? maybeRelativeLabel
-            : testRelative(maybeRelativeLabel);
-    return testFixture
-        .getTargetsList()
+  protected Stream<TargetIdeInfo> findTargets(IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
+    final var label = isAbsoluteTarget(maybeRelativeLabel)
+        ? maybeRelativeLabel
+        : testRelative(maybeRelativeLabel);
+
+    return testFixture.getTargetsList()
         .stream()
-        .filter(target -> matchTarget(target, label))
-        .findAny()
-        .orElse(null);
+        .filter(target -> matchTarget(target, label));
+  }
+
+  protected TargetIdeInfo findTarget(IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
+      return findTargets(testFixture, maybeRelativeLabel).findAny().orElse(null);
   }
 
   protected TargetIdeInfo findAspectTarget(
