@@ -165,6 +165,9 @@
     <action id="Bazel.DumpCacheDirectories"
       class="com.google.idea.blaze.base.actions.BazelDumpCacheDirectories"
       text="Bazel dump cache directories"/>
+    <action id="Bazel.ShowTargetInfo"
+      class="com.google.idea.blaze.base.actions.BazelShowTargetInfoAction"
+      text="Bazel show target info"/>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup" popup="true">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
