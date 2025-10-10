@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFileManager
+import kotlin.io.path.extension
 
 private val LOG = Logger.getInstance(BazelDumpVFSAction::class.java)
 
@@ -56,8 +57,16 @@ class BazelDumpVFSAction : DumbAwareAction() {
       return
     }
 
+    val histogram = mutableMapOf<String, Long>()
     LOG.info("################################## EXECROOT VFS ################################")
-    VfsUtil.getVfsChildrenAsSequence(virtualRoot).forEach { LOG.info(it.toString()) }
+    for (child in VfsUtil.getVfsChildrenAsSequence(virtualRoot)) {
+      histogram[child.extension] = histogram.getOrDefault(child.extension, 0) + 1L
+      LOG.info(child.toString())
+    }
+    LOG.info("################################## EXECROOT MAP ################################")
+    for ((ext, size) in histogram.entries.sortedByDescending { it.value }) {
+      LOG.info(String.format("%6d - %s", size, ext))
+    }
     LOG.info("################################################################################")
   }
 }
