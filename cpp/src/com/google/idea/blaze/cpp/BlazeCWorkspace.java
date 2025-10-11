@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
+import com.google.idea.blaze.cpp.sync.HeaderCacheService;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -65,6 +66,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -269,14 +271,26 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // transitiveDefines are sourced from a target's (and transitive deps) "defines" attribute
         compilationCtx.defines().forEach(compilerSwitchesBuilder::withMacro);
 
-        Function<ExecutionRootPath, Stream<File>> resolver =
-            executionRootPath ->
-                executionRootPathResolver.resolveToIncludeDirectories(executionRootPath).stream();
+        final Function<ExecutionRootPath, Stream<File>> resolver;
+        if (HeaderCacheService.getEnabled()) {
+          final var includesCache = HeaderCacheService.of(project);
+
+          resolver = executionRootPath -> Stream.of(includesCache
+              .resolve(targetKey, executionRootPath)
+              .map(Path::toFile)
+              .orElseGet(() -> executionRootPathResolver.resolveExecutionRootPath(executionRootPath))
+          );
+        } else {
+          // legacy resolver, use `resolveToIncludesDirectories` and filter with `HeaderRootsTrimmer`
+          resolver = executionRootPath -> executionRootPathResolver
+              .resolveToIncludeDirectories(executionRootPath)
+              .stream()
+              .filter(configResolveData::isValidHeaderRoot);
+        }
 
         // transitiveIncludeDirectories are sourced from CcSkylarkApiProvider.include_directories
         compilationCtx.includes().stream()
             .flatMap(resolver)
-            .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withIncludePath);
 
@@ -284,7 +298,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // CcSkylarkApiProvider.quote_include_directories
         final var quoteIncludePaths = compilationCtx.quoteIncludes().stream()
             .flatMap(resolver)
-            .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
             .collect(ImmutableList.toImmutableList());
         quoteIncludePaths.forEach(compilerSwitchesBuilder::withQuoteIncludePath);
@@ -295,7 +308,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
         // that get built by ClangUtils::addIncludeDirectories (it uses -I for system libraries).
         compilationCtx.systemIncludes().stream()
             .flatMap(resolver)
-            .filter(configResolveData::isValidHeaderRoot)
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 

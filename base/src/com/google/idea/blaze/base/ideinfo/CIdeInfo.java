@@ -107,7 +107,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     private static final CompilationContext EMPTY = builder().build();
 
-    public abstract ImmutableList<ArtifactLocation> directHeaders();
+    public abstract ImmutableList<ArtifactLocation> headers();
 
     public abstract ImmutableList<String> defines();
 
@@ -119,7 +119,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     public static CIdeInfo.CompilationContext fromProto(IntellijIdeInfo.CIdeInfo.CompilationContext proto) {
       return builder()
-          .setDirectHeaders(ProtoWrapper.map(proto.getDirectHeadersList(), ArtifactLocation::fromProto))
+          .setHeaders(ProtoWrapper.map(proto.getHeadersList(), ArtifactLocation::fromProto))
           .setDefines(ProtoWrapper.internStrings(proto.getDefinesList()))
           .setIncludes(ProtoWrapper.map(proto.getIncludesList(), ExecutionRootPath::fromProto))
           .setQuoteIncludes(ProtoWrapper.map(proto.getQuoteIncludesList(), ExecutionRootPath::fromProto))
@@ -130,7 +130,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     @Override
     public IntellijIdeInfo.CIdeInfo.CompilationContext toProto() {
       return IntellijIdeInfo.CIdeInfo.CompilationContext.newBuilder()
-          .addAllDirectHeaders(ProtoWrapper.mapToProtos(directHeaders()))
+          .addAllHeaders(ProtoWrapper.mapToProtos(headers()))
           .addAllDefines(defines())
           .addAllIncludes(ProtoWrapper.mapToProtos(includes()))
           .addAllQuoteIncludes(ProtoWrapper.mapToProtos(quoteIncludes()))
@@ -140,7 +140,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     public static Builder builder() {
       return new AutoValue_CIdeInfo_CompilationContext.Builder()
-          .setDirectHeaders(ImmutableList.of())
+          .setHeaders(ImmutableList.of())
           .setDefines(ImmutableList.of())
           .setIncludes(ImmutableList.of())
           .setQuoteIncludes(ImmutableList.of())
@@ -150,7 +150,7 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     @AutoValue.Builder
     public abstract static class Builder {
 
-      public abstract Builder setDirectHeaders(ImmutableList<ArtifactLocation> value);
+      public abstract Builder setHeaders(ImmutableList<ArtifactLocation> value);
 
       public abstract Builder setDefines(ImmutableList<String> value);
 
