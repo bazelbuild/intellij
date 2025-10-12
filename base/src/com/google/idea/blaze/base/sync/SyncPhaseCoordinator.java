@@ -897,6 +897,6 @@ public final class SyncPhaseCoordinator {
       cause = cause.getCause();
     }
     logger.error(e);
-    IssueOutput.error("Internal error: " + e.getMessage()).withThrowable(cause).submit(context);
+    IssueOutput.error("Internal error: " + e.getMessage()).withThrowable(e).submit(context);
   }
 }
