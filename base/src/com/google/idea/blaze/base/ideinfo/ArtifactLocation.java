@@ -15,149 +15,96 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.base.Objects;
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ComparisonChain;
 import com.google.devtools.intellij.aspect.Common;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.Paths;
 
-/** Represents a blaze-produced artifact. */
-public final class ArtifactLocation
-    implements ProtoWrapper<Common.ArtifactLocation>, Comparable<ArtifactLocation> {
-  private final String rootExecutionPathFragment;
-  private final String relativePath;
-  private final boolean isSource;
-  private final boolean isExternal;
+/**
+ * Represents a blaze-produced artifact.
+ */
+@AutoValue
+public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLocation>, Comparable<ArtifactLocation> {
 
-  private ArtifactLocation(
-      String rootExecutionPathFragment, String relativePath, boolean isSource, boolean isExternal) {
-    this.rootExecutionPathFragment = rootExecutionPathFragment;
-    this.relativePath = relativePath;
-    this.isSource = isSource;
-    this.isExternal = isExternal;
-  }
+  public abstract String rootExecutionPathFragment();
+
+  /**
+   * The root-relative path. For external workspace artifacts, this is relative to the external workspace root.
+   */
+  public abstract String relativePath();
+
+  public abstract boolean isSource();
+
+  public abstract boolean isExternal();
+
 
   @SuppressWarnings("NoInterning")
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
     return ProjectDataInterner.intern(
-        new ArtifactLocation(
+        new AutoValue_ArtifactLocation(
             proto.getRootExecutionPathFragment().intern(),
             proto.getRelativePath(),
             proto.getIsSource(),
-            proto.getIsExternal()));
+            proto.getIsExternal()
+        )
+    );
   }
 
   @Override
   public Common.ArtifactLocation toProto() {
     return Common.ArtifactLocation.newBuilder()
-        .setRootExecutionPathFragment(rootExecutionPathFragment)
-        .setRelativePath(relativePath)
-        .setIsSource(isSource)
-        .setIsExternal(isExternal)
+        .setRootExecutionPathFragment(rootExecutionPathFragment())
+        .setRelativePath(relativePath())
+        .setIsSource(isSource())
+        .setIsExternal(isExternal())
         .build();
-  }
-
-  public String getRootExecutionPathFragment() {
-    return rootExecutionPathFragment;
-  }
-
-  /**
-   * The root-relative path. For external workspace artifacts, this is relative to the external
-   * workspace root.
-   */
-  public String getRelativePath() {
-    return relativePath;
-  }
-
-  public boolean isSource() {
-    return isSource;
-  }
-
-  public boolean isExternal() {
-    return isExternal;
   }
 
   public boolean isGenerated() {
     return !isSource();
   }
 
-  /** Returns false for generated or external artifacts */
+  /**
+   * Returns false for generated or external artifacts
+   */
   public boolean isMainWorkspaceSourceArtifact() {
     return isSource() && !isExternal();
   }
 
-  /** For main-workspace source artifacts, this is simply the workspace-relative path. */
+  /**
+   * For main-workspace source artifacts, this is simply the workspace-relative path.
+   */
   public String getExecutionRootRelativePath() {
-    return Paths.get(getRootExecutionPathFragment(), getRelativePath()).toString();
+    return Paths.get(rootExecutionPathFragment(), relativePath()).toString();
   }
 
   public static Builder builder() {
-    return new Builder();
+    return new AutoValue_ArtifactLocation.Builder();
   }
 
-  /** Builder for an artifact location */
-  public static class Builder {
-    String relativePath;
-    String rootExecutionPathFragment = "";
-    boolean isSource;
-    boolean isExternal;
+  /**
+   * Builder for an artifact location
+   */
+  @AutoValue.Builder
+  public abstract class Builder {
 
-    @CanIgnoreReturnValue
-    public Builder setRelativePath(String relativePath) {
-      this.relativePath = relativePath;
-      return this;
-    }
+    public abstract Builder setRelativePath(String value);
 
-    @CanIgnoreReturnValue
-    public Builder setRootExecutionPathFragment(String rootExecutionPathFragment) {
-      this.rootExecutionPathFragment = rootExecutionPathFragment;
-      return this;
-    }
+    public abstract Builder setRootExecutionPathFragment(String value);
 
-    @CanIgnoreReturnValue
-    public Builder setIsSource(boolean isSource) {
-      this.isSource = isSource;
-      return this;
-    }
+    public abstract Builder setIsSource(boolean value);
 
-    @CanIgnoreReturnValue
-    public Builder setIsExternal(boolean isExternal) {
-      this.isExternal = isExternal;
-      return this;
-    }
+    public abstract Builder setIsExternal(boolean isExternal);
+
+    public abstract ArtifactLocation build();
 
     public static Builder copy(ArtifactLocation artifact) {
-      return new Builder()
-          .setRelativePath(artifact.getRelativePath())
-          .setRootExecutionPathFragment(artifact.getRootExecutionPathFragment())
+      return builder()
+          .setRelativePath(artifact.relativePath())
+          .setRootExecutionPathFragment(artifact.rootExecutionPathFragment())
           .setIsSource(artifact.isSource())
           .setIsExternal(artifact.isExternal());
     }
-
-    public ArtifactLocation build() {
-      return new ArtifactLocation(rootExecutionPathFragment, relativePath, isSource, isExternal);
-    }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    ArtifactLocation that = (ArtifactLocation) o;
-    return Objects.equal(getRootExecutionPathFragment(), that.getRootExecutionPathFragment())
-        && Objects.equal(getRelativePath(), that.getRelativePath())
-        && Objects.equal(isSource(), that.isSource())
-        && Objects.equal(isExternal(), that.isExternal());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(
-        getRootExecutionPathFragment(), getRelativePath(), isSource(), isExternal());
   }
 
   @Override
@@ -168,8 +115,8 @@ public final class ArtifactLocation
   @Override
   public int compareTo(ArtifactLocation o) {
     return ComparisonChain.start()
-        .compare(getRootExecutionPathFragment(), o.getRootExecutionPathFragment())
-        .compare(getRelativePath(), o.getRelativePath())
+        .compare(rootExecutionPathFragment(), o.rootExecutionPathFragment())
+        .compare(relativePath(), o.relativePath())
         .compareFalseFirst(isSource(), o.isSource())
         .compareFalseFirst(isExternal(), o.isExternal())
         .result();

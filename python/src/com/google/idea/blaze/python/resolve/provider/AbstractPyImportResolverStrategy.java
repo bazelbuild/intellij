@@ -36,7 +36,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.google.idea.blaze.qsync.project.ProjectTarget;
-import com.google.idea.blaze.qsync.query.Query;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -258,7 +257,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocation source,
       ImmutableList.Builder<ArtifactLocation> assembly) {
-    if (source.getRelativePath().endsWith(".py")) {
+    if (source.relativePath().endsWith(".py")) {
       assembly.add(source);
     } else {
       if (!source.isSource()) {
@@ -300,7 +299,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
 
       if (null != subFilenames) {
         for (String subFilename : subFilenames) {
-          Path subSourcePath = Path.of(source.getRelativePath(), subFilename);
+          Path subSourcePath = Path.of(source.relativePath(), subFilename);
           marshallPySources(
               ArtifactLocation.Builder.copy(source).setRelativePath(subSourcePath.toString())
                   .build(),
@@ -325,7 +324,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   abstract QualifiedName toImportString(ArtifactLocation source);
 
   private static boolean includeParentDirectory(ArtifactLocation source) {
-    return source.getRelativePath().endsWith(".py");
+    return source.relativePath().endsWith(".py");
   }
 
   private static boolean includeParentDirectory(File source) {

@@ -155,7 +155,7 @@ final class BlazeConfigurationResolver {
 
   private static boolean containsCompiledSources(TargetIdeInfo target) {
     Predicate<ArtifactLocation> isCompiled = location -> {
-      String locationExtension = FileUtilRt.getExtension(location.getRelativePath());
+      String locationExtension = FileUtilRt.getExtension(location.relativePath());
       return CFileExtensions.SOURCE_EXTENSIONS.contains(locationExtension);
     };
 

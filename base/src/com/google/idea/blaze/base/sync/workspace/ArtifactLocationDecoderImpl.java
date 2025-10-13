@@ -66,14 +66,14 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     }
 
     return artifact.isMainWorkspaceSourceArtifact()
-        ? pathResolver.resolveToFile(artifact.getRelativePath())
+        ? pathResolver.resolveToFile(artifact.relativePath())
         : null;
   }
 
   @Override
   public File decode(ArtifactLocation artifactLocation) {
     if (artifactLocation.isMainWorkspaceSourceArtifact()) {
-      return pathResolver.resolveToFile(artifactLocation.getRelativePath());
+      return pathResolver.resolveToFile(artifactLocation.relativePath());
     }
 
     File mainWorkspaceFile = tryToResolveExternalArtifactToMainWorkspace(artifactLocation);
@@ -142,6 +142,6 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     }
     return new LocalFileOutputArtifactWithoutDigest(
       decode(location), Path.of(execRootPath),
-      Path.of(location.getRootExecutionPathFragment()).getNameCount());
+      Path.of(location.rootExecutionPathFragment()).getNameCount());
   }
 }
