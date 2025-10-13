@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.actions
 
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
+import com.google.idea.blaze.base.settings.Blaze
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.google.protobuf.TextFormat
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -36,6 +37,10 @@ class BazelShowTargetInfoAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = Blaze.isBlazeProject(e.project)
   }
 
   override fun actionPerformed(event: AnActionEvent) {
