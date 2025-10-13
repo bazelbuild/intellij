@@ -58,8 +58,8 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     assertThat(compilationCtx.getDefinesList()).containsExactly("VERSION2");
     assertThat(compilationCtx.getSystemIncludesList()).contains(testRelative("foo/bar"));
     assertThat(compilationCtx.getQuoteIncludesList()).contains(".");
-    assertThat(relativePathsForArtifacts(compilationCtx.getDirectHeadersList()))
-        .containsExactly(testRelative("simple/simple.h"));
+    assertThat(relativePathsForArtifacts(compilationCtx.getHeadersList()))
+        .containsExactly(testRelative("simple/simple.h"), testRelative("simple/simple_textual.h"));
 
     // Can't test for this because the cc code stuffs source artifacts into
     // the output group
