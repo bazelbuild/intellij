@@ -26,26 +26,36 @@ import java.nio.file.Paths;
 @AutoValue
 public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLocation>, Comparable<ArtifactLocation> {
 
-  public abstract String rootExecutionPathFragment();
+  /**
+   * The root beneath which this file resides. Not equal to File.root.path, normalizes relative paths and therefore also
+   * includes the bazel-bin prefix for the artifact.
+   */
+  public abstract String rootPath();
 
   /**
-   * The root-relative path. For external workspace artifacts, this is relative to the external workspace root.
+   * The path of this file relative to its root. This excludes the aforementioned root, i.e. configuration-specific
+   * fragments of the path. This path is can be different to File.short_path.
    */
   public abstract String relativePath();
 
+  /**
+   * True if this is a source file, i.e. it is not generated.
+   */
   public abstract boolean isSource();
 
+  /**
+   * Whether this artifact comes from an external repository.
+   */
   public abstract boolean isExternal();
-
 
   @SuppressWarnings("NoInterning")
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
     return ProjectDataInterner.intern(
         new AutoValue_ArtifactLocation(
-            proto.getRootExecutionPathFragment().intern(),
+            proto.getRootPath().intern(),
             proto.getRelativePath(),
             proto.getIsSource(),
-            proto.getIsExternal()
+            proto.getIsExternal(),
         )
     );
   }
@@ -53,7 +63,7 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
   @Override
   public Common.ArtifactLocation toProto() {
     return Common.ArtifactLocation.newBuilder()
-        .setRootExecutionPathFragment(rootExecutionPathFragment())
+        .setRootPath(rootPath())
         .setRelativePath(relativePath())
         .setIsSource(isSource())
         .setIsExternal(isExternal())
@@ -72,10 +82,14 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
   }
 
   /**
-   * For main-workspace source artifacts, this is simply the workspace-relative path.
+   * The execution path of this file, relative to the workspace's execution directory. It consists of two parts, an
+   * optional first part called the root, and the second part which is the relativePath. The root may be empty, which it
+   * usually is for non-generated files. For generated files it usually contains a configuration-specific path fragment
+   * that encodes things like the target CPU architecture that was used while building said file. Use the relativePath
+   * for the path under which the file is mapped if it's in the runfiles of a binary.
    */
   public String getExecutionRootRelativePath() {
-    return Paths.get(rootExecutionPathFragment(), relativePath()).toString();
+    return Paths.get(rootPath(), relativePath()).toString();
   }
 
   public static Builder builder() {
@@ -94,14 +108,14 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
 
     public abstract Builder setIsSource(boolean value);
 
-    public abstract Builder setIsExternal(boolean isExternal);
+    public abstract Builder setIsExternal(boolean value);
 
     public abstract ArtifactLocation build();
 
     public static Builder copy(ArtifactLocation artifact) {
       return builder()
           .setRelativePath(artifact.relativePath())
-          .setRootExecutionPathFragment(artifact.rootExecutionPathFragment())
+          .setRootExecutionPathFragment(artifact.rootPath())
           .setIsSource(artifact.isSource())
           .setIsExternal(artifact.isExternal());
     }
@@ -115,7 +129,7 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
   @Override
   public int compareTo(ArtifactLocation o) {
     return ComparisonChain.start()
-        .compare(rootExecutionPathFragment(), o.rootExecutionPathFragment())
+        .compare(rootPath(), o.rootPath())
         .compare(relativePath(), o.relativePath())
         .compareFalseFirst(isSource(), o.isSource())
         .compareFalseFirst(isExternal(), o.isExternal())

@@ -142,6 +142,6 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     }
     return new LocalFileOutputArtifactWithoutDigest(
       decode(location), Path.of(execRootPath),
-      Path.of(location.rootExecutionPathFragment()).getNameCount());
+      Path.of(location.rootPath()).getNameCount());
   }
 }

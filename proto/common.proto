@@ -21,12 +21,19 @@ package blaze;
 option java_package = "com.google.devtools.intellij.aspect";
 
 message ArtifactLocation {
+  // The path of this file relative to its root. This excludes the
+  // aforementioned root, i.e. configuration-specific fragments of the path.
+  // This path is can be different to File.short_path.
   string relative_path = 2;
+
+  // True if this is a source file, i.e. it is not generated.
   bool is_source = 3;
 
-  // path from the execution root to the actual root:
-  // exec_root + root_execution_path_fragment + relative_path = absolute_path
-  string root_execution_path_fragment = 4;
-  // whether this artifact comes from an external repository (bazel only)
+  // The root beneath which this file resides. Not equal to File.root.path,
+  // normalizes relative paths and therefore also includes the bazel-bin
+  // prefix for the artifact.
+  string root_path = 4;
+
+  // Whether this artifact comes from an external repository.
   bool is_external = 5;
 }

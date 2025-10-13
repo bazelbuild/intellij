@@ -51,7 +51,7 @@ public class ArtifactTest extends BazelIntellijAspectTest {
     final var ideInfo = getCIdeInfo("//main:main");
     final var sourceFile = ideInfo.getRuleContext().getSources(0);
 
-    assertThat(sourceFile.getRootExecutionPathFragment()).isEqualTo("external/+_repo_rules2+clwb_virtual_includes_project");
+    assertThat(sourceFile.getRootPath()).isEqualTo("external/+_repo_rules2+clwb_virtual_includes_project");
     assertThat(sourceFile.getRelativePath()).isEqualTo("main/main.cc");
     assertThat(sourceFile.getIsExternal()).isTrue();
     assertThat(sourceFile.getIsSource()).isTrue();
@@ -73,7 +73,7 @@ public class ArtifactTest extends BazelIntellijAspectTest {
     final var ideInfo = getIdeInfo("//main:main");
     final var buildFile = ideInfo.getBuildFileArtifactLocation();
 
-    assertThat(buildFile.getRootExecutionPathFragment()).isEqualTo(""); // TODO: i think this is a bug
+    assertThat(buildFile.getRootPath()).isEqualTo("external/+_repo_rules2+clwb_virtual_includes_project");
     assertThat(buildFile.getRelativePath()).isEqualTo("main/BUILD");
     assertThat(buildFile.getIsExternal()).isTrue();
     assertThat(buildFile.getIsSource()).isTrue();
