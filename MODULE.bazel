@@ -250,3 +250,11 @@ http_archive(
         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz",
     ],
 )
+
+# import clwb test projects for aspect tests
+local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
+
+local_repository(
+    name = "clwb_virtual_includes_project",
+    path = "clwb/tests/projects/virtual_includes",
+)
