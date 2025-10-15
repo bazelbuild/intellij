@@ -129,7 +129,7 @@ public final class AspectSyncProjectData implements BlazeProjectData {
     }
     // otherwise just return any matching target
     return map.targets().stream()
-        .filter(t -> Objects.equals(label, t.getKey().getLabel()))
+        .filter(t -> Objects.equals(label, t.getKey().label()))
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
@@ -149,7 +149,7 @@ public final class AspectSyncProjectData implements BlazeProjectData {
   @Override
   public ImmutableList<Label> targets() {
     return getTargetMap().targets().stream()
-        .map(it -> it.getKey().getLabel())
+        .map(it -> it.getKey().label())
         .collect(ImmutableList.toImmutableList());
   }
 

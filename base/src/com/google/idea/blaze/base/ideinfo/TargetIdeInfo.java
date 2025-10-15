@@ -137,7 +137,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     }
     GoIdeInfo goIdeInfo = null;
     if (proto.hasGoIdeInfo()) {
-      goIdeInfo = GoIdeInfo.fromProto(proto.getGoIdeInfo(), key.getLabel(), kind);
+      goIdeInfo = GoIdeInfo.fromProto(proto.getGoIdeInfo(), key.label(), kind);
       sourcesBuilder.addAll(goIdeInfo.getSources());
     }
     JsIdeInfo jsIdeInfo = null;
@@ -367,7 +367,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   public TargetInfo toTargetInfo() {
-    return TargetInfo.builder(getKey().getLabel(), getKind().getKindString())
+    return TargetInfo.builder(getKey().label(), getKind().getKindString())
         .setTestSize(getTestIdeInfo() != null ? getTestIdeInfo().getTestSize() : null)
         .setTestClass(getJavaIdeInfo() != null ? getJavaIdeInfo().getTestClass() : null)
         .setSyncTime(getSyncTime())
