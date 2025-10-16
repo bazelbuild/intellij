@@ -13,11 +13,22 @@ licenses(["notice"])
 create_sdkcompat_visibility_package()
 
 java_library(
+    name = "sdkcompat",
+    visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_version({
         "2025.1": ["//sdkcompat/v251"],
         "2025.2": ["//sdkcompat/v252"],
         "2025.3": ["//sdkcompat/v253"],
     }),
-    name = "sdkcompat",
+)
+
+#api252 needs to be a separate target since radler sources are not always available
+java_library(
+    name = "sdkcompat_radler",
     visibility = SDK_COMPAT_VISIBILITY,
+    exports = select_for_version({
+        "2025.1": ["//sdkcompat/v251:v251_radler"],
+        "2025.2": ["//sdkcompat/v252:v252_radler"],
+        "2025.3": ["//sdkcompat/v253:v253_radler"],
+    }),
 )

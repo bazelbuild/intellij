@@ -184,9 +184,9 @@ http_archive(
     url = CLION_252_URL,
 )
 
-CLION_253_SHA = "8358d2429358a5f40be2a151bd23f78d375ec70479514414438535d5a643de6d"
+CLION_253_SHA = "6496a19c1abf8ecf8d8419f136e87bd865e50f4c539f8da81c05d2fc83de7f1f"
 
-CLION_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/253.24325.50-EAP-SNAPSHOT/clion-253.24325.50-EAP-SNAPSHOT.zip"
+CLION_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/253.25908.36-EAP-SNAPSHOT/clion-253.25908.36-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2025_3",
@@ -230,9 +230,9 @@ http_archive(
     url = PYTHON_PLUGIN_252_URL,
 )
 
-PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.22441.33/PythonCore-253.22441.33.zip"
+PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.25908.13/PythonCore-253.25908.13.zip"
 
-PYTHON_PLUGIN_253_SHA = "d9f744dc392605981fc9d014b388942edaac7dd2788badd8eb76fab8133b7c72"
+PYTHON_PLUGIN_253_SHA = "18bc98649ea55b2569e9780b70dd0481c16dd1a1c41cf29062a169f56162460e"
 
 http_archive(
     name = "python_2025_3",

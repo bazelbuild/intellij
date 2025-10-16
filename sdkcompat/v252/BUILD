@@ -33,3 +33,13 @@ kt_jvm_library(
         "//third_party/javascript",
     ],
 )
+
+kt_jvm_library(
+    name = "v252_radler",
+    srcs = glob(["com/google/idea/sdkcompat/radler/**"]),  #api252
+    visibility = ["//sdkcompat:__pkg__"],
+    deps = [
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
