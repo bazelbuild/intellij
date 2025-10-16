@@ -54,11 +54,13 @@ private const val CACHE_DIRECTORY = "headerCache"
 class HeaderCacheService(private val project: Project) {
 
   companion object {
+    const val ENABLED_KEY: String = "blaze.cpp.header.cache.enabled"
+
     @JvmStatic
     fun of(project: Project): HeaderCacheService = project.service()
 
     @JvmStatic
-    val enabled: Boolean get() = Registry.`is`("bazel.cpp.header.cache.enabled")
+    val enabled: Boolean get() = Registry.`is`(ENABLED_KEY)
   }
 
   val cacheDirectory: Path by lazy {
@@ -121,9 +123,9 @@ class HeaderCacheService(private val project: Project) {
       if (!isInBazelBin(header)) continue
 
       // check if the header is already present in the cache
-      if (!cacheTracker.add(header.relativePath)) continue
+      if (!cacheTracker.add(header.relativePath())) continue
 
-      val path = targetCacheDirectory.resolve(header.relativePath)
+      val path = targetCacheDirectory.resolve(header.relativePath())
 
       try {
         Files.createDirectories(path.parent)
@@ -137,8 +139,8 @@ class HeaderCacheService(private val project: Project) {
           }
         }
       } catch (e: IOException) {
-        cacheTracker.remove(header.relativePath)
-        LOG.warn("failed to copy generated header ${header.relativePath} for ${key.label}", e)
+        cacheTracker.remove(header.relativePath())
+        LOG.warn("failed to copy generated header ${header.relativePath()} for ${key.label}", e)
       }
     }
   }
@@ -164,7 +166,7 @@ class HeaderCacheService(private val project: Project) {
   }
 
   private fun isInBazelBin(location: ArtifactLocation): Boolean {
-    return location.rootExecutionPathFragment.isNotBlank() && isInBazelBin(Path.of(location.rootExecutionPathFragment))
+    return location.rootPath().isNotBlank() && isInBazelBin(Path.of(location.rootPath()))
   }
 }
 
