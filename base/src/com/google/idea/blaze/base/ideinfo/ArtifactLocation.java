@@ -51,12 +51,12 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
   @SuppressWarnings("NoInterning")
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
     return ProjectDataInterner.intern(
-        new AutoValue_ArtifactLocation(
-            proto.getRootPath().intern(),
-            proto.getRelativePath(),
-            proto.getIsSource(),
-            proto.getIsExternal(),
-        )
+        builder()
+            .setRootPath(proto.getRootPath().intern())
+            .setRelativePath(proto.getRelativePath())
+            .setIsSource(proto.getIsSource())
+            .setIsExternal(proto.getIsExternal())
+            .build()
     );
   }
 
@@ -93,18 +93,21 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
   }
 
   public static Builder builder() {
-    return new AutoValue_ArtifactLocation.Builder();
+    return new AutoValue_ArtifactLocation.Builder()
+        .setIsExternal(false)
+        .setIsSource(true)
+        .setRootPath("");
   }
 
   /**
    * Builder for an artifact location
    */
   @AutoValue.Builder
-  public abstract class Builder {
+  public static abstract class Builder {
 
     public abstract Builder setRelativePath(String value);
 
-    public abstract Builder setRootExecutionPathFragment(String value);
+    public abstract Builder setRootPath(String value);
 
     public abstract Builder setIsSource(boolean value);
 
@@ -115,7 +118,7 @@ public abstract class ArtifactLocation implements ProtoWrapper<Common.ArtifactLo
     public static Builder copy(ArtifactLocation artifact) {
       return builder()
           .setRelativePath(artifact.relativePath())
-          .setRootExecutionPathFragment(artifact.rootPath())
+          .setRootPath(artifact.rootPath())
           .setIsSource(artifact.isSource())
           .setIsExternal(artifact.isExternal());
     }

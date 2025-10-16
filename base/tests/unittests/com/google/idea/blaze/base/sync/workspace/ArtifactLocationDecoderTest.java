@@ -43,7 +43,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   public void testGeneratedArtifact() {
     ArtifactLocation artifactLocation =
         ArtifactLocation.builder()
-            .setRootExecutionPathFragment("/blaze-out/bin")
+            .setRootPath("/blaze-out/bin")
             .setRelativePath("com/google/Bla.java")
             .setIsSource(false)
             .build();
@@ -69,12 +69,12 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
                 .setRelativePath("com/google/Bla.java")
-                .setRootExecutionPathFragment("../repo_name")
+                .setRootPath("../repo_name")
                 .setIsSource(true)
                 .setIsExternal(true)
                 .build());
 
-    assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
+    assertThat(artifactLocation.relativePath()).isEqualTo("com/google/Bla.java");
     assertThat(artifactLocation.getExecutionRootRelativePath())
         .isEqualTo("../repo_name/com/google/Bla.java");
 
@@ -99,11 +99,11 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
                 .setRelativePath("com/google/Bla.java")
-                .setRootExecutionPathFragment("../repo_name/blaze-out/crosstool/bin")
+                .setRootPath("../repo_name/blaze-out/crosstool/bin")
                 .setIsSource(false)
                 .build());
 
-    assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
+    assertThat(artifactLocation.relativePath()).isEqualTo("com/google/Bla.java");
     assertThat(artifactLocation.getExecutionRootRelativePath())
         .isEqualTo("../repo_name/blaze-out/crosstool/bin/com/google/Bla.java");
 
@@ -128,7 +128,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
                 .setRelativePath("something.h")
-                .setRootExecutionPathFragment("external/repo_name")
+                .setRootPath("external/repo_name")
                 .setIsSource(true)
                 .setIsExternal(true)
                 .build());
