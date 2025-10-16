@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.actions
 
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider
+import com.google.idea.blaze.base.settings.Blaze
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -31,6 +32,10 @@ class BazelDumpCacheDirectories : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = Blaze.isBlazeProject(e.project)
   }
 
   override fun actionPerformed(event: AnActionEvent) {
