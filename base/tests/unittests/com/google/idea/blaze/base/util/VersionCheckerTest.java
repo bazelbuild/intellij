@@ -126,6 +126,16 @@ public class VersionCheckerTest {
       throw new UnsupportedOperationException();
     }
 
+    // @Override #api252 remove this function
+    public @Nullable String getProductUrl() {
+      throw new UnsupportedOperationException();
+    }
+
+    // @Override #api252 remove this function
+    public @Nullable String getJetBrainsTvUrl() {
+      throw new UnsupportedOperationException();
+    }
+
     @Override
     public boolean hasHelp() {
       throw new UnsupportedOperationException();
