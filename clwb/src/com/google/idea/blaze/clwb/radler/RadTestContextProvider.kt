@@ -27,15 +27,14 @@ import com.google.idea.blaze.base.run.producers.TestContext
 import com.google.idea.blaze.base.run.producers.TestContextProvider
 import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
+import com.google.idea.sdkcompat.radler.RadTestPsiElement
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.util.asSafely
-import com.jetbrains.cidr.radler.testing.RadTestPsiElement
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
 import kotlinx.coroutines.async
 import kotlinx.coroutines.guava.asListenableFuture
 import kotlinx.coroutines.guava.await
-import java.io.File
 import java.util.*
 
 abstract class RadTestContextProvider : TestContextProvider {

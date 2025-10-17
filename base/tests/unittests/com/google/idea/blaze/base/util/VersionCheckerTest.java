@@ -126,12 +126,12 @@ public class VersionCheckerTest {
       throw new UnsupportedOperationException();
     }
 
-    @Override
+    // @Override #api252 remove this function
     public @Nullable String getProductUrl() {
       throw new UnsupportedOperationException();
     }
 
-    @Override
+    // @Override #api252 remove this function
     public @Nullable String getJetBrainsTvUrl() {
       throw new UnsupportedOperationException();
     }

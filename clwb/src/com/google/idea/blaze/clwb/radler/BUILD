@@ -17,5 +17,6 @@ kt_jvm_library(
     deps = [
         "//clwb:clwb_lib",
         "//intellij_platform_sdk:plugin_api",
+        "//sdkcompat:sdkcompat_radler",
     ],
 )

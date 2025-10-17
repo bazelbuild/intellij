@@ -21,11 +21,10 @@ import com.google.idea.blaze.base.run.SourceToTargetFinder
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunContext
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
+import com.google.idea.sdkcompat.radler.RadSymbolHost
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafElement
-import com.jetbrains.cidr.radler.protocol.RadSymbolsHost
-import java.io.File
 import java.util.*
 
 /**
@@ -48,7 +47,7 @@ class RadBinaryContextProvider : BinaryContextProvider {
 private fun isMain(element: PsiElement?): Boolean {
   if (element !is LeafElement) return false
 
-  val symbolsHost = RadSymbolsHost.getInstance(element.project)
+  val symbolsHost = RadSymbolHost.getInstance(element.project)
   return symbolsHost.isEntryPointOffset(element.containingFile.viewProvider.virtualFile, element.startOffset)
 }
 
