@@ -344,7 +344,7 @@ def collect_cc_compilation_context(ctx, target):
     external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
 
     return struct(
-        direct_headers = [artifact_location(it) for it in compilation_context.direct_headers],
+        headers = [artifact_location(it) for it in compilation_context.headers.to_list()],
         defines = compilation_context.defines.to_list(),
         includes = compilation_context.includes.to_list(),
         quote_includes = compilation_context.quote_includes.to_list(),

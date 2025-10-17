@@ -17,6 +17,7 @@ package com.google.idea.blaze.aspect.general.artifacts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
@@ -25,7 +26,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests the artifact representation */
+/**
+ * Tests the artifact representation
+ */
 @RunWith(JUnit4.class)
 public class ArtifactTest extends BazelIntellijAspectTest {
 
@@ -77,5 +80,20 @@ public class ArtifactTest extends BazelIntellijAspectTest {
     assertThat(buildFile.getRelativePath()).isEqualTo("main/BUILD");
     assertThat(buildFile.getIsExternal()).isTrue();
     assertThat(buildFile.getIsSource()).isTrue();
+  }
+
+  @Test
+  public void testVirtualIncludesSymlinks() throws Exception {
+    final var ideInfo = getCIdeInfo("//main:main");
+
+    final var headers = ideInfo.getCompilationContext().getHeadersList();
+    assertThat(headers).hasSize(10);
+
+    final var virtualHeaders = headers.stream()
+        .filter(it -> it.getRelativePath().contains("virtual_includes"))
+        .toList();
+
+    assertThat(virtualHeaders).hasSize(3);
+    assertThat(virtualHeaders.stream().map(ArtifactLocation::getIsSource).distinct()).containsExactly(false);
   }
 }
