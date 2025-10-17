@@ -64,7 +64,7 @@ final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalL
     Set<String> jsExtensions = JavascriptPrefetchFileSource.getJavascriptExtensions();
     Predicate<ArtifactLocation> isJs =
         (location) -> {
-          String extension = Files.getFileExtension(location.getRelativePath());
+          String extension = Files.getFileExtension(location.relativePath());
           return jsExtensions.contains(extension);
         };
     Predicate<ArtifactLocation> isExternal =
@@ -72,7 +72,7 @@ final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalL
           if (!location.isSource()) {
             return true;
           }
-          WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
+          WorkspacePath workspacePath = WorkspacePath.createIfValid(location.relativePath());
           return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
         };
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();

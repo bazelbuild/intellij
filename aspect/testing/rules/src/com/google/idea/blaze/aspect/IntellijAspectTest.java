@@ -69,16 +69,25 @@ public abstract class IntellijAspectTest {
         .collect(toImmutableList());
   }
 
-  protected TargetIdeInfo findTarget(
-      IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
+  protected TargetIdeInfo findTarget(IntellijAspectTestFixture testFixture, String maybeRelativeLabel) {
     String label =
         isAbsoluteTarget(maybeRelativeLabel)
             ? maybeRelativeLabel
             : testRelative(maybeRelativeLabel);
+
     return testFixture
         .getTargetsList()
         .stream()
         .filter(target -> matchTarget(target, label))
+        .findAny()
+        .orElse(null);
+  }
+
+  protected TargetIdeInfo findExternalTarget(IntellijAspectTestFixture testFixture, String repo, String label) {
+    return testFixture
+        .getTargetsList()
+        .stream()
+        .filter(target -> matchTarget(target, repo, label))
         .findAny()
         .orElse(null);
   }
@@ -128,8 +137,15 @@ public abstract class IntellijAspectTest {
     return targetKey.getLabel().equals(label) && targetKey.getAspectIdsList().isEmpty();
   }
 
-  private static boolean matchTarget(
-      TargetIdeInfo target, String label, String... fractionalAspectIds) {
+  private static boolean matchTarget(TargetIdeInfo target, String repo, String label) {
+    if (!target.hasKey() || target.getKey().getAspectIdsCount() != 0) {
+      return false;
+    }
+
+    return target.getKey().getLabel().endsWith(repo + label);
+  }
+
+  private static boolean matchTarget(TargetIdeInfo target, String label, String... fractionalAspectIds) {
     if (!target.hasKey()) {
       return false;
     }
@@ -141,8 +157,7 @@ public abstract class IntellijAspectTest {
     return targetHasMatchingAspects(target, fractionalAspectIds);
   }
 
-  protected static boolean targetHasMatchingAspects(
-      TargetIdeInfo target, String... fractionalAspectIds) {
+  protected static boolean targetHasMatchingAspects(TargetIdeInfo target, String... fractionalAspectIds) {
     if (!target.hasKey()) {
       return false;
     }

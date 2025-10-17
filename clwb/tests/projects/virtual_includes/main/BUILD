@@ -1,10 +1,23 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
 cc_binary(
-    name = "hello-world",
-    srcs = [
-        "hello-world.cc",
+    name = "main",
+    srcs = ["main.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//lib/impl_deps:lib",
         "//lib/raw_files:lib",
+        "//lib/strip_absolut:gen",
+        "//lib/strip_absolut:lib",
+        "//lib/strip_relative:lib",
+    ],
+)
+
+cc_binary(
+    name = "raw",
+    srcs = [
+        "raw.cc",
+        "//lib/raw_files:files",
     ],
     # basically manual strip absolut, different flags required for MSVC
     copts = select({
@@ -19,10 +32,4 @@ cc_binary(
             "-iquotelib/raw_files/quote",
         ],
     }),
-    deps = [
-        "//lib/impl_deps:lib",
-        "//lib/strip_absolut:gen",
-        "//lib/strip_absolut:lib",
-        "//lib/strip_relative:lib",
-    ],
 )

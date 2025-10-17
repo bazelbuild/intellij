@@ -55,7 +55,7 @@ public class CPrefetchFileSource implements PrefetchFileSource {
           if (!location.isSource() || location.isExternal()) {
             return false;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
+          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath());
           if (path == null || importRoots.containsWorkspacePath(path)) {
             return false;
           }

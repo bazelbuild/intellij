@@ -303,7 +303,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     PyIdeInfo.Builder pyIdeInfoBuilder = PyIdeInfo.builder()
         .addSources(ImmutableSet.of(
             ArtifactLocation.builder()
-                .setRootExecutionPathFragment("bazel-out/anyos_arm64-fastbuild/bin")
+                .setRootPath("bazel-out/anyos_arm64-fastbuild/bin")
                 .setRelativePath("example/materials")
                 //^ This would be a typical source path for a code generation scenario.
                 .setIsSource(false)
@@ -443,7 +443,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     @Nullable
     @Override
     QualifiedName toImportString(ArtifactLocation source) {
-      return fromRelativePath(source.getRelativePath());
+      return fromRelativePath(source.relativePath());
     }
 
     @Nullable

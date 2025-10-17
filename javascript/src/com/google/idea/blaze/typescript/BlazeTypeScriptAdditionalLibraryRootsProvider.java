@@ -113,7 +113,7 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
   }
 
   private static boolean isTypeScriptArtifact(ArtifactLocation location) {
-    String extension = Files.getFileExtension(location.getRelativePath());
+    String extension = Files.getFileExtension(location.relativePath());
     return TypeScriptPrefetchFileSource.getTypeScriptExtensions().contains(extension);
   }
 
@@ -121,7 +121,7 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
     if (!location.isSource()) {
       return true;
     }
-    WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
+    WorkspacePath workspacePath = WorkspacePath.createIfValid(location.relativePath());
     return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
   }
 

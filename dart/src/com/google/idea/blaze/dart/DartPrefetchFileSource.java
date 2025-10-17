@@ -75,7 +75,7 @@ public class DartPrefetchFileSource implements PrefetchFileSource, OutputsProvid
           if (location.isGenerated()) {
             return true;
           }
-          WorkspacePath path = WorkspacePath.createIfValid(location.getRelativePath());
+          WorkspacePath path = WorkspacePath.createIfValid(location.relativePath());
           return path != null && !importRoots.containsWorkspacePath(path);
         };
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();

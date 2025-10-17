@@ -110,7 +110,7 @@ def get_code_generator_rule_names(ctx, language_name):
 def build_file_artifact_location(ctx):
     """Creates an ArtifactLocation proto representing a location of a given BUILD file."""
     return to_artifact_location(
-        ctx.label.package + "/BUILD",
+        ctx.label.workspace_root,
         ctx.label.package + "/BUILD",
         True,
         is_external_artifact(ctx.label),
