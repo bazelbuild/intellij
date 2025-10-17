@@ -35,6 +35,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -70,7 +71,7 @@ class HeaderCacheService(private val project: Project) {
     if (importSettings != null) {
       BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve(CACHE_DIRECTORY)
     } else {
-      Path.of(project.basePath, CACHE_DIRECTORY)
+      project.getProjectDataPath(CACHE_DIRECTORY)
     }
   }
 
@@ -86,11 +87,11 @@ class HeaderCacheService(private val project: Project) {
   @RequiresReadLockAbsence
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  fun clear() {
+  private fun clear() {
     cacheTracker.clear()
 
     if (Files.exists(cacheDirectory)) {
-      // I have a feeling that this will be really slow on Windows, so let's try to avoid this
+      // On windows this could be replace with a rename and asynchronous delete for better performance.
       NioFiles.deleteRecursively(cacheDirectory)
     }
 
