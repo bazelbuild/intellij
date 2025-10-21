@@ -587,9 +587,7 @@ public final class BlazeEditProjectViewControl {
     String projectName = projectNameField.getText().trim();
     File projectDataDir = getProjectDataDir();
     String projectDataDirectory = projectDataDir.getPath();
-    File localProjectViewFile =
-        ProjectViewStorageManager.getLocalProjectViewFileName(
-            builder.getBuildSystem(), new File(projectDataDirectory));
+    File localProjectViewFile = ProjectViewStorageManager.getLocalProjectViewFileName(new File(projectDataDirectory));
 
     BlazeSelectProjectViewOption selectProjectViewOption = builder.getProjectViewOption();
     boolean useSharedProjectView = projectViewUi.getUseSharedProjectView();
