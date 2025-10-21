@@ -39,11 +39,6 @@ public interface BlazeSyncStatus {
 
   void syncEnded(SyncMode syncMode, SyncResult syncResult);
 
-  /**
-   * @deprecated For query sync, use {@link
-   *     com.google.idea.blaze.base.qsync.QuerySyncManager#operationInProgress}
-   */
-  @Deprecated
   boolean syncInProgress();
 
   void setDirty();
