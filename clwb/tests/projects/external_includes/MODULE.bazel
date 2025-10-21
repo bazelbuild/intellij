@@ -1,2 +1,2 @@
-bazel_dep(name = "rules_cc", version = "0.2.10")
+bazel_dep(name = "rules_cc", version = "0.2.11")
 bazel_dep(name = "catch2", version = "3.7.1")
