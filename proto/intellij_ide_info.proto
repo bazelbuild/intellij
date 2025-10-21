@@ -68,7 +68,7 @@ message CIdeInfo {
 
   // Information collected from CcInfo provider.
   message CompilationContext {
-    repeated ArtifactLocation direct_headers = 1;
+    repeated ArtifactLocation headers = 1;
 
     repeated string defines = 2;
     repeated string includes = 3;
