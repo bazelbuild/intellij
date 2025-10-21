@@ -55,7 +55,7 @@ private const val CACHE_DIRECTORY = "headerCache"
 class HeaderCacheService(private val project: Project) {
 
   companion object {
-    const val ENABLED_KEY: String = "blaze.cpp.header.cache.enabled"
+    const val ENABLED_KEY: String = "bazel.cpp.header.cache.enabled"
 
     @JvmStatic
     fun of(project: Project): HeaderCacheService = project.service()
