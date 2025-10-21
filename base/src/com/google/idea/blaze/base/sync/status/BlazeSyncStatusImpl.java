@@ -52,9 +52,6 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
 
   @Override
   public boolean syncInProgress() {
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      return QuerySyncManager.getInstance(project).operationInProgress();
-    }
     return syncInProgress.get();
   }
 
