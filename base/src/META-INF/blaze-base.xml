@@ -168,6 +168,10 @@
     <action id="Bazel.ShowTargetInfo"
       class="com.google.idea.blaze.base.actions.BazelShowTargetInfoAction"
       text="Bazel show target info"/>
+    <action id="Bazel.LoadProjectViewFile"
+      class="com.google.idea.blaze.base.actions.LoadProjectViewAction"
+      text="Load Project View"
+      icon="BlazeIcons.Logo"/>
 
     <group id="Blaze.MainMenuActionGroup" class="com.google.idea.blaze.base.actions.BlazeMenuGroup" popup="true">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
@@ -228,6 +232,7 @@
       <reference ref="Blaze.AddToQuerySyncProjectView"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
+      <reference ref="Bazel.LoadProjectViewFile"/>
     </group>
     <group id="Internal.Blaze" text="Blaze" popup="true" internal="true">
       <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.ClearDependencies" text="QSync - Clear Dependencies" />
