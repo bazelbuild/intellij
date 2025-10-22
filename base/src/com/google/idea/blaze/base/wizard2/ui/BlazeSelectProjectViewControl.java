@@ -64,8 +64,7 @@ public class BlazeSelectProjectViewControl {
   }
 
   private static String getTitle(BlazeNewProjectBuilder builder) {
-    String projectViewString =
-        ProjectViewStorageManager.getProjectViewFileName(builder.getBuildSystem());
+    String projectViewString = ProjectViewStorageManager.getProjectViewFileName();
     return String.format("Select project view (%s file)", projectViewString);
   }
 }
