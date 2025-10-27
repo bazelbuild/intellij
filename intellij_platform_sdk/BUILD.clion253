@@ -56,8 +56,6 @@ java_import(
         "plugins/cidr-lang/lib/*.jar",
         "plugins/cidr-lang/lib/modules/*.jar",
         "plugins/clion/lib/*.jar",
-        "plugins/clion-cmake/lib/*.jar",
-        "plugins/clion-cmake/lib/modules/*.jar",
         "plugins/clion-test-google/lib/*.jar",
         "plugins/clion-test-google/lib/modules/*.jar",
         "plugins/clion-test-catch/lib/*.jar",
@@ -67,10 +65,16 @@ java_import(
         "plugins/clion-radler/lib/*.jar",
         "plugins/clion-radler/lib/modules/*.jar",
         "plugins/clion-rd-components/lib/*.jar",
-        "plugins/nativeDebug-plugin/lib/*.jar",
         "plugins/clion/lib/*.jar",
         "plugins/clion/lib/modules/*.jar",
-        "plugins/platform-images/lib/*.jar", # for native debug plugin
+        "plugins/cmake/lib/*.jar",
+        "plugins/cmake/lib/modules/*.jar",
+        "plugins/nativeDebug-plugin/lib/*.jar",
+
+        # for native debug plugin
+        "plugins/platform-images/lib/*.jar",
+        "plugins/platform-images/lib/modules/*.jar",
+
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
     ]),
