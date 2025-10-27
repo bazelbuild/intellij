@@ -73,7 +73,7 @@ public class ArtifactTest {
     final var ideInfo = aspect.findCIdeInfo("//main:main", REPOSITORY_NAME, Collections.emptyList());
 
     final var headers = ideInfo.getCompilationContext().getHeadersList();
-    assertThat(headers).hasSize(10);
+    assertThat(headers).hasSize(11);
 
     final var virtualHeaders = headers.stream()
         .filter(it -> it.getRelativePath().contains("virtual_includes"))

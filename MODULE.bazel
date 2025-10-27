@@ -66,6 +66,11 @@ bazel_dep(
     dev_dependency = True,
 )
 bazel_dep(
+    name = "rules_foreign_cc",
+    version = "0.12.0",
+    dev_dependency = True,
+)
+bazel_dep(
     name = "rules_bazel_integration_test",
     version = "0.34.0",
     dev_dependency = True,
