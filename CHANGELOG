@@ -1,3 +1,11 @@
+v2025.10.27
+===========
+* Add experimental header cache (can be enabled with the bazel.cpp.header.cache.enabled registry key) #7947
+* Fix NPE in SyncPhaseCoordinator #7933
+* Enable the new sync view by default for new users #7909
+* Add check for initialized workspaces in CLionNotificationProvider #7908
+* Remove plugin transfer notification #7910
+
 v2025.09.19
 ===========
 * Handle cancellation of project sync more gracefully #7805
