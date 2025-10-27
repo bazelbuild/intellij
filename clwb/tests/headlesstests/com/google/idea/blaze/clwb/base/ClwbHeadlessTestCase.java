@@ -28,11 +28,14 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
   }
 
   @Override
-  protected void tearDown() {
+  protected void tearDown() throws Exception {
     final var roots = new ArrayList<AllowedVfsRoot>();
     addAllowedVfsRoots(roots);
 
     Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
+    // HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
+
+    super.tearDown();
   }
 
   private void setupSandboxBin() {
@@ -50,7 +53,9 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     assertExists(sdkBinPath.toFile());
 
     try {
-      Files.createSymbolicLink(Path.of(PathManager.getBinPath()), sdkBinPath);
+      final var link = Path.of(PathManager.getBinPath());
+      Files.deleteIfExists(link);
+      Files.createSymbolicLink(link, sdkBinPath);
     } catch (IOException e) {
       abort("could not create bin path symlink", e);
     }

@@ -2,10 +2,14 @@ package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.idea.blaze.clwb.base.Utils.resolveHeader;
 import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.common.truth.StringSubject;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.util.VfsUtil;
+import com.google.idea.blaze.cpp.sync.HeaderCacheService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,6 +22,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Assertions {
+
   private final static Pattern defineRx = Pattern.compile("#define ([^ ]+) ?(.*)");
 
   public static void assertContainsHeader(String fileName, OCCompilerSettings settings) {
@@ -37,10 +42,14 @@ public class Assertions {
 
     for (final var root : roots) {
       final var rootFile = root.getVirtualFile();
-      if (rootFile == null) continue;
+      if (rootFile == null) {
+        continue;
+      }
 
       final var headerFile = rootFile.findFileByRelativePath(fileName);
-      if (headerFile == null || !headerFile.exists()) continue;
+      if (headerFile == null || !headerFile.exists()) {
+        continue;
+      }
 
       found.set(headerFile);
       foundIn.set(root);
@@ -108,5 +117,29 @@ public class Assertions {
       final var roots = allowedRoots.stream().map(Object::toString).collect(Collectors.joining(";"));
       abort(String.format("%s not in allowed roots: [%s], debug with: '-Dfile.system.trace.loading=%s'", child, roots, child));
     }
+  }
+
+  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project) {
+    final var header = resolveHeader(fileName, settings);
+    assertThat(header).isNotNull();
+
+    final var service = HeaderCacheService.of(project);
+    assertThat(HeaderCacheService.getEnabled()).isTrue();
+
+    assertWithMessage(String.format("file does not reside in the include cache: %s", header.getPath()))
+        .that(header.toNioPath().startsWith(service.getCacheDirectory()))
+        .isTrue();
+  }
+
+  public static void assertWorkspaceHeader(String fileName, OCCompilerSettings compilerSettings, Project project) {
+    final var header = resolveHeader(fileName, compilerSettings);
+    assertThat(header).isNotNull();
+
+    final var importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    assertThat(importSettings).isNotNull();
+
+    assertWithMessage(String.format("file does not reside in the workspace: %s", header.getPath()))
+        .that(header.toNioPath().startsWith(importSettings.getWorkspaceRoot()))
+        .isTrue();
   }
 }

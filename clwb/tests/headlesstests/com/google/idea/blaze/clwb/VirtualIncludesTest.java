@@ -2,6 +2,8 @@ package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
+import static com.google.idea.blaze.clwb.base.Utils.resolveHeader;
+import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
@@ -21,6 +23,8 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
 
   @Test
   public void testClwb() {
+    setIncludesCacheEnabled(false);
+
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
@@ -48,22 +52,6 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
   }
 
-  private @Nullable VirtualFile findHeader(String fileName, OCCompilerSettings settings) {
-    final var roots = settings.getHeadersSearchRoots().getAllRoots();
-
-    for (final var root : roots) {
-      final var rootFile = root.getVirtualFile();
-      if (rootFile == null) continue;
-
-      final var headerFile = rootFile.findFileByRelativePath(fileName);
-      if (headerFile == null) continue;
-
-      return headerFile;
-    }
-
-    return null;
-  }
-
   private void checkIncludes() {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
 
@@ -75,22 +63,22 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertContainsHeader("raw_quote.h", compilerSettings);
 
     assertThat(findProjectFile("lib/strip_absolut/strip_absolut.h"))
-        .isEqualTo(findHeader("strip_absolut/strip_absolut.h", compilerSettings));
+        .isEqualTo(resolveHeader("strip_absolut/strip_absolut.h", compilerSettings));
 
     assertThat(findProjectFile("lib/strip_relative/include/strip_relative.h"))
-        .isEqualTo(findHeader("strip_relative.h", compilerSettings));
+        .isEqualTo(resolveHeader("strip_relative.h", compilerSettings));
 
     assertThat(findProjectFile("lib/impl_deps/impl.h"))
-        .isEqualTo(findHeader("lib/impl_deps/impl.h", compilerSettings));
+        .isEqualTo(resolveHeader("lib/impl_deps/impl.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/default/raw_default.h"))
-        .isEqualTo(findHeader("raw_default.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_default.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/system/raw_system.h"))
-        .isEqualTo(findHeader("raw_system.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_system.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/quote/raw_quote.h"))
-        .isEqualTo(findHeader("raw_quote.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_quote.h", compilerSettings));
   }
 
   private void checkCoptIncludes() {
@@ -101,13 +89,13 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertContainsHeader("raw_quote.h", compilerSettings);
 
     assertThat(findProjectFile("lib/raw_files/default/raw_default.h"))
-        .isEqualTo(findHeader("raw_default.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_default.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/system/raw_system.h"))
-        .isEqualTo(findHeader("raw_system.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_system.h", compilerSettings));
 
     assertThat(findProjectFile("lib/raw_files/quote/raw_quote.h"))
-        .isEqualTo(findHeader("raw_quote.h", compilerSettings));
+        .isEqualTo(resolveHeader("raw_quote.h", compilerSettings));
   }
 
   private void checkImplDeps() {
