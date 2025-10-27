@@ -29,15 +29,15 @@ public class ProjectViewStorageManagerTest {
   private static final com.google.common.collect.ImmutableList<String>
       VALID_PROJECT_VIEW_FILENAMES =
           ImmutableList.of(
-              ".blazeproject",
-              ".asproject",
               ".bazelproject",
-              "foo.blazeproject",
+              "foo.bazelproject",
               "bar.baz.bazelproject");
 
   private static final com.google.common.collect.ImmutableList<String>
       INVALID_PROJECT_VIEW_FILENAMES =
           ImmutableList.of(
+              ".blazeproject",
+              ".asproject",
               ".buckproject",
               ".bazel",
               "blazeproject",

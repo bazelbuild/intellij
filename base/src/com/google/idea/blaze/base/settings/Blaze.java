@@ -88,7 +88,11 @@ public class Blaze {
   /**
    * Returns the build system associated with this project, or falls back to the default blaze build
    * system if the project is null or not a blaze project.
+   *
+   * @deprecated Since we do not support Blaze anymore, this check is redundant and can be removed in
+   * the future.
    */
+  @Deprecated
   public static BuildSystemName getBuildSystemName(@Nullable Project project) {
     BlazeImportSettings importSettings =
         project == null
