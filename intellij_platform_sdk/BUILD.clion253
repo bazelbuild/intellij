@@ -43,7 +43,7 @@ no_mockito_extensions(
 
 java_import(
     name = "guava",
-    jars = glob(["lib/guava.jar"]),
+    jars = glob(["lib/module-intellij.libraries.guava.jar"]),
 )
 
 java_import(
