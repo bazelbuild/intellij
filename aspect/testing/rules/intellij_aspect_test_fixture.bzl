@@ -1,15 +1,10 @@
 """Rules for writing tests for the IntelliJ aspect."""
 
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load(
-    "//aspect:intellij_info.bzl",
-    "intellij_info_aspect",
-)
-load(
-    "//aspect:intellij_info_impl.bzl",
-    "IntelliJInfo",
-    "update_set_in_dict",
-)
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("//aspect:intellij_info.bzl", "intellij_info_aspect")
+load("//aspect:intellij_info_impl.bzl", "IntelliJInfo", "update_set_in_dict")
 
 def _impl(ctx):
     """Implementation method for _intellij_aspect_test_fixture."""
@@ -67,6 +62,10 @@ _intellij_aspect_test_fixture = rule(
 )
 
 def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
+    """
+    Runs the aspect on `deps` and writes the output to a file.
+    """
+
     _intellij_aspect_test_fixture(
         name = name,
         output = name + ".intellij-aspect-test-fixture",
@@ -75,10 +74,42 @@ def intellij_aspect_test_fixture(name, deps, transitive_configs = []):
         transitive_configs = transitive_configs,
     )
 
-def test_sources(outs):
-    for out in outs:
-        copy_file(
-            name = out + ".genrule",
-            src = out + ".testdata",
-            out = out,
-        )
+def intellij_aspect_test(name, aspect_deps, **kwargs):
+    """
+    Creates an intellij aspect test. Runs the aspect on `aspect_deps` and makes
+    the result available as a fixture called <name>_fixture. The fixture can be
+    loaded in the test using the IntellijAspectResource:
+
+    @Rule
+    @JvmField
+    val aspect: IntellijAspectResource = IntellijAspectResource(this::class.java)
+    """
+
+    deps = list(kwargs.pop("deps", []))
+    deps.extend([
+        "//aspect/testing/rules:IntellijAspectResource",
+        "//intellij_platform_sdk:test_libs",
+        "//proto:common_java_proto",
+        "//third_party/java/junit",
+    ])
+
+    data = list(kwargs.pop("data", []))
+    data.append(name + "_fixture")
+
+    intellij_aspect_test_fixture(
+        name = name + "_fixture",
+        deps = aspect_deps,
+    )
+
+    kt_jvm_library(
+        name = name + "_lib",
+        testonly = 1,
+        data = data,
+        deps = deps,
+        **kwargs
+    )
+
+    java_test(
+        name = name,
+        runtime_deps = [name + "_lib"],
+    )
