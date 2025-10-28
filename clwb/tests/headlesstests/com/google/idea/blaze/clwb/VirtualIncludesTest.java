@@ -50,6 +50,7 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
     roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "external/+_repo_rules+clwb_virtual_includes_external"));
   }
 
   private void checkIncludes() {
@@ -61,6 +62,7 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
     assertContainsHeader("raw_default.h", compilerSettings);
     assertContainsHeader("raw_system.h", compilerSettings);
     assertContainsHeader("raw_quote.h", compilerSettings);
+    assertContainsHeader("external/generated.h", compilerSettings);
 
     assertThat(findProjectFile("lib/strip_absolut/strip_absolut.h"))
         .isEqualTo(resolveHeader("strip_absolut/strip_absolut.h", compilerSettings));
