@@ -126,7 +126,7 @@ class HeaderCacheService(private val project: Project) {
       // check if the header is already present in the cache
       if (!cacheTracker.add(header.relativePath())) continue
 
-      val path = targetCacheDirectory.resolve(header.relativePath())
+      val path = resolveCachePath(targetCacheDirectory, header)
 
       try {
         Files.createDirectories(path.parent)
@@ -168,6 +168,19 @@ class HeaderCacheService(private val project: Project) {
 
   private fun isInBazelBin(location: ArtifactLocation): Boolean {
     return location.rootPath().isNotBlank() && isInBazelBin(Path.of(location.rootPath()))
+  }
+
+  private fun resolveCachePath(cacheDirectory: Path, location: ArtifactLocation): Path {
+    val root = Path.of(location.rootPath())
+
+    // if the path has an external prefix, this needs to map into the cache as well
+    val cacheRoot = if (root.nameCount > 3) {
+      cacheDirectory.resolve(root.subpath(3, root.nameCount))
+    } else {
+      cacheDirectory
+    }
+
+    return cacheRoot.resolve(location.relativePath())
   }
 }
 
