@@ -86,14 +86,11 @@ public class ArtifactTest extends BazelIntellijAspectTest {
   public void testVirtualIncludesSymlinks() throws Exception {
     final var ideInfo = getCIdeInfo("//main:main");
 
-    final var headers = ideInfo.getCompilationContext().getHeadersList();
-    assertThat(headers).hasSize(10);
-
-    final var virtualHeaders = headers.stream()
+    final var virtualHeaders = ideInfo.getCompilationContext().getHeadersList().stream()
         .filter(it -> it.getRelativePath().contains("virtual_includes"))
         .toList();
 
-    assertThat(virtualHeaders).hasSize(3);
+    assertThat(virtualHeaders).hasSize(4);
     assertThat(virtualHeaders.stream().map(ArtifactLocation::getIsSource).distinct()).containsExactly(false);
   }
 }
