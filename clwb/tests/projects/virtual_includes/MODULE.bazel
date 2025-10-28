@@ -3,8 +3,9 @@ module(name = "clwb_virtual_includes_project")
 bazel_dep(name = "rules_cc", version = "0.2.11")
 bazel_dep(name = "platforms", version = "1.0.0")
 
-local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
-local_repository(
-    name = "clwb_virtual_includes_external",
+# local external dependency
+bazel_dep(name = "clwb_virtual_includes_external")
+local_path_override(
+    module_name = "clwb_virtual_includes_external",
     path = "lib/external",
 )
