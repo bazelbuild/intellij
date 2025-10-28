@@ -10,7 +10,7 @@ cmake(
     lib_source = ":srcs",
     out_include_dir = "include",
     out_static_libs = select({
-        "@platforms//os:windows": ["libcmake.lib"],
+        "@platforms//os:windows": ["cmake.lib"],
         "//conditions:default": ["libcmake.a"],
     }),
     visibility = ["//visibility:public"],
