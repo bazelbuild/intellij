@@ -24,7 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 
-class LoadProjectViewAction : BlazeProjectAction(), DumbAware {
+class SwitchProjectViewAction : BlazeProjectAction(), DumbAware {
 
   override fun actionPerformedInBlazeProject(project: Project, e: AnActionEvent) {
     val project = e.project ?: return
@@ -36,7 +36,7 @@ class LoadProjectViewAction : BlazeProjectAction(), DumbAware {
     settings.projectViewFile = file.path
 
     // this also reloads the project view
-    BlazeSyncManager.getInstance(project).fullProjectSync( /* reason= */ "LoadProjectViewAction")
+    BlazeSyncManager.getInstance(project).fullProjectSync( /* reason= */ "SwitchProjectViewAction")
   }
 
   override fun updateForBlazeProject(project: Project, e: AnActionEvent) {
