@@ -173,9 +173,9 @@ http_archive(
     url = CLION_251_URL,
 )
 
-CLION_252_SHA = "5d18b7ef0fd46a39e87914a7f54ff8d1e095938e451881fa3f9f5bebaa3037b2"
+CLION_252_SHA = "29b8cda11752215aaf273de283ea6245c9c55eb54cb5ef30e0765277eea9130a"
 
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.2/clion-2025.2.2.zip"
+CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.4/clion-2025.2.4.zip"
 
 http_archive(
     name = "clion_2025_2",
@@ -219,9 +219,9 @@ http_archive(
     url = PYTHON_PLUGIN_251_URL,
 )
 
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.26830.24/PythonCore-252.26830.24.zip"
+PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.27397.103/PythonCore-252.27397.103.zip"
 
-PYTHON_PLUGIN_252_SHA = "8410233d2b0d0ea38a65c38708a8dbdeb19657970f876487e6775614e4d203c3"
+PYTHON_PLUGIN_252_SHA = "f56a95f3aa127bc7057700583cb201044f4b41bfacd8f1f7d4a827c7020cf4a4"
 
 http_archive(
     name = "python_2025_2",
