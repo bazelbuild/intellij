@@ -41,6 +41,11 @@ jobs:
         run: |
           echo "VERSION = '${{ inputs.version }}'" > version.bzl
 
+      - name: Check CHANGELOG for version
+        if: ${{ !inputs.eap }} # EAP builds don't have a CHANGELOG entry
+        run: |
+          grep -qF $(echo "${{ inputs.version }}" | cut -d'.' -f1-3) CHANGELOG
+
       - name: Build Plugin Zip
         run: bazel build //clwb:clwb_bazel_zip --define=ij_product=${{ matrix.product }}
 
