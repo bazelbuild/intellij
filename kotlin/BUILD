@@ -98,6 +98,7 @@ intellij_integration_test_suite(
     jvm_flags = [
         "--add-exports java.base/sun.nio.ch=ALL-UNNAMED",
         "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "-Didea.kotlin.plugin.use.k1=true",
     ],
     required_plugins = "org.jetbrains.kotlin,com.google.idea.blaze.kotlin",
     tags = ["noci:studio-win"],

@@ -55,7 +55,10 @@ java_import(
 
 java_import(
     name = "platform_images",
-    jars = glob(["plugins/platform-images/lib/*.jar"]),
+    jars = glob([
+        "plugins/platform-images/lib/*.jar",
+        "plugins/platform-images/lib/modules/*.jar"
+    ]),
 )
 
 java_import(
@@ -78,8 +81,6 @@ java_import(
         "plugins/css-plugin/lib/*.jar",
         "plugins/css-plugin/lib/frontend-split/*.jar",
         "plugins/css-plugin/lib/modules/*.jar",
-        "plugins/platform-images/lib/*.jar",
-        "plugins/platform-images/modules/*.jar",
     ]),
 )
 
