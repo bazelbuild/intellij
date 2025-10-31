@@ -18,10 +18,9 @@ package com.google.idea.blaze.aspect.general.artifacts;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CIdeInfo;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
-import com.google.idea.blaze.BazelIntellijAspectTest;
-import java.io.IOException;
+import com.google.idea.blaze.aspect.IntellijAspectResource;
+import java.util.Collections;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,50 +29,37 @@ import org.junit.runners.JUnit4;
  * Tests the artifact representation
  */
 @RunWith(JUnit4.class)
-public class ArtifactTest extends BazelIntellijAspectTest {
+public class ArtifactTest {
 
   private static final String REPOSITORY_NAME = "clwb_virtual_includes_project";
 
-  private TargetIdeInfo getIdeInfo(String label) throws IOException {
-    final var testFixture = loadTestFixture(":aspect_fixture");
-    final var target = findExternalTarget(testFixture, REPOSITORY_NAME, label);
-    assertThat(target).isNotNull();
-
-    return target;
-  }
-
-  private CIdeInfo getCIdeInfo(String label) throws IOException {
-    final var target = getIdeInfo(label);
-    assertThat(target.hasCIdeInfo()).isTrue();
-
-    return target.getCIdeInfo();
-  }
+  @Rule
+  public final IntellijAspectResource aspect = new IntellijAspectResource(ArtifactTest.class, ":aspect_fixture");
 
   @Test
-  public void testExternalFilePath() throws Exception {
-    final var ideInfo = getCIdeInfo("//main:main");
+  public void testExternalFilePath() {
+    final var ideInfo = aspect.findCIdeInfo("//main:main", REPOSITORY_NAME, Collections.emptyList());
     final var sourceFile = ideInfo.getRuleContext().getSources(0);
 
     assertThat(sourceFile.getRootPath()).isEqualTo("external/+_repo_rules2+clwb_virtual_includes_project");
     assertThat(sourceFile.getRelativePath()).isEqualTo("main/main.cc");
     assertThat(sourceFile.getIsExternal()).isTrue();
     assertThat(sourceFile.getIsSource()).isTrue();
-
   }
 
   @Test
-  public void testSourceFilesAreCorrectlyMarkedAsSourceOrGenerated() throws Exception {
-    final var genIdeInfo = getCIdeInfo("//lib/strip_absolut:gen");
+  public void testSourceFilesAreCorrectlyMarkedAsSourceOrGenerated() {
+    final var genIdeInfo = aspect.findCIdeInfo("//lib/strip_absolut:gen", REPOSITORY_NAME, Collections.emptyList());
     assertThat(genIdeInfo.getRuleContext().getHeadersList().get(0).getIsSource()).isFalse();
 
-    final var srcIdeInfo = getCIdeInfo("//lib/strip_absolut:lib");
+    final var srcIdeInfo = aspect.findCIdeInfo("//lib/strip_absolut:lib", REPOSITORY_NAME, Collections.emptyList());
     assertThat(srcIdeInfo.getRuleContext().getSourcesList().get(0).getIsSource()).isTrue();
     assertThat(srcIdeInfo.getRuleContext().getHeadersList().get(0).getIsSource()).isTrue();
   }
 
   @Test
-  public void testCorrectPathToTargetBuildFile() throws Exception {
-    final var ideInfo = getIdeInfo("//main:main");
+  public void testCorrectPathToTargetBuildFile() {
+    final var ideInfo = aspect.findTarget("//main:main", REPOSITORY_NAME, Collections.emptyList());
     final var buildFile = ideInfo.getBuildFileArtifactLocation();
 
     assertThat(buildFile.getRootPath()).isEqualTo("external/+_repo_rules2+clwb_virtual_includes_project");
@@ -83,11 +69,11 @@ public class ArtifactTest extends BazelIntellijAspectTest {
   }
 
   @Test
-  public void testVirtualIncludesSymlinks() throws Exception {
-    final var ideInfo = getCIdeInfo("//main:main");
+  public void testVirtualIncludesSymlinks() {
+    final var ideInfo = aspect.findCIdeInfo("//main:main", REPOSITORY_NAME, Collections.emptyList());
 
     final var headers = ideInfo.getCompilationContext().getHeadersList();
-    assertThat(headers).hasSize(10);
+    assertThat(headers).hasSize(11);
 
     final var virtualHeaders = headers.stream()
         .filter(it -> it.getRelativePath().contains("virtual_includes"))

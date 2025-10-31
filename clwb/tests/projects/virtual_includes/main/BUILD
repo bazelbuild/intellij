@@ -5,6 +5,7 @@ cc_binary(
     srcs = ["main.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//lib/cmake:lib",
         "//lib/impl_deps:lib",
         "//lib/raw_files:lib",
         "//lib/strip_absolut:gen",
