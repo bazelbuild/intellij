@@ -173,7 +173,8 @@ class HeaderCacheService(private val project: Project) {
   private fun resolveCachePath(cacheDirectory: Path, location: ArtifactLocation): Path {
     val root = Path.of(location.rootPath())
 
-    // if the path has an external prefix, this needs to map into the cache as well
+    // for external root paths (e.g bazel-out/k8-fastbuild/bin/external/bazel_tools) the external prefix
+    // (e.g. external/bazel_tools) needs to map into the cache as well
     val cacheRoot = if (root.nameCount > 3) {
       cacheDirectory.resolve(root.subpath(3, root.nameCount))
     } else {
