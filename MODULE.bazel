@@ -258,3 +258,8 @@ local_repository(
     name = "clwb_virtual_includes_project",
     path = "clwb/tests/projects/virtual_includes",
 )
+
+local_repository(
+    name = "clwb_virtual_includes_external",
+    path = "clwb/tests/projects/virtual_includes/lib/external",
+)

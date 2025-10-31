@@ -54,6 +54,8 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertContainsHeader("raw_quote.h", compilerSettings);
     assertWorkspaceHeader("raw_quote.h", compilerSettings, myProject);
 
+    assertContainsHeader("external/generated.h", compilerSettings);
+    assertCachedHeader("external/generated.h", compilerSettings, myProject);
   }
 
   private void checkCoptIncludes() {
@@ -67,7 +69,6 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
 
     assertContainsHeader("raw_quote.h", compilerSettings);
     assertWorkspaceHeader("raw_quote.h", compilerSettings, myProject);
-
   }
 
   private void checkImplDeps() {
