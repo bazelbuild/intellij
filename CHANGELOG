@@ -1,3 +1,8 @@
+v2025.11.03
+===========
+* Add switch project view action #7951
+* Fix bug with external dependencies in the header cache #7967
+
 v2025.10.27
 ===========
 * Add experimental header cache (can be enabled with the bazel.cpp.header.cache.enabled registry key) #7947
