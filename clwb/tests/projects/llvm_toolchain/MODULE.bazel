@@ -1,4 +1,4 @@
-bazel_dep(name = "rules_cc", version = "0.2.13")
+bazel_dep(name = "rules_cc", version = "0.2.14")
 bazel_dep(name = "toolchains_llvm", version = "1.5.0")
 
 # Configure and register the toolchain.
