@@ -1,0 +1,36 @@
+name: Issue Android Label Comment
+
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  check_and_comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      
+    steps:
+      - name: Check for Android Studio label and Add Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueLabels = context.payload.issue.labels.map(label => label.name);
+            const targetLabel = 'Android Studio';
+            
+            if (issueLabels.includes(targetLabel)) {
+              console.log(`Found the '${targetLabel}' label. Adding comment...`);
+              
+              const bodyMsg = "Thanks for submitting this issue! Please note that, the Android Studio plugin source code is maintained in [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb) and user issues should be reported to Android Public Tracker > App Development > Android Studio component.";
+            
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: bodyMsg
+              });
+              
+              console.log('Comment added successfully.');
+            } else {
+              console.log(`The '${targetLabel}' label was not found. No comment added.`);
+            }
