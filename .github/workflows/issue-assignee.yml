@@ -39,7 +39,6 @@ jobs:
               'product: CLion': ['ujohnny'],
               'product: IntelliJ': ['sellophane'],
               'product: GoLand': ['iliakondratev'],
-              'product: Android Studio': ['mai93'],
               'product: PyCharm': ['agluszak']
               };
             const assignees = labels.some(label => label.startsWith('product:'))
@@ -47,7 +46,7 @@ jobs:
                   const assignee = label in labelToAssignees ? labelToAssignees[label] : [];
                   return acc.concat(assignee);
                 }, [])
-              : ['sgowroji', 'satyanandak', 'iancha1992'];
+              : ['bharadwaj08-one', 'satyanandak', 'iancha1992'];
 
             if (assignees.length > 0) {
               await github.rest.issues.addAssignees({

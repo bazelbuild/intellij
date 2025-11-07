@@ -40,7 +40,6 @@ jobs:
               'product: CLion': ['ujohnny'],
               'product: IntelliJ': ['sellophane'],
               'product: GoLand': ['iliakondratev'],
-              'product: Android Studio': ['mai93'],
               'product: PyCharm': ['agluszak']
             };
             for (const label of labels) {
