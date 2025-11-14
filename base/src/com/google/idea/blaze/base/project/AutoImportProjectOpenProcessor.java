@@ -2,14 +2,16 @@ package com.google.idea.blaze.base.project;
 
 import static com.google.idea.blaze.base.project.BlazeProjectOpenProcessor.getIdeaSubdirectory;
 
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectView.Builder;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -21,9 +23,7 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -242,7 +242,9 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
     Path managedProjectViewFilePath = workspaceRoot.toNioPath()
         .resolve(MANAGED_PROJECT_RELATIVE_PATH);
     if (managedProjectViewFilePath.toFile().exists()) {
-      return fromFileProjectView(managedProjectViewFilePath, pathResolver);
+      return ProjectView.builder().add(
+          ScalarSection.builder(ImportSection.KEY).set(
+              WorkspacePath.createIfValid(MANAGED_PROJECT_RELATIVE_PATH))).build();
     }
 
     // create minimal project view file manually
