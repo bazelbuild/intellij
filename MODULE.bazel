@@ -1,8 +1,3 @@
-module(
-    bazel_compatibility = [">=7.0.0"],
-    repo_name = "intellij_with_bazel",
-)
-
 bazel_dep(
     name = "platforms",
     version = "1.0.0",
@@ -93,7 +88,7 @@ use_repo(
     "build_bazel_bazel_last_green",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.8")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -115,7 +110,7 @@ maven.install(
         "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
-        "com.google.errorprone:error_prone_annotations:2.20.0",
+        "com.google.errorprone:error_prone_annotations:2.23.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
         "com.google.truth:truth:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
@@ -128,6 +123,11 @@ maven.install(
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
+    known_contributing_modules = [
+        "",
+        "bazel_worker_java",
+        "protobuf",
+    ],
     lock_file = "//:maven_install.json",
 )
 use_repo(
