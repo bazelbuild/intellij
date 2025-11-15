@@ -125,3 +125,15 @@ filegroup(
     name = "application_info_json",
     srcs = ["product-info.json"],
 )
+
+java_import(
+    name = "grammar_kit_libs",
+    jars = [
+        "lib/util.jar",
+        "lib/util-8.jar",
+        "lib/util_rt.jar",
+        "lib/app.jar",
+        "lib/lib.jar",
+        "lib/opentelemetry.jar",
+    ] + glob(["lib/module-intellij.libraries.*.jar"]),
+)

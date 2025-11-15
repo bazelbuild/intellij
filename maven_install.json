@@ -18,50 +18,60 @@
     "net.bytebuddy:byte-buddy-agent": -1244514791,
     "net.java.dev.jna:jna": 1334366304,
     "org.hamcrest:hamcrest-core": 477294799,
+    "org.jetbrains.intellij.deps.jflex:jflex": -357929704,
     "org.jetbrains.kotlin:kotlin-stdlib": -76234895,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": 1514315635,
     "org.jetbrains.pty4j:pty4j": -1956001118,
     "org.jetbrains:annotations": -828182130,
+    "org.jetbrains:grammar-kit": -539741380,
     "org.mockito:mockito-core": -816422487,
     "org.objenesis:objenesis": -1739136178,
-    "org.opentest4j:opentest4j": 1345016098,
-    "repositories": -1949687017
+    "org.opentest4j:opentest4j": 36565236,
+    "repositories": 1485828590
   },
   "__RESOLVED_ARTIFACTS_HASH": {
-    "com.google.auto.value:auto-value": -1952736596,
-    "com.google.auto.value:auto-value-annotations": 641018093,
-    "com.google.code.findbugs:jsr305": 870839855,
-    "com.google.code.gson:gson": 50257904,
-    "com.google.errorprone:error_prone_annotations": 248661300,
-    "com.google.flogger:flogger": -1346444653,
-    "com.google.flogger:flogger-system-backend": 1919472289,
-    "com.google.guava:failureaccess": -718864417,
-    "com.google.guava:guava": 1193262116,
-    "com.google.guava:listenablefuture": 1079558157,
-    "com.google.j2objc:j2objc-annotations": -404209759,
-    "com.google.truth:truth": 482842935,
-    "com.googlecode.java-diff-utils:diffutils": -799723261,
-    "junit:junit": -1126424969,
-    "net.bytebuddy:byte-buddy": -1008009040,
-    "net.bytebuddy:byte-buddy-agent": 2101978136,
-    "net.java.dev.jna:jna": -1045971559,
-    "net.java.dev.jna:jna-platform": 527596188,
-    "org.checkerframework:checker-compat-qual": -1467964223,
-    "org.checkerframework:checker-qual": -1158206121,
-    "org.hamcrest:hamcrest": 1282317766,
-    "org.hamcrest:hamcrest-core": 2078867070,
-    "org.jetbrains.kotlin:kotlin-stdlib": 542836483,
-    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": 674260543,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": -1038345167,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": -1553798467,
-    "org.jetbrains.pty4j:pty4j": 1260041748,
-    "org.jetbrains:annotations": 1790698553,
-    "org.jspecify:jspecify": 1590475990,
-    "org.mockito:mockito-core": -83135043,
-    "org.objenesis:objenesis": 1798216877,
-    "org.opentest4j:opentest4j": -1711174392,
-    "org.ow2.asm:asm": 55894444,
-    "org.slf4j:slf4j-api": 408013754
+    "com.google.auto.value:auto-value": -1584651363,
+    "com.google.auto.value:auto-value-annotations": -661386722,
+    "com.google.code.findbugs:jsr305": 791001056,
+    "com.google.code.gson:gson": -1786914335,
+    "com.google.errorprone:error_prone_annotations": -756568027,
+    "com.google.flogger:flogger": 1299493181,
+    "com.google.flogger:flogger-system-backend": -1759336745,
+    "com.google.guava:failureaccess": -415715952,
+    "com.google.guava:guava": -121764660,
+    "com.google.guava:listenablefuture": -1095866050,
+    "com.google.j2objc:j2objc-annotations": -1813418542,
+    "com.google.truth:truth": 1038075009,
+    "com.googlecode.java-diff-utils:diffutils": 485967796,
+    "junit:junit": 1978237313,
+    "net.bytebuddy:byte-buddy": -1190647135,
+    "net.bytebuddy:byte-buddy-agent": -268900343,
+    "net.java.dev.jna:jna": 11676106,
+    "net.java.dev.jna:jna-platform": -1846578358,
+    "org.apache.ant:ant": -1613288748,
+    "org.apache.ant:ant-launcher": 742887738,
+    "org.checkerframework:checker-compat-qual": -1365501198,
+    "org.checkerframework:checker-qual": 2035939592,
+    "org.hamcrest:hamcrest": 1226587447,
+    "org.hamcrest:hamcrest-core": 1117998846,
+    "org.jetbrains.intellij.deps.jflex:jflex": 160180211,
+    "org.jetbrains.kotlin:kotlin-stdlib": -1302785066,
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk7": -1155375557,
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk8": -1530570385,
+    "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm": -1506325626,
+    "org.jetbrains.kotlinx:kotlinx-io-core-jvm": 1637351479,
+    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": -1838996780,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1401819924,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": -286774337,
+    "org.jetbrains.pty4j:pty4j": 1161499589,
+    "org.jetbrains:annotations": 771553386,
+    "org.jetbrains:grammar-kit": 295701083,
+    "org.jspecify:jspecify": -507076537,
+    "org.mockito:mockito-core": -215822582,
+    "org.objenesis:objenesis": 609775070,
+    "org.opentest4j:opentest4j": -1037660935,
+    "org.ow2.asm:asm": 521087645,
+    "org.slf4j:slf4j-api": 1053919275
   },
   "conflict_resolution": {
     "com.google.auto.value:auto-value-annotations:1.10.2": "com.google.auto.value:auto-value-annotations:1.11.0",
@@ -178,6 +188,18 @@
       },
       "version": "5.14.0"
     },
+    "org.apache.ant:ant": {
+      "shasums": {
+        "jar": "befbfc79e744e9892cfa7db96df3b6e82dc17d2571af42aa427976fc22299838"
+      },
+      "version": "1.10.13"
+    },
+    "org.apache.ant:ant-launcher": {
+      "shasums": {
+        "jar": "cd7695b3bfb6964ab71b6a0b31dad60005ae77fe502132364679aacf08f77970"
+      },
+      "version": "1.10.13"
+    },
     "org.checkerframework:checker-compat-qual": {
       "shasums": {
         "jar": "d76b9afea61c7c082908023f0cbc1427fab9abd2df915c8b8a3e7a509bccbc6d"
@@ -202,11 +224,41 @@
       },
       "version": "3.0"
     },
+    "org.jetbrains.intellij.deps.jflex:jflex": {
+      "shasums": {
+        "jar": "a583140bda559942f4a5be23e6c9164a9ce11969bd32901768659d5402b03b04"
+      },
+      "version": "1.10.16"
+    },
     "org.jetbrains.kotlin:kotlin-stdlib": {
       "shasums": {
         "jar": "263bdc679e1f62012db7b091796279b6d71cf36f4797a98ff1ace05835f201c8"
       },
       "version": "2.1.21"
+    },
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk7": {
+      "shasums": {
+        "jar": "712f480760edeee48a84369e6be89f6ab52375408bb2ca3be14ef663f72bee31"
+      },
+      "version": "2.0.21"
+    },
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk8": {
+      "shasums": {
+        "jar": "15c8c0acb311483c068d1697501965474b70dfd80ac79580eca3a03cf51e4a1d"
+      },
+      "version": "2.0.21"
+    },
+    "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm": {
+      "shasums": {
+        "jar": "baa77a783d70a66af88d6898a1d4971e4aa84e62b26418057379bdf09fb5bada"
+      },
+      "version": "0.6.0"
+    },
+    "org.jetbrains.kotlinx:kotlinx-io-core-jvm": {
+      "shasums": {
+        "jar": "42523c80823d31ef59fae42c9252ef1d3b1189ca9d3cc3adfd402a29d063e6ff"
+      },
+      "version": "0.6.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": {
       "shasums": {
@@ -237,6 +289,12 @@
         "jar": "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297"
       },
       "version": "26.0.2"
+    },
+    "org.jetbrains:grammar-kit": {
+      "shasums": {
+        "jar": "80e4b65ca055eb3c6f91cca5fa56eace2ead351b7b100e009b419fa15324f3b0"
+      },
+      "version": "2023.3"
     },
     "org.jspecify:jspecify": {
       "shasums": {
@@ -305,11 +363,34 @@
     "net.java.dev.jna:jna-platform": [
       "net.java.dev.jna:jna"
     ],
+    "org.apache.ant:ant": [
+      "org.apache.ant:ant-launcher"
+    ],
     "org.hamcrest:hamcrest-core": [
       "org.hamcrest:hamcrest"
     ],
+    "org.jetbrains.intellij.deps.jflex:jflex": [
+      "com.google.code.findbugs:jsr305",
+      "org.apache.ant:ant",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+      "org.jetbrains.kotlinx:kotlinx-io-core-jvm"
+    ],
     "org.jetbrains.kotlin:kotlin-stdlib": [
       "org.jetbrains:annotations"
+    ],
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk7": [
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "org.jetbrains.kotlin:kotlin-stdlib-jdk8": [
+      "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk7"
+    ],
+    "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm": [
+      "org.jetbrains.kotlin:kotlin-stdlib"
+    ],
+    "org.jetbrains.kotlinx:kotlinx-io-core-jvm": [
+      "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm"
     ],
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": [
       "org.jetbrains.kotlin:kotlin-stdlib"
@@ -583,6 +664,74 @@
       "com.sun.jna.platform.win32.COM.util.annotation",
       "com.sun.jna.platform.wince"
     ],
+    "org.apache.ant:ant": [
+      "org.apache.tools.ant",
+      "org.apache.tools.ant.attribute",
+      "org.apache.tools.ant.dispatch",
+      "org.apache.tools.ant.filters",
+      "org.apache.tools.ant.filters.util",
+      "org.apache.tools.ant.helper",
+      "org.apache.tools.ant.input",
+      "org.apache.tools.ant.listener",
+      "org.apache.tools.ant.loader",
+      "org.apache.tools.ant.property",
+      "org.apache.tools.ant.taskdefs",
+      "org.apache.tools.ant.taskdefs.compilers",
+      "org.apache.tools.ant.taskdefs.condition",
+      "org.apache.tools.ant.taskdefs.cvslib",
+      "org.apache.tools.ant.taskdefs.email",
+      "org.apache.tools.ant.taskdefs.launcher",
+      "org.apache.tools.ant.taskdefs.modules",
+      "org.apache.tools.ant.taskdefs.optional",
+      "org.apache.tools.ant.taskdefs.optional.ccm",
+      "org.apache.tools.ant.taskdefs.optional.clearcase",
+      "org.apache.tools.ant.taskdefs.optional.depend",
+      "org.apache.tools.ant.taskdefs.optional.depend.constantpool",
+      "org.apache.tools.ant.taskdefs.optional.ejb",
+      "org.apache.tools.ant.taskdefs.optional.extension",
+      "org.apache.tools.ant.taskdefs.optional.extension.resolvers",
+      "org.apache.tools.ant.taskdefs.optional.i18n",
+      "org.apache.tools.ant.taskdefs.optional.j2ee",
+      "org.apache.tools.ant.taskdefs.optional.javacc",
+      "org.apache.tools.ant.taskdefs.optional.javah",
+      "org.apache.tools.ant.taskdefs.optional.jlink",
+      "org.apache.tools.ant.taskdefs.optional.jsp",
+      "org.apache.tools.ant.taskdefs.optional.jsp.compilers",
+      "org.apache.tools.ant.taskdefs.optional.native2ascii",
+      "org.apache.tools.ant.taskdefs.optional.net",
+      "org.apache.tools.ant.taskdefs.optional.pvcs",
+      "org.apache.tools.ant.taskdefs.optional.script",
+      "org.apache.tools.ant.taskdefs.optional.sos",
+      "org.apache.tools.ant.taskdefs.optional.testing",
+      "org.apache.tools.ant.taskdefs.optional.unix",
+      "org.apache.tools.ant.taskdefs.optional.vss",
+      "org.apache.tools.ant.taskdefs.optional.windows",
+      "org.apache.tools.ant.taskdefs.rmic",
+      "org.apache.tools.ant.types",
+      "org.apache.tools.ant.types.mappers",
+      "org.apache.tools.ant.types.optional",
+      "org.apache.tools.ant.types.optional.depend",
+      "org.apache.tools.ant.types.resources",
+      "org.apache.tools.ant.types.resources.comparators",
+      "org.apache.tools.ant.types.resources.selectors",
+      "org.apache.tools.ant.types.selectors",
+      "org.apache.tools.ant.types.selectors.modifiedselector",
+      "org.apache.tools.ant.types.spi",
+      "org.apache.tools.ant.util",
+      "org.apache.tools.ant.util.depend",
+      "org.apache.tools.ant.util.facade",
+      "org.apache.tools.ant.util.java15",
+      "org.apache.tools.ant.util.optional",
+      "org.apache.tools.ant.util.regexp",
+      "org.apache.tools.bzip2",
+      "org.apache.tools.mail",
+      "org.apache.tools.tar",
+      "org.apache.tools.zip"
+    ],
+    "org.apache.ant:ant-launcher": [
+      "",
+      "org.apache.tools.ant.launch"
+    ],
     "org.checkerframework:checker-compat-qual": [
       "org.checkerframework.checker.nullness.compatqual"
     ],
@@ -634,6 +783,28 @@
     "org.hamcrest:hamcrest-core": [
       "org.hamcrest.core.deprecated"
     ],
+    "org.jetbrains.intellij.deps.jflex:jflex": [
+      "java_cup.runtime",
+      "jflex",
+      "jflex.anttask",
+      "jflex.base",
+      "jflex.chars",
+      "jflex.core",
+      "jflex.core.unicode",
+      "jflex.core.unicode.data",
+      "jflex.dfa",
+      "jflex.exceptions",
+      "jflex.generator",
+      "jflex.gui",
+      "jflex.io",
+      "jflex.l10n",
+      "jflex.logging",
+      "jflex.option",
+      "jflex.performance",
+      "jflex.scanner",
+      "jflex.skeleton",
+      "jflex.state"
+    ],
     "org.jetbrains.kotlin:kotlin-stdlib": [
       "kotlin",
       "kotlin.annotation",
@@ -682,6 +853,16 @@
       "kotlin.time.jdk8",
       "kotlin.uuid"
     ],
+    "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm": [
+      "kotlinx.io.bytestring",
+      "kotlinx.io.bytestring.unsafe"
+    ],
+    "org.jetbrains.kotlinx:kotlinx-io-core-jvm": [
+      "kotlinx.io",
+      "kotlinx.io.files",
+      "kotlinx.io.internal",
+      "kotlinx.io.unsafe"
+    ],
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": [
       "kotlinx.serialization",
       "kotlinx.serialization.builtins",
@@ -710,6 +891,29 @@
     "org.jetbrains:annotations": [
       "org.intellij.lang.annotations",
       "org.jetbrains.annotations"
+    ],
+    "org.jetbrains:grammar-kit": [
+      "org.intellij.grammar",
+      "org.intellij.grammar.actions",
+      "org.intellij.grammar.analysis",
+      "org.intellij.grammar.config",
+      "org.intellij.grammar.diagram",
+      "org.intellij.grammar.editor",
+      "org.intellij.grammar.fleet",
+      "org.intellij.grammar.generator",
+      "org.intellij.grammar.inspection",
+      "org.intellij.grammar.intention",
+      "org.intellij.grammar.java",
+      "org.intellij.grammar.livePreview",
+      "org.intellij.grammar.parser",
+      "org.intellij.grammar.psi",
+      "org.intellij.grammar.psi.impl",
+      "org.intellij.grammar.refactor",
+      "org.intellij.jflex",
+      "org.intellij.jflex.editor",
+      "org.intellij.jflex.parser",
+      "org.intellij.jflex.psi",
+      "org.intellij.jflex.psi.impl"
     ],
     "org.jspecify:jspecify": [
       "org.jspecify.annotations"
@@ -807,7 +1011,7 @@
     ]
   },
   "repositories": {
-    "https://repo1.maven.org/maven2/": [
+    "https://cache-redirector.jetbrains.com/maven-central/": [
       "com.google.auto.value:auto-value",
       "com.google.auto.value:auto-value-annotations",
       "com.google.code.findbugs:jsr305",
@@ -826,16 +1030,68 @@
       "net.bytebuddy:byte-buddy-agent",
       "net.java.dev.jna:jna",
       "net.java.dev.jna:jna-platform",
+      "org.apache.ant:ant",
+      "org.apache.ant:ant-launcher",
       "org.checkerframework:checker-compat-qual",
       "org.checkerframework:checker-qual",
       "org.hamcrest:hamcrest",
       "org.hamcrest:hamcrest-core",
+      "org.jetbrains.intellij.deps.jflex:jflex",
       "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+      "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",
+      "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
       "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
       "org.jetbrains.kotlinx:kotlinx-serialization-json",
       "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
       "org.jetbrains.pty4j:pty4j",
       "org.jetbrains:annotations",
+      "org.jetbrains:grammar-kit",
+      "org.jspecify:jspecify",
+      "org.mockito:mockito-core",
+      "org.objenesis:objenesis",
+      "org.opentest4j:opentest4j",
+      "org.ow2.asm:asm",
+      "org.slf4j:slf4j-api"
+    ],
+    "https://cache-redirector.jetbrains.com/intellij-dependencies/": [
+      "com.google.auto.value:auto-value",
+      "com.google.auto.value:auto-value-annotations",
+      "com.google.code.findbugs:jsr305",
+      "com.google.code.gson:gson",
+      "com.google.errorprone:error_prone_annotations",
+      "com.google.flogger:flogger",
+      "com.google.flogger:flogger-system-backend",
+      "com.google.guava:failureaccess",
+      "com.google.guava:guava",
+      "com.google.guava:listenablefuture",
+      "com.google.j2objc:j2objc-annotations",
+      "com.google.truth:truth",
+      "com.googlecode.java-diff-utils:diffutils",
+      "junit:junit",
+      "net.bytebuddy:byte-buddy",
+      "net.bytebuddy:byte-buddy-agent",
+      "net.java.dev.jna:jna",
+      "net.java.dev.jna:jna-platform",
+      "org.apache.ant:ant",
+      "org.apache.ant:ant-launcher",
+      "org.checkerframework:checker-compat-qual",
+      "org.checkerframework:checker-qual",
+      "org.hamcrest:hamcrest",
+      "org.hamcrest:hamcrest-core",
+      "org.jetbrains.intellij.deps.jflex:jflex",
+      "org.jetbrains.kotlin:kotlin-stdlib",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+      "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm",
+      "org.jetbrains.kotlinx:kotlinx-io-core-jvm",
+      "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
+      "org.jetbrains.kotlinx:kotlinx-serialization-json",
+      "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
+      "org.jetbrains.pty4j:pty4j",
+      "org.jetbrains:annotations",
+      "org.jetbrains:grammar-kit",
       "org.jspecify:jspecify",
       "org.mockito:mockito-core",
       "org.objenesis:objenesis",
