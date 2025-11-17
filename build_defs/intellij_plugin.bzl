@@ -38,6 +38,7 @@ intellij_plugin(
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_binary", "java_common", "java_import")
+load(":intellij_plugin_library.bzl", "OptionalPluginXmlInfo", "IntellijPluginLibraryInfo")
 load(
     "//build_defs:restrictions.bzl",
     "RestrictedInfo",
@@ -45,8 +46,6 @@ load(
     "validate_restrictions",
     "validate_unchecked_internal",
 )
-
-_OptionalPluginXmlInfo = provider(fields = ["optional_plugin_xmls"])
 
 def _optional_plugin_xml_impl(ctx):
     attr = ctx.attr
@@ -56,7 +55,7 @@ def _optional_plugin_xml_impl(ctx):
             plugin_xml = ctx.file.plugin_xml,
             module = attr.module,
         ))
-    return [_OptionalPluginXmlInfo(optional_plugin_xmls = optional_plugin_xmls)]
+    return [OptionalPluginXmlInfo(optional_plugin_xmls = optional_plugin_xmls)]
 
 optional_plugin_xml = rule(
     implementation = _optional_plugin_xml_impl,
@@ -66,41 +65,11 @@ optional_plugin_xml = rule(
     },
 )
 
-_IntellijPluginLibraryInfo = provider(fields = ["plugin_xmls", "optional_plugin_xmls", "java_info"])
-
-def _intellij_plugin_library_impl(ctx):
-    java_info = java_common.merge([dep[JavaInfo] for dep in ctx.attr.deps])
-
-    plugin_xmls = []
-    for target in ctx.attr.plugin_xmls:
-        for file in target.files.to_list():
-            plugin_xmls.append(file)
-
-    return [
-        _IntellijPluginLibraryInfo(
-            plugin_xmls = depset(plugin_xmls, order = "preorder"),
-            optional_plugin_xmls = [
-                dep[_OptionalPluginXmlInfo]
-                for dep in ctx.attr.optional_plugin_xmls
-            ],
-            java_info = java_info,
-        ),
-    ]
-
-intellij_plugin_library = rule(
-    implementation = _intellij_plugin_library_impl,
-    attrs = {
-        "deps": attr.label_list(providers = [JavaInfo]),
-        "plugin_xmls": attr.label_list(allow_files = [".xml"]),
-        "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
-    },
-)
-
 def _merge_plugin_xmls(ctx):
     dep_plugin_xmls = []
     for dep in ctx.attr.deps:
-        if _IntellijPluginLibraryInfo in dep:
-            dep_plugin_xmls.append(dep[_IntellijPluginLibraryInfo].plugin_xmls)
+        if IntellijPluginLibraryInfo in dep:
+            dep_plugin_xmls.append(dep[IntellijPluginLibraryInfo].plugin_xmls)
     plugin_xmls = depset([ctx.file.plugin_xml], transitive = dep_plugin_xmls, order = "preorder")
 
     if len(plugin_xmls.to_list()) == 1:
@@ -145,7 +114,7 @@ A trick to overcome this limitation is to create a synthetic file, which only pu
 by a `<depends>first_plugin</depends>` directive on the and contain another <depends>second_plugin</depends> directive
 for the second plugin.
 
-Te purpose of `_create_dependency_file_chain` method is to implement this trick. It receives a `_OptionalPluginXmlInfo`
+Te purpose of `_create_dependency_file_chain` method is to implement this trick. It receives a `OptionalPluginXmlInfo`
 structure, which contains the xml file and N of its plugin dependencies. Then it creates actions to generate N-1
 .xml files that make up the dependency chain.
 
@@ -175,12 +144,12 @@ def _merge_optional_plugin_xmls(ctx):
     module_to_xmls = {}
     optional_plugin_xml_providers = []
     for dep in ctx.attr.deps:
-        if _IntellijPluginLibraryInfo in dep:
+        if IntellijPluginLibraryInfo in dep:
             optional_plugin_xml_providers.extend(
-                dep[_IntellijPluginLibraryInfo].optional_plugin_xmls,
+                dep[IntellijPluginLibraryInfo].optional_plugin_xmls.to_list(),
             )
     optional_plugin_xml_providers.extend(
-        [target[_OptionalPluginXmlInfo] for target in ctx.attr.optional_plugin_xmls],
+        [target[OptionalPluginXmlInfo] for target in ctx.attr.optional_plugin_xmls],
     )
     for provider in optional_plugin_xml_providers:
         for xml in provider.optional_plugin_xmls:
@@ -256,7 +225,7 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     return jar_file
 
 def _intellij_plugin_java_deps_impl(ctx):
-    java_infos = [dep[_IntellijPluginLibraryInfo].java_info for dep in ctx.attr.deps]
+    java_infos = [dep[IntellijPluginLibraryInfo].java_info for dep in ctx.attr.deps]
     return [java_common.merge(java_infos)]
 
 _intellij_plugin_java_deps = rule(
@@ -264,7 +233,7 @@ _intellij_plugin_java_deps = rule(
     attrs = {
         "deps": attr.label_list(
             mandatory = True,
-            providers = [[_IntellijPluginLibraryInfo]],
+            providers = [[IntellijPluginLibraryInfo]],
         ),
     },
 )
@@ -301,9 +270,9 @@ _intellij_plugin_jar = rule(
     attrs = {
         "deploy_jar": attr.label(mandatory = True, allow_single_file = [".jar"]),
         "plugin_xml": attr.label(mandatory = True, allow_single_file = [".xml"]),
-        "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
+        "optional_plugin_xmls": attr.label_list(providers = [OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
-        "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
+        "deps": attr.label_list(providers = [[IntellijPluginLibraryInfo]]),
         "restrict_deps": attr.bool(),
         "restricted_deps": attr.label_list(aspects = [restricted_deps_aspect]),
         "plugin_icons": attr.label_list(allow_files = True),
