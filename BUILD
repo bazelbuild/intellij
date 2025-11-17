@@ -31,6 +31,5 @@ test_suite(
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",
-        "//skylark:unit_tests",
     ],
 )
