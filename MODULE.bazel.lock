@@ -255,6 +255,72 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
+    "//intellij_platform_sdk:extension.bzl%intellij_platform": {
+      "general": {
+        "bzlTransitiveDigest": "UjNym0BxUS4MaN8Wh8hjZtlBQJO29AuRlFxQOtEzySI=",
+        "usagesDigest": "j96E+NQfsVoyTdUfAcbkzA/uvNC2sH1XJXydnUCs7xk=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "clion_2025_1": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.clion251",
+              "sha256": "1222a7915371d0f80292215ec63aceed330dd887ce1ad058bfed8384623908a8",
+              "url": "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.6/clion-2025.1.6.zip"
+            }
+          },
+          "clion_2025_2": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.clion252",
+              "sha256": "29b8cda11752215aaf273de283ea6245c9c55eb54cb5ef30e0765277eea9130a",
+              "url": "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.4/clion-2025.2.4.zip"
+            }
+          },
+          "clion_2025_3": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.clion253",
+              "sha256": "de0e78665204adea9e906af351bdd4e988fe7a47a8b6288136eb23ec89d8d83e",
+              "url": "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/253.27642.28-EAP-SNAPSHOT/clion-253.27642.28-EAP-SNAPSHOT.zip"
+            }
+          },
+          "python_2025_1": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.python",
+              "sha256": "b9cc64a4c260f7dd41e0c06b1b30ca8893be11370252cb84e6784c87e2585c54",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.28774.11/PythonCore-251.28774.11.zip"
+            }
+          },
+          "python_2025_2": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.python",
+              "sha256": "f56a95f3aa127bc7057700583cb201044f4b41bfacd8f1f7d4a827c7020cf4a4",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.27397.103/PythonCore-252.27397.103.zip"
+            }
+          },
+          "python_2025_3": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.python",
+              "sha256": "f2643e4f3ab5bf3b7b77cbf0797e8c33318c9d21a3807462f6034d0613ecebc6",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.27864.23/PythonCore-253.27864.23.zip"
+            }
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "",
+            "bazel_tools",
+            "bazel_tools"
+          ]
+        ]
+      }
+    },
     "@@buildifier_prebuilt+//:defs.bzl%buildifier_prebuilt_deps_extension": {
       "general": {
         "bzlTransitiveDigest": "izaEjT7NE6vV9H5axiYiPrvmFtCLNkfjhj+bpMolt1A=",
@@ -594,7 +660,7 @@
     "@@rules_bazel_integration_test+//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "XC9nqZ31LIbq8N7cEK+rYa2iXNQLcJ3cyGWw+zPZlc0=",
-        "usagesDigest": "ZtXRTZClD/tXyC1zKY7memVkEHslKfR/m3WYQReOTeY=",
+        "usagesDigest": "+VzryO3xLIqHjvDhCR7L8ShODtGw2x+a5Q0+e5FW8nE=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -647,8 +713,7 @@
           }
         },
         "moduleExtensionMetadata": {
-          "explicitRootModuleDirectDeps": [],
-          "explicitRootModuleDirectDevDeps": [
+          "explicitRootModuleDirectDeps": [
             "bazel_binaries_bazelisk",
             "build_bazel_bazel_6_5_0",
             "build_bazel_bazel_7_6_2",
@@ -656,6 +721,7 @@
             "build_bazel_bazel_last_green",
             "bazel_binaries"
           ],
+          "explicitRootModuleDirectDevDeps": [],
           "useAllRepos": "NO",
           "reproducible": false
         },
