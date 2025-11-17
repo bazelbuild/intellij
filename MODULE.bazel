@@ -32,12 +32,14 @@ local_repository(
 )
 
 # custom rules kotlin version, patches are required
-bazel_dep(name = "rules_kotlin", version = "2.1.9")
+bazel_dep(name = "rules_kotlin", version = "2.1.10")
 single_version_override(
     module_name = "rules_kotlin",
     patch_strip = 1,
     patches = ["//third_party/kotlin/patches:strip_stdlib.patch"],
 )
+
+register_toolchains("//third_party/kotlin:toolchain")
 
 # configure python cor rules_python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -46,8 +48,6 @@ python.toolchain(
     python_version = "3.12",
 )
 use_repo(python, "python_3_12", "python_versions")
-
-register_toolchains("//third_party/kotlin:toolchain")
 
 # configure bazel binaries for rules_bazel_integration_test
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
