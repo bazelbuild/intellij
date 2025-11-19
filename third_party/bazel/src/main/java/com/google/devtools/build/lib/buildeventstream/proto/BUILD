@@ -20,6 +20,7 @@ proto_library(
     visibility = ["//visibility:public"],
     deps = [
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/packages/metrics:package_load_metrics_proto",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/skyframe/serialization/analysis/proto:analysis_cache_service_metadata_status_proto",
         "//third_party/bazel/src/main/protobuf:action_cache_proto",
         "//third_party/bazel/src/main/protobuf:command_line_proto",
         "//third_party/bazel/src/main/protobuf:failure_details_proto",
