@@ -20,7 +20,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set Assignees
         uses: actions/github-script@v8
         with:
