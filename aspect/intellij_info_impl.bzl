@@ -13,7 +13,7 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION")
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "CcInfoCompat", "cc_common_compat")
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 load(
     ":make_variables.bzl",
@@ -151,7 +151,7 @@ def _is_language_specific_proto_library(ctx, target, semantics):
     """Returns True if the target is a proto library with attached language-specific aspect."""
     if ctx.rule.kind != "proto_library":
         return False
-    if CcInfo in target:
+    if CcInfoCompat in target:
         return True
     return False
 
@@ -328,16 +328,16 @@ def collect_cc_rule_context(ctx):
     )
 
 def collect_cc_compilation_context(ctx, target):
-    """Collect information from the compilation context provided by the CcInfo provider."""
+    """Collect information from the compilation context provided by the CcInfoCompat provider."""
 
-    compilation_context = target[CcInfo].compilation_context
+    compilation_context = target[CcInfoCompat].compilation_context
 
     # merge current compilation context with context of implementation dependencies
     if ctx.rule.kind.startswith("cc_") and hasattr(ctx.rule.attr, "implementation_deps"):
         impl_deps = ctx.rule.attr.implementation_deps
 
-        compilation_context = cc_common.merge_compilation_contexts(
-            compilation_contexts = [compilation_context] + [it[CcInfo].compilation_context for it in impl_deps],
+        compilation_context = cc_common_compat.merge_compilation_contexts(
+            compilation_contexts = [compilation_context] + [it[CcInfoCompat].compilation_context for it in impl_deps],
         )
 
     # external_includes available since bazel 7
@@ -355,14 +355,14 @@ def collect_cc_compilation_context(ctx, target):
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
-    if CcInfo not in target:
+    if CcInfoCompat not in target:
         return False
 
     # ignore cc_proto_library, attach to proto_library with aspect attached instead
     if ctx.rule.kind == "cc_proto_library":
         return False
 
-    # Go targets always provide CcInfo. Usually it's empty, but even if it isn't we don't handle it
+    # Go targets always provide CcInfoCompat. Usually it's empty, but even if it isn't we don't handle it
     if ctx.rule.kind.startswith("go_"):
         return False
 
@@ -370,7 +370,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
         rule_context = collect_cc_rule_context(ctx),
         compilation_context = collect_cc_compilation_context(ctx, target),
     )
-    resolve_files = target[CcInfo].compilation_context.headers
+    resolve_files = target[CcInfoCompat].compilation_context.headers
 
     # TODO(brendandouglas): target to cpp files only
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
@@ -391,11 +391,11 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # to generic platforms and toolchains.
     if ctx.rule.kind != "cc_toolchain" and ctx.rule.kind != "cc_toolchain_suite" and ctx.rule.kind != "cc_toolchain_alias":
         return False
-    if cc_common.CcToolchainInfo not in target:
+    if cc_common_compat.CcToolchainInfo not in target:
         return False
 
     # cc toolchain to access compiler flags
-    cpp_toolchain = target[cc_common.CcToolchainInfo]
+    cpp_toolchain = target[cc_common_compat.CcToolchainInfo]
 
     # cpp fragment to access bazel options
     cpp_fragment = ctx.fragments.cpp
@@ -404,39 +404,39 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     cxxopts = cpp_fragment.cxxopts
     conlyopts = cpp_fragment.conlyopts
 
-    feature_configuration = cc_common.configure_features(
+    feature_configuration = cc_common_compat.configure_features(
         ctx = ctx,
         cc_toolchain = cpp_toolchain,
         requested_features = ctx.features,
         unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
     )
-    c_variables = cc_common.create_compile_variables(
+    c_variables = cc_common_compat.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cpp_toolchain,
         user_compile_flags = copts + conlyopts,
     )
-    cpp_variables = cc_common.create_compile_variables(
+    cpp_variables = cc_common_compat.create_compile_variables(
         feature_configuration = feature_configuration,
         cc_toolchain = cpp_toolchain,
         user_compile_flags = copts + cxxopts,
     )
-    c_options = cc_common.get_memory_inefficient_command_line(
+    c_options = cc_common_compat.get_memory_inefficient_command_line(
         feature_configuration = feature_configuration,
         action_name = ACTION_NAMES.c_compile,
         variables = c_variables,
     )
-    cpp_options = cc_common.get_memory_inefficient_command_line(
+    cpp_options = cc_common_compat.get_memory_inefficient_command_line(
         feature_configuration = feature_configuration,
         action_name = ACTION_NAMES.cpp_compile,
         variables = cpp_variables,
     )
 
     if CC_USE_GET_TOOL_FOR_ACTION:
-        c_compiler = cc_common.get_tool_for_action(
+        c_compiler = cc_common_compat.get_tool_for_action(
             feature_configuration = feature_configuration,
             action_name = ACTION_NAMES.c_compile,
         )
-        cpp_compiler = cc_common.get_tool_for_action(
+        cpp_compiler = cc_common_compat.get_tool_for_action(
             feature_configuration = feature_configuration,
             action_name = ACTION_NAMES.cpp_compile,
         )
@@ -649,7 +649,7 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[CcInfo]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [[CcInfoCompat]] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
         **kwargs
     )
