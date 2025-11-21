@@ -1,3 +1,5 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
 java_import(
     name = "python",
     jars = glob(["python-ce/lib/*.jar", "python-ce/lib/modules/*.jar"]),
