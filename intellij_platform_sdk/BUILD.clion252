@@ -17,6 +17,7 @@
 # Plugin source jars for CLion, accessed remotely.
 
 load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+load("@rules_java//java:defs.bzl", "java_import")
 
 package(default_visibility = ["//visibility:public"])
 
