@@ -4,9 +4,9 @@
 load(
     ":intellij_plugin.bzl",
     _intellij_plugin = "intellij_plugin",
-    _intellij_plugin_library = "intellij_plugin_library",
     _optional_plugin_xml = "optional_plugin_xml",
 )
+load(":intellij_plugin_library.bzl", _intellij_plugin_library = "intellij_plugin_library")
 
 # Re-export these symbols
 intellij_plugin = _intellij_plugin
