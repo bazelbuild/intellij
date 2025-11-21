@@ -52,7 +52,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
   private static final String[] QUERY_XCODE_VERSION_SCRIPT_LINES = new String[]{
       "#!/bin/bash",
       "__BAZEL_BIN__ cquery \\",
-      " 'deps(\"@bazel_tools//tools/osx:current_xcode_config\")' \\",
+      " 'deps(\"@bazel_tools//tools/cpp:host_xcodes\")' \\",
       " --output=starlark \\",
       " --starlark:file='__QUERY_FILE__'",
   };
