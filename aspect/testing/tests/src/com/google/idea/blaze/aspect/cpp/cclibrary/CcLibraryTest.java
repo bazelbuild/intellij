@@ -56,7 +56,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     // compilation context
     final var compilationCtx = target.getCIdeInfo().getCompilationContext();
     assertThat(compilationCtx.getDefinesList()).containsExactly("VERSION2");
-    assertThat(compilationCtx.getSystemIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationCtx.getIncludesList()).contains(testRelative("foo/bar"));
     assertThat(compilationCtx.getQuoteIncludesList()).contains(".");
     assertThat(relativePathsForArtifacts(compilationCtx.getHeadersList()))
         .containsExactly(testRelative("simple/simple.h"), testRelative("simple/simple_textual.h"));
@@ -70,7 +70,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
   public void testCcLibraryHasToolchain() throws Exception {
     final var testFixture = loadTestFixture(":simple_fixture");
     final var toolchains = testFixture.getTargetsList().stream()
-        .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain_alias"))
+        .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain"))
         .collect(Collectors.toList());
 
     assertThat(toolchains).hasSize(1);
@@ -90,8 +90,8 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
     final var ruleContext = lib1.getCIdeInfo().getRuleContext();
     final var compilationContext = lib1.getCIdeInfo().getCompilationContext();
 
-    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("foo/bar"));
-    assertThat(compilationContext.getSystemIncludesList()).contains(testRelative("baz/lib"));
+    assertThat(compilationContext.getIncludesList()).contains(testRelative("foo/bar"));
+    assertThat(compilationContext.getIncludesList()).contains(testRelative("baz/lib"));
 
     assertThat(ruleContext.getCoptsList()).containsExactly("-DGOPT", "-Ifoo/baz/");
 
