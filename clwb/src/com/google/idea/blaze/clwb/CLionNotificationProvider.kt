@@ -38,7 +38,7 @@ private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
     return null
   }
 
-  if (Blaze.isBlazeProject(project)) {
+  if (!Blaze.isBlazeProject(project)) {
     return null
   }
 
@@ -52,7 +52,7 @@ private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
 
   val workspaceRoot = project.basePath ?: return null
 
-  // if some how the project was open in .clwb but is not imported as a blaze project
+  // if somehow the project was open in .clwb but is not imported as a blaze project
   return workspaceRoot.removeSuffix(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
 }
 
