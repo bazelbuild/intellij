@@ -1,7 +1,18 @@
 # cquery script to dump the CcInfo of a target
 # usage: bazel cquery '<target>' --output=starlark --starlark:file=tools/cquery/cc_info.bzl
 
-CC_INFO = "CcInfo"
+BUILTIN_CC_INFO = "CcInfo"
+RULESET_CC_INFO = "@@rules_cc+//cc/private:cc_info.bzl%CcInfo"
+
+def get_cc_info(target):
+    ps = providers(target) or []
+
+    if BUILTIN_CC_INFO in ps:
+        return ps[BUILTIN_CC_INFO]
+    if RULESET_CC_INFO in ps:
+        return ps[RULESET_CC_INFO]
+
+    return None
 
 def compilation_context_to_struct(ctx):
     return struct(
@@ -39,9 +50,10 @@ def format_cc_info(info):
 
 def format(target):
     buffer = "%s: " % target.label
+    info = get_cc_info(target)
 
-    if CC_INFO in providers(target):
-        buffer += format_cc_info(providers(target)[CC_INFO])
+    if info:
+        buffer += format_cc_info(info)
     else:
         buffer += "NO CcInfo"
 
