@@ -94,6 +94,7 @@ maven.install(
         "org.jetbrains.pty4j:pty4j:0.13.0",
         # Only required for the maintenance script, otherwise use the stdlib for the sdk
         "org.jetbrains.kotlin:kotlin-stdlib:2.1.21",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
