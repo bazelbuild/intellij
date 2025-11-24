@@ -137,8 +137,8 @@ intellij_platform = use_extension("//intellij_platform_sdk:extension.bzl", "inte
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion251",
-    sha256 = "1222a7915371d0f80292215ec63aceed330dd887ce1ad058bfed8384623908a8",
-    version = "2025.1.6",
+    sha256 = "3a5e75b37445ffa9bef10667dfd4e79feac385519c7722035f890749a991533a",
+    version = "2025.1.7",
 )
 intellij_platform.sdk(
     name = "clion",
