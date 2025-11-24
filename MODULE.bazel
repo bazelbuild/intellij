@@ -164,8 +164,8 @@ intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2025_2",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "f56a95f3aa127bc7057700583cb201044f4b41bfacd8f1f7d4a827c7020cf4a4",
-    version = "252.27397.103",
+    sha256 = "dd58ebbc9f2fd539804e874b8f01ade391dcaac8ac7b2c6fb6c2437433a90040",
+    version = "252.28238.7",
 )
 intellij_platform.plugin(
     name = "PythonCore",
