@@ -1,21 +1,42 @@
-module(
-    bazel_compatibility = [">=7.0.0"],
-    repo_name = "intellij_with_bazel",
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_java", version = "9.0.3")
+bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", version = "33.1")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
+
+# required for aspect tests
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "abseil-cpp", version = "20250814.1")
+
+# import clwb test projects for aspect tests
+local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
+
+local_repository(
+    name = "clwb_virtual_includes_project",
+    path = "clwb/tests/projects/virtual_includes",
 )
 
-bazel_dep(
-    name = "platforms",
-    version = "1.0.0",
-)
-bazel_dep(
-    name = "rules_java",
-    version = "9.0.3",
-)
-bazel_dep(
-    name = "rules_python",
-    version = "1.6.3",
+local_repository(
+    name = "clwb_virtual_includes_external",
+    path = "clwb/tests/projects/virtual_includes/lib/external",
 )
 
+# custom rules kotlin version, patches are required
+bazel_dep(name = "rules_kotlin", version = "2.2.0")
+single_version_override(
+    module_name = "rules_kotlin",
+    patch_strip = 1,
+    patches = ["//third_party/kotlin/patches:strip_stdlib.patch"],
+)
+
+register_toolchains("//third_party/kotlin:toolchain")
+
+# configure python cor rules_python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
     configure_coverage_tool = True,
@@ -23,59 +44,8 @@ python.toolchain(
 )
 use_repo(python, "python_3_12", "python_versions")
 
-bazel_dep(
-    name = "rules_proto",
-    version = "7.1.0",
-)
-bazel_dep(
-    name = "protobuf",
-    version = "33.1",
-)
-bazel_dep(
-    name = "bazel_skylib",
-    version = "1.8.2",
-)
-bazel_dep(
-    name = "rules_pkg",
-    version = "1.1.0",
-)
-
-# custom configuration for rules kotlin, patches are required
-bazel_dep(
-    name = "rules_kotlin",
-    version = "2.1.10",
-)
-single_version_override(
-    module_name = "rules_kotlin",
-    patch_strip = 1,
-    patches = [
-        "//third_party/kotlin/patches:strip_stdlib.patch",
-    ],
-)
-
-register_toolchains("//third_party/kotlin:toolchain")
-
-bazel_dep(
-    name = "rules_shell",
-    version = "0.6.1",
-    dev_dependency = True,
-)
-bazel_dep(
-    name = "rules_cc",
-    version = "0.2.14",
-    dev_dependency = True,
-)
-bazel_dep(
-    name = "rules_bazel_integration_test",
-    version = "0.34.0",
-    dev_dependency = True,
-)
-
-bazel_binaries = use_extension(
-    "@rules_bazel_integration_test//:extensions.bzl",
-    "bazel_binaries",
-    dev_dependency = True,
-)
+# configure bazel binaries for rules_bazel_integration_test
+bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.6.2")
 bazel_binaries.download(
@@ -93,8 +63,7 @@ use_repo(
     "build_bazel_bazel_last_green",
 )
 
-bazel_dep(name = "rules_jvm_external", version = "6.8")
-
+# configure maven for rules_java_external
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
     name = "maven",
@@ -115,7 +84,7 @@ maven.install(
         "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
-        "com.google.errorprone:error_prone_annotations:2.20.0",
+        "com.google.errorprone:error_prone_annotations:2.23.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
         "com.google.truth:truth:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
@@ -125,9 +94,15 @@ maven.install(
         "org.jetbrains.pty4j:pty4j:0.13.0",
         # Only required for the maintenance script, otherwise use the stdlib for the sdk
         "org.jetbrains.kotlin:kotlin-stdlib:2.1.21",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
+    known_contributing_modules = [
+        "",
+        "bazel_worker_java",
+        "protobuf",
+    ],
     lock_file = "//:maven_install.json",
 )
 use_repo(
@@ -158,108 +133,46 @@ use_repo(
     truth = "com_google_truth_truth",
 )
 
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-# Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
-
-CLION_251_SHA = "1222a7915371d0f80292215ec63aceed330dd887ce1ad058bfed8384623908a8"
-
-CLION_251_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.1.6/clion-2025.1.6.zip"
-
-http_archive(
-    name = "clion_2025_1",
-    build_file = "@//intellij_platform_sdk:BUILD.clion251",
-    sha256 = CLION_251_SHA,
-    url = CLION_251_URL,
+# install all required intellij sdks and plugins
+intellij_platform = use_extension("//intellij_platform_sdk:extension.bzl", "intellij_platform")
+intellij_platform.sdk(
+    name = "clion",
+    build_file = "//intellij_platform_sdk:BUILD.clion251",
+    sha256 = "3a5e75b37445ffa9bef10667dfd4e79feac385519c7722035f890749a991533a",
+    version = "2025.1.7",
 )
-
-CLION_252_SHA = "29b8cda11752215aaf273de283ea6245c9c55eb54cb5ef30e0765277eea9130a"
-
-CLION_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2025.2.4/clion-2025.2.4.zip"
-
-http_archive(
-    name = "clion_2025_2",
-    build_file = "@//intellij_platform_sdk:BUILD.clion252",
-    sha256 = CLION_252_SHA,
-    url = CLION_252_URL,
+intellij_platform.sdk(
+    name = "clion",
+    build_file = "//intellij_platform_sdk:BUILD.clion252",
+    sha256 = "29b8cda11752215aaf273de283ea6245c9c55eb54cb5ef30e0765277eea9130a",
+    version = "2025.2.4",
 )
-
-CLION_253_SHA = "de0e78665204adea9e906af351bdd4e988fe7a47a8b6288136eb23ec89d8d83e"
-
-CLION_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/253.27642.28-EAP-SNAPSHOT/clion-253.27642.28-EAP-SNAPSHOT.zip"
-
-http_archive(
-    name = "clion_2025_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion253",
-    sha256 = CLION_253_SHA,
-    url = CLION_253_URL,
+intellij_platform.sdk(
+    name = "clion",
+    alias = "clion_2025_3",
+    build_file = "//intellij_platform_sdk:BUILD.clion253",
+    sha256 = "a6658d1339ca0578e1a60e24f2b6cf5c9ba77f6e34e0131d111d74af7f014e9d",
+    version = "253.28294.125-EAP-SNAPSHOT",
 )
-
-_PYTHON_CE_BUILD_FILE = """
-java_import(
-    name = "python",
-    jars = glob(["python-ce/lib/*.jar", "python-ce/lib/modules/*.jar"]),
-    visibility = ["//visibility:public"],
+intellij_platform.plugin(
+    name = "PythonCore",
+    alias = "python_2025_1",
+    build_file = "//intellij_platform_sdk:BUILD.python",
+    sha256 = "b9cc64a4c260f7dd41e0c06b1b30ca8893be11370252cb84e6784c87e2585c54",
+    version = "251.28774.11",
 )
-filegroup(
-  name = "python_helpers",
-  srcs = glob(["python-ce/helpers/**/*"]),
-  visibility = ["//visibility:public"],
+intellij_platform.plugin(
+    name = "PythonCore",
+    alias = "python_2025_2",
+    build_file = "//intellij_platform_sdk:BUILD.python",
+    sha256 = "dd58ebbc9f2fd539804e874b8f01ade391dcaac8ac7b2c6fb6c2437433a90040",
+    version = "252.28238.7",
 )
-"""
-
-PYTHON_PLUGIN_251_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/251.28774.11/PythonCore-251.28774.11.zip"
-
-PYTHON_PLUGIN_251_SHA = "b9cc64a4c260f7dd41e0c06b1b30ca8893be11370252cb84e6784c87e2585c54"
-
-http_archive(
-    name = "python_2025_1",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = PYTHON_PLUGIN_251_SHA,
-    url = PYTHON_PLUGIN_251_URL,
+intellij_platform.plugin(
+    name = "PythonCore",
+    alias = "python_2025_3",
+    build_file = "//intellij_platform_sdk:BUILD.python",
+    sha256 = "fa3dc8a5038736e8c4aef5a8da42ab933d32ac9b416a6f5f900697aefe799487",
+    version = "253.28294.169",
 )
-
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.27397.103/PythonCore-252.27397.103.zip"
-
-PYTHON_PLUGIN_252_SHA = "f56a95f3aa127bc7057700583cb201044f4b41bfacd8f1f7d4a827c7020cf4a4"
-
-http_archive(
-    name = "python_2025_2",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = PYTHON_PLUGIN_252_SHA,
-    url = PYTHON_PLUGIN_252_URL,
-)
-
-PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.27864.23/PythonCore-253.27864.23.zip"
-
-PYTHON_PLUGIN_253_SHA = "f2643e4f3ab5bf3b7b77cbf0797e8c33318c9d21a3807462f6034d0613ecebc6"
-
-http_archive(
-    name = "python_2025_3",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = PYTHON_PLUGIN_253_SHA,
-    url = PYTHON_PLUGIN_253_URL,
-)
-
-# needed for cpp tests
-http_archive(
-    name = "com_google_absl",
-    sha256 = "f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3",
-    strip_prefix = "abseil-cpp-20240722.0",
-    urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz",
-    ],
-)
-
-# import clwb test projects for aspect tests
-local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
-
-local_repository(
-    name = "clwb_virtual_includes_project",
-    path = "clwb/tests/projects/virtual_includes",
-)
-
-local_repository(
-    name = "clwb_virtual_includes_external",
-    path = "clwb/tests/projects/virtual_includes/lib/external",
-)
+use_repo(intellij_platform, "clion_2025_1", "clion_2025_2", "clion_2025_3", "python_2025_1", "python_2025_2", "python_2025_3")

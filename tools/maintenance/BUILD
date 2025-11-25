@@ -20,7 +20,8 @@ kt_jvm_library(
     srcs = ["maintenance.kt"],
     deps = [
         "@maven//:com_google_guava_guava",
-        "@maven//:org_jetbrains_kotlin_kotlin_stdlib"
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
 

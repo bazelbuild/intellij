@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage
 
+import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
 import com.google.idea.blaze.base.util.TemplateWriter
 import com.intellij.openapi.project.Project
@@ -28,9 +29,10 @@ class CcAspectTemplateWriter : AspectWriter {
 
   override fun name(): String = "CC Aspect Templates"
 
-  override fun writeDumb(dst: Path, project: Project) {
+  override fun write(dst: Path, project: Project, state: SyncProjectState) {
     val options = mapOf(
-      getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", true)
+      getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", true),
+      getCcEnabledOption(state),
     )
 
     TemplateWriter.evaluate(
@@ -40,6 +42,11 @@ class CcAspectTemplateWriter : AspectWriter {
       TEMPLATE_CC_INFO,
       options,
     )
+  }
+
+  private fun getCcEnabledOption(state: SyncProjectState): Pair<String, String> {
+    val hasRulesCc = state.externalWorkspaceData?.getByRepoName("rules_cc") != null
+    return Pair("isCcEnabled", if (hasRulesCc) "true" else "false")
   }
 
   private fun getRegistryOption(key: String, default: Boolean): Pair<String, String> {
