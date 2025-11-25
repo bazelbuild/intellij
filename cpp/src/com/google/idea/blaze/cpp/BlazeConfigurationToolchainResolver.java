@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -424,14 +425,13 @@ public final class BlazeConfigurationToolchainResolver {
     return BlazeExecutor.getInstance().submit(callable);
   }
 
-  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context,
-      Project project) {
+  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context, Project project, BlazeProjectData projectData) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Resolve Xcode information", EventType.Other));
           try {
-            return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project);
+            return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project, projectData);
           } catch (XcodeCompilerSettingsException e) {
             IssueOutput.warn(
                 String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString())
