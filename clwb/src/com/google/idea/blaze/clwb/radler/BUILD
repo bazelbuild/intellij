@@ -1,9 +1,4 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("//build_defs:build_defs.bzl", "optional_plugin_xml")
-
-licenses(["notice"])
-
-package(default_visibility = ["//clwb:__subpackages__"])
+load("//build_defs:build_defs.bzl", "intellij_plugin_library", "optional_plugin_xml")
 
 optional_plugin_xml(
     name = "plugin_xml",
@@ -11,12 +6,13 @@ optional_plugin_xml(
     plugin_xml = "optional-plugin.xml",
 )
 
-kt_jvm_library(
-    name = "lib",
+intellij_plugin_library(
+    name = "radler",
     srcs = glob(["*.kt"]),
+    optional_plugin_xmls = [":plugin_xml"],
+    visibility = ["//clwb:__subpackages__"],
     deps = [
         "//clwb:clwb_lib",
-        "//intellij_platform_sdk:plugin_api",
         "//sdkcompat:sdkcompat_radler",
     ],
 )
