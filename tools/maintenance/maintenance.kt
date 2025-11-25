@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 import com.google.common.io.BaseEncoding
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.BufferedInputStream
@@ -21,144 +25,87 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 
 // Usage: bazel run //tools/maintenance -- $PWD/MODULE.bazel && cp MODULE.bazel.out MODULE.bazel
-fun main(args: Array<String>) { 
-    val out = Paths.get("${args[0]}.out")
-    Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
+fun main(args: Array<String>) {
+  var content = Files.readString(Path.of(args[0]))
 
-    // Example for 252:
-    // bumpEap("252", out)
-    // bumpPlugins("252", out)
-    // bumpRelease("2025.2", "252", out)
+  content = bumpSdk("253", eap = true, content)
+  content = bumpPythonPlugin("253", content)
+  content = bumpSdk("2025.2", eap = false, content)
+  content = bumpPythonPlugin("252", content)
+  content = bumpSdk("2025.1", eap = false, content)
+  content = bumpPythonPlugin("251", content)
+
+  Files.writeString(Paths.get("${args[0]}.out"), content,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 }
 
-fun bumpMavenPackages(coordinates: String, variablePrefix: String, out: Path) {
-    val latestVersion = latestVersion(coordinates)
-    val packageName = coordinates.split( ":").last()
-    val jarUrl = "https://repo1.maven.org/maven2/${coordinates.replace(":", "/").replace(".", "/")}/$latestVersion/$packageName-$latestVersion.jar"
-    val sha = shaOfUrl(jarUrl)
-    val content = Files.readString(out)
-            .insertWorkspaceValue("${variablePrefix}_ARTIFACT", "$coordinates:$latestVersion")
-            .insertWorkspaceValue("${variablePrefix}_SHA", sha)
-    Files.writeString(out, content)
+private fun bumpSdk(majorVersion: String, eap: Boolean, input: String): String {
+  val version = getLatestSdkVersion(majorVersion, eap)
+  val repository = if (eap) "snapshots" else "releases"
+  val url = "https://www.jetbrains.com/intellij-repository/$repository/com/jetbrains/intellij/clion/clion/$version/clion-$version.zip"
+
+  return bump("clion", majorVersion, version, getSha256(url), input)
 }
 
-private fun latestVersion(coordinates: String): String {
-    val metadataAddress = "https://repo1.maven.org/maven2/${coordinates.replace(".", "/").replace(":", "/")}/maven-metadata.xml"
-    val metadata = URL(metadataAddress).readText()
-    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-    val plugins = builder.parse(metadata.byteInputStream()).documentElement.getElementsByTagName("versioning")
-    return plugins.item(0).childNodes.toList().first { it.nodeName == "latest" }.firstChild.nodeValue
+private fun bumpPythonPlugin(majorVersion: String, input: String): String {
+  val version = getLatestPluginVersion(7322, majorVersion)
+  val url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/$version/PythonCore-$version.zip"
+
+  return bump("PythonCore", majorVersion, version, getSha256(url), input)
 }
 
-fun bumpRelease(version: String, major: String, out: Path) {
-    val releasesPage = URL("https://www.jetbrains.com/intellij-repository/releases").readText();
-    val clionRelease = latestRelease(version, releasesPage, "clion")
-
-    bump(
-        workspaceShaVarName = "CLION_${major}_SHA",
-        workspaceUrlVarName = "CLION_${major}_URL",
-        downloadUrl = clionRelease,
-        workspace = out,
-    )
-    println(clionRelease)
-}
-
-private fun bumpEap(intellijMajorVersion: String, out: Path) {
-    val clionLatestVersion = getLatestVersion("clion", intellijMajorVersion)
-
-    println(clionLatestVersion)
-    bump(
-        workspaceShaVarName = "CLION_${intellijMajorVersion}_SHA",
-        workspaceUrlVarName = "CLION_${intellijMajorVersion}_URL",
-        downloadUrl = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/${clionLatestVersion}-EAP-SNAPSHOT/clion-${clionLatestVersion}-EAP-SNAPSHOT.zip",
-        workspace = out,
-    )
-    println(out.toAbsolutePath())
-}
-
-private fun bumpPlugins(intellijMajorVersion: String, out: Path) {
-    bumpPluginVersion(intellijMajorVersion, out, "PythonCore", "PYTHON_PLUGIN")
-}
-
-private fun bumpPluginVersion(intellijMajorVersion: String, out: Path, mavenCoordinates: String, pythonPluginVarPrefix: String) {
-    val pluginVersion = pluginLatestVersion(mavenCoordinates, intellijMajorVersion)
-    bump(
-            workspaceShaVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_SHA",
-            workspaceUrlVarName = "${pythonPluginVarPrefix}_${intellijMajorVersion}_URL",
-            downloadUrl = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/$mavenCoordinates/${pluginVersion}/$mavenCoordinates-${pluginVersion}.zip",
-            workspace = out
-    )
-}
-
-private fun bump(downloadUrl: String, workspace: Path?, workspaceShaVarName: String, workspaceUrlVarName: String) {
-    val regex = "$workspaceUrlVarName = \"(.*)\"".toRegex()
-    val currentURL = regex.find(Files.readString(workspace))?.destructured?.toList()?.firstOrNull()
-    if(currentURL == null) {
-        println("Couldn't bump $workspaceUrlVarName")
-        return
+private fun bump(name: String, majorVersion: String, version: String, sha256: String, input: String): String {
+  return input
+    .replace( // replace the version
+      """(intellij_platform\.(sdk|plugin)[^)]*name = "$name"[^)]*version = ")($majorVersion[^"]*)""".toRegex()
+    ) { result ->
+      "${result.groupValues[1]}$version"
     }
-    if(currentURL == downloadUrl) {
-        println("${Paths.get(currentURL).fileName} is up to date");
-        return
+    .replace( // replace the sha256
+      """(intellij_platform\.(sdk|plugin)[^)]*name = "$name"[^)]*sha256 = ")([^"]+)("[^)]*version = "$version")""".toRegex()
+    ) { result ->
+      "${result.groupValues[1]}$sha256${result.groupValues[4]}"
     }
-    val icSha = shaOfUrl(downloadUrl)
-    val content = Files.readString(workspace)
-        .insertWorkspaceValue(workspaceShaVarName, icSha)
-        .insertWorkspaceValue(workspaceUrlVarName, downloadUrl)
-    Files.writeString(workspace, content)
 }
 
-private fun shaOfUrl(icUrl: String): String {
-    val icStream = BufferedInputStream(URL(icUrl).openStream())
-    val digest = MessageDigest.getInstance("SHA-256")
-    var index = 0L // iterator's withIndex uses int instead of long
-    icStream.iterator().forEachRemaining {
-        index += 1
-        digest.update(it)
-        if (index % 10000000 == 0L) {
-            println("${index / 1024 / 1024} mb of ${URL(icUrl).file.split("/").last()} processed")
-        }
+private fun getSha256(url: String): String {
+  val icStream = BufferedInputStream(URL(url).openStream())
+  val digest = MessageDigest.getInstance("SHA-256")
+  var index = 0L // iterator's withIndex uses int instead of long
+  icStream.iterator().forEachRemaining {
+    index += 1
+    digest.update(it)
+    if (index % 10000000 == 0L) {
+      println("${index / 1024 / 1024} mb of ${URL(url).file.split("/").last()} processed")
     }
-    val sha256sum = digest.digest(icStream.readAllBytes())
-    return BaseEncoding.base16().encode(sha256sum).lowercase()
+  }
+  val sha256sum = digest.digest(icStream.readAllBytes())
+  return BaseEncoding.base16().encode(sha256sum).lowercase()
 }
 
-private fun getLatestVersion(product: String, major: String): String {
-    val ijVersionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/$product/BUILD/$major-EAP-SNAPSHOT/BUILD-$major-EAP-SNAPSHOT.txt")
-    return BufferedInputStream(ijVersionUrl.openStream()).reader().readText()
+private fun getLatestSdkVersion(major: String, eap: Boolean): String {
+  if (eap) {
+    val version =
+      URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/BUILD/$major-EAP-SNAPSHOT/BUILD-$major-EAP-SNAPSHOT.txt").readText()
+    return "$version-EAP-SNAPSHOT"
+  }
+
+  val latestRelease =
+    URL("https://data.services.jetbrains.com/products/releases?code=CL&type=release&majorVersion=$major&latest=true").readText()
+
+  val json = Json.parseToJsonElement(latestRelease).jsonObject
+  val clArray = json["CL"]?.jsonArray ?: error("CL array not found")
+  return clArray[0].jsonObject["version"]?.jsonPrimitive?.content ?: error("Version not found")
 }
 
-private fun latestRelease(version: String, releasesPage: String, product: String): String {
-    val productFamily = when(product) {
-        "clion" -> "clion"
-        else -> throw RuntimeException("No such product: $product")
-    }
-    return "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/$productFamily/$product/$version\\.?(\\d*)\\.?(\\d*)/$product-$version\\.?(\\d*)\\.?(\\d*).zip".toRegex()
-        .findAll(releasesPage).maxWith(compareBy({ it.groupValues[1].toIntOrNull() ?: 0 }, { it.groupValues[2].toIntOrNull() ?: 0 }))
-        .value
-}
+fun getLatestPluginVersion(pluginId: Int, major: String): String {
+  val text = URL("https://plugins.jetbrains.com/api/plugins/$pluginId/updates").readText()
 
-fun pluginLatestVersion(pluginId: String, major: String): String? {
-    val pluginListUrl = URL("https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId").readText()
-    val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-    val plugins: NodeList = builder.parse(pluginListUrl.byteInputStream()).documentElement.childNodes.item(1).childNodes
-    val compatiblePlugin =  plugins.toList().firstOrNull {plugin ->
-        val ideaVersionNode = plugin.childNodes.toList().first{ it.nodeName == "idea-version" }
-        val until = ideaVersionNode.attributes.getNamedItem("until-build")
-        until.nodeValue.startsWith("${major}.")
-    }
-    val pluginVersion = compatiblePlugin?.childNodes?.toList()?.firstOrNull { it.nodeName == "version" }
-    return pluginVersion?.childNodes?.toList()?.first()?.nodeValue
-}
-
-fun String.insertWorkspaceValue(workspaceShaVarName: String, icSha: String): String =
-    this.replace("$workspaceShaVarName =.*".toRegex(), """$workspaceShaVarName = "$icSha"""")
-
-fun NodeList.toList(): List<Node> {
-    return (0 until this.length).map { this.item(it) }
+  return Json.parseToJsonElement(text).jsonArray
+    .mapNotNull { it.jsonObject["version"]?.jsonPrimitive?.content }
+    .first { it.startsWith(major) }
 }
