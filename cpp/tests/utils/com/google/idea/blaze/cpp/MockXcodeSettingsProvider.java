@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
 
@@ -28,7 +29,7 @@ public class MockXcodeSettingsProvider implements XcodeCompilerSettingsProvider 
   }
 
   @Override
-  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project)
+  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project, BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     if (this.settings != null) {
       return Optional.of(this.settings);
