@@ -8,6 +8,7 @@ IntellijPluginLibraryInfo = provider(
         "plugin_xmls": "Depset of files",
         "optional_plugin_xmls": "Depset of OptionalPluginXmlInfo providers",
         "java_info": "Single JavaInfo provider (depreacated rules should get JavaInfo directly form the target)",
+        "runfiles": "Runfiles required by the plugin library and included in zip file. Track this separatly to not get any jars in here.",
     },
 )
 
@@ -16,7 +17,7 @@ OptionalPluginXmlInfo = provider(
     fields = ["optional_plugin_xmls"],
 )
 
-def _resource_file(target):
+def _single_file(target):
     """Makes sore that every target in the resource mapping privdes a single file."""
     files = target[DefaultInfo].files.to_list()
 
@@ -30,12 +31,12 @@ def _import_resources(ctx):
     output = ctx.actions.declare_file(ctx.label.name + "_resource.jar")
 
     mapping = [
-        "%s=%s" % (paths.join("resources", path), _resource_file(target).path)
+        "%s=%s" % (paths.join("resources", path), _single_file(target).path)
         for path, target in ctx.attr.resources.items()
     ]
 
     ctx.actions.run(
-        inputs = [_resource_file(target) for target in ctx.attr.resources.values()],
+        inputs = [_single_file(target) for target in ctx.attr.resources.values()],
         outputs = [output],
         mnemonic = "IntellijPluginResource",
         progress_message = "Creating intellij plugin resource jar for %{label}",
@@ -44,6 +45,19 @@ def _import_resources(ctx):
     )
 
     return JavaInfo(output_jar = output, compile_jar = output)
+
+def _import_runfiles(ctx):
+    """Builds a runfile tree form the data mapping."""
+    symlink_map = {
+        path: _single_file(target)
+        for path, target in ctx.attr.data.items()
+    }
+
+    return ctx.runfiles(symlinks = symlink_map).merge_all([
+        dep[IntellijPluginLibraryInfo].runfiles
+        for dep in ctx.attr.deps
+        if IntellijPluginLibraryInfo in dep
+    ])
 
 def _merge_plugin_xmls(ctx):
     """Merges all dependent plugin_xmls and the current one."""
@@ -79,15 +93,22 @@ def _intellij_plugin_library_rule_impl(ctx):
         plugin_xmls = _merge_plugin_xmls(ctx),
         optional_plugin_xmls = _merge_optional_plugin_xmls(ctx),
         java_info = java_info,
+        runfiles = _import_runfiles(ctx),
     )
 
-    return [plugin_info, java_info]
+    default_info = DefaultInfo(runfiles = plugin_info.runfiles)
+
+    return [plugin_info, java_info, default_info]
 
 _intellij_plugin_library = rule(
     implementation = _intellij_plugin_library_rule_impl,
     attrs = {
         "resources": attr.string_keyed_label_dict(
             doc = "Maps a file to a specific location inside the resource directory of the plugin.",
+            allow_files = True,
+        ),
+        "data": attr.string_keyed_label_dict(
+            doc = "Maps a file to a specific location inside the plugin zip and the runfiles tree.",
             allow_files = True,
         ),
         "deps": attr.label_list(

@@ -39,13 +39,6 @@ intellij_plugin(
 
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_binary", "java_common", "java_import")
 load(":intellij_plugin_library.bzl", "OptionalPluginXmlInfo", "IntellijPluginLibraryInfo")
-load(
-    "//build_defs:restrictions.bzl",
-    "RestrictedInfo",
-    "restricted_deps_aspect",
-    "validate_restrictions",
-    "validate_unchecked_internal",
-)
 
 def _optional_plugin_xml_impl(ctx):
     attr = ctx.attr
@@ -243,27 +236,13 @@ def _intellij_plugin_jar_impl(ctx):
     module_to_merged_xmls = _merge_optional_plugin_xmls(ctx)
     final_plugin_xml_file = _add_optional_dependencies_to_plugin_xml(ctx, augmented_xml, [k.name for k in module_to_merged_xmls.keys() if not k.is_synthetic])
     jar_file = _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls)
-    files = depset([jar_file])
 
-    if ctx.attr.restrict_deps:
-        dependencies = {}
-        unchecked_transitive = []
-        roots = []
-        for k in ctx.attr.restricted_deps:
-            if RestrictedInfo in k:
-                dependencies.update(k[RestrictedInfo].dependencies)
-                unchecked_transitive.append(k[RestrictedInfo].unchecked)
-                roots.append(k[RestrictedInfo].roots)
+    runfiles = ctx.runfiles().merge_all([dep[IntellijPluginLibraryInfo].runfiles for dep in ctx.attr.deps])
 
-        # Uncomment the next line to see all buildable roots:
-        # fail("".join(["     " + str(t) + "\n" for t in depset(transitive=roots).to_list()]))
-        validate_restrictions(dependencies)
-        unchecked = [str(t.label) for t in depset(direct = [], transitive = unchecked_transitive).to_list()]
-        validate_unchecked_internal(unchecked)
-
-    return DefaultInfo(
-        files = files,
-    )
+    return [
+        JavaInfo(output_jar = jar_file, compile_jar = jar_file),
+        DefaultInfo(files = depset([jar_file]), runfiles = runfiles),
+    ]
 
 _intellij_plugin_jar = rule(
     implementation = _intellij_plugin_jar_impl,
@@ -273,8 +252,6 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         "deps": attr.label_list(providers = [[IntellijPluginLibraryInfo]]),
-        "restrict_deps": attr.bool(),
-        "restricted_deps": attr.label_list(aspects = [restricted_deps_aspect]),
         "plugin_icons": attr.label_list(allow_files = True),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
@@ -302,9 +279,7 @@ def intellij_plugin(
         jar_name = None,
         extra_runtime_deps = [],
         plugin_icons = [],
-        restrict_deps = False,
         tags = [],
-        target_compatible_with = [],
         testonly = 0,
         **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
@@ -318,7 +293,6 @@ def intellij_plugin(
       extra_runtime_deps: runtime_deps added to java_binary or java_test calls
       plugin_icons: Plugin logo files to be placed in META-INF. Follow https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html#plugin-logo-requirements
       tags: Tags to add to generated rules
-      target_compatible_with: To be passed through to generated rules
       testonly: testonly setting for generated rules.
       **kwargs: Any further arguments to be passed to the final target
     """
@@ -335,7 +309,6 @@ def intellij_plugin(
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
         tags = tags,
-        target_compatible_with = target_compatible_with,
         testonly = testonly,
     )
 
@@ -359,28 +332,14 @@ def intellij_plugin(
             message = "Applying workarounds to plugin jar",
         )
 
-    jar_target_name = name + "_intellij_plugin_jar"
     _intellij_plugin_jar(
-        name = jar_target_name,
+        name = name,
         deploy_jar = deploy_jar,
         jar_name = jar_name or (name + ".jar"),
         deps = deps,
-        restrict_deps = restrict_deps,
-        restricted_deps = deps if restrict_deps else [],
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
         plugin_icons = plugin_icons,
         tags = tags,
-        target_compatible_with = target_compatible_with,
         testonly = testonly,
-    )
-
-    # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
-    java_import(
-        name = name,
-        jars = [jar_target_name],
-        tags = ["intellij-plugin"] + tags,
-        target_compatible_with = target_compatible_with,
-        testonly = testonly,
-        **kwargs
     )
