@@ -23,7 +23,8 @@ intellij_plugin_zip = rule(
     doc = """Creates an intellij deployable zip archive.
 
     All files of the dependencies are included in the `lib` directory and all runfiles are included
-    from the root of the archive.
+    from the root of the archive. See `intellij_common.compute_plugin_layout` for details on the
+    layout.
     """,
     attrs = {
         "deps": attr.label_list(

@@ -23,9 +23,10 @@ def _intellij_plugin_debug_target_impl(ctx):
 
 intellij_plugin_debug_target = rule(
     implementation = _intellij_plugin_debug_target_impl,
-    doc = """Populates the _IntellijPluginDeployInfo provider to be read by the IntelliJ plugin.
+    doc = """Creates plugin target debuggable from IntelliJ.
 
-    Recreates the structure created by intellij_plugin_zip, see intellij_plugin_zip for layout details.
+    All files in deps are mapped into the plugin sandbox in the same mannar as they would be mapped
+    into the release zip.
     """,
     attrs = {
         "deps": attr.label_list(
