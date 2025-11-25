@@ -1,11 +1,8 @@
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
-load(
-    "//:build-visibility.bzl",
-    "COMMON_PLUGINS_VISIBILITY",
-)
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_channel")
 
-package(default_visibility = COMMON_PLUGINS_VISIBILITY)
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -45,6 +42,12 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "@error_prone_annotations//jar",
     ],
+)
+
+kt_jvm_library(
+    name = "datafiles",
+    srcs = ["src/com/google/idea/datafiles/Datafiles.kt"],
+    deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
 java_test(

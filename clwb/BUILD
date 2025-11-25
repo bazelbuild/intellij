@@ -73,6 +73,7 @@ kt_jvm_library(
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",
         "//common/experiments",
+        "//common/util:datafiles",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
