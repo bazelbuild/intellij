@@ -1,3 +1,9 @@
+v2025.11.27
+===========
+* Support for Bazel 9 #8014 #8003 #8002 #8001 #8000
+* Fix import notification shown for non-Bazel project #8005
+* Autoimport copies managed project view file #7976
+
 v2025.11.03
 ===========
 * Add switch project view action #7951
