@@ -1,0 +1,18 @@
+We don't need any SDK, so we also don't care what version is there.
+
+diff --git a/rules/android_sdk_repository/rule.bzl b/rules/android_sdk_repository/rule.bzl
+index cc06816..1acc819 100644
+--- a/rules/android_sdk_repository/rule.bzl
++++ b/rules/android_sdk_repository/rule.bzl
+@@ -135,11 +135,6 @@ def _android_sdk_repository_impl(repo_ctx):
+     # Check validity of build_tools
+     if not build_tools:
+         fail("Unable to determine build tools version")
+-    if compare_android_revisions(build_tools, _MIN_BUILD_TOOLS_VERSION) != build_tools:
+-        fail("Bazel requires Android build tools version %s or newer, %s was provided" % (
+-            _MIN_BUILD_TOOLS_VERSION.dir,
+-            build_tools.dir,
+-        ))
+
+     # Determine system image dirs
+     system_images = _find_system_images(repo_ctx, android_sdk_path)
