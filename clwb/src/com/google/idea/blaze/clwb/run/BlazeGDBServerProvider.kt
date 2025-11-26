@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.command.BlazeFlags
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
 import com.google.idea.common.experiments.BoolExperiment
-import com.google.idea.datafiles.Datafiles
+import com.google.idea.common.util.Datafiles
 import com.google.idea.sdkcompat.clion.debug.CidrDebuggerPathManagerAdapter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry

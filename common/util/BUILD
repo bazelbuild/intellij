@@ -46,7 +46,7 @@ java_library(
 
 kt_jvm_library(
     name = "datafiles",
-    srcs = ["src/com/google/idea/datafiles/Datafiles.kt"],
+    srcs = ["src/com/google/idea/common/util/Datafiles.kt"],
     deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
