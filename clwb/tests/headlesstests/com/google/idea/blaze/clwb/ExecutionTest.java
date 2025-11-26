@@ -9,6 +9,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
@@ -41,12 +42,17 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ExecutionTest extends ClwbHeadlessTestCase {
+
+  // catch requires bazel 7+
+  @Rule
+  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   private static final String ECHO_OUTPUT_MARKER = "ECHO_OUTPUT_FILE: ";
 

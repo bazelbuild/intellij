@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.OSRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -26,6 +27,10 @@ public class LibCppTest extends ClwbHeadlessTestCase {
   // only the macOS and linux runners have llvm available
   @Rule
   public final OSRule osRule = new OSRule(OS.Linux, OS.macOS);
+
+  // catch requires bazel 7+
+  @Rule
+  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Test
   public void testClwb() throws IOException {
