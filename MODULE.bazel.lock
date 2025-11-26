@@ -502,7 +502,7 @@
     },
     "@@rules_android+//rules/android_sdk_repository:rule.bzl%android_sdk_repository_extension": {
       "general": {
-        "bzlTransitiveDigest": "+rMrzIrv7sImYmkbXJYv+gFpTJQ79X3MpwwMLI2A+oA=",
+        "bzlTransitiveDigest": "9Sd/Ggbq3LMPqnYhDRo3cuQzFq3UjkU/tFEzqVd9YfE=",
         "usagesDigest": "klEeNphct5pZgMFG4ln7/y5tcfnXpo0zHeFFI6ajD9E=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

@@ -14,6 +14,8 @@ bazel_dep(name = "rules_android", version = "0.6.6")
 git_override(
     module_name = "rules_android",
     commit = "a11ce9d817a9a66e4ff2074bbe5c2fa264733547",
+    patch_strip = 1,
+    patches = ["//third_party/android/patches:remove_sdk_check.patch"],
     remote = "https://github.com/bazelbuild/rules_android.git",
 )
 
