@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -45,20 +46,26 @@ import java.util.Optional;
 
 
 public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsProvider {
-  
+
+  // provides only the default xcode version but is available in Bazel 9 as well
+  private static final String HOST_XCODES_TARGET = "@bazel_tools//tools/cpp:host_xcodes";
+
+  // provides the current xcode version but is not available in Bazel 9 anymore
+  private static final String CURRENT_XCODE_CONFIG_TARGET = "@bazel_tools//tools/osx:current_xcode_config";
+
   private static final String QUERY_STARLARK_FILE = "xcode_query.bzl";
   
   // This only exists because it's impossible to escape a `deps()` query expression correctly in a Java string.
   private static final String[] QUERY_XCODE_VERSION_SCRIPT_LINES = new String[]{
       "#!/bin/bash",
       "__BAZEL_BIN__ cquery \\",
-      " 'deps(\"@bazel_tools//tools/osx:current_xcode_config\")' \\",
+      " 'deps(__TARGET__)' \\",
       " --output=starlark \\",
       " --starlark:file='__QUERY_FILE__'",
   };
 
   @Override
-  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project)
+  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project, BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     BuildSystem.BuildInvoker invoker =
@@ -68,7 +75,8 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         context, 
         invoker,
         workspaceRoot,
-        project);
+        project,
+        projectData);
 
     if (!xcodeAndSdkVersions.isPresent()) {
       return Optional.empty();
@@ -205,7 +213,8 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       BlazeContext context,
       BuildInvoker invoker, 
       WorkspaceRoot workspaceRoot,
-      Project project)
+      Project project,
+      BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     // this will not work with query sync, since at the moment aspects are only written as part of the async
     final var queryFile = AspectStorageService.of(project)
@@ -213,6 +222,13 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         .orElseThrow(() -> new IllegalStateException("could not resolve query file"))
         .toFilePath()
         .toString();
+
+    final String queryTarget;
+    if (projectData.getBlazeVersionData().bazelIsAtLeastVersion(9, 0, 0)) {
+      queryTarget = HOST_XCODES_TARGET;
+    } else {
+      queryTarget = CURRENT_XCODE_CONFIG_TARGET;
+    }
     
     File blazeCqueryWrapper = null;
     try {
@@ -226,6 +242,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         Arrays.stream(QUERY_XCODE_VERSION_SCRIPT_LINES).forEach(line -> {
           line = line.replace("__BAZEL_BIN__", invoker.getBinaryPath());
           line = line.replace("__QUERY_FILE__", queryFile);
+          line = line.replace("__TARGET__", queryTarget);
 
           pw.println(line);
         });

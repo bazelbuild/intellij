@@ -1,6 +1,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
@@ -13,7 +14,7 @@ import java.util.Optional;
 public class XcodeCompilerSettingsProviderNoopImpl implements XcodeCompilerSettingsProvider {
 
   @Override
-  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project)
+  public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project, BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     return Optional.empty();
   }

@@ -86,7 +86,7 @@ final class BlazeConfigurationResolver {
             context, blazeProjectData.getTargetMap());
 
     Optional<XcodeCompilerSettings> xcodeSettings =
-            BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project);
+            BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project, blazeProjectData);
 
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
         BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ public interface XcodeCompilerSettingsProvider {
     return ServiceManager.getService(project, XcodeCompilerSettingsProvider.class);
   }
 
-  Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project)
+  Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project, BlazeProjectData projectData)
       throws XcodeCompilerSettingsException;
 
   default ImmutableMap<String, String> asEnvironmentVariables(
