@@ -1,5 +1,12 @@
 bazel_dep(name = "rules_cc", version = "0.2.14")
+
+# temporary to fix missings loads in toolchains_llvm (drop wit Bazel 9 release)
 bazel_dep(name = "toolchains_llvm", version = "1.5.0")
+git_override(
+    module_name = "toolchains_llvm",
+    commit = "43e5dc41535c0f8d4f3573c7373caf10e883e4bb",
+    remote = "https://github.com/bazel-contrib/toolchains_llvm.git",
+)
 
 # Configure and register the toolchain.
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
