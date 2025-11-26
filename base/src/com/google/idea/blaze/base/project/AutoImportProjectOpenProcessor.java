@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
@@ -57,6 +58,8 @@ import org.jetbrains.annotations.Nullable;
  * Must be loaded after {@link BlazeProjectOpenProcessor} to only import new projects.
  */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
+
+  public static final String[] WORKSPACE_MARKER_FILES = {"WORKSPACE", "WORKSPACE.bazel", "MODULE.bazel"};
 
   public static final String MANAGED_PROJECT_RELATIVE_PATH = "tools/intellij/.managed.bazelproject";
   public static final String PROJECT_VIEW_FROM_ENV = "INTELLIJ_BAZEL_PROJECT_VIEW_TEMPLATE";
@@ -97,9 +100,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   private boolean isBazelWorkspace(VirtualFile virtualFile) {
-    return virtualFile.findChild("WORKSPACE") != null
-        || virtualFile.findChild("WORKSPACE.bazel") != null
-        || virtualFile.findChild("MODULE.bazel") != null;
+    return Arrays.stream(WORKSPACE_MARKER_FILES).anyMatch((file) -> virtualFile.findChild(file) != null);
   }
 
   @Override

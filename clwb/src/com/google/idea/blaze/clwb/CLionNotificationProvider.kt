@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType
+import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor
 import com.google.idea.blaze.base.settings.Blaze
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.wizard2.BazelImportCurrentProjectAction
@@ -27,8 +28,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
 import com.google.idea.sdkcompat.clion.projectStatus.*
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.cidr.project.workspace.CidrWorkspace
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 /// This function is a little overloaded, ensures the project could be imported
 // and returns the potential workspace root.
@@ -38,7 +44,7 @@ private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
     return null
   }
 
-  if (!Blaze.isBlazeProject(project)) {
+  if (Blaze.isBlazeProject(project)) {
     return null
   }
 
@@ -56,13 +62,32 @@ private fun guessWorkspaceRoot(project: Project, file: VirtualFile?): String? {
   return workspaceRoot.removeSuffix(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
 }
 
-@RequiresReadLock
-private fun guessWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
+@RequiresReadLockAbsence
+private fun validateWorkspaceRoot(workspaceRoot: String): Boolean {
+  return AutoImportProjectOpenProcessor.WORKSPACE_MARKER_FILES.any {
+    Files.exists(Path.of(workspaceRoot, it))
+  }
+}
+
+@RequiresReadLockAbsence
+private suspend fun guessWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
   if (Blaze.isBlazeProject(project)) {
     return DefaultWidgetStatus(Status.OK, Scope.Project, "Bazel project is configured")
   }
 
-  if (currentFile == null || guessWorkspaceRoot(project, currentFile) == null) {
+  if (currentFile == null) {
+    return null
+  }
+
+  val workspaceRoot = readAction {
+    guessWorkspaceRoot(project, currentFile)
+  }
+
+  if (workspaceRoot == null) {
+    return null
+  }
+
+  if (withContext(Dispatchers.IO) { !validateWorkspaceRoot(workspaceRoot) }) {
     return null
   }
 
@@ -86,13 +111,13 @@ class BazelProjectFixesProvider : ProjectFixesProvider {
 class BazelWidgetStatusProvider : WidgetStatusProvider {
 
   override suspend fun computeWidgetStatus(project: Project, currentFile: VirtualFile?): WidgetStatus? {
-    return readAction { guessWidgetStatus(project, currentFile) }
+    return guessWidgetStatus(project, currentFile)
   }
 }
 
 class BazelEditorNotificationProvider : EditorNotificationWarningProvider {
 
   override suspend fun computeProjectNotification(project: Project, file: VirtualFile): ProjectNotification? {
-    return convertStatus(readAction { guessWidgetStatus(project, file) })
+    return convertStatus(guessWidgetStatus(project, file))
   }
 }
