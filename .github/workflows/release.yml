@@ -30,6 +30,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          large-packages: false
+
       - name: Setup Bazel
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
