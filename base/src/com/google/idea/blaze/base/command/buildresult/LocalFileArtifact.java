@@ -27,11 +27,19 @@ import java.util.Collection;
 public interface LocalFileArtifact extends BlazeArtifact {
 
   /**
-   * Filters out non-local artifacts for legacy sync as it supports BlazeArtifact.
+   * Filters out non-local artifacts.
    *
    * <p>Some callers will only ever accept local outputs (e.g. when debugging, and making use of
    * runfiles directories).
    */
+  static ImmutableList<File> getLocalFiles(Collection<? extends BlazeArtifact> artifacts) {
+    return getLocalFilesForLegacySync(artifacts);
+  }
+
+  /**
+   * @deprecated use {@link #getLocalFiles(Collection)} instead.
+   */
+  @Deprecated
   static ImmutableList<File> getLocalFilesForLegacySync(Collection<? extends BlazeArtifact> artifacts) {
     return artifacts.stream()
       .filter(a -> a instanceof LocalFileArtifact)
