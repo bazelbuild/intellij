@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
-import com.google.idea.blaze.base.qsync.NotSupportedWithQuerySyncException;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -146,10 +145,6 @@ public class LegacyAdditionalLanguagesHelper
    * installs/enables any other required plugins.
    */
   public static void enableLanguageSupport(Project project, List<LanguageClass> languages) {
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      throw new NotSupportedWithQuerySyncException(
-          "Additional languages not applicable to querysync.");
-    }
     ProjectViewEdit edit =
         ProjectViewEdit.editLocalProjectView(
             project,

@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -62,7 +61,6 @@ public class TestMapTest extends BlazeTestCase {
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     mockBlazeProjectDataManager = new MockBlazeProjectDataManager();
     projectServices.register(BlazeProjectDataManager.class, mockBlazeProjectDataManager);

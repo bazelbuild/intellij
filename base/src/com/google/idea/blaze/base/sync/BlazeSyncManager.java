@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.NotSupportedWithQuerySyncException;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
@@ -93,9 +92,6 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
-    if (Blaze.getUpToDateProjectTypeBeforeSync(project) == ProjectType.QUERY_SYNC) {
-      throw new NotSupportedWithQuerySyncException("legacy sync requested");
-    }
     if (syncParams.syncMode() == SyncMode.NO_BUILD
         && !syncParams.backgroundSync()
         && !SyncDirectoriesWarning.warn(project)) {

@@ -33,8 +33,6 @@ import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.execution.BazelGuard;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
-import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -50,7 +48,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,8 +77,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
-    BuildDepsStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputsForLegacy(buildResult);
     }
@@ -118,8 +113,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
-    BuildDepsStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
@@ -219,7 +212,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
               .ignoreExitCode(true)
               .build()
               .run();
-      SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(retVal));
       BazelExitCodeException.throwIfFailed(
           blazeCommandBuilder.build(), retVal, ThrowOption.ALLOW_PARTIAL_SUCCESS);
       return new BufferedInputStream(

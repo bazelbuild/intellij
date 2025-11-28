@@ -15,13 +15,9 @@
  */
 package com.google.idea.blaze.base.bazel;
 
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.BazelQueryRunner;
-import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -53,10 +49,5 @@ class BazelBuildSystem implements BuildSystem {
   @Override
   public Optional<String> getBazelVersionString(BlazeInfo blazeInfo) {
     return Optional.ofNullable(BazelVersion.parseVersion(blazeInfo).toString());
-  }
-
-  @Override
-  public BazelQueryRunner createQueryRunner(Project project) {
-    return new BazelQueryRunner(project, this);
   }
 }

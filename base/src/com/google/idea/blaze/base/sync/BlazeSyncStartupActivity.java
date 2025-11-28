@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
@@ -47,16 +45,10 @@ public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
     }
     ProjectType initialProjectType = importSettings.getProjectType();
     ProjectType currentProjectType = Blaze.getUpToDateProjectTypeBeforeSync(project);
-    if (currentProjectType == ProjectType.QUERY_SYNC) {
-      // When query sync is not enabled hasProjectData triggers the load
-      QuerySyncManager.getInstance(project)
-          .onStartup(QuerySyncActionStatsScope.create(getClass(), null));
+    if (initialProjectType == currentProjectType && hasProjectData(project, importSettings)) {
+      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
     } else {
-      if (initialProjectType == currentProjectType && hasProjectData(project, importSettings)) {
-        BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
-      } else {
-        BlazeSyncManager.getInstance(project).incrementalProjectSync(SYNC_REASON);
-      }
+      BlazeSyncManager.getInstance(project).incrementalProjectSync(SYNC_REASON);
     }
   }
 

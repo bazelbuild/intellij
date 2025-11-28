@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -37,7 +34,9 @@ import icons.BlazeIcons;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
-/** Syncs the project with BUILD files. */
+/**
+ * Syncs the project with BUILD files.
+ */
 public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   public static final String ID = "Blaze.IncrementalSyncProject";
@@ -53,26 +52,12 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     // This is a project type after we reloaded project view and actualized it in BlazeImportSettings
     ProjectType refreshedProjectType = Blaze.getUpToDateProjectTypeBeforeSync(project);
     boolean projectTypeChanged = currentProjectType != refreshedProjectType;
-    if (refreshedProjectType == ProjectType.QUERY_SYNC) {
-      QuerySyncManager qsm = QuerySyncManager.getInstance(project);
-      QuerySyncActionStatsScope scope = QuerySyncActionStatsScope.create(klass, e);
-      if (!qsm.isProjectLoaded()) {
-        qsm.onStartup(scope);
-      } else {
-        if (projectTypeChanged) {
-          qsm.fullSync(scope, TaskOrigin.USER_ACTION);
-        } else {
-          qsm.deltaSync(scope, TaskOrigin.USER_ACTION);
-        }
-      }
+    if (projectTypeChanged) {
+      BlazeSyncManager.getInstance(project)
+          .fullProjectSync(/* reason= */ "FullSyncProjectAction");
     } else {
-      if (projectTypeChanged) {
-        BlazeSyncManager.getInstance(project)
-                .fullProjectSync(/* reason= */ "FullSyncProjectAction");
-      } else {
-        BlazeSyncManager.getInstance(project)
-                .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
-      }
+      BlazeSyncManager.getInstance(project)
+          .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
     }
   }
 

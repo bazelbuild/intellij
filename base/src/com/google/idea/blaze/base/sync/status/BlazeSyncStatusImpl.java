@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.project.Project;

@@ -28,8 +28,6 @@ kt_jvm_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//querysync",
-        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//sdkcompat",
         "//shared",
         "//third_party/java/auto_value",

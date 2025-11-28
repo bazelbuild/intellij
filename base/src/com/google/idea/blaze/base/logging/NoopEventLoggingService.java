@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.logging;
 
 import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -26,9 +25,6 @@ public final class NoopEventLoggingService implements EventLoggingService {
 
   @Override
   public void log(SyncStats syncStats) {}
-
-  @Override
-  public void log(QuerySyncActionStats syncStats) {}
 
   @Override
   public void logCommand(Class<?> loggingClass, Command command) {}
