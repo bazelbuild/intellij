@@ -4,9 +4,13 @@
 ###end
 # TEMPLATE-INCLUDE-END
 
+# TEMPLATE-IGNORE-BEGIN
+load("@rules_python//python:defs.bzl", RulesPyInfo = "PyInfo")
+# TEMPLATE-IGNORE-END
+
 def py_info_in_target(target):
 # TEMPLATE-IGNORE-BEGIN
-    return PyInfo in target
+    return RulesPyInfo in target
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
@@ -23,8 +27,8 @@ def py_info_in_target(target):
 
 def get_py_info(target):
 # TEMPLATE-IGNORE-BEGIN
-    if PyInfo in target:
-        return target[PyInfo]
+    if RulesPyInfo in target:
+        return target[RulesPyInfo]
     else:
         return None
 # TEMPLATE-IGNORE-END
