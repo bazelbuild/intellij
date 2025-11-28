@@ -69,7 +69,7 @@ class BazelDebugFlagsBuilder(
     switchBuilder.withDisableOptimization()
 
     if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && withClangTrimPaths && workspaceRoot != null) {
-      switchBuilder.withSwitch("-fdebug-compilation-dir=$workspaceRoot")
+      switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
     }
 
     if (debuggerKind == BlazeDebuggerKind.GDB_SERVER && withFissionFlag) {
