@@ -17,25 +17,20 @@ package com.google.idea.blaze.clwb.run
 
 import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.command.BlazeCommandName
-import com.google.idea.blaze.base.command.BlazeFlags
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
-import com.google.idea.common.experiments.BoolExperiment
 import com.google.idea.common.util.Datafiles
 import com.google.idea.sdkcompat.clion.debug.CidrDebuggerPathManagerAdapter
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PathUtil
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
-import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
+import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 private val LOG = logger<BlazeGDBServerProvider>()
-
-private val USE_REMOTE_DEBUGGING_WRAPPER: BoolExperiment = BoolExperiment("cc.remote.debugging.wrapper", true)
 
 /** CLion-specific class that provides the slightly customized Toolchain for use with gdbserver  */
 object BlazeGDBServerProvider {
@@ -47,80 +42,24 @@ object BlazeGDBServerProvider {
    */
   private val GDBSERVER_WRAPPER: Path by Datafiles.resolveLazy("gdb/gdbserver")
 
-  // These flags are used when debugging cc_binary targets when remote debugging
-  // is enabled (cc.remote.debugging)
-  private val EXTRA_FLAGS_FOR_DEBUG_RUN = ImmutableList.of<String>(
-    "--compilation_mode=dbg", "--strip=never", "--dynamic_mode=off"
-  )
-
-  // These flags are used when debugging cc_test targets when remote debugging
-  // is enabled (cc.remote.debugging)
-  private val EXTRA_FLAGS_FOR_DEBUG_TEST = ImmutableList.of<String>(
-    "--compilation_mode=dbg",
-    "--strip=never",
-    "--dynamic_mode=off",
-    "--test_timeout=3600",
-    BlazeFlags.NO_CACHE_TEST_RESULTS,
-    BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
-    BlazeFlags.DISABLE_TEST_SHARDING
-  )
-
-  // Allows the fission flag to be disabled as workaround for
-  @JvmStatic
-  fun getOptionalFissionArguments(): ImmutableList<String> {
-    return if (Registry.`is`("bazel.clwb.debug.fission.disabled")) {
-      ImmutableList.of()
-    } else {
-      ImmutableList.of("--fission=yes")
-    }
-  }
-
   @JvmStatic
   fun getFlagsForDebugging(state: RunConfigurationState?): ImmutableList<String> {
     if (state !is BlazeCidrRunConfigState) {
       return ImmutableList.of()
     }
 
-    val commandName = state.commandState.command
-    val builder = ImmutableList.builder<String>()
+    val builder = BazelDebugFlagsBuilder.fromDefaults(BlazeDebuggerKind.GDB_SERVER, GCCCompilerKind)
+    builder.withBuildFlags()
 
-    val toolchain = ToolchainUtils.getToolchain()
+    if (state.commandState.command == BlazeCommandName.TEST) {
+      builder.withTestFlags()
+    }
 
     // if gdbserver could not be found, fall back to trying PATH
-    val gdbServerPath = getGDBServerPath(toolchain) ?: "gdbserver"
+    val gdbServerPath = getGDBServerPath(ToolchainUtils.getToolchain()) ?: "gdbserver"
+    builder.withRunUnderGDBServer(gdbServerPath, state.getDebugPortState().port, GDBSERVER_WRAPPER)
 
-    if (USE_REMOTE_DEBUGGING_WRAPPER.value) {
-      builder.add(
-        String.format(
-          "--run_under='bash' '%s' '%s' --once localhost:%d --target",
-          GDBSERVER_WRAPPER,
-          gdbServerPath,
-          state.getDebugPortState().port,
-        )
-      )
-    } else {
-      builder.add(
-        String.format(
-          "--run_under='%s' --once localhost:%d",
-          gdbServerPath,
-          state.getDebugPortState().port,
-        )
-      )
-    }
-
-    if (BlazeCommandName.RUN == commandName) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN)
-      builder.addAll(getOptionalFissionArguments())
-      return builder.build()
-    }
-
-    if (BlazeCommandName.TEST == commandName) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST)
-      builder.addAll(getOptionalFissionArguments())
-      return builder.build()
-    }
-
-    return ImmutableList.of()
+    return builder.build()
   }
 
   private fun getGDBServerPath(toolchain: CPPToolchains.Toolchain): String? {
