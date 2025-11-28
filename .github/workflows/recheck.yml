@@ -36,27 +36,38 @@ jobs:
             const { owner, repo } = context.repo;
             const prNumber = context.issue.number;
 
-            // get the current PR
+            // get the Commenter's details to spoof the author
+            const commenter = context.payload.comment.user;
+            // construct the standard GitHub noreply email: ID+Login@users.noreply.github.com
+            const authorName = commenter.login;
+            const authorEmail = `${commenter.id}+${commenter.login}@users.noreply.github.com`;
+
+            // 4. Get the current PR
             const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: prNumber,
             });
             
-            // get the current commit
+            // Get the current commit
             const { data: currentCommit } = await github.rest.git.getCommit({
               owner,
               repo,
               commit_sha: pr.head.sha,
             });
             
-            // create the empty commit
+            // Create the empty commit with the commenter as the Author
             const { data: newCommit } = await github.rest.git.createCommit({
               owner,
               repo,
-              message: "Triggering CI (empty commit)",
+              message: `Triggering CI (empty commit)\n\nAutomatically created on behalf of @${authorName}`,
               tree: currentCommit.tree.sha,
               parents: [pr.head.sha],
+              author: {
+                name: authorName,
+                email: authorEmail,
+                date: new Date().toISOString() // timestamp is required when manually setting author
+              }
             });
 
             // update the branch reference
@@ -67,7 +78,7 @@ jobs:
               sha: newCommit.sha,
             });
             
-            // add reaction to comment
+            // add a reaction to the comment
             await github.rest.reactions.createForIssueComment({
               owner,
               repo,
