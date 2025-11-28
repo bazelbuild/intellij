@@ -3,48 +3,26 @@ module(
     repo_name = "intellij_with_bazel",
 )
 
-bazel_dep(
-    name = "platforms",
-    version = "1.0.0",
-)
-bazel_dep(
-    name = "rules_java",
-    version = "8.16.1",
-)
-bazel_dep(
-    name = "rules_python",
-    version = "1.6.3",
-)
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_java", version = "9.0.3")
+bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_proto", version = "7.1.0")
+bazel_dep(name = "protobuf", version = "33.1")
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
+bazel_dep(name = "rules_jvm_external", version = "6.9")
+bazel_dep(name = "rules_kotlin", version = "2.1.9")
+bazel_dep(name = "rules_scala", version = "7.1.5")
+bazel_dep(name = "rules_go", version = "0.59.0", repo_name = "io_bazel_rules_go")
+bazel_dep(name = "gazelle", version = "0.47.0", repo_name = "bazel_gazelle")
 
-python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(
-    configure_coverage_tool = True,
-    python_version = "3.12",
-)
-use_repo(python, "python_3_12", "python_versions")
-
-bazel_dep(
-    name = "rules_proto",
-    version = "7.1.0",
-)
-bazel_dep(
-    name = "protobuf",
-    version = "32.1",
-)
-bazel_dep(
-    name = "bazel_skylib",
-    version = "1.8.2",
-)
-bazel_dep(
-    name = "rules_pkg",
-    version = "1.1.0",
-)
+# required for aspect tests
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "abseil-cpp", version = "20250814.1")
 
 # custom configuration for rules kotlin, patches are required
-bazel_dep(
-    name = "rules_kotlin",
-    version = "2.1.9",
-)
 single_version_override(
     module_name = "rules_kotlin",
     patch_strip = 1,
@@ -54,55 +32,39 @@ single_version_override(
     ],
 )
 
-register_toolchains("//third_party/kotlin:toolchain")
-
-bazel_dep(
-    name = "rules_shell",
-    version = "0.6.1",
-    dev_dependency = True,
-)
-bazel_dep(
-    name = "rules_cc",
-    version = "0.2.8",
-    dev_dependency = True,
-)
-bazel_dep(
-    name = "rules_bazel_integration_test",
-    version = "0.33.2",
-    dev_dependency = True,
-)
-
-bazel_binaries = use_extension(
-    "@rules_bazel_integration_test//:extensions.bzl",
-    "bazel_binaries",
-    dev_dependency = True,
-)
-bazel_binaries.download(version = "6.5.0")
-bazel_binaries.download(version = "7.5.0")
-bazel_binaries.download(
-    current = True,
-    version = "8.4.0",
-)
-bazel_binaries.download(version = "last_green")
-use_repo(
-    bazel_binaries,
-    "bazel_binaries",
-    "bazel_binaries_bazelisk",
-    "build_bazel_bazel_6_5_0",
-    "build_bazel_bazel_7_5_0",
-    "build_bazel_bazel_8_4_0",
-    "build_bazel_bazel_last_green",
-)
-
-bazel_dep(name = "rules_jvm_external", version = "6.8")
-bazel_dep(name = "rules_scala", version = "7.0.0")
-
+# configure scala
 scala_dev_deps = use_extension(
     "@rules_scala//scala/extensions:deps.bzl",
     "scala_deps",
 )
 scala_dev_deps.scala()
 scala_dev_deps.scalatest()
+
+# configure python core rules_python
+register_toolchains("//third_party/kotlin:toolchain")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    configure_coverage_tool = True,
+    python_version = "3.12",
+)
+use_repo(python, "python_3_12", "python_versions")
+
+# configure bazel binaries for rules_bazel_integration_test
+bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
+bazel_binaries.download(version = "6.5.0")
+bazel_binaries.download(version = "7.6.2")
+bazel_binaries.download(version = "8.4.2")
+bazel_binaries.download(version = "last_green")
+use_repo(
+    bazel_binaries,
+    "bazel_binaries",
+    "bazel_binaries_bazelisk",
+    "build_bazel_bazel_6_5_0",
+    "build_bazel_bazel_7_6_2",
+    "build_bazel_bazel_8_4_2",
+    "build_bazel_bazel_last_green",
+)
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 maven.install(
@@ -124,7 +86,7 @@ maven.install(
         "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.10.1",
-        "com.google.errorprone:error_prone_annotations:2.20.0",
+        "com.google.errorprone:error_prone_annotations:2.23.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
         "com.google.truth:truth:1.4.4",
         "com.google.j2objc:j2objc-annotations:2.8",
@@ -133,7 +95,8 @@ maven.install(
         "org.jetbrains:annotations:26.0.2",
         "org.jetbrains.pty4j:pty4j:0.13.0",
         # Only required for the maintenance script, otherwise use the stdlib for the sdk
-        "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.1.21",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
@@ -167,9 +130,6 @@ use_repo(
     truth = "com_google_truth_truth",
 )
 
-bazel_dep(name = "rules_go", version = "0.56.1", repo_name = "io_bazel_rules_go")
-bazel_dep(name = "gazelle", version = "0.45.0", repo_name = "bazel_gazelle")
-
 go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
 
 # gRPC is used to generate Go from proto in the aspect tests, in
@@ -199,9 +159,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IC_252_SHA = "042cc287b47a2803a80a3bd6d9cbb5858ae46680870788a4a12fc1aa38fb8abc"
+IC_252_SHA = "af61eabf6f9463dc4852e7e14f6a40fee4fa346d70755f7015331f9093982463"
 
-IC_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2025.2.4/ideaIC-2025.2.4.zip"
+IC_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2025.2.5/ideaIC-2025.2.5.zip"
 
 http_archive(
     name = "intellij_ce_2025_2",
@@ -211,9 +171,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_3. This is required to build IJwB and run integration tests.
-IC_253_SHA = "752d8f1ce968f729a9c357595a18000a0e7b80789295ce4be99f59d349db131f"
+IC_253_SHA = "3d3735b5cac46973ba2ddd542ad28ba0679d976fded3a75cbc1cf248d35470f9"
 
-IC_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/253.27864.23-EAP-SNAPSHOT/ideaIC-253.27864.23-EAP-SNAPSHOT.zip"
+IC_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/253.28294.169-EAP-SNAPSHOT/ideaIC-253.28294.169-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2025_3",
@@ -235,9 +195,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_2. This is required to build IJwB and run integration tests.
-IU_252_SHA = "9ef0c3e6d9c5e992e3c35db8c880c5e0f7230129077f3c9eb9bdb37dab735cff"
+IU_252_SHA = "b2ac7d54c5c25261a5da3c08c07f2763e6d4dedecc8345b16fcae84fb41aa0c5"
 
-IU_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2025.2.4/ideaIU-2025.2.4.zip"
+IU_252_URL = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2025.2.5/ideaIU-2025.2.5.zip"
 
 http_archive(
     name = "intellij_ue_2025_2",
@@ -247,9 +207,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2025_3. This is required to build IJwB and run integration tests.
-IU_253_SHA = "073c904000c6f454bcdb64d22bb104f2c8f5e17b740cf28aa8de7f662fd08052"
+IU_253_SHA = "3f4c1a6fa86359f82d8f5c977e0645b27f46fd3ce0e183f70f19f1746c882eab"
 
-IU_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/253.27864.23-EAP-SNAPSHOT/ideaIU-253.27864.23-EAP-SNAPSHOT.zip"
+IU_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/253.28294.169-EAP-SNAPSHOT/ideaIU-253.28294.169-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2025_3",
@@ -288,9 +248,9 @@ http_archive(
     url = DEVKIT_252_URL,
 )
 
-DEVKIT_253_SHA = "6d48032f9797220168592e21c3894a8cdce6228a68f37d53057d55d122dcc114"
+DEVKIT_253_SHA = "1eabcf7230deb3d019eff0fc46c8045af78bc796eec8abee5c73bad1c708995f"
 
-DEVKIT_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/253.27864.23/DevKit-253.27864.23.zip"
+DEVKIT_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/253.28294.169/DevKit-253.28294.169.zip"
 
 http_archive(
     name = "devkit_2025_3",
@@ -323,9 +283,9 @@ http_archive(
     url = PYTHON_PLUGIN_251_URL,
 )
 
-PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.27397.103/PythonCore-252.27397.103.zip"
+PYTHON_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/252.28238.7/PythonCore-252.28238.7.zip"
 
-PYTHON_PLUGIN_252_SHA = "f56a95f3aa127bc7057700583cb201044f4b41bfacd8f1f7d4a827c7020cf4a4"
+PYTHON_PLUGIN_252_SHA = "dd58ebbc9f2fd539804e874b8f01ade391dcaac8ac7b2c6fb6c2437433a90040"
 
 http_archive(
     name = "python_2025_2",
@@ -334,9 +294,9 @@ http_archive(
     url = PYTHON_PLUGIN_252_URL,
 )
 
-PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.27864.23/PythonCore-253.27864.23.zip"
+PYTHON_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/253.28294.169/PythonCore-253.28294.169.zip"
 
-PYTHON_PLUGIN_253_SHA = "f2643e4f3ab5bf3b7b77cbf0797e8c33318c9d21a3807462f6034d0613ecebc6"
+PYTHON_PLUGIN_253_SHA = "fa3dc8a5038736e8c4aef5a8da42ab933d32ac9b416a6f5f900697aefe799487"
 
 http_archive(
     name = "python_2025_3",
@@ -375,9 +335,9 @@ http_archive(
     url = GO_PLUGIN_252_URL,
 )
 
-GO_PLUGIN_253_SHA = "77d1f4683fe921259f77ec1f7d41bd68b4f85274a4fdff3713672a32f1c14179"
+GO_PLUGIN_253_SHA = "d0432b03d958baad3cf408a9f60f104bc237e4452e1d85a756b23135c270c314"
 
-GO_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/253.27864.23/org.jetbrains.plugins.go-253.27864.23.zip"
+GO_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/253.28294.169/org.jetbrains.plugins.go-253.28294.169.zip"
 
 http_archive(
     name = "go_2025_3",
@@ -416,9 +376,9 @@ http_archive(
     url = SCALA_PLUGIN_252_URL,
 )
 
-SCALA_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.3.14/org.intellij.scala-2025.3.14.zip"
+SCALA_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2025.3.20/org.intellij.scala-2025.3.20.zip"
 
-SCALA_PLUGIN_253_SHA = "359e3009aaf17ff479b653b8542ed6ffe325791106ce1d6ff54c139bf32deb8e"
+SCALA_PLUGIN_253_SHA = "7bbf8c42f4aee8bae7fee4fe97e6f18f87a9478b7cd0fd123218e49443941ca5"
 
 http_archive(
     name = "scala_2025_3",
@@ -446,9 +406,9 @@ http_archive(
     url = TOML_PLUGIN_251_URL,
 )
 
-TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.27397.109/org.toml.lang-252.27397.109.zip"
+TOML_PLUGIN_252_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/252.28238.9/org.toml.lang-252.28238.9.zip"
 
-TOML_PLUGIN_252_SHA = "0f3d04221fc711f58249b9d99b95aeccbf0200ecb535fb7f7f2df4e8882e280d"
+TOML_PLUGIN_252_SHA = "8d479976a793ac1f39d0c792087b91be3f436f87ea72c8379d24ea47807fb7ba"
 
 http_archive(
     name = "toml_2025_2",
@@ -457,23 +417,13 @@ http_archive(
     url = TOML_PLUGIN_252_URL,
 )
 
-TOML_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/253.27864.35/org.toml.lang-253.27864.35.zip"
+TOML_PLUGIN_253_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/253.28294.218/org.toml.lang-253.28294.218.zip"
 
-TOML_PLUGIN_253_SHA = "356a32bd9c9d9754f51d1d8fa98d7ef66111fc304f4a47cc4396b952fd79aa52"
+TOML_PLUGIN_253_SHA = "146c9b3c6f71f8b80960dbc59ed5c1158fc59e2312201ed9adf34d1b9aa4f96c"
 
 http_archive(
     name = "toml_2025_3",
     build_file_content = _TOML_BUILD_FILE,
     sha256 = TOML_PLUGIN_253_SHA,
     url = TOML_PLUGIN_253_URL,
-)
-
-# needed for cpp tests
-http_archive(
-    name = "com_google_absl",
-    sha256 = "f50e5ac311a81382da7fa75b97310e4b9006474f9560ac46f54a9967f07d4ae3",
-    strip_prefix = "abseil-cpp-20240722.0",
-    urls = [
-        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20240722.0.tar.gz",
-    ],
 )

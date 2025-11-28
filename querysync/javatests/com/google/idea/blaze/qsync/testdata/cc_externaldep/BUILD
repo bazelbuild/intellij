@@ -5,5 +5,5 @@ cc_library(
     srcs = ["TestClass.cc"],
     hdrs = ["TestClass.h"],
     visibility = ["//querysync/javatests/com/google/idea/blaze/qsync/testdata:__subpackages__"],
-    deps = ["@com_google_absl//absl/strings"],
+    deps = ["@abseil-cpp//absl/strings"],
 )
