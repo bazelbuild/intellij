@@ -14,7 +14,7 @@
 
 # Description:
 #
-# Plugin source jars for IntelliJ CE, accessed remotely.
+# Plugin source jars for IntelliJ UE, accessed remotely.
 
 load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 
@@ -43,7 +43,7 @@ no_mockito_extensions(
 
 java_import(
     name = "guava",
-    jars = ["lib/lib.jar", "lib/guava.jar"],
+    jars = ["lib/lib.jar", "lib/module-intellij.libraries.guava.jar"],
 )
 
 java_library(name = "jsr305")  # not bundled
@@ -55,7 +55,10 @@ java_import(
 
 java_import(
     name = "platform_images",
-    jars = glob(["plugins/platform-images/lib/*.jar"]),
+    jars = glob([
+        "plugins/platform-images/lib/*.jar",
+        "plugins/platform-images/lib/modules/*.jar"
+    ]),
 )
 
 java_import(
@@ -113,8 +116,11 @@ java_import(
         "plugins/java-i18n/lib/*.jar",
         "plugins/junit/lib/*.jar",
         "plugins/properties/lib/*.jar",
+        "plugins/properties/lib/modules/*.jar",
         "plugins/json/lib/*.jar",
         "plugins/json/lib/modules/*.jar",
+        "plugins/platform-images/lib/*.jar",
+        "plugins/platform-images/modules/*.jar",
         "plugins/toml/lib/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
