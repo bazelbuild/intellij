@@ -42,24 +42,35 @@ jobs:
             const authorName = commenter.login;
             const authorEmail = `${commenter.id}+${commenter.login}@users.noreply.github.com`;
 
-            // 4. Get the current PR
+            // get the current PR
             const { data: pr } = await github.rest.pulls.get({
               owner,
               repo,
               pull_number: prNumber,
             });
             
-            // Get the current commit
+            if (!pr.head.repo) {
+              console.log("The source repository (fork) seems to be deleted. Cannot commit.");
+              return;
+            }
+            
+            const forkOwner = pr.head.repo.owner.login;
+            const forkRepo = pr.head.repo.name;
+            const forkRef = pr.head.ref;
+            
+            console.log(`Targeting repo: ${forkOwner}/${forkRepo} on branch: ${forkRef}`);
+            
+            // get the current commit
             const { data: currentCommit } = await github.rest.git.getCommit({
-              owner,
-              repo,
+              owner: forkOwner,
+              repo: forkRepo,
               commit_sha: pr.head.sha,
             });
             
             // Create the empty commit with the commenter as the Author
             const { data: newCommit } = await github.rest.git.createCommit({
-              owner,
-              repo,
+              owner: forkOwner,
+              repo: forkRepo,
               message: `Triggering CI (empty commit)\n\nAutomatically created on behalf of @${authorName}`,
               tree: currentCommit.tree.sha,
               parents: [pr.head.sha],
@@ -72,8 +83,8 @@ jobs:
 
             // update the branch reference
             await github.rest.git.updateRef({
-              owner,
-              repo,
+              owner: forkOwner,
+              repo: forkRepo,
               ref: `heads/${pr.head.ref}`,
               sha: newCommit.sha,
             });
