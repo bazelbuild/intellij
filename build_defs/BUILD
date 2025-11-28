@@ -41,9 +41,3 @@ py_binary(
     srcs = ["package_meta_inf_files.py"],
     python_version = "PY3",
 )
-
-py_binary(
-    name = "zip_plugin_files",
-    srcs = ["zip_plugin_files.py"],
-    python_version = "PY3",
-)

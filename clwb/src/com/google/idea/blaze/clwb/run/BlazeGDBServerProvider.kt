@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.BlazeFlags
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
 import com.google.idea.common.experiments.BoolExperiment
+import com.google.idea.common.util.Datafiles
 import com.google.idea.sdkcompat.clion.debug.CidrDebuggerPathManagerAdapter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
@@ -36,8 +37,6 @@ private val LOG = logger<BlazeGDBServerProvider>()
 
 private val USE_REMOTE_DEBUGGING_WRAPPER: BoolExperiment = BoolExperiment("cc.remote.debugging.wrapper", true)
 
-private const val GDB_SERVER_PROPERTY = "clwb.gdbserverPath"
-
 /** CLion-specific class that provides the slightly customized Toolchain for use with gdbserver  */
 object BlazeGDBServerProvider {
 
@@ -46,14 +45,7 @@ object BlazeGDBServerProvider {
    * environment expects. It will respond to signals, exit with the same exit code as the inferior,
    * and escape the parameters correctly.
    */
-  private val GDBSERVER_WRAPPER: String by lazy {
-    if (System.getProperty(GDB_SERVER_PROPERTY) != null) {
-      Path.of(System.getProperty(GDB_SERVER_PROPERTY)).absolutePathString()
-    } else {
-      val jarPath = Path.of(PathUtil.getJarPathForClass(BlazeCidrLauncher::class.java))
-      jarPath.parent.parent.resolve("gdb").resolve("gdbserver").toString()
-    }
-  }
+  private val GDBSERVER_WRAPPER: Path by Datafiles.resolveLazy("gdb/gdbserver")
 
   // These flags are used when debugging cc_binary targets when remote debugging
   // is enabled (cc.remote.debugging)

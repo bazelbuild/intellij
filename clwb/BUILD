@@ -12,16 +12,15 @@ load("//:version.bzl", "VERSION")
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
-    "intellij_plugin_library",
     "optional_plugin_xml",
-    "plugin_deploy_zip",
-    "repackaged_files",
     "stamped_plugin_xml",
 )
 load(
-    "//build_defs:intellij_plugin_debug_target.bzl",
+    "//build_defs:intellij_plugin_debug.bzl",
     "intellij_plugin_debug_target",
 )
+load("//build_defs:intellij_plugin_library.bzl", "intellij_plugin_library")
+load("//build_defs:intellij_plugin_zip.bzl", "intellij_plugin_zip")
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_version")
 load(
     "//testing:test_defs.bzl",
@@ -33,6 +32,7 @@ licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",
+    data = {"gdb/gdbserver": ":gdbserver"},
     optional_plugin_xmls = ["optional_clwb_oclang"],
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
@@ -73,6 +73,7 @@ kt_jvm_library(
         "//base/src/com/google/idea/blaze/base/command/buildresult/bepparser",
         "//common/actions",
         "//common/experiments",
+        "//common/util:datafiles",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -100,34 +101,17 @@ intellij_plugin(
     ],
 )
 
-repackaged_files(
-    name = "plugin_jar",
-    srcs = [":clwb_bazel"],
-    prefix = "clwb/lib",
-)
-
-repackaged_files(
-    name = "clwb_bazel_gdbserver_wrapper",
-    srcs = ["//clwb:gdbserver_wrapper"],
-    prefix = "clwb/gdb",
-    strip_prefix = "/clwb",
-)
-
 intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
-    deps = [
-        ":clwb_bazel_gdbserver_wrapper",
-        ":plugin_jar",
-    ],
+    prefix = "clwb",
+    deps = [":clwb_bazel"],
 )
 
-plugin_deploy_zip(
+intellij_plugin_zip(
     name = "clwb_bazel_zip",
-    srcs = [
-        ":clwb_bazel_gdbserver_wrapper",
-        ":plugin_jar",
-    ],
-    zip_filename = "clwb_bazel.zip",
+    filename = "clwb_bazel.zip",
+    prefix = "clwb",
+    deps = [":clwb_bazel"],
 )
 
 intellij_unit_test_suite(
@@ -142,12 +126,6 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/java/junit",
     ],
-)
-
-filegroup(
-    name = "gdbserver_wrapper",
-    srcs = ["gdbserver"],
-    visibility = ["//visibility:public"],
 )
 
 clwb_headless_test(
