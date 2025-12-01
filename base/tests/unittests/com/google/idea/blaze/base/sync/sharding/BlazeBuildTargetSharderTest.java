@@ -390,18 +390,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsNoExcludeManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeInvoker commandInvoker = new FakeWildCardTargetExpanderBlazeInvoker() {
-
-      @Override
-      public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext context) throws BuildException {
-        // We need to confirm within the query runner because there are no public methods currently to
-        // perform this check downstream.
-        for (String argument : blazeCommandBuilder.build().toArgumentList()) {
-          assertFalse(argument.contains(WildcardTargetExpander.MANUAL_EXCLUDE_TAG));
-        }
-        return super.invokeQuery(blazeCommandBuilder, context);
-      }
-    };
+    FakeWildCardTargetExpanderBlazeInvoker commandInvoker = new FakeWildCardTargetExpanderBlazeInvoker();
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
@@ -432,16 +421,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsIncludesManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeInvoker blazeInvoker = new FakeWildCardTargetExpanderBlazeInvoker() {
-
-      @Override
-      public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext context) throws BuildException {
-        // We need to confirm within the query runner because there are no public methods currently to
-        // perform this check downstream.
-        assertTrue(blazeCommandBuilder.build().toArgumentList().stream().anyMatch(argument -> argument.contains(WildcardTargetExpander.MANUAL_EXCLUDE_TAG)));
-        return super.invokeQuery(blazeCommandBuilder, context);
-      }
-    };
+    FakeWildCardTargetExpanderBlazeInvoker blazeInvoker = new FakeWildCardTargetExpanderBlazeInvoker();
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)

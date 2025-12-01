@@ -556,6 +556,13 @@ intellij_unit_test_suite(
     ],
 )
 
+test_suite(
+    name = "unit_tests_kt",
+    tests = [
+        "//base/tests/unittests/com/google/idea/blaze/base/dependencies:QueryBuilderTest",
+    ],
+)
+
 stamped_plugin_xml(
     name = "base_plugin_xml",
     testonly = 1,
