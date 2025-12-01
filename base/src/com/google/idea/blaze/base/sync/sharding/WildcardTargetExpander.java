@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
+import com.google.idea.blaze.base.dependencies.QueryBuilder;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -64,7 +65,6 @@ import javax.annotation.Nullable;
 /** Expands wildcard target patterns into individual blaze targets. */
 public class WildcardTargetExpander {
 
-  public static final String MANUAL_EXCLUDE_TAG = "^((?!manual).)*$";
   private static final BoolExperiment filterByRuleType =
       new BoolExperiment("blaze.build.filter.by.rule.type", true);
 
@@ -207,7 +207,10 @@ public class WildcardTargetExpander {
       Predicate<String> handledRulesPredicate,
       List<TargetExpression> targetPatterns,
       boolean excludeManualTargets) {
-    String query = queryString(targetPatterns, excludeManualTargets);
+    final var query = new QueryBuilder()
+        .includeTargets(targetPatterns)
+        .excludeManualTag(excludeManualTargets)
+        .excludeNoIdeTag(true);
     if (query.isEmpty()) {
       // will be empty if there are no non-excluded targets
       return new ExpandedTargetsResult(ImmutableList.of(), BuildResult.SUCCESS);
@@ -216,7 +219,7 @@ public class WildcardTargetExpander {
         BlazeCommand.builder(buildBinary, BlazeCommandName.QUERY, project)
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags("--output=label_kind")
-            .addBlazeFlags(query);
+            .addBlazeFlags(query.build());
 
     // it's fine to include wildcards here; they're guaranteed not to clash with actual labels.
     Set<String> explicitTargets =
@@ -243,36 +246,5 @@ public class WildcardTargetExpander {
   private static Predicate<String> handledRuleTypes(ProjectViewSet projectViewSet) {
     return LanguageSupport.createWorkspaceLanguageSettings(projectViewSet)
         .getAvailableTargetKinds();
-  }
-
-  private static String queryString(List<TargetExpression> targets, boolean excludeManualTargets) {
-    StringBuilder builder = new StringBuilder();
-    for (TargetExpression target : targets) {
-      boolean excluded = target.isExcluded();
-      if (builder.length() == 0) {
-        if (excluded) {
-          continue; // an excluded target at the start of the list has no effect
-        }
-        builder.append("'").append(target).append("'");
-      } else {
-        if (excluded) {
-          builder.append(" - ");
-          // trim leading '-'
-          String excludedTarget = target.toString();
-          builder.append("'").append(excludedTarget, 1, excludedTarget.length()).append("'");
-        } else {
-          builder.append(" + ");
-          builder.append("'").append(target).append("'");
-        }
-      }
-    }
-    String targetList = builder.toString();
-    if (targetList.isEmpty()) {
-      return targetList;
-    }
-    String query = String.format("attr('tags', '^((?!no-ide).)*$', %s)", targetList);
-    return excludeManualTargets
-        ? String.format("attr('tags', '%s', %s)", MANUAL_EXCLUDE_TAG, query)
-        : query;
   }
 }

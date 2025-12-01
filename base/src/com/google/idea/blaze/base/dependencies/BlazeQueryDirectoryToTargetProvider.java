@@ -62,32 +62,23 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
 
   @VisibleForTesting
   public static String getQueryString(ImportRoots directories, boolean allowManualTargetsSync, WorkspacePathResolver pathResolver) {
-    StringBuilder targets = new StringBuilder();
-    targets.append(
-        directories.rootDirectories().stream()
-            .map(w -> TargetExpression.allFromPackageRecursive(w).toString())
-            .collect(joining(" + ")));
-    for (WorkspacePath excluded : directories.excludePathsForBazelQuery()) {
+    final var builder = new QueryBuilder()
+        .excludeNoIdeTag(true)
+        .excludeManualTag(!allowManualTargetsSync);
+
+    for (final var directory : directories.rootDirectories()) {
+      builder.includeTarget(TargetExpression.allFromPackageRecursive(directory));
+    }
+    
+    for (final var directory : directories.excludePathsForBazelQuery()) {
       // Bazel produces errors for paths that don't exist (e.g. bazel-out in a project that overrides the default symlinks),
       // so only include paths that actually exist.
-      if (Files.exists(pathResolver.resolveToFile(excluded).toPath())) {
-        targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
+      if (Files.exists(pathResolver.resolveToFile(directory).toPath())) {
+        builder.excludeTarget(TargetExpression.allFromPackageRecursive(directory));
       }
     }
 
-    String query = String.format("attr('tags', '^((?!no-ide).)*$', %s)", targets);
-
-    if (allowManualTargetsSync) {
-      return query;
-    }
-
-    // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
-    if (SystemInfo.isWindows) {
-      // TODO(b/201974254): Windows support for Bazel sync (see
-      // https://github.com/bazelbuild/intellij/issues/113).
-      return String.format("attr('tags', '^((?!manual).)*$', %s)", query);
-    }
-    return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", query);
+    return builder.build();
   }
 
   /**
