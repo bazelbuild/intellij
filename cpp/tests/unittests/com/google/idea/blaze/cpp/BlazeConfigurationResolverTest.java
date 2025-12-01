@@ -24,6 +24,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.intellij.mock.MockProject;
+import kotlinx.coroutines.GlobalScope;
 import org.mockito.MockedStatic;
 
 import com.google.common.collect.ImmutableList;
@@ -141,7 +142,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
-    projectServices.register(SyncCache.class, new SyncCache(project));
+    projectServices.register(SyncCache.class, new SyncCache(project, GlobalScope.INSTANCE));
     projectServices.register(HeaderRootTrimmer.class, new HeaderRootTrimmerMock());
 
     context.addOutputSink(IssueOutput.class, errorCollector);
