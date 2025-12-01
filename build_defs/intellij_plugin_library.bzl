@@ -123,7 +123,7 @@ def intellij_plugin_library(name, srcs = None, deps = None, **kwargs):
         kt_jvm_library(
             name = name + "_ktlib",
             srcs = srcs,
-            deps = deps + ["//intellij_platform_sdk:plugin_api",],
+            deps = deps + ["//intellij_platform_sdk:plugin_api"],
             visibility = ["//visibility:private"],
         )
 
