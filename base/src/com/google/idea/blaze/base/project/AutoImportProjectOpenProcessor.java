@@ -112,7 +112,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   ) {
 
     ProjectManager pm = ProjectManager.getInstance();
-    if (projectToClose != null) {
+    if (projectToClose != null && projectToClose != pm.getDefaultProject()) {
       pm.closeAndDispose(projectToClose);
     }
 
