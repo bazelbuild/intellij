@@ -39,10 +39,17 @@ local_repository(
 
 # custom rules kotlin version, patches are required
 bazel_dep(name = "rules_kotlin", version = "2.2.0")
-single_version_override(
+git_override(
     module_name = "rules_kotlin",
+    commit = "89fd270f1e77766ee6afa2f658c327771b90a3ce",
     patch_strip = 1,
-    patches = ["//third_party/kotlin/patches:strip_stdlib.patch"],
+    patches = [
+        "//third_party/kotlin/patches:strip_stdlib.patch",
+        "//third_party/kotlin/patches:win_classpath.patch",
+        "//third_party/kotlin/patches:bazel_9.patch",
+        "//third_party/kotlin/patches:jarjar.patch",
+    ],
+    remote = "https://github.com/bazelbuild/rules_kotlin.git",
 )
 
 register_toolchains("//third_party/kotlin:toolchain")

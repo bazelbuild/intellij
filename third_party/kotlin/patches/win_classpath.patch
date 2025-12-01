@@ -1,0 +1,134 @@
+From 1b8dc93603ec201f6e40c47aa41cc26078dedb1f Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andrzej=20G=C5=82uszak?= <andrzej.gluszak@jetbrains.com>
+Date: Sun, 30 Nov 2025 15:02:06 +0100
+Subject: [PATCH] Fix Windows bzlmod classpath issue for Kotlin compiler
+
+On Windows with bzlmod, the native Java launcher's Rlocation mechanism
+doesn't correctly handle bzlmod canonical repository names (paths starting
+with `+`). This caused the builder to fail with:
+
+  LAUNCHER ERROR: Rlocation failed on
+  _main/+rules_kotlin_extensions+com_github_jetbrains_kotlin_git/lib/...
+
+The fix adds Kotlin stdlib directly to the compiler binary's runtime_deps
+instead of passing it via --main_advice_classpath at runtime. This ensures
+the stdlib is on the classpath without relying on Rlocation.
+
+Changes:
+- Add final_runtime_deps parameter to kt_bootstrap_binary macro
+- Add KOTLIN_STDLIBS to runtime_deps of build and merge_jdeps binaries
+- Remove --main_advice_classpath wrapper script flag from toolchains
+- Fix bash script classpath separator to use ":" on all platforms
+---
+ kotlin/internal/toolchains.bzl                          | 6 +-----
+ src/main/kotlin/BUILD.release.bazel                     | 2 +-
+ src/main/kotlin/bootstrap.bzl                           | 3 ++-
+ src/main/kotlin/io/bazel/kotlin/builder/cmd/BUILD.bazel | 2 ++
+ src/main/starlark/core/compile/cli/compile.bzl          | 5 +----
+ src/main/starlark/core/compile/rules.bzl                | 4 +++-
+ 6 files changed, 10 insertions(+), 12 deletions(-)
+
+diff --git a/kotlin/internal/toolchains.bzl b/kotlin/internal/toolchains.bzl
+index 89a15b04f..00c5df6c8 100644
+--- a/kotlin/internal/toolchains.bzl
++++ b/kotlin/internal/toolchains.bzl
+@@ -72,11 +72,7 @@ def _kotlin_toolchain_impl(ctx):
+         debug = ctx.attr.debug,
+         jvm_target = ctx.attr.jvm_target,
+         kotlinbuilder = ctx.attr.kotlinbuilder,
+-        builder_args = [
+-            "--wrapper_script_flag=--main_advice_classpath=%s" % (
+-                ctx.configuration.host_path_separator.join([f.path for f in ctx.files.jvm_stdlibs])
+-            ),
+-        ],
++        builder_args = [],
+         jdeps_merger = ctx.attr.jdeps_merger,
+         kotlin_home = ctx.attr.kotlin_home,
+         jvm_stdlibs = java_common.merge(compile_time_providers + runtime_providers),
+diff --git a/src/main/kotlin/BUILD.release.bazel b/src/main/kotlin/BUILD.release.bazel
+index cbb1fab79..9be676435 100644
+--- a/src/main/kotlin/BUILD.release.bazel
++++ b/src/main/kotlin/BUILD.release.bazel
+@@ -74,7 +74,7 @@ java_binary(
+     runtime_deps = [
+         ":worker",
+         "@bazel_tools//tools/jdk:JacocoCoverage",
+-    ],
++    ] + KOTLIN_STDLIBS,
+ )
+ 
+ java_binary(
+diff --git a/src/main/kotlin/bootstrap.bzl b/src/main/kotlin/bootstrap.bzl
+index fe1f54106..16cfd4405 100644
+--- a/src/main/kotlin/bootstrap.bzl
++++ b/src/main/kotlin/bootstrap.bzl
+@@ -63,6 +63,7 @@ def kt_bootstrap_binary(
+         shade_rules,
+         jvm_flags = [],
+         data = [],
++        final_runtime_deps = [],
+         visibility = ["//visibility:public"]):
+     raw = name + "_raw"
+     jar_jared = name + "_jarjar"
+@@ -93,5 +94,5 @@ def kt_bootstrap_binary(
+         ],
+         main_class = main_class,
+         visibility = visibility,
+-        runtime_deps = [":" + jar_jared],
++        runtime_deps = [":" + jar_jared] + final_runtime_deps,
+     )
+diff --git a/src/main/kotlin/io/bazel/kotlin/builder/cmd/BUILD.bazel b/src/main/kotlin/io/bazel/kotlin/builder/cmd/BUILD.bazel
+index 729d6b526..30f5005f2 100644
+--- a/src/main/kotlin/io/bazel/kotlin/builder/cmd/BUILD.bazel
++++ b/src/main/kotlin/io/bazel/kotlin/builder/cmd/BUILD.bazel
+@@ -30,6 +30,7 @@ kt_bootstrap_binary(
+         "@kotlinx_serialization_json//jar",
+         "@kotlinx_serialization_json_jvm//jar",
+     ] + _KOTLIN_STDLIBS,
++    final_runtime_deps = _KOTLIN_STDLIBS,
+     jvm_flags = [
+         "-D@com_github_jetbrains_kotlinx...serialization-core-jvm=$(rlocationpath @kotlinx_serialization_core_jvm//jar)",
+         "-D@com_github_jetbrains_kotlinx...serialization-json=$(rlocationpath @kotlinx_serialization_json//jar)",
+@@ -70,6 +71,7 @@ kt_bootstrap_library(
+ kt_bootstrap_binary(
+     name = "merge_jdeps",
+     data = _KOTLIN_STDLIBS,
++    final_runtime_deps = _KOTLIN_STDLIBS,
+     main_class = "io.bazel.kotlin.builder.cmd.MergeJdeps",
+     shade_rules = "//src/main/kotlin:shade.jarjar",
+     visibility = ["//src:__subpackages__"],
+diff --git a/src/main/starlark/core/compile/cli/compile.bzl b/src/main/starlark/core/compile/cli/compile.bzl
+index a8a973bf3..6a7d0a33c 100644
+--- a/src/main/starlark/core/compile/cli/compile.bzl
++++ b/src/main/starlark/core/compile/cli/compile.bzl
+@@ -29,10 +29,7 @@ def compile_kotlin_for_jvm(
+         ],
+     )
+ 
+-    # Set the stdlib for the compiler to run on.
+-    args = actions.args().add("--wrapper_script_flag=--main_advice_classpath=%s" % (
+-        path_separator.join([f.path for f in toolchain_info.kotlin_stdlib.transitive_compile_time_jars.to_list()])
+-    ))
++    args = actions.args()
+     args.add("-d", class_jar)
+     args.add("-jdk-home", toolchain_info.java_runtime.java_home)
+     args.add("-jvm-target", toolchain_info.jvm_target)
+diff --git a/src/main/starlark/core/compile/rules.bzl b/src/main/starlark/core/compile/rules.bzl
+index fb80a8764..f8dfccb7b 100644
+--- a/src/main/starlark/core/compile/rules.bzl
++++ b/src/main/starlark/core/compile/rules.bzl
+@@ -141,11 +141,13 @@ def _kt_jvm_binary_impl(ctx):
+     runtime_jars = depset([ctx.outputs.class_jar], transitive = [j.transitive_runtime_jars for j in java_info_deps])
+     executable = ctx.outputs.executable
+ 
++    # Always use ":" as the path separator for the launcher script since it's a bash script.
++    # Using the host path separator (";") on Windows would cause bash to interpret it as a command separator.
+     launch_runfiles = kt_tools.launch(
+         main_class = ctx.attr.main_class,
+         executable_output = executable,
+         actions = ctx.actions,
+-        path_separator = ctx.configuration.host_path_separator,
++        path_separator = ":",
+         workspace_prefix = ctx.workspace_name + "/",
+         jvm_flags = " ".join([ctx.expand_location(f, ctx.attr.data) for f in ctx.attr.jvm_flags]),
+         runtime_jars = runtime_jars,

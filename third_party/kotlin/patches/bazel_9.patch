@@ -1,0 +1,256 @@
+Rules kotlin are not Bazel 9 compatible, this patch updates them to be.
+
+diff --git a/MODULE.bazel b/MODULE.bazel
+index c6cc9ff..d1d836d 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -5,12 +5,13 @@ module(
+     repo_name = "rules_kotlin",
+ )
+
+-bazel_dep(name = "protobuf", version = "29.0", repo_name = "com_google_protobuf")
++bazel_dep(name = "protobuf", version = "33.1", repo_name = "com_google_protobuf")
+ bazel_dep(name = "rules_proto", version = "6.0.2", repo_name = "rules_proto")
+ bazel_dep(name = "abseil-py", version = "2.1.0", repo_name = "py_absl")
+ bazel_dep(name = "rules_cc", version = "0.0.16")
+ bazel_dep(name = "platforms", version = "0.0.11")
+ bazel_dep(name = "bazel_skylib", version = "1.8.2")
++bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
+ bazel_dep(name = "rules_java", version = "8.9.0")
+ bazel_dep(name = "rules_python", version = "0.23.1")
+ bazel_dep(name = "rules_android", version = "0.6.4")
+diff --git a/src/main/protobuf/BUILD b/src/main/protobuf/BUILD
+index 4728b22..3161d88 100644
+--- a/src/main/protobuf/BUILD
++++ b/src/main/protobuf/BUILD
+@@ -4,14 +4,24 @@ load("@rules_java//java:java_library.bzl", "java_library")
+
+ package(default_visibility = ["//visibility:public"])
+
+-alias(
+-    name = "deps_java_proto",
+-    actual = "@bazel_tools//src/main/protobuf:deps_java_proto",
++proto_library(
++  name = "deps_proto",
++  srcs = [":deps.proto"],
++)
++
++java_proto_library(
++  name = "deps_java_proto",
++  deps = [":deps_proto"],
+ )
+
+-alias(
+-    name = "worker_protocol_java_proto",
+-    actual = "@bazel_tools//src/main/protobuf:worker_protocol_java_proto",
++proto_library(
++  name = "worker_protocol_proto",
++  srcs = [":worker_protocol.proto"],
++)
++
++java_proto_library(
++  name = "worker_protocol_java_proto",
++  deps = [":worker_protocol_proto"],
+ )
+
+ proto_library(
+diff --git a/src/main/protobuf/deps.proto b/src/main/protobuf/deps.proto
+index 670855d..45c3c53 100644
+--- a/src/main/protobuf/deps.proto
++++ b/src/main/protobuf/deps.proto
+@@ -1,4 +1,4 @@
+-// Copyright 2018 The Bazel Authors. All rights reserved.
++// Copyright 2014 The Bazel Authors. All rights reserved.
+ //
+ // Licensed under the Apache License, Version 2.0 (the "License");
+ // you may not use this file except in compliance with the License.
+@@ -22,45 +22,50 @@ option java_package = "com.google.devtools.build.lib.view.proto";
+
+ // A specific location within a source file.
+ message SourceLocation {
+-    required string path = 1;
+-    optional int32 line = 2;
+-    optional int32 column = 3;
++  required string path = 1;
++  optional int32 line = 2;
++  optional int32 column = 3;
+ }
+
+ message Dependency {
+
+-    enum Kind {
+-        // Dependency used explicitly in the source.
+-        EXPLICIT = 0;
+-        // Dependency that is implicitly loaded and used by the compiler.
+-        IMPLICIT = 1;
+-        // Unused dependency.
+-        UNUSED = 2;
+-        // Implicit dependency considered by the compiler but not completed.
+-        INCOMPLETE = 3;
+-    }
++  enum Kind {
++    // Dependency used explicitly in the source.
++    EXPLICIT = 0;
++    // Dependency that is implicitly loaded and used by the compiler.
++    IMPLICIT = 1;
++    // Unused dependency.
++    UNUSED = 2;
++    // Implicit dependency considered by the compiler but not completed.
++    INCOMPLETE = 3;
++  }
+
+-    // Path to the artifact representing this dependency.
+-    required string path = 1;
++  // Path to the artifact representing this dependency.
++  required string path = 1;
+
+-    // Dependency kind
+-    required Kind kind = 2;
++  // Dependency kind
++  required Kind kind = 2;
+
+-    // Source file locations: compilers can pinpoint the uses of a dependency.
+-    repeated SourceLocation location = 3;
++  // Source file locations: compilers can pinpoint the uses of a dependency.
++  repeated SourceLocation location = 3;
+ }
+
+ // Top-level message found in .deps artifacts
+ message Dependencies {
+-    repeated Dependency dependency = 1;
++  repeated Dependency dependency = 1;
+
+-    // Name of the rule being analyzed.
+-    optional string rule_label = 2;
++  // Name of the rule being analyzed.
++  optional string rule_label = 2;
+
+-    // Whether the action was successful; even when compilation fails, partial
+-    // dependency information can be useful.
+-    optional bool success = 3;
++  // Whether the action was successful; even when compilation fails, partial
++  // dependency information can be useful.
++  optional bool success = 3;
+
+-    // Packages contained in the output jar, sorted alphabetically.
+-    repeated string contained_package = 4;
+-}
++  // Packages contained in the output jar, sorted alphabetically.
++  repeated string contained_package = 4;
++
++  // If the Java action was started with a reduced classpath and an error
++  // occurred suggesting that it should be rerun with the full classpath, this
++  // will be true.
++  optional bool requires_reduced_classpath_fallback = 5;
++}
+diff --git a/src/main/protobuf/worker_protocol.proto b/src/main/protobuf/worker_protocol.proto
+index 1733d82..ae17121 100644
+--- a/src/main/protobuf/worker_protocol.proto
++++ b/src/main/protobuf/worker_protocol.proto
+@@ -1,4 +1,4 @@
+-// Copyright 2018 The Bazel Authors. All rights reserved.
++// Copyright 2015 The Bazel Authors. All rights reserved.
+ //
+ // Licensed under the Apache License, Version 2.0 (the "License");
+ // you may not use this file except in compliance with the License.
+@@ -20,32 +20,81 @@ option java_package = "com.google.devtools.build.lib.worker";
+
+ // An input file.
+ message Input {
+-    // The path in the file system where to read this input artifact from. This is
+-    // either a path relative to the execution root (the worker process is
+-    // launched with the working directory set to the execution root), or an
+-    // absolute path.
+-    string path = 1;
+-
+-    // A hash-value of the contents. The format of the contents is unspecified and
+-    // the digest should be treated as an opaque token.
+-    bytes digest = 2;
++  // The path in the file system where to read this input artifact from. This is
++  // either a path relative to the execution root (the worker process is
++  // launched with the working directory set to the execution root), or an
++  // absolute path.
++  string path = 1;
++
++  // A hash-value of the contents. The format of the contents is unspecified and
++  // the digest should be treated as an opaque token. This can be empty in some
++  // cases.
++  bytes digest = 2;
+ }
+
+ // This represents a single work unit that Blaze sends to the worker.
+ message WorkRequest {
+-    repeated string arguments = 1;
++  repeated string arguments = 1;
++
++  // The inputs that the worker is allowed to read during execution of this
++  // request.
++  repeated Input inputs = 2;
++
++  // Each WorkRequest must have either a unique
++  // request_id or request_id = 0. If request_id is 0, this WorkRequest must be
++  // processed alone (singleplex), otherwise the worker may process multiple
++  // WorkRequests in parallel (multiplexing). As an exception to the above, if
++  // the cancel field is true, the request_id must be the same as a previously
++  // sent WorkRequest. The request_id must be attached unchanged to the
++  // corresponding WorkResponse. Only one singleplex request may be sent to a
++  // worker at a time.
++  int32 request_id = 3;
++
++  // EXPERIMENTAL: When true, this is a cancel request, indicating that a
++  // previously sent WorkRequest with the same request_id should be cancelled.
++  // The arguments and inputs fields must be empty and should be ignored.
++  bool cancel = 4;
+
+-    // The inputs that the worker is allowed to read during execution of this
+-    // request.
+-    repeated Input inputs = 2;
++  // Values greater than 0 indicate that the worker may output extra debug
++  // information to stderr (which will go into the worker log). Setting the
++  // --worker_verbose flag for Bazel makes this flag default to 10.
++  int32 verbosity = 5;
++
++  // The relative directory inside the workers working directory where the
++  // inputs and outputs are placed, for sandboxing purposes. For singleplex
++  // workers, this is unset, as they can use their working directory as sandbox.
++  // For multiplex workers, this will be set when the
++  // --experimental_worker_multiplex_sandbox flag is set _and_ the execution
++  // requirements for the worker includes 'supports-multiplex-sandbox'.
++  // The paths in `inputs` will not contain this prefix, but the actual files
++  // will be placed/must be written relative to this directory. The worker
++  // implementation is responsible for resolving the file paths.
++  string sandbox_dir = 6;
+ }
+
+-// The worker sends this message to Blaze when it finished its work on the WorkRequest message.
++// The worker sends this message to Blaze when it finished its work on the
++// WorkRequest message.
+ message WorkResponse {
+-    int32 exit_code = 1;
++  int32 exit_code = 1;
++
++  // Output message for this work unit.
++  // This is akin to the combined stdout/stderr if the work unit were executed
++  // as a standalone process. Output pertaining to a work unit should be
++  // reported here instead of through the stdout/stderr of the worker process.
++  // Assumed to be UTF-8 encoded.
++  string output = 2;
++
++  // This field must be set to the same request_id as the WorkRequest it is a
++  // response to. Since worker processes which support multiplex worker will
++  // handle multiple WorkRequests in parallel, this ID will be used to
++  // determined which WorkerProxy does this WorkResponse belong to.
++  int32 request_id = 3;
+
+-    // This is printed to the user after the WorkResponse has been received and is supposed to contain
+-    // compiler warnings / errors etc. - thus we'll use a string type here, which gives us UTF-8
+-    // encoding.
+-    string output = 2;
++  // EXPERIMENTAL When true, indicates that this response was sent due to
++  // receiving a cancel request. The exit_code and output fields should be empty
++  // and will be ignored. Exactly one WorkResponse must be sent for each
++  // non-cancelling WorkRequest received by the worker, but if the worker
++  // received a cancel request, it doesn't matter if it replies with a regular
++  // WorkResponse or with one where was_cancelled = true.
++  bool was_cancelled = 4;
+ }
