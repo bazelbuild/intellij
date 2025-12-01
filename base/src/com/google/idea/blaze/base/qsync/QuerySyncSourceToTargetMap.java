@@ -43,6 +43,11 @@ public class QuerySyncSourceToTargetMap implements SourceToTargetMap {
   }
 
   @Override
+  public void init() {
+    // No-op
+  }
+
+  @Override
   public ImmutableList<Label> getTargetsToBuildForSourceFile(File file) {
     Path rel = workspaceRoot.relativize(file.toPath());
 

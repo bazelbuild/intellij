@@ -29,6 +29,8 @@ public interface SourceToTargetMap {
     return project.getService(SourceToTargetMap.class);
   }
 
+  void init();
+
   /** Returns a set of targets that will cause the file to build */
   ImmutableList<Label> getTargetsToBuildForSourceFile(File file);
 
