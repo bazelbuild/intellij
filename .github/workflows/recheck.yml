@@ -20,6 +20,6 @@ jobs:
           sparse-checkout: .github/scripts
 
       - name: Create Empty Commit
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: await require('./.github/scripts/recheck.js')(github, context, core)
