@@ -79,7 +79,7 @@ class BazelDebugFlagsBuilder(
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
 
     if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && targetOS == OS.macOS) {
-      flags.add("--linkopt=-Wl,-oso_prefix,.")
+      flags.add("--linkopt=-Wl,-oso_prefix,.", "--linkopt=-Wl,-reproducible", "--remote_download_regex='.*_objs/.*.o$'")
     }
   }
 
