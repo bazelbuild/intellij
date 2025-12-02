@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.qsync.QuerySyncManager.TaskOrigin;
@@ -40,7 +41,10 @@ import com.intellij.ui.EditorNotifications;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nullable;
 
 /** {@link AsyncFileListener} for monitoring project changes requiring a re-sync */
@@ -119,7 +123,8 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
                     }
 
                     if (syncOnFileChanges()) {
-                      syncRequester.requestSync();
+                      var files = eventsRequiringSync.stream().map(it -> it.getFile()).collect(toImmutableList());
+                      syncRequester.requestSync(files);
                     }
                     EditorNotifications.getInstance(project).updateAllNotifications();
                   });
@@ -154,7 +159,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
 
   /** Interface for requesting project syncs. */
   public interface SyncRequester {
-    void requestSync();
+    void requestSync(ImmutableList<VirtualFile> files);
   }
 
   /**
@@ -164,7 +169,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
   private static class QueueingSyncRequester implements SyncRequester {
     private final Project project;
 
-    private final AtomicBoolean changePending = new AtomicBoolean(false);
+    private final AtomicReference<ImmutableSet<VirtualFile>> changePending = new AtomicReference<>(ImmutableSet.of());
 
     public QueueingSyncRequester(Project project) {
       this.project = project;
@@ -182,9 +187,7 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
                   if (!requester.project.equals(project)) {
                     return;
                   }
-                  if (requester.changePending.get()) {
-                    requester.requestSyncInternal();
-                  }
+                  requester.requestSyncInternal();
                 }
               },
               parentDisposable);
@@ -192,20 +195,23 @@ public class QuerySyncAsyncFileListener implements AsyncFileListener {
     }
 
     @Override
-    public void requestSync() {
-      if (changePending.compareAndSet(false, true)) {
-        if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
-          requestSyncInternal();
-        }
+    public void requestSync(ImmutableList<VirtualFile> files) {
+      changePending.getAndUpdate(existingFileSet ->
+              ImmutableSet.<VirtualFile>builder().addAll(files).addAll(existingFileSet).build()
+      );
+      if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
+        requestSyncInternal();
       }
     }
 
     private void requestSyncInternal() {
-      QuerySyncManager.getInstance(project)
-          .deltaSync(
-              QuerySyncActionStatsScope.create(QuerySyncAsyncFileListener.class, null),
-              TaskOrigin.AUTOMATIC);
-      changePending.set(false);
+      var files = changePending.getAndSet(ImmutableSet.of());
+      if (!files.isEmpty()) {
+        QuerySyncManager.getInstance(project)
+            .deltaSync(
+                QuerySyncActionStatsScope.createForFiles(QuerySyncAsyncFileListener.class, null, files),
+                TaskOrigin.AUTOMATIC);
+      }
     }
   }
 
