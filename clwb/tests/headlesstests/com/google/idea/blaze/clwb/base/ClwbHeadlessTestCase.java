@@ -32,7 +32,7 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     final var roots = new ArrayList<AllowedVfsRoot>();
     addAllowedVfsRoots(roots);
 
-    Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
+    Assertions.assertVfsLoads(getTestBazelInfo().executionRoot(), roots);
     // HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
 
     super.tearDown();

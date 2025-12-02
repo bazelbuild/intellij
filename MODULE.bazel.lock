@@ -276,7 +276,7 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "P0fpL4yQs2Exm1SnSkDfC5UhwuzKPZ2OmIJmaT9MvR0=",
+        "bzlTransitiveDigest": "D9l8/1vico3/YQ9qEx4Lt+b2V2Lht+M+DyrYks7cKEc=",
         "usagesDigest": "LDGnl5b/9DpVGhogPgRQx73i6hwNaAxp/31FSKr01Jo=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -497,7 +497,7 @@
     },
     "@@rules_android+//rules/android_sdk_repository:rule.bzl%android_sdk_repository_extension": {
       "general": {
-        "bzlTransitiveDigest": "9Sd/Ggbq3LMPqnYhDRo3cuQzFq3UjkU/tFEzqVd9YfE=",
+        "bzlTransitiveDigest": "aHIE2EyEbhgQ50/DINBvC6GgAeQPAHMkyCNjy6iT28s=",
         "usagesDigest": "klEeNphct5pZgMFG4ln7/y5tcfnXpo0zHeFFI6ajD9E=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
