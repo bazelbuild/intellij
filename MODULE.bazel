@@ -5,7 +5,6 @@ bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "protobuf", version = "33.1")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
-bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
 bazel_dep(name = "rules_jvm_external", version = "6.9")
 
 # required for aspect tests
@@ -24,6 +23,14 @@ local_repository(
 local_repository(
     name = "clwb_virtual_includes_external",
     path = "clwb/tests/projects/virtual_includes/lib/external",
+)
+
+# custom rules_bazel_integration_test version, patches are required until we write our own version of these rules :c
+bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
+single_version_override(
+    module_name = "rules_bazel_integration_test",
+    patch_strip = 1,
+    patches = ["//third_party/bazel/patches:rules_bazel_integration_test.patch"],
 )
 
 # custom rules kotlin version, patches are required

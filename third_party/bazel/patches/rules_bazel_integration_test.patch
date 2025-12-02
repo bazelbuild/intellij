@@ -1,0 +1,24 @@
+Modify the wrapper script to return the bazelisk binary to call it directly
+instead of using this script.
+diff --git a/bazel_integration_test/private/bazel_binaries_script.template b/bazel_integration_test/private/bazel_binaries_script.template
+index d5dfa3d..be19fb5 100644
+--- a/bazel_integration_test/private/bazel_binaries_script.template
++++ b/bazel_integration_test/private/bazel_binaries_script.template
+@@ -33,4 +33,4 @@ if [[ -z "${BIT_BAZELISK_BINARY:-}" ]]; then
+   export BIT_BAZELISK_BINARY
+ fi
+
+-exec "${BIT_BAZELISK_BINARY}" ${BIT_STARTUP_OPTIONS:-} "$@"
++echo "${BIT_BAZELISK_BINARY}"
+diff --git a/bazel_integration_test/private/integration_test_wrapper.sh b/bazel_integration_test/private/integration_test_wrapper.sh
+index b60dab8..26dbcc1 100755
+--- a/bazel_integration_test/private/integration_test_wrapper.sh
++++ b/bazel_integration_test/private/integration_test_wrapper.sh
+@@ -52,6 +52,7 @@ fi
+ # Export environment variables so that test runner does not need to parse args.
+ export BIT_BAZEL_BINARY="${bazel}"
+ export BIT_WORKSPACE_DIR="${workspace_dir_path}"
++export BAZELISK_HOME="${TEST_SRCDIR}"
+
+ # Make sure that we have a TEST_TMPDIR.
+ if [[ -z "${TEST_TMPDIR:-}" ]]; then
