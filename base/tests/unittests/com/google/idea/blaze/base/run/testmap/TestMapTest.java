@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +67,7 @@ public class TestMapTest extends BlazeTestCase {
 
     mockBlazeProjectDataManager = new MockBlazeProjectDataManager();
     projectServices.register(BlazeProjectDataManager.class, mockBlazeProjectDataManager);
-    projectServices.register(SyncCache.class, new SyncCache(project));
+    projectServices.register(SyncCache.class, new SyncCache(project, GlobalScope.INSTANCE));
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     BlazeImportSettings settings =
         new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC);
