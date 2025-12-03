@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Objects;
@@ -99,6 +100,8 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
     for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+      ProgressManager.checkCanceled();
+
       TargetKey key = target.getKey();
       for (ArtifactLocation sourceArtifact : target.getSources()) {
         File file = decoder.resolveSource(sourceArtifact);
