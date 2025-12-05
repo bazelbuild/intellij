@@ -54,7 +54,7 @@ class BazelDebugFlagsBuilder(
       debuggerKind,
       compilerKind,
       OS.CURRENT,
-      withClangTrimPaths = Registry.`is`("bazel.trim.absolute.path.disabled"),
+      withClangTrimPaths = !Registry.`is`("bazel.trim.absolute.path.disabled"),
       withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
     )
   }
