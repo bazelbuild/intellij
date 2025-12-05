@@ -25,7 +25,7 @@ import kotlin.time.Duration.Companion.minutes
 
 private val LOG = logger<BazelDebugFlagsBuilder>()
 
-private val VALID_GDB_COMPILERS = listOf(GCCCompilerKind)
+private val VALID_GDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, GCCCompilerKind)
 private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, MSVCCompilerKind)
 
 /**
@@ -44,15 +44,6 @@ class BazelDebugFlagsBuilder(
   private val withFissionFlag: Boolean = false,
 ) {
 
-  init {
-
-    // check for valid debugger/compiler combinations
-    when (debuggerKind) {
-      BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.GDB_SERVER -> LOG.assertTrue(compilerKind in VALID_GDB_COMPILERS)
-      BlazeDebuggerKind.BUNDLED_LLDB -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
-    }
-  }
-
   companion object {
 
     @JvmStatic
@@ -70,6 +61,20 @@ class BazelDebugFlagsBuilder(
 
   private val flags = ImmutableList.builder<String>()
 
+  init {
+    // check for valid debugger/compiler combinations
+    when {
+      isGdb() -> LOG.assertTrue(compilerKind in VALID_GDB_COMPILERS)
+      isLldb() -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
+    }
+  }
+
+  private fun isClang() = compilerKind in listOf(ClangCompilerKind, ClangClCompilerKind)
+
+  private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
+
+  private fun isGdb() = debuggerKind in listOf(BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.BUNDLED_GDB)
+
   fun withBuildFlags(workspaceRoot: String? = null) {
     flags.add("--compilation_mode=dbg")
     flags.add("--strip=never")
@@ -85,17 +90,17 @@ class BazelDebugFlagsBuilder(
     switchBuilder.withDebugInfo(2) // ignored for msvc/clangcl
     switchBuilder.withDisableOptimization()
 
-    if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && withClangTrimPaths && workspaceRoot != null) {
+    if (isLldb() && isClang() && withClangTrimPaths && workspaceRoot != null) {
       switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
     }
 
-    if (debuggerKind == BlazeDebuggerKind.GDB_SERVER && withFissionFlag) {
+    if (isGdb() && withFissionFlag) {
       switchBuilder.withSwitch("--fission=yes")
     }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
 
-    if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && targetOS == OS.macOS) {
+    if (isLldb() && targetOS == OS.macOS) {
       flags.add("--linkopt=-Wl,-oso_prefix,.", "--linkopt=-Wl,-reproducible", "--remote_download_regex='.*_objs/.*.o$'")
     }
   }
