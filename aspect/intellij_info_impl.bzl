@@ -13,7 +13,7 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "CcInfoCompat", "cc_common_compat")
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "cc_common_compat", "cc_info_in_target", "cc_info_reference", "get_cc_info")
 load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
 load(":java_info.bzl", "get_java_info", "get_provider_from_target", "java_info_in_target", "java_info_reference")
 load(
@@ -256,7 +256,7 @@ def _is_language_specific_proto_library(ctx, target, semantics):
         return False
     if java_info_in_target(target):
         return True
-    if CcInfoCompat in target:
+    if cc_info_in_target(target):
         return True
     if semantics.go.is_proto_library(target, ctx):
         return True
@@ -509,10 +509,54 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-sources-go", depset(sources))
     return True
 
+def collect_cc_rule_context(ctx):
+    """Collect additional information from the rule attributes of cc_xxx rules."""
+
+    if not ctx.rule.kind.startswith("cc_"):
+        return struct()
+
+    return struct(
+        sources = artifacts_from_target_list_attr(ctx, "srcs"),
+        headers = artifacts_from_target_list_attr(ctx, "hdrs"),
+        textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs"),
+        copts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "copts", [])),
+        args = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "args", [])),
+        include_prefix = getattr(ctx.rule.attr, "include_prefix", ""),
+        strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", ""),
+    )
+
+def collect_cc_compilation_context(ctx, target):
+    """Collect information from the compilation context provided by the CcInfoCompat provider."""
+
+    if not cc_info_in_target(target):
+        return False
+
+    compilation_context = get_cc_info(target).compilation_context
+
+    # merge current compilation context with context of implementation dependencies
+    if ctx.rule.kind.startswith("cc_") and hasattr(ctx.rule.attr, "implementation_deps"):
+        impl_deps = ctx.rule.attr.implementation_deps
+        if cc_common_compat:
+            compilation_context = cc_common_compat.merge_compilation_contexts(
+                compilation_contexts = [compilation_context] + [get_cc_info(it).compilation_context for it in impl_deps],
+            )
+
+    # external_includes available since bazel 7
+    external_includes = getattr(compilation_context, "external_includes", depset()).to_list()
+
+    return struct(
+        headers = [artifact_location(it) for it in compilation_context.headers.to_list()],
+        defines = compilation_context.defines.to_list(),
+        includes = compilation_context.includes.to_list(),
+        quote_includes = compilation_context.quote_includes.to_list(),
+        # both system and external includes are added using `-isystem`
+        system_includes = compilation_context.system_includes.to_list() + external_includes,
+    )
+
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
-    if CcInfoCompat not in target:
+    if not cc_info_in_target(target):
         return False
 
     # ignore cc_proto_library, attach to proto_library with aspect attached instead
@@ -538,14 +582,14 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
 
     target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts, extra_targets)
 
-    compilation_context = target[CcInfo].compilation_context
+    compilation_context = get_cc_info(target).compilation_context
 
     # Merge current compilation context with context of implementation dependencies.
-    if hasattr(ctx.rule.attr, "implementation_deps"):
+    if cc_common_compat and hasattr(ctx.rule.attr, "implementation_deps"):
         implementation_deps = ctx.rule.attr.implementation_deps
         compilation_context = cc_common_compat.merge_compilation_contexts(
             compilation_contexts =
-                [compilation_context] + [impl[CcInfoCompat].compilation_context for impl in implementation_deps],
+                [compilation_context] + [get_cc_info(impl).compilation_context for impl in implementation_deps],
         )
 
     # external_includes available since bazel 7
@@ -584,6 +628,8 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # https://github.com/bazelbuild/bazel/commit/3aedb2f6de80630f88ffb6b60795c44e351a5810
     # but will switch back to cc_toolchain providing CcToolchainProvider once we migrate C++ rules
     # to generic platforms and toolchains.
+    if not cc_common_compat:
+        return False
     if ctx.rule.kind != "cc_toolchain" and ctx.rule.kind != "cc_toolchain_suite" and ctx.rule.kind != "cc_toolchain_alias":
         return False
     if cc_common_compat.CcToolchainInfo not in target:
@@ -1355,12 +1401,11 @@ def make_intellij_info_aspect(aspect_impl, semantics, **kwargs):
     # add attrs required by semantics
     if hasattr(semantics, "attrs"):
         attrs.update(semantics.attrs)
-
     return aspect(
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [java_info_reference(), [CcInfoCompat]] + semantics.extra_required_aspect_providers,
+        required_aspect_providers = [java_info_reference(), cc_info_reference()] + semantics.extra_required_aspect_providers,
         implementation = aspect_impl,
         **kwargs
     )

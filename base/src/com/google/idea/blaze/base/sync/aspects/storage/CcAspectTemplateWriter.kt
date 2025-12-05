@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.storage
 
+import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
 import com.google.idea.blaze.base.util.TemplateWriter
@@ -33,6 +34,7 @@ class CcAspectTemplateWriter : AspectWriter {
     val options = mapOf(
       getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", true),
       getCcEnabledOption(state),
+      getAtLeastBazel9Option(state),
     )
 
     TemplateWriter.evaluate(
@@ -45,8 +47,14 @@ class CcAspectTemplateWriter : AspectWriter {
   }
 
   private fun getCcEnabledOption(state: SyncProjectState): Pair<String, String> {
-    val hasRulesCc = state.externalWorkspaceData?.getByRepoName("rules_cc") != null
+    val hasRulesCc = state.languageSettings.activeLanguages.contains(LanguageClass.C)
+      && state.externalWorkspaceData?.getByRepoName("rules_cc") != null
     return Pair("isCcEnabled", if (hasRulesCc) "true" else "false")
+  }
+
+  private fun getAtLeastBazel9Option(state: SyncProjectState): Pair<String, String> {
+    val isAtLeastBazel9 = state.blazeVersionData.bazelIsAtLeastVersion(9, 0, 0)
+    return Pair("bazel9OrAbove", if (isAtLeastBazel9) "true" else "false")
   }
 
   private fun getRegistryOption(key: String, default: Boolean): Pair<String, String> {
