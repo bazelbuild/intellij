@@ -8,7 +8,7 @@ IntellijPluginLibraryInfo = provider(
         "plugin_xmls": "Depset of files",
         "optional_plugin_xmls": "Depset of OptionalPluginXmlInfo providers",
         "java_info": "Single JavaInfo provider (depreacated, rules should get JavaInfo directly from the target)",
-        "runfiles": "Runfiles required by the plugin library and included in zip file. Track this separatly to not get any jars in here.",
+        "runfiles": "Runfiles for data files required by the plugin library. These are included in the plugin archive and tracked separately from library jars.",
     },
 )
 
