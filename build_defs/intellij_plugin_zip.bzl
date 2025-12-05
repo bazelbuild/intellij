@@ -11,7 +11,7 @@ def _intellij_plugin_zip_impl(ctx):
         inputs = layout.values(),
         outputs = [output],
         mnemonic = "IntellijPluginZip",
-        progress_message = "Creating intellij plugin zip for %{label}",
+        progress_message = "Creating IntelliJ plugin zip for %{label}",
         executable = ctx.executable._zipper,
         arguments = ["c", output.path] + mapping,
     )
@@ -20,7 +20,7 @@ def _intellij_plugin_zip_impl(ctx):
 
 intellij_plugin_zip = rule(
     implementation = _intellij_plugin_zip_impl,
-    doc = """Creates an intellij deployable zip archive.
+    doc = """Creates an IntelliJ deployable zip archive.
 
     All files of the dependencies are included in the `lib` directory and all runfiles are included
     from the root of the archive. See `intellij_common.compute_plugin_layout` for details on the

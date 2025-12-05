@@ -25,8 +25,8 @@ intellij_plugin_debug_target = rule(
     implementation = _intellij_plugin_debug_target_impl,
     doc = """Creates plugin target debuggable from IntelliJ.
 
-    All files in deps are mapped into the plugin sandbox in the same mannar as they would be mapped
-    into the release zip.
+    The mapping mirrors `intellij_plugin_zip` (all jars under `<prefix>/lib`, runfiles under root). The generated file
+    ends with `.intellij-plugin-debug-target-deploy-info` as expected by the IntelliJ plugin.
     """,
     attrs = {
         "deps": attr.label_list(
