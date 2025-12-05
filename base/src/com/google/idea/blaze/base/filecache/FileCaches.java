@@ -51,7 +51,6 @@ public class FileCaches {
           });
     }
 
-    // CLion does not use this extension point, this is just an unnecessary refresh there
     if (!FileCache.EP_NAME.getExtensionList().isEmpty()) {
       LocalFileSystem.getInstance().refresh(true);
     }
