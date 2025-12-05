@@ -73,7 +73,7 @@ class BazelDebugFlagsBuilder(
 
   private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
 
-  private fun isGdb() = debuggerKind in listOf(BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.BUNDLED_GDB)
+  private fun isGdb() = debuggerKind in listOf(BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.GDB_SERVER)
 
   fun withBuildFlags(workspaceRoot: String? = null) {
     flags.add("--compilation_mode=dbg")

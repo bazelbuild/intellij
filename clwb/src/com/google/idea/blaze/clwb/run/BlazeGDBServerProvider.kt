@@ -17,6 +17,7 @@ package com.google.idea.blaze.clwb.run
 
 import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.command.BlazeCommandName
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
 import com.google.idea.common.util.Datafiles
@@ -42,13 +43,19 @@ object BlazeGDBServerProvider {
    */
   private val GDBSERVER_WRAPPER: Path by Datafiles.resolveLazy("gdb/gdbserver")
 
+  // TODO: inline this into BlazeCidrLauncher once it is converted to Kotlin, no reason to keep this extra object around
   @JvmStatic
-  fun getFlagsForDebugging(state: RunConfigurationState?): ImmutableList<String> {
+  fun getFlagsForDebugging(state: RunConfigurationState?, configuration: BlazeCommandRunConfiguration): ImmutableList<String> {
+    LOG.assertTrue(RunConfigurationUtils.getDebuggerKind(configuration) == BlazeDebuggerKind.GDB_SERVER)
+
     if (state !is BlazeCidrRunConfigState) {
       return ImmutableList.of()
     }
 
-    val builder = BazelDebugFlagsBuilder.fromDefaults(BlazeDebuggerKind.GDB_SERVER, GCCCompilerKind)
+    val builder = BazelDebugFlagsBuilder.fromDefaults(
+      BlazeDebuggerKind.GDB_SERVER,
+      RunConfigurationUtils.getCompilerKind(configuration),
+    )
     builder.withBuildFlags()
 
     if (state.commandState.command == BlazeCommandName.TEST) {
@@ -57,7 +64,7 @@ object BlazeGDBServerProvider {
 
     // if gdbserver could not be found, fall back to trying PATH
     val gdbServerPath = getGDBServerPath(ToolchainUtils.getToolchain()) ?: "gdbserver"
-    builder.withRunUnderGDBServer(gdbServerPath, state.getDebugPortState().port, GDBSERVER_WRAPPER)
+    builder.withRunUnderGDBServer(gdbServerPath, state.getDebugPortState().port, GDBSERVER_WRAPPER.toString())
 
     return builder.build()
   }
