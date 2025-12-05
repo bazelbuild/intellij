@@ -16,9 +16,17 @@
 package com.google.idea.blaze.clwb.run
 
 import com.google.common.collect.ImmutableList
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.lang.workspace.compiler.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+
+private val LOG = logger<BazelDebugFlagsBuilder>()
+
+private val VALID_GDB_COMPILERS = listOf(GCCCompilerKind)
+private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, MSVCCompilerKind)
 
 /**
  * Builds flags for debugging a blaze target, flags are either used for just
@@ -36,6 +44,15 @@ class BazelDebugFlagsBuilder(
   private val withFissionFlag: Boolean = false,
 ) {
 
+  init {
+
+    // check for valid debugger/compiler combinations
+    when (debuggerKind) {
+      BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.GDB_SERVER -> LOG.assertTrue(compilerKind in VALID_GDB_COMPILERS)
+      BlazeDebuggerKind.BUNDLED_LLDB -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
+    }
+  }
+
   companion object {
 
     @JvmStatic
@@ -47,7 +64,7 @@ class BazelDebugFlagsBuilder(
       compilerKind,
       OS.CURRENT,
       withClangTrimPaths = Registry.`is`("bazel.trim.absolute.path.disabled"),
-      withFissionFlag = Registry.`is`("bazel.clwb.debug.fission.disabled"),
+      withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
     )
   }
 
@@ -83,13 +100,13 @@ class BazelDebugFlagsBuilder(
     }
   }
 
-  fun withTestFlags(timeout: Int? = 3600) {
+  fun withTestFlags(timeout: Duration? = 60.minutes) {
     flags.add("--nocache_test_results")
     flags.add("--test_strategy=exclusive")
     flags.add("--test_sharding_strategy=disabled")
 
     if (timeout != null) {
-      flags.add("--test_timeout=$timeout")
+      flags.add("--test_timeout=${timeout.inWholeSeconds}")
     }
   }
 
