@@ -302,7 +302,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
       return CidrCoroutineHelper.runOnEDT(() -> new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder()));
     }
-    List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState);
+    List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState, configuration);
 
     ProcessHandler targetProcess = createProcess(state, extraDebugFlags);
 

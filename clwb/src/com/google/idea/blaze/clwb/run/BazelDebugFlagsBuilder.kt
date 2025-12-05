@@ -54,7 +54,7 @@ class BazelDebugFlagsBuilder(
       debuggerKind,
       compilerKind,
       OS.CURRENT,
-      withClangTrimPaths = Registry.`is`("bazel.trim.absolute.path.disabled"),
+      withClangTrimPaths = !Registry.`is`("bazel.trim.absolute.path.disabled"),
       withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
     )
   }
@@ -69,11 +69,11 @@ class BazelDebugFlagsBuilder(
     }
   }
 
-  private fun isClang() = compilerKind in listOf(ClangCompilerKind, ClangClCompilerKind)
+  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == ClangClCompilerKind
 
   private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
 
-  private fun isGdb() = debuggerKind in listOf(BlazeDebuggerKind.BUNDLED_GDB, BlazeDebuggerKind.BUNDLED_GDB)
+  private fun isGdb() = debuggerKind == BlazeDebuggerKind.BUNDLED_GDB || debuggerKind == BlazeDebuggerKind.GDB_SERVER
 
   fun withBuildFlags(workspaceRoot: String? = null) {
     flags.add("--compilation_mode=dbg")
@@ -94,7 +94,7 @@ class BazelDebugFlagsBuilder(
       switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
     }
 
-    if (isGdb() && withFissionFlag) {
+    if (isGdb() && isClang() && withFissionFlag) {
       switchBuilder.withSwitch("--fission=yes")
     }
 
