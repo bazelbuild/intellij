@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
 import com.google.idea.blaze.base.command.WorkspaceRootReplacement;
@@ -34,8 +33,6 @@ import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStream
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.execution.BazelGuard;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
-import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -107,10 +104,6 @@ public class LocalInvoker extends AbstractBuildInvoker {
       blazeContext.setHasError();
       IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(blazeContext);
     }
-    if (blazeCommandBuilder.build().getName().equals(BlazeCommandName.BUILD)) {
-      BuildDepsStatsScope.fromContext(blazeContext)
-          .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
-    }
     return getBepStream(outputFile);
   }
 
@@ -154,8 +147,6 @@ public class LocalInvoker extends AbstractBuildInvoker {
               .ignoreExitCode(true)
               .build()
               .run();
-      SyncQueryStatsScope.fromContext(blazeContext)
-          .ifPresent(stats -> stats.setBazelExitCode(retVal));
       BazelExitCodeException.throwIfFailed(
           blazeCommand, retVal, BazelExitCodeException.ThrowOption.ALLOW_PARTIAL_SUCCESS);
       return new BufferedInputStream(

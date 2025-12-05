@@ -8,7 +8,6 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
@@ -16,7 +15,6 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -288,40 +286,6 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .setSyncMode(SyncMode.FULL)
         .setSyncOrigin("test")
         .setAddProjectViewTargets(true);
-  }
-
-  protected boolean runQuerySync() {
-    final var future = QuerySyncManager.getInstance(myProject).onStartup(QuerySyncActionStatsScope.create(getClass(), null));
-
-    return pullFuture(future, 10, TimeUnit.MINUTES);
-  }
-
-  protected SyncOutput enableAnalysisFor(VirtualFile file) {
-    final var context = BlazeContext.create();
-
-    final var output = new SyncOutput();
-    output.install(context);
-
-    final var manager = QuerySyncManager.getInstance(myProject);
-    final var targets = manager.getTargetsToBuild(file).targets();
-
-    final var projects = manager.getLoadedProject();
-    assertThat(projects).isPresent();
-
-    final var future = CompletableFuture.runAsync(() -> {
-      try {
-        projects.get().enableAnalysis(context, targets);
-      } catch (Exception e) {
-        abort("enable analysis failed");
-      }
-    }, ApplicationManager.getApplication()::executeOnPooledThread);
-
-    pullFuture(future, 10, TimeUnit.MINUTES);
-
-    context.close();
-    LOG.info(String.format("PROJECT BUILD LOG:%n%s", output.collectLog()));
-
-    return output;
   }
 
   protected VirtualFile findProjectFile(String relativePath) {

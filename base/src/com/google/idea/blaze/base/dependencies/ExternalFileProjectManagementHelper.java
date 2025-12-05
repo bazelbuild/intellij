@@ -24,11 +24,7 @@ import com.google.idea.blaze.base.dependencies.AddSourceToProjectHelper.Location
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.qsync.QuerySyncProject;
-import com.google.idea.blaze.base.qsync.action.AddToProjectAction;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -57,7 +53,6 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -142,8 +137,6 @@ public class ExternalFileProjectManagementHelper
   private EditorNotificationPanel createNotificationPanelByProjectType(VirtualFile vf) {
     ProjectType projectType = Blaze.getProjectType(project);
     switch (projectType) {
-      case QUERY_SYNC:
-        return createNotificationPanelForQuerySync(vf);
       case ASPECT_SYNC:
         return createNotificationPanelForLegacySync(vf);
       case UNKNOWN:
@@ -220,40 +213,6 @@ public class ExternalFileProjectManagementHelper
                       }), "Do you want to add this package to your project sources?");
       return panel;
     } else return null;
-  }
-
-  @Nullable
-  private EditorNotificationPanel createNotificationPanelForQuerySync(VirtualFile virtualFile) {
-    QuerySyncProject querySyncProject =
-        QuerySyncManager.getInstance(project).getLoadedProject().orElse(null);
-    if (querySyncProject == null) {
-      return null;
-    }
-    if (!WorkspaceRoot.fromProject(project).isInWorkspace(virtualFile)) {
-      return null;
-    }
-
-    Path path;
-    try {
-      path = virtualFile.toNioPath();
-
-      // Thrown when the file does not have a nio path (such as a file within a source archive)
-    } catch (UnsupportedOperationException e) {
-      return null;
-    }
-
-    // Project views do not support overriding a directory exclude, and the excluded directory may
-    // be imported from another file and so cannot be removed from the top-level file.
-    if (querySyncProject.containsPath(path) || querySyncProject.explicitlyExcludesPath(path)) {
-      return null;
-    }
-
-    return createPanel(
-        virtualFile,
-        p ->
-            p.createActionLabel(
-                "Add file to project",
-                () -> AddToProjectAction.Performer.create(project, virtualFile, p).perform()), addFilePanelTitle);
   }
 
   private EditorNotificationPanel createPanel(
