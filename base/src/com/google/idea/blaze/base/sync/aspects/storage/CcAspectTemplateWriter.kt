@@ -34,7 +34,7 @@ class CcAspectTemplateWriter : AspectWriter {
     val options = mapOf(
       getRegistryOption("bazel.cc.aspect.use_get_tool_for_action", true),
       getCcEnabledOption(state),
-      geAtLeastBazel9Option(state),
+      getAtLeastBazel9Option(state),
     )
 
     TemplateWriter.evaluate(
@@ -52,7 +52,7 @@ class CcAspectTemplateWriter : AspectWriter {
     return Pair("isCcEnabled", if (hasRulesCc) "true" else "false")
   }
 
-  private fun geAtLeastBazel9Option(state: SyncProjectState): Pair<String, String> {
+  private fun getAtLeastBazel9Option(state: SyncProjectState): Pair<String, String> {
     val isAtLeastBazel9 = state.blazeVersionData.bazelIsAtLeastVersion(9, 0, 0)
     return Pair("bazel9OrAbove", if (isAtLeastBazel9) "true" else "false")
   }

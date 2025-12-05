@@ -528,7 +528,7 @@ def collect_cc_rule_context(ctx):
 def collect_cc_compilation_context(ctx, target):
     """Collect information from the compilation context provided by the CcInfoCompat provider."""
 
-    if cc_info_in_target(target) == None:
+    if not cc_info_in_target(target):
         return False
 
     compilation_context = get_cc_info(target).compilation_context
@@ -556,7 +556,7 @@ def collect_cc_compilation_context(ctx, target):
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
-    if cc_info_in_target(target) == None:
+    if not cc_info_in_target(target):
         return False
 
     # ignore cc_proto_library, attach to proto_library with aspect attached instead
