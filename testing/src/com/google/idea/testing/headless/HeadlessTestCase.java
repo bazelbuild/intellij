@@ -113,31 +113,15 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   }
 
   /**
-   * Gets the path to the bazelisk wrapper script and performs some basic checks.
-   * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
-   * environment variable.
+   * Runs a executable in the current execution root (the execroot might not
+   * exist yet) and returns stdout or fails the test.
    */
-  private static Path getTestBazelPath() {
-    final var bitBazelBinary = System.getenv("BIT_BAZEL_BINARY");
-    assertThat(bitBazelBinary).isNotNull();
-
-    final var bazel = Path.of(normalizePath(bitBazelBinary));
-    assertPathExists(bazel);
-
-    return bazel.toAbsolutePath();
-  }
-
-  /**
-   * Runns bazel info to get the current execution root. The execroot might not
-   * exist yet.
-   */
-  private static BazelInfo getTestBazelInfo(Path bazel) throws ExecutionException, InterruptedException {
+  private static String exec(String ... args) throws ExecutionException, InterruptedException {
     final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
-    // run bazel binary in project root to avoid downloading it twice
     final var result = ExternalTask.builder(getTestProjectRoot())
-        .args(bazel.toString(), "info")
+        .args(args)
         .stderr(errStream)
         .stdout(outStream)
         .build()
@@ -145,10 +129,32 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .get();
 
     if (result != 0) {
-      abort("cannot run bazel info: " + errStream);
+      abort(String.format("execution '%s' failed (%d): %s", String.join(" ", args), result, errStream));
     }
 
-    return BazelInfo.parse(outStream.toString());
+    return outStream.toString();
+  }
+
+  /**
+   * Gets the path to the bazelisk binary and performs some basic checks.
+   * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
+   * environment variable.
+   *
+   * To avoid argument passing issues on Windows caused by sh_binary a patch to
+   * rules_bazel_integration test is applied to resolve to the actual bazelisk
+   * binary (see https://github.com/bazelbuild/bazel/issues/17487).
+   */
+  private static Path getTestBazelPath() throws ExecutionException, InterruptedException {
+    final var bitBazelWrapper = System.getenv("BIT_BAZEL_BINARY");
+    assertThat(bitBazelWrapper).isNotNull();
+
+    final var bitBazeliskBinary = exec(normalizePath(bitBazelWrapper));
+    assertThat(bitBazeliskBinary).isNotEmpty();
+
+    final var bazel = Path.of(bitBazeliskBinary.trim());
+    assertPathExists(bazel);
+
+    return bazel.toAbsolutePath();
   }
 
   @Override
@@ -158,7 +164,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     final var bazelBinary = getTestBazelPath();
     BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
 
-    myBazelInfo = getTestBazelInfo(bazelBinary);
+    myBazelInfo = BazelInfo.parse(exec(bazelBinary.toString(), "info"));
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);
