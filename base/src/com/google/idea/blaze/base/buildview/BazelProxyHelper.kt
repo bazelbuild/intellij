@@ -39,11 +39,10 @@ object BazelProxyHelper {
 }
 
 private fun buildProxyUrl(
-  schema: String,
   configuration: ProxyConfiguration.StaticProxyConfiguration,
   credentials: Credentials?
 ): String {
-  val builder = StringBuilder(schema).append("://")
+  val builder = StringBuilder()
 
   if (credentials != null) {
     builder
@@ -76,7 +75,7 @@ private fun getProxyConfiguration(): Map<String, String> {
     .getKnownAuthentication(configuration.host, configuration.port)
 
   // IntelliJ only supports http proxies
-  val url = buildProxyUrl("http", configuration, authentication)
+  val url = buildProxyUrl(configuration, authentication)
 
   return mapOf(
     HTTP_PROXY_VARIABLE to url,
