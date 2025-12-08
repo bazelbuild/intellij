@@ -216,7 +216,7 @@ public class WildcardTargetExpander {
       return new ExpandedTargetsResult(ImmutableList.of(), BuildResult.SUCCESS);
     }
     BlazeCommand.Builder builder =
-        BlazeCommand.builder(buildBinary, BlazeCommandName.QUERY, project)
+        BlazeCommand.builder(buildBinary, BlazeCommandName.QUERY)
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags(query.build());

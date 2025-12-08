@@ -75,13 +75,13 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
 
     val cmd = cmdBuilder.build()
-    val root = cmd.effectiveWorkspaceRoot.orElseGet { WorkspaceRoot.fromProject(project).path() }
+    val root = cmd.workspaceRoot().orElseGet { WorkspaceRoot.fromProject(project).path() }
     val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
 
     val cmdLine = PtyCommandLine()
       .withInitialColumns(size.columns)
       .withInitialRows(size.rows)
-      .withExePath(cmd.binaryPath)
+      .withExePath(cmd.binary().pathString)
       .withParameters(cmd.toArgumentList())
       .withWorkDirectory(root.pathString)
 

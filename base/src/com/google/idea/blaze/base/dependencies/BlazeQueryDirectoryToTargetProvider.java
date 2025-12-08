@@ -91,7 +91,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
     BlazeCommand.Builder command =
         BlazeCommand.builder(
-                buildSystem.getDefaultInvoker(project), BlazeCommandName.QUERY, project)
+                buildSystem.getDefaultInvoker(project), BlazeCommandName.QUERY)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags("--keep_going")
             .addBlazeFlags(query);

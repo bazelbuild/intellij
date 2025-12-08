@@ -120,7 +120,7 @@ public class LocalInvoker extends AbstractBuildInvoker {
     try (Closer closer = Closer.create()) {
       Path tempFile =
           Files.createTempFile(
-              String.format("intellij-bazel-%s-", blazeCommand.getName()), ".stdout");
+              String.format("intellij-bazel-%s-", blazeCommand.name()), ".stdout");
       OutputStream out = closer.register(Files.newOutputStream(tempFile));
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
       Function<String, String> rootReplacement =
@@ -171,7 +171,7 @@ public class LocalInvoker extends AbstractBuildInvoker {
     try (Closer closer = Closer.create()) {
       Path tmpFile =
           Files.createTempFile(
-              String.format("intellij-bazel-%s-", blazeCommand.getName()), ".stdout");
+              String.format("intellij-bazel-%s-", blazeCommand.name()), ".stdout");
       OutputStream out = closer.register(Files.newOutputStream(tmpFile));
       OutputStream stderr =
           closer.register(
