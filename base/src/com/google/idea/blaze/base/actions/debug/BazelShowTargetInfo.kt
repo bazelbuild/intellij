@@ -62,4 +62,9 @@ private class TargetPopupStep(
   override fun isSpeedSearchEnabled(): Boolean {
     return true
   }
+
+  override fun canceled() {
+    cont.cancel()
+    super.canceled()
+  }
 }
