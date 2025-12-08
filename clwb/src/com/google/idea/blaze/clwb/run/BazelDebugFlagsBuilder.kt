@@ -80,6 +80,10 @@ class BazelDebugFlagsBuilder(
     flags.add("--strip=never")
     flags.add("--dynamic_mode=off")
 
+    if (isGdb() && withFissionFlag) {
+      flags.add("--fission=yes")
+    }
+
     val switchBuilder = when (compilerKind) {
       MSVCCompilerKind -> MSVCSwitchBuilder()
       ClangClCompilerKind -> ClangClSwitchBuilder()
@@ -92,10 +96,6 @@ class BazelDebugFlagsBuilder(
 
     if (isLldb() && isClang() && withClangTrimPaths && workspaceRoot != null) {
       switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
-    }
-
-    if (isGdb() && isClang() && withFissionFlag) {
-      switchBuilder.withSwitch("--fission=yes")
     }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
