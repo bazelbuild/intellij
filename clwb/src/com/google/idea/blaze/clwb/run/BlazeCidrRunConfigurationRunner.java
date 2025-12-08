@@ -145,9 +145,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     } catch (GetArtifactsException e) {
-      throw new ExecutionException(
-          String.format(
-              "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
+      throw new ExecutionException(String.format("Failed to get output artifacts when building %s", target), e);
     }
   }
 
