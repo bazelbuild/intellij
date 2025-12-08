@@ -58,12 +58,9 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     }
   }
 
-  private static final String OLD_DEFAULT_BLAZE_PATH =
-      SystemInfo.isMac ? "/usr/local/bin/blaze" : "/usr/bin/blaze";
   private static final String DEFAULT_BLAZE_PATH = "blaze";
   private static final String DEFAULT_BAZEL_PATH = "bazel";
   private static final String DEFAULT_BUILDIFIER_PATH = "buildifier";
-  private static final String DEFAULT_FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES = "";
 
   private FocusBehavior showBlazeConsoleOnSync = FocusBehavior.ALWAYS;
   private FocusBehavior showBlazeProblemsViewOnSync = FocusBehavior.ALWAYS;
@@ -83,7 +80,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
   private String buildifierBinaryPath = DEFAULT_BUILDIFIER_PATH;
-  private String fastBuildJavaBinaryPathInRunFiles = "";
 
   public static BlazeUserSettings getInstance() {
     return ApplicationManager.getApplication().getService(BlazeUserSettings.class);
@@ -161,26 +157,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setBlazeBinaryPath(String blazeBinaryPath) {
     this.blazeBinaryPath = StringUtil.defaultIfEmpty(blazeBinaryPath, DEFAULT_BLAZE_PATH).trim();
-  }
-
-  /** Resets the blaze binary path to its default value. */
-  public void clearBlazeBinaryPath() {
-    blazeBinaryPath = DEFAULT_BLAZE_PATH;
-  }
-
-  public boolean isDefaultBlazePath() {
-    return DEFAULT_BLAZE_PATH.equals(getBlazeBinaryPath())
-        || OLD_DEFAULT_BLAZE_PATH.equals(getBlazeBinaryPath());
-  }
-
-  public String getFastBuildJavaBinaryPathInRunFiles() {
-    return StringUtil.defaultIfEmpty(fastBuildJavaBinaryPathInRunFiles,
-        DEFAULT_FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES).trim();
-  }
-
-  public void setFastBuildJavaBinaryPathInRunFiles(String javaRunFilesBinaryPath) {
-    this.fastBuildJavaBinaryPathInRunFiles = StringUtil.defaultIfEmpty(javaRunFilesBinaryPath,
-        DEFAULT_FAST_BUILD_JAVA_BINARY_PATH_IN_RUN_FILES).trim();
   }
 
   public String getBuildifierBinaryPath() {
