@@ -71,6 +71,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
   private boolean useNewSyncView = true;
+  private boolean forwardProxySettings = false;
 
   private boolean javascriptTestrunnersEnabled = false;
 
@@ -192,6 +193,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.useNewSyncView = useNewSyncView;
   }
 
+  public boolean getForwardProxySettings() {
+    return forwardProxySettings;
+  }
+
+  public void setForwardProxySettings(boolean forwardProxySettings) {
+    this.forwardProxySettings = forwardProxySettings;
+  }
+
   public boolean isJavascriptTestrunnersEnabled() {
     return javascriptTestrunnersEnabled;
   }
@@ -255,6 +264,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
       builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
       builder.put("useNewSyncView", Boolean.toString(settings.useNewSyncView));
+      builder.put("forwardProxySettings", Boolean.toString(settings.forwardProxySettings));
       return builder.build();
     }
   }

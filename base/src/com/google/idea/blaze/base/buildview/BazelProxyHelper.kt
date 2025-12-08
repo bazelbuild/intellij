@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.buildview
 
 import com.google.idea.blaze.base.command.BlazeCommand
+import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.intellij.credentialStore.Credentials
 import com.intellij.util.asSafely
 import com.intellij.util.net.ProxyAuthentication
@@ -62,6 +63,10 @@ private fun buildProxyUrl(
 }
 
 private fun getProxyConfiguration(): Map<String, String> {
+  if (!BlazeUserSettings.getInstance().forwardProxySettings) {
+    return emptyMap()
+  }
+
   val configuration = ProxySettings.getInstance()
     .getProxyConfiguration()
     .asSafely<ProxyConfiguration.StaticProxyConfiguration>()

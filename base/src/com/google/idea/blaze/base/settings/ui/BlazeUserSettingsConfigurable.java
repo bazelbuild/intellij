@@ -114,6 +114,12 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .setter(BlazeUserSettings::setUseNewSyncView)
           .componentFactory(SimpleComponent::createCheckBox);
 
+  private static final ConfigurableSetting<?, ?> FOREARD_PROXY_SETTINGS =
+      setting("Forward proxy settings")
+          .getter(BlazeUserSettings::getForwardProxySettings)
+          .setter(BlazeUserSettings::setForwardProxySettings)
+          .componentFactory(SimpleComponent::createCheckBox);
+
   private static final ConfigurableSetting<?, ?> ALWAYS_SELECT_NEWEST_CHILD_TASK =
       setting("Always select the newest child task in Blaze view")
           .getter(BlazeUserSettings::getSelectNewestChildTask)
@@ -165,6 +171,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           ALLOW_JAVASCRIPT_TESTS,
           COLLAPSE_PROJECT_VIEW,
           USE_NEW_SYNC_VIEW,
+          FOREARD_PROXY_SETTINGS,
           FORMAT_BUILD_FILES_ON_SAVE,
           SHOW_ADD_FILE_TO_PROJECT,
           ALWAYS_SELECT_NEWEST_CHILD_TASK,
@@ -194,6 +201,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
         getFocusBehaviorSettingsUi(),
         createVerticalPanel(
             USE_NEW_SYNC_VIEW,
+            FOREARD_PROXY_SETTINGS,
             COLLAPSE_PROJECT_VIEW,
             ALLOW_JAVASCRIPT_TESTS,
             FORMAT_BUILD_FILES_ON_SAVE,
