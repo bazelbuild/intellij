@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
@@ -98,6 +99,8 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
         if (pathResolver.getWorkspacePath(realFile) != null) {
           return realFile;
         }
+      } catch (NoSuchFileException ignore) {
+        // this is ok as it might not exist
       } catch (IOException ioException) {
         LOG.warn("Failed to resolve real path for " + artifactLocation.getExecutionRootRelativePath() +
                 "\n" + ioException.getClass().getSimpleName() + ": " + ioException.getMessage());
