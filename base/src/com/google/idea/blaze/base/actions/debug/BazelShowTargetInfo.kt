@@ -18,23 +18,25 @@ package com.google.idea.blaze.base.actions.debug
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.model.BlazeProjectData
 import com.google.protobuf.TextFormat
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
-import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 
 class BazelShowTargetInfo : BazelDebugAction() {
 
   override suspend fun exec(project: Project, data: BlazeProjectData): String {
-    val info = suspendCancellableCoroutine { cont ->
-      JBPopupFactory.getInstance()
-        .createListPopup(TargetPopupStep(cont, data.targetMap.targets().toList()))
-        .showCenteredInCurrentWindow(project)
+    val info = withContext(Dispatchers.EDT) {
+      suspendCancellableCoroutine { cont ->
+        JBPopupFactory.getInstance()
+          .createListPopup(TargetPopupStep(cont, data.targetMap.targets().toList()))
+          .showCenteredInCurrentWindow(project)
+      }
     }
 
     return TextFormat.printer().printToString(info.toProto())

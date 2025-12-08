@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.actions.debug
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider
 import com.google.idea.blaze.base.model.BlazeProjectData
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -51,21 +53,22 @@ class BazelDumpCacheDirectories : BazelDebugAction() {
 
 private data class DirectorySize(val items: Long, val size: Long)
 
-private fun collectDirectorySize(path: Path): DirectorySize? {
+private suspend fun collectDirectorySize(path: Path): DirectorySize? {
   var items = 0L
   var size = 0L
 
-  try {
-    Files.walk(path).use { stream ->
-      stream.forEach { item ->
-        items++
-        size += Files.size(item)
+  return withContext(Dispatchers.IO) {
+    try {
+      Files.walk(path).use { stream ->
+        stream.forEach { item ->
+          items++
+          size += Files.size(item)
+        }
       }
-    }
-  } catch (_: IOException) { // ignore exception, report 0
-    items = 0
-    size = 0
-  }
 
-  return DirectorySize(items, size)
+      DirectorySize(items, size)
+    } catch (_: IOException) {
+      null
+    }
+  }
 }

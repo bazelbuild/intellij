@@ -21,14 +21,18 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.LightVirtualFile
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val LOG = Logger.getInstance(BazelDebugAction::class.java)
 
@@ -43,7 +47,13 @@ abstract class BazelDebugAction : DumbAwareAction() {
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    currentThreadCoroutineScope().launch { entryPoint(e) }
+    val project = e.project ?: return
+
+    currentThreadCoroutineScope().launch(Dispatchers.Default) {
+      withBackgroundProgress(project, this@BazelDebugAction.javaClass.simpleName) {
+        entryPoint(e)
+      }
+    }
   }
 
   private suspend fun entryPoint(e: AnActionEvent) {
@@ -76,11 +86,13 @@ abstract class BazelDebugAction : DumbAwareAction() {
     }
   }
 
-  private fun showOutputInEditor(e: AnActionEvent, text: String) {
+  private suspend fun showOutputInEditor(e: AnActionEvent, text: String) {
     val project = e.project ?: return
 
-    val file = LightVirtualFile("${javaClass.simpleName}.txt", PlainTextFileType.INSTANCE, text)
-    FileEditorManager.getInstance(project).openFile(file, false)
+    withContext(Dispatchers.EDT) {
+      val file = LightVirtualFile("${javaClass.simpleName}.txt", PlainTextFileType.INSTANCE, text)
+      FileEditorManager.getInstance(project).openFile(file, false)
+    }
   }
 
   protected open fun shouldShowOutputInEditor(): Boolean = ApplicationManager.getApplication().isInternal
