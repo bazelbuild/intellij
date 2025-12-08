@@ -95,54 +95,6 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
   }
 
   @Override
-  public BlazeBuildOutputs.Legacy runLegacy(Project project, BlazeCommand.Builder blazeCommandBuilder,
-                                            BuildResultHelper buildResultHelper, BlazeContext context,
-                                            Map<String, String> envVars) throws BuildException {
-    command = blazeCommandBuilder.build();
-    try {
-      BlazeBuildOutputs blazeBuildOutputs = resultsFunction.runBuild(buildResultHelper);
-      int exitCode = blazeBuildOutputs.buildResult().exitCode;
-      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
-        return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-            BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
-      }
-    } catch (GetArtifactsException e) {
-      return BlazeBuildOutputs.noOutputsForLegacy(BuildResult.FATAL_ERROR);
-    }
-  }
-
-  @Override
-  public BlazeTestResults runTest(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context,
-      Map<String, String> envVars) {
-    return BlazeTestResults.NO_RESULTS;
-  }
-
-  @Override
-  public InputStream runQuery(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException {
-    return InputStream.nullInputStream();
-  }
-
-  @Override
-  @MustBeClosed
-  public InputStream runBlazeInfo(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BlazeInfoException {
-    return InputStream.nullInputStream();
-  }
-
-  @Override
   @MustBeClosed
   public InputStream runBlazeMod(
       Project project,
