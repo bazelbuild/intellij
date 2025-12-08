@@ -23,6 +23,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.async.process.CommandLineTask;
+import com.google.idea.blaze.base.buildview.BazelProxyHelper;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -73,6 +74,9 @@ public interface ExternalTask {
 
     private Builder(WorkspaceRoot workspaceRoot) {
       this(workspaceRoot.directory());
+
+      // TODO: temporary workaround to inject proxy environment variables into all bazel invocations
+      environmentVariables.putAll(BazelProxyHelper.getConfiguration());
     }
 
     private Builder(File workingDirectory) {

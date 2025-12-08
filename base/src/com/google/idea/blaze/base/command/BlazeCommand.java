@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /** A command to issue to Blaze/Bazel on the command line. */
@@ -39,6 +41,8 @@ public abstract class BlazeCommand {
   public abstract ImmutableList<String> startupFlags();
 
   public abstract Optional<Path> workspaceRoot();
+
+  public abstract ImmutableMap<String, String> environment();
 
   public ImmutableList<String> toArgumentList() {
     return ImmutableList.<String>builder()
@@ -78,6 +82,7 @@ public abstract class BlazeCommand {
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     private final ImmutableList.Builder<String> cmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
+    private final ImmutableMap.Builder<String, String> environment = ImmutableMap.builder();
 
     public Builder(String binaryPath, BlazeCommandName name) {
       this.binary = Path.of(binaryPath);
@@ -110,7 +115,8 @@ public abstract class BlazeCommand {
           name,
           arguments.build(),
           startupFlags.build(),
-          Optional.ofNullable(effectiveWorkspaceRoot)
+          Optional.ofNullable(effectiveWorkspaceRoot),
+          environment.build()
       );
     }
 
@@ -164,6 +170,18 @@ public abstract class BlazeCommand {
     @CanIgnoreReturnValue
     public BlazeCommand.Builder setWorkspaceRoot(Path root) {
       this.effectiveWorkspaceRoot = root;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public BlazeCommand.Builder addEnvironmentVariable(String key, String value) {
+      this.environment.put(key, value);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public BlazeCommand.Builder addEnvironmentVariables(Map<String, String> values) {
+      this.environment.putAll(values);
       return this;
     }
   }

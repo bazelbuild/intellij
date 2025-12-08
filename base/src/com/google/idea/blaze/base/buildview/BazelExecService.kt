@@ -67,6 +67,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
   }
 
   private suspend fun execute(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): Int {
+    configureProxy(cmdBuilder)
+
     // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
     if (BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows) {
       cmdBuilder.addBlazeFlags("--curses=yes")
@@ -83,6 +85,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       .withInitialRows(size.rows)
       .withExePath(cmd.binary().pathString)
       .withParameters(cmd.toArgumentList())
+      .withEnvironment(cmd.environment())
       .withWorkDirectory(root.pathString)
 
     var handler: OSProcessHandler? = null
