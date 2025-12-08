@@ -132,13 +132,13 @@
       text="Dismiss import notification"/>
 
     <action id="Bazel.DumpVFSAction"
-      class="com.google.idea.blaze.base.actions.BazelDumpVFSAction"
+      class="com.google.idea.blaze.base.actions.debug.BazelDumpVFS"
       text="Bazel dump execroot VFS"/>
     <action id="Bazel.DumpCacheDirectories"
-      class="com.google.idea.blaze.base.actions.BazelDumpCacheDirectories"
+      class="com.google.idea.blaze.base.actions.debug.BazelDumpCacheDirectories"
       text="Bazel dump cache directories"/>
     <action id="Bazel.ShowTargetInfo"
-      class="com.google.idea.blaze.base.actions.BazelShowTargetInfoAction"
+      class="com.google.idea.blaze.base.actions.debug.BazelShowTargetInfo"
       text="Bazel show target info"/>
     <action id="Bazel.SwitchProjectViewFile"
       class="com.google.idea.blaze.base.actions.SwitchProjectViewAction"

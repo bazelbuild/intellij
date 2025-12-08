@@ -13,56 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.actions
+package com.google.idea.blaze.base.actions.debug
 
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider
-import com.google.idea.blaze.base.settings.Blaze
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAwareAction
+import com.google.idea.blaze.base.model.BlazeProjectData
+import com.intellij.openapi.project.Project
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.jvm.optionals.getOrNull
 
-private val LOG = Logger.getInstance(BazelDumpCacheDirectories::class.java)
+class BazelDumpCacheDirectories : BazelDebugAction() {
 
-class BazelDumpCacheDirectories : DumbAwareAction() {
+  override suspend fun exec(project: Project, data: BlazeProjectData): String {
+    val builder = StringBuilder()
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Blaze.isBlazeProject(e.project)
-  }
-
-  override fun actionPerformed(event: AnActionEvent) {
-    val project = event.project
-    if (project == null) {
-      LOG.warn("no open project found")
-      return
-    }
-
-    LOG.info("################################### CACHE DIRS #################################")
     for (provider in LoggedDirectoryProvider.EP_NAME.extensionList) {
       val directory = provider.getLoggedDirectory(project).getOrNull() ?: continue
 
       val exists = Files.exists(directory.path())
       val size = if (exists) collectDirectorySize(directory.path()) else null
 
-      LOG.info("Directory: ${directory.path().toAbsolutePath()}")
-      LOG.info("-> purpose: ${directory.purpose()}")
-      LOG.info("->  origin: ${directory.originatingIdePart()}")
-      LOG.info("->  exists: $exists")
+      builder.appendLine("Directory: ${directory.path().toAbsolutePath()}")
+      builder.appendLine("-> purpose: ${directory.purpose()}")
+      builder.appendLine("->  origin: ${directory.originatingIdePart()}")
+      builder.appendLine("->  exists: $exists")
 
       if (size != null) {
-        LOG.info("->    size: ${size.size}B")
-        LOG.info("->   items: ${size.items}")
+        builder.appendLine("->    size: ${size.size}B")
+        builder.appendLine("->   items: ${size.items}")
       }
     }
-    LOG.info("################################################################################")
+
+    return builder.toString()
   }
 }
 
@@ -79,8 +62,9 @@ private fun collectDirectorySize(path: Path): DirectorySize? {
         size += Files.size(item)
       }
     }
-  } catch (e: IOException) {
-    LOG.warn("failed to collect directory size $path", e)
+  } catch (_: IOException) { // ignore exception, report 0
+    items = 0
+    size = 0
   }
 
   return DirectorySize(items, size)
