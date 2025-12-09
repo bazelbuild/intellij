@@ -23,6 +23,7 @@ import com.intellij.util.net.ProxyAuthentication
 import com.intellij.util.net.ProxyConfiguration
 import com.intellij.util.net.ProxySettings
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private const val HTTP_PROXY_VARIABLE = "HTTP_PROXY"
 private const val HTTPS_PROXY_VARIABLE = "HTTPS_PROXY"
@@ -50,7 +51,7 @@ private fun buildProxyUrl(
       .append(credentials.userName)
       .append(":")
       // Bazel only supports URL encoding for passwords, not the user names
-      .append(URLEncoder.encode(credentials.getPasswordAsString(), "UTF-8"))
+      .append(URLEncoder.encode(credentials.getPasswordAsString(), StandardCharsets.UTF_8))
       .append("@")
   }
 
