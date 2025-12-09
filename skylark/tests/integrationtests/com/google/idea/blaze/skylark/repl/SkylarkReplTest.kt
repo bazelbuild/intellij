@@ -16,7 +16,7 @@
 package com.google.idea.blaze.skylark.repl
 
 import com.google.common.truth.Truth.assertThat
-import com.google.idea.balze.skylark.repl.REPL_JAR_PATH
+import com.google.idea.blaze.skylark.repl.REPL_JAR_PATH
 import com.google.idea.common.util.RunJarService
 import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
