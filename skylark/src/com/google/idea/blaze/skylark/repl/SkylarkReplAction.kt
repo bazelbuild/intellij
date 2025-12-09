@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.balze.skylark.repl
+package com.google.idea.blaze.skylark.repl
 
 import com.google.idea.common.util.RunJarService
 import com.google.idea.common.util.Datafiles
@@ -28,7 +28,7 @@ import kotlinx.coroutines.withContext
 
 val REPL_JAR_PATH by Datafiles.resolveLazy("bazel/starlark_repl.jar")
 
-class SkylarkReplAction() : AnAction(), DumbAware {
+class SkylarkReplAction : AnAction(), DumbAware {
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return

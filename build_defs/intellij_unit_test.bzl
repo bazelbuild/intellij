@@ -1,7 +1,6 @@
 load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-
-laod(":common.bzl", "intellij_common")
+load(":common.bzl", "intellij_common")
 
 def intellij_unit_test(test, deps = None, test_package = None, **kwargs):
     """
