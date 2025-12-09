@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.balze.skylark.repl
+package com.google.idea.blaze.skylark.repl
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage
 import com.intellij.execution.console.LanguageConsoleBuilder
@@ -37,7 +37,9 @@ class SkylarkReplConsole(
   val handler: OSProcessHandler,
 ) : AbstractConsoleRunnerWithHistory<LanguageConsoleView>(project, CONSOLE_TITLE, null) {
 
-  // WHY DO I HAVE TO DO THIS MANUALLY IF I EXTEND ABSTRACTCONSOLERUNNERWITHHISTORY???
+  // This manual tracking of the history is required because
+  // `AbstractConsoleRunnerWithHistory`, despite its name, does not provide the
+  // history functionality that we need.
   private lateinit var manager: HistoryManger
 
   override fun createProcess() = handler.process

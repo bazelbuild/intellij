@@ -13,6 +13,6 @@ intellij_plugin_library(
 test_suite(
     name = "integration_tests",
     tests = [
-        "//skylark/test/integrationtests/com/google/idea/blaze/skylark/repl:SkylarkReplTest",
+        "//skylark/tests/integrationtests/com/google/idea/blaze/skylark/repl:SkylarkReplTest",
     ],
 )

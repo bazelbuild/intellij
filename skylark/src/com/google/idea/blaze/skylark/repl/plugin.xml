@@ -3,6 +3,6 @@
     <action
       id="Bazel.SkylarkRepl"
       text="Starlark REPL"
-      class="com.google.idea.balze.skylark.repl.SkylarkReplAction"/>
+      class="com.google.idea.blaze.skylark.repl.SkylarkReplAction"/>
   </actions>
 </idea-plugin>
