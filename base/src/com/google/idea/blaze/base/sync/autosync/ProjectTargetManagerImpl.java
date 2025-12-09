@@ -160,10 +160,9 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
       ProjectTargetManagerImpl manager = getImpl(project);
       buildIds.forEach(manager.inProgressBuilds::remove);
       manager.updateProjectSyncStatus();
-      if (!syncResult.successful()) {
-        // project view won't otherwise update for failed/cancelled syncs
-        ProjectView.getInstance(project).refresh();
-      }
+      SourceToTargetMap.getInstance(project).init();
+      // refresh the sync status indicators as the target map is built
+      ProjectView.getInstance(project).refresh();
     }
   }
 

@@ -33,6 +33,11 @@ public class DelegatingSourceToTargetMap implements SourceToTargetMap {
   }
 
   @Override
+  public void init() {
+    delegateSupplier.get().init();
+  }
+
+  @Override
   public ImmutableList<Label> getTargetsToBuildForSourceFile(File sourceFile) {
     return delegateSupplier.get().getTargetsToBuildForSourceFile(sourceFile);
   }

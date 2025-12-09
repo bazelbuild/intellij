@@ -28,6 +28,8 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Objects;
@@ -39,6 +41,11 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
 
   public AspectSyncSourceToTargetMap(Project project) {
     this.project = project;
+  }
+
+  @Override
+  public void init() {
+    getSourceToTargetMap();
   }
 
   @Override
@@ -69,9 +76,20 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
   }
 
   @Nullable
-  private synchronized ImmutableMultimap<File, TargetKey> getSourceToTargetMap() {
-    return SyncCache.getInstance(project)
-        .get(
+  private ImmutableMultimap<File, TargetKey> getSourceToTargetMap() {
+    var syncCache = SyncCache.getInstance(project);
+
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // we might be called from a non-cancellable read action, and this leads
+      // to a freeze as computeSourceToTargetMap is blocking. This is an
+      // ijplatform issue as cancellable read actions should be used, but there
+      // are still usages of the old noncancellable one. So in case of read action
+      // we do not compute the map and just trying to get the computed version and
+      // schedule computation if needed
+      return syncCache.tryGet(AspectSyncSourceToTargetMap.class, AspectSyncSourceToTargetMap::computeSourceToTargetMap);
+    }
+
+    return syncCache.get(
             AspectSyncSourceToTargetMap.class,
             AspectSyncSourceToTargetMap::computeSourceToTargetMap);
   }
@@ -82,6 +100,8 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
     for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+      ProgressManager.checkCanceled();
+
       TargetKey key = target.getKey();
       for (ArtifactLocation sourceArtifact : target.getSources()) {
         File file = decoder.resolveSource(sourceArtifact);
