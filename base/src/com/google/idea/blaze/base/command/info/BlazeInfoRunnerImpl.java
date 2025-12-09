@@ -40,7 +40,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
     return BlazeExecutor.getInstance()
         .submit(
             () -> {
-              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO, project);
+              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO);
               builder.addBlazeFlags(blazeFlags);
               if (keys != null) {
                 builder.addBlazeFlags(keys);

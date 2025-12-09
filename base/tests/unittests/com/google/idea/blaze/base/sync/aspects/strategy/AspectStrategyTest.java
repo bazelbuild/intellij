@@ -196,7 +196,7 @@ public class AspectStrategyTest extends BlazeTestCase {
   }
 
   private BlazeCommand.Builder emptyBuilder() {
-    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD, getProject());
+    return BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD);
   }
 
   private static ImmutableList<String> getBlazeFlags(BlazeCommand.Builder builder) {

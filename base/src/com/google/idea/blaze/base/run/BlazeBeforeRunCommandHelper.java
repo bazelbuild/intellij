@@ -130,7 +130,7 @@ public final class BlazeBeforeRunCommandHelper {
                 context.output(new StatusOutput(progressMessage));
 
                 BlazeCommand.Builder command =
-                    BlazeCommand.builder(binaryPath, commandName, project)
+                    BlazeCommand.builder(binaryPath, commandName)
                         .addTargets(targets)
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(

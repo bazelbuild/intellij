@@ -674,8 +674,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                             targets,
                             aspectStrategy,
                             outputGroups,
-                            additionalBlazeFlags,
-                            invokeParallel);
+                            additionalBlazeFlags);
                     if (result.buildResult().outOfMemory()) {
                       logger.warn(
                           String.format(
@@ -763,17 +762,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy,
       ImmutableSet<OutputGroup> outputGroups,
-      List<String> additionalBlazeFlags,
-      boolean invokeParallel)
+      List<String> additionalBlazeFlags)
       throws BuildException {
 
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
     Path targetPatternFile = prepareTargetPatternFile(project, targets);
-    BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD, project);
+    BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
     builder
-        .setInvokeParallel(invokeParallel)
         .addTargets(targets)
         .addBlazeFlags(BlazeFlags.KEEP_GOING)
         .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
