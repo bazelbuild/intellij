@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.actions.debug
 
 import com.google.idea.blaze.base.buildview.BazelProxyHelper
 import com.google.idea.blaze.base.model.BlazeProjectData
+import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.intellij.openapi.project.Project
 
 class BazelDumpProxyConfiguration : BazelDebugAction() {
@@ -28,10 +29,16 @@ class BazelDumpProxyConfiguration : BazelDebugAction() {
     builder.appendLine("  HTTP_PROXY=${System.getenv("HTTP_PROXY")}")
     builder.appendLine("  HTTPS_PROXY=${System.getenv("HTTPS_PROXY")}")
     builder.appendLine("  NO_PROXY=${System.getenv("NO_PROXY")}")
+    builder.appendLine()
+
+    if (!BlazeUserSettings.getInstance().forwardProxySettings) {
+      builder.appendLine("PROXY FORWARDING DISABLED (enable in settings)")
+      return builder.toString()
+    }
 
     val config = BazelProxyHelper.getConfiguration()
 
-    builder.appendLine("LOCAL CONFIGURATION:")
+    builder.appendLine("FORWARDED CONFIGURATION:")
     config.forEach { (key, value) -> builder.appendLine("  $key=$value") }
 
     return builder.toString()
