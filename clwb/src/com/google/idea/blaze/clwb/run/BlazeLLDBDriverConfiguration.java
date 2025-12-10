@@ -40,16 +40,23 @@ public class BlazeLLDBDriverConfiguration extends CLionLLDBDriverConfiguration {
     }
 
     @Override
-    public String convertToProjectModelPath(@Nullable String absolutePath) {
-        if (absolutePath == null) {
+    public String convertToProjectModelPath(@Nullable String absolutePathString) {
+        if (absolutePathString == null) {
             return null;
+        }
+
+        // this might work for non-hermetic toolchain libraries if those have
+        // debug symbols available
+        Path absolutePath = Path.of(absolutePathString);
+        if (!absolutePath.startsWith(projectRoot)) {
+            return absolutePathString;
         }
 
         // we need to relativize the path to the project root for breakpoints.
         // LLDB started from execroot can set only relative breakpoints, and for
         // absolute it requires path mapping to be set, which is quite hard to
         // configure properly because the source location is dynamic inside the build sandbox
-        return projectRoot.relativize(Path.of(absolutePath)).toString();
+        return projectRoot.relativize(absolutePath).toString();
     }
 
     @NotNull
