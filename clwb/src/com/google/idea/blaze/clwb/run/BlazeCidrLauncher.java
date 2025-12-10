@@ -48,7 +48,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -78,6 +77,7 @@ import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -289,7 +289,17 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       final DebuggerDriverConfiguration debuggerDriver;
       if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB) {
-        debuggerDriver = new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath());
+        final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+        final Path executionRoot;
+        if (projectData == null) {
+          executionRoot = workspaceRoot.directory().toPath();
+        } else {
+          executionRoot = projectData.getBlazeInfo().getExecutionRoot().toPath();
+        }
+
+        // the working directory must be the execroot to make breakpoints work
+        debuggerDriver = new BlazeLLDBDriverConfiguration(project, executionRoot,
+                workspaceRoot.directory().toPath());
       } else {
         final var startupCommands = getGdbStartupCommands(workspaceRootDirectory);
         debuggerDriver = new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot);

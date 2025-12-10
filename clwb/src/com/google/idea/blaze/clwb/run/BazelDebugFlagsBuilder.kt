@@ -40,7 +40,6 @@ class BazelDebugFlagsBuilder(
   private val debuggerKind: BlazeDebuggerKind,
   private val compilerKind: OCCompilerKind,
   private val targetOS: OS,
-  private val withClangTrimPaths: Boolean = true,
   private val withFissionFlag: Boolean = false,
 ) {
 
@@ -54,7 +53,6 @@ class BazelDebugFlagsBuilder(
       debuggerKind,
       compilerKind,
       OS.CURRENT,
-      withClangTrimPaths = !Registry.`is`("bazel.trim.absolute.path.disabled"),
       withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
     )
   }
@@ -68,8 +66,6 @@ class BazelDebugFlagsBuilder(
       isLldb() -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
     }
   }
-
-  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == ClangClCompilerKind
 
   private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
 
@@ -93,10 +89,6 @@ class BazelDebugFlagsBuilder(
 
     switchBuilder.withDebugInfo(2) // ignored for msvc/clangcl
     switchBuilder.withDisableOptimization()
-
-    if (isLldb() && isClang() && withClangTrimPaths && workspaceRoot != null) {
-      switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
-    }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
 
