@@ -21,7 +21,6 @@ import com.google.idea.common.util.RunJarService
 import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
-import com.google.idea.testing.integration.TestSandbox
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,10 +29,6 @@ import java.nio.file.Files
 
 @RunWith(JUnit4::class)
 class SkylarkReplTest : BasePlatformTestCase() {
-
-  @Rule
-  @JvmField
-  val sandbox = TestSandbox()
 
   @Test
   fun testFindsRepl() {
