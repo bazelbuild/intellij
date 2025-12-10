@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Searches through the transitive rdeps map for blaze rules of a certain type which build a given
@@ -62,7 +64,8 @@ public interface SourceToTargetFinder {
    *
    * <p>Future returns null if there was no non-empty result found.
    */
-  static ListenableFuture<Collection<TargetInfo>> findTargetInfoFuture(
+  @NotNull
+  static ListenableFuture<@Nullable Collection<TargetInfo>> findTargetInfoFuture(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
     return findTargetInfoFuture(project, ImmutableSet.of(sourceFile), ruleType);
   }
@@ -73,7 +76,8 @@ public interface SourceToTargetFinder {
    *
    * <p>Future returns null if there was no non-empty result found.
    */
-  static ListenableFuture<Collection<TargetInfo>> findTargetInfoFuture(
+  @NotNull
+  static ListenableFuture<@Nullable Collection<TargetInfo>> findTargetInfoFuture(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
     Iterable<Future<Collection<TargetInfo>>> futures =
         Iterables.transform(

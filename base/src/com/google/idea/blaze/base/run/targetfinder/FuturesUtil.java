@@ -27,7 +27,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /** Utilities operating on futures. */
 public class FuturesUtil {
@@ -51,12 +52,13 @@ public class FuturesUtil {
   }
 
   /**
-   * Iterates through the futures, returning the first future satisfying the predicate. Future
-   * returns null if there are no results matching the predicate.
+   * Iterates through the futures, returning the first future satisfying the predicate.
+   * Future returns null if there are no results matching the predicate.
    *
    * <p>Prioritizes immediately available results.
    */
-  public static <T> ListenableFuture<T> getFirstFutureSatisfyingPredicate(
+  @NotNull
+  public static <T> ListenableFuture<@Nullable T> getFirstFutureSatisfyingPredicate(
       Iterable<Future<T>> iterable, Predicate<T> predicate) {
     List<ListenableFuture<T>> futures = new ArrayList<>();
     for (Future<T> future : iterable) {
