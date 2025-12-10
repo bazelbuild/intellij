@@ -47,9 +47,7 @@ abstract class RadTestContextProvider : TestContextProvider {
 
     val target = pluginProjectScope(context.project).future {
       val targets = findTargets(context).await()
-
-      // orEmpty because of [FuturesUtil.getFirstFutureSatisfyingPredicate]
-      chooseTargetForFile(context, targets.orEmpty())
+      chooseTargetForFile(context, targets)
     }
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
@@ -63,7 +61,7 @@ abstract class RadTestContextProvider : TestContextProvider {
   protected abstract fun createTestFilter(test: RadTestElementModel): String?
 }
 
-private fun findTargets(context: ConfigurationContext): ListenableFuture<Collection<TargetInfo>?> {
+private fun findTargets(context: ConfigurationContext): ListenableFuture<Collection<TargetInfo>> {
   val virtualFile = context.location?.virtualFile ?: return Futures.immediateFuture(emptyList())
 
   return SourceToTargetFinder.findTargetInfoFuture(
