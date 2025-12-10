@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.run.targetfinder;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.JdkFutureAdapters;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -59,7 +58,27 @@ public class FuturesUtil {
    */
   @NotNull
   public static <T> ListenableFuture<@Nullable T> getFirstFutureSatisfyingPredicate(
-      Iterable<Future<T>> iterable, Predicate<T> predicate) {
+          Iterable<Future<T>> iterable, Predicate<@Nullable T> predicate) {
+    return getFirstFutureSatisfyingPredicateImpl(iterable, predicate, null);
+  }
+
+  /**
+   * Iterates through the futures, returning the first future satisfying the predicate.
+   * Future returns fallback value if there are no results matching the predicate.
+   *
+   * <p>Prioritizes immediately available results.
+   */
+  @NotNull
+  public static <T> ListenableFuture<@NotNull T> getFirstFutureSatisfyingPredicate(
+          Iterable<Future<T>> iterable, Predicate<@Nullable T> predicate, @NotNull T fallbackValue) {
+    return getFirstFutureSatisfyingPredicateImpl(iterable, predicate, fallbackValue);
+  }
+
+  @NotNull
+  private static <T> ListenableFuture<T> getFirstFutureSatisfyingPredicateImpl(
+      Iterable<Future<T>> iterable, Predicate<@Nullable T> predicate, @Nullable T fallback) {
+    // it would be nice to have @Contract(_, _, !null -> <!null>) here,
+    // but @Contract does not support types in generics
     List<ListenableFuture<T>> futures = new ArrayList<>();
     for (Future<T> future : iterable) {
       if (future.isDone()) {
@@ -74,12 +93,11 @@ public class FuturesUtil {
       }
     }
     if (futures.isEmpty()) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(fallback);
     }
     return Futures.transform(
         Futures.allAsList(futures),
-        (Function<List<T>, T>)
-            list -> list == null ? null : list.stream().filter(predicate).findFirst().orElse(null),
+        list -> list.stream().filter(predicate).findFirst().orElse(fallback),
         directExecutor());
   }
 }

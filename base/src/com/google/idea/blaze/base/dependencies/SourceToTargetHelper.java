@@ -21,10 +21,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A helper class to complement {@link SourceToTargetProvider}. Separated from that class to keep
@@ -38,19 +40,19 @@ public final class SourceToTargetHelper {
    * Returns the blaze targets provided by the first available {@link SourceToTargetProvider} able
    * to handle the given source file, prioritizing any which are immediately available.
    *
-   * <p>Future returns null if no provider was able to handle the given source file.
+   * <p>Future returns empty list if no provider was able to handle the given source file.
    */
-  static ListenableFuture<List<TargetInfo>> findTargetsBuildingSourceFile(
+  static @NotNull ListenableFuture<@NotNull List<TargetInfo>> findTargetsBuildingSourceFile(
       Project project, String workspaceRelativePath) {
     Iterable<Future<List<TargetInfo>>> futures =
         Arrays.stream(SourceToTargetProvider.EP_NAME.getExtensions())
             .map(f -> f.getTargetsBuildingSourceFile(project, workspaceRelativePath))
             .collect(Collectors.toList());
-    ListenableFuture<List<TargetInfo>> future =
-        FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull);
+    var future =
+        FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull, Collections.emptyList());
     return Futures.transform(
         future,
-        list -> list == null ? null : SourceToTargetFilteringStrategy.filterTargets(list),
+        SourceToTargetFilteringStrategy::filterTargets,
         MoreExecutors.directExecutor());
   }
 }
