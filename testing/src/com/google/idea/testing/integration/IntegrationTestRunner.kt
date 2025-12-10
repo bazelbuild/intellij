@@ -15,15 +15,24 @@
  */
 package com.google.idea.testing.integration
 
-import org.junit.rules.ExternalResource
+import com.google.testing.junit.runner.BazelTestRunner
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-class TestSandbox : ExternalResource() {
+object IntegrationTestRunner {
+
+  @JvmStatic
+  fun main(args: Array<String>) {
+    println("Integration Test Setup")
+    setup()
+
+    // delegate the actual execution to the default test runner
+    BazelTestRunner.main(args)
+  }
 
   @Throws(IOException::class)
-  override fun before() {
+  private fun setup() {
     val sandboxRoot = Path.of(requireNotNull(System.getenv("TEST_TMPDIR")))
 
     registerSandboxPath(sandboxRoot, "idea.home.path", "home")
@@ -31,12 +40,14 @@ class TestSandbox : ExternalResource() {
     registerSandboxPath(sandboxRoot, "idea.system.path", "system")
     registerSandboxPath(sandboxRoot, "java.util.prefs.userRoot", "userRoot")
     registerSandboxPath(sandboxRoot, "java.util.prefs.systemRoot", "systemRoot")
+    registerSandboxPath(sandboxRoot, "user.home", "userhome")
+    registerSandboxPath(sandboxRoot, "idea.log.path", "logs")
   }
-}
 
-@Throws(IOException::class)
-private fun registerSandboxPath(root: Path, property: String, directory: String) {
-  val path = root.resolve(directory)
-  Files.createDirectories(path)
-  System.setProperty(property, path.toString())
+  @Throws(IOException::class)
+  private fun registerSandboxPath(root: Path, property: String, directory: String) {
+    val path = root.resolve(directory)
+    Files.createDirectories(path)
+    System.setProperty(property, path.toString())
+  }
 }
