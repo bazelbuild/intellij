@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -131,6 +132,8 @@ public class ExecutionRootPathResolverImpl implements ExecutionRootPathResolver 
       if (workspacePathResolver.getWorkspacePath(realPath) != null) {
         return ImmutableList.of(realPath);
       }
+    } catch (NoSuchFileException ignore) {
+      // this is ok as it might not exist
     } catch (IOException ioException) {
       LOG.warn("Failed to resolve real path for " + pathInExecutionRoot, ioException);
     }
