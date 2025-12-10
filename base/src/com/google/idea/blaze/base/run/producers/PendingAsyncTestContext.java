@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
 import javax.annotation.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
  * For situations where we appear to be in a recognized test context, but can't efficiently resolve
@@ -71,7 +72,7 @@ class PendingAsyncTestContext extends TestContext implements PendingRunConfigura
                   ? context
                   : new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
             },
-            MoreExecutors.directExecutor());
+            PooledThreadExecutor.INSTANCE);
     return new PendingAsyncTestContext(
         supportedExecutors, future, progressMessage, sourceElement, blazeFlags, description);
   }
