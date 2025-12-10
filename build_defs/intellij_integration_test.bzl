@@ -39,8 +39,7 @@ _JVM_INTELLIJ_CONFIG_FLAGS = [
 def intellij_integration_test(test, deps = None, jvm_flags = None, test_package = None, **kwargs):
     """
     Crates a JUnit4 integration test for a single Kotlin class with a dependency
-    on the plugin API. Use the TestSandbox rule to setup the test environment
-    inside the test.
+    on the plugin API.
 
     Prefer this over the old intellij_integration_test_suite, as it works for Kotlin
     test classes and provides a more fine grained mapping.
@@ -56,7 +55,6 @@ def intellij_integration_test(test, deps = None, jvm_flags = None, test_package 
         deps = deps + [
             "//intellij_platform_sdk:plugin_api_for_tests",
             "//third_party/java/truth",
-            "//testing/src/com/google/idea/testing/integration",
             "@maven//:org_opentest4j_opentest4j",
         ],
         testonly = 1,
@@ -72,7 +70,9 @@ def intellij_integration_test(test, deps = None, jvm_flags = None, test_package 
         runtime_deps = [
             name + "_ktlib",
             "//intellij_platform_sdk:bundled_plugins",
+            "//testing/src/com/google/idea/testing/integration:TestRunner",
         ],
+        main_class = "com.google.idea.testing.integration.IntegrationTestRunner",
         test_class = intellij_common.derive_test_class(name, "integrationtests", test_package),
         jvm_flags = jvm_flags,
         **kwargs
