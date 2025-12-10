@@ -1,4 +1,4 @@
-package com.google.idea.sdkcompat.radler;
+package com.google.idea.sdkcompat.radler
 
 import com.intellij.openapi.project.Project
 
@@ -7,5 +7,5 @@ import com.intellij.openapi.project.Project
  */
 interface RadProjectFallbackConfigDisabler {
 
-  suspend fun disableFallbackConfigForProject(project: Project): Boolean;
+  suspend fun disableFallbackConfigForProject(project: Project): Boolean
 }

@@ -21,7 +21,5 @@ import com.intellij.openapi.project.Project
 
 class RadBazelProjectFallbackConfigDisabler : RadProjectFallbackConfigDisabler {
 
-  override suspend fun disableFallbackConfigForProject(project: Project): Boolean {
-    return Blaze.isBlazeProject(project)
-  }
+  override suspend fun disableFallbackConfigForProject(project: Project): Boolean = Blaze.isBlazeProject(project)
 }
