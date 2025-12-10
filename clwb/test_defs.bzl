@@ -20,6 +20,7 @@ def _integration_test_suite(name, srcs, deps = []):
             "-Didea.suppressed.plugins.set.selector=classic",
             # enable detailed logging in tests to diagnose issues in CI
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
+            "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
         ],
         deps = deps + [
             "//clwb:plugin_library",
