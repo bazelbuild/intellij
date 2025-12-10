@@ -74,15 +74,9 @@ java_import(
         "plugins/nativeDebug-plugin/lib/*.jar",
         "plugins/clion/lib/*.jar",
         "plugins/clion/lib/modules/*.jar",
-
-        # for native debug plugin
-        "plugins/platform-images/lib/*.jar",
-
+        "plugins/platform-images/lib/*.jar", # for native debug plugin
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
-
-        "plugins/clion-radler/lib/*.jar",
-        "plugins/clion-radler/lib/modules/*.jar",
     ]),
 )
 

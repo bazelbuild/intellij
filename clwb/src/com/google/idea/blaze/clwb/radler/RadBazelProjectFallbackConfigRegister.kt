@@ -25,6 +25,8 @@ private const val IMPLEMENTATION_CLASS = "com.google.idea.blaze.clwb.radler.RadB
 /**
  * This is required for backwards compatibility with CLion 2025.2.4 and earlier. Since the extension
  * point was introduced in 2025.2.5, it is not save to simply instantiate the implementation class.
+ *
+ * Switch to proper registration with removal of #api252.
  */
 class RadBazelProjectFallbackConfigRegister : AppLifecycleListener {
 
