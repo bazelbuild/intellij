@@ -16,12 +16,10 @@
 package com.google.idea.blaze.skylark.repl
 
 import com.google.common.truth.Truth.assertThat
-import com.google.idea.blaze.skylark.repl.REPL_JAR_PATH
 import com.google.idea.common.util.RunJarService
 import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
