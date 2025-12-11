@@ -71,6 +71,7 @@ def intellij_integration_test(test, deps = None, jvm_flags = None, test_package 
             name + "_ktlib",
             "//intellij_platform_sdk:bundled_plugins",
             "//testing/src/com/google/idea/testing/integration:TestRunner",
+            "@maven//:net_java_dev_jna_jna",
         ],
         main_class = "com.google.idea.testing.integration.IntegrationTestRunner",
         test_class = intellij_common.derive_test_class(name, "integrationtests", test_package),
