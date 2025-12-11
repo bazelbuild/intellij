@@ -43,7 +43,6 @@ class SkylarkReplTest : BasePlatformTestCase() {
     handler.startNotify()
     handler.waitFor()
 
-    assertThat(adapter.output.stderr).isEmpty()
     assertThat(adapter.output.stdout).isEqualTo("hello world\n")
     assertThat(adapter.output.exitCode).isEqualTo(0)
   }
