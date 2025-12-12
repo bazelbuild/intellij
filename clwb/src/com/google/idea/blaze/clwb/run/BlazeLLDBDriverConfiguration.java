@@ -20,6 +20,7 @@ import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionLLDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BlazeLLDBDriverConfiguration extends CLionLLDBDriverConfiguration {
+    public static final String LLDB_LAUNCH_EXECROOT_REGISTRY_KEY = "bazel.cpp.lldb.launch.execroot";
 
     private final Path workingDirectory;
     private final Path projectRoot;
@@ -41,6 +43,10 @@ public class BlazeLLDBDriverConfiguration extends CLionLLDBDriverConfiguration {
 
     @Override
     public String convertToProjectModelPath(@Nullable String absolutePathString) {
+        if (!Registry.is(LLDB_LAUNCH_EXECROOT_REGISTRY_KEY)) {
+            return absolutePathString;
+        }
+
         if (absolutePathString == null) {
             return null;
         }
@@ -64,7 +70,11 @@ public class BlazeLLDBDriverConfiguration extends CLionLLDBDriverConfiguration {
     public GeneralCommandLine createDriverCommandLine(@NotNull DebuggerDriver driver,
             @NotNull ArchitectureType architectureType) throws ExecutionException {
         GeneralCommandLine commandLine = super.createDriverCommandLine(driver, architectureType);
-        commandLine.setWorkDirectory(workingDirectory.toFile());
+        if (Registry.is(LLDB_LAUNCH_EXECROOT_REGISTRY_KEY)) {
+            commandLine.setWorkDirectory(workingDirectory.toFile());
+        } else {
+            commandLine.setWorkDirectory(projectRoot.toFile());
+        }
         return commandLine;
     }
 }
