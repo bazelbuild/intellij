@@ -21,4 +21,12 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.radler.RadTestEventsHandler"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.clwb.radler.RadSyncStatusContributor"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Disable fallback resolve configurations for radler." key="bazel.clwb.radler.fallback.configurations.disabled"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.google.idea.blaze.clwb.radler.RadBazelProjectFallbackConfigRegister" topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>
