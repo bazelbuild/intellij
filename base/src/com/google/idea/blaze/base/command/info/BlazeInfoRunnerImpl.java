@@ -46,6 +46,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
                 builder.addBlazeFlags(keys);
               }
               try (InputStream blazeInfoStream = invoker.invokeInfo(builder, context)) {
+                // TODO: NPE blazeInfoStream is null when there is an error in the invocation
                 return blazeInfoStream.readAllBytes();
               }
             });

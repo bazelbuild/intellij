@@ -21,4 +21,8 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.radler.RadTestEventsHandler"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.clwb.radler.RadSyncStatusContributor"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.google.idea.blaze.clwb.radler.RadBazelProjectFallbackConfigRegister" topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>
