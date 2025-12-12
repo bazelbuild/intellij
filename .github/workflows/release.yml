@@ -63,7 +63,7 @@ jobs:
           mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
 
       - name: Upload Plugin Zip
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.product }}
           path: "out/*.zip"
@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Download Plugin Zips
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: clion-oss-*
           merge-multiple: true
@@ -110,7 +110,7 @@ jobs:
 
     steps:
       - name: Download Plugin Zips
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: clion-oss-*
           merge-multiple: true
