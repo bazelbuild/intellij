@@ -68,6 +68,9 @@
                     overrides="true"/>
 
     <registryKey defaultValue="true"
+                 description="Launch LLDB from execution root"
+                 key="bazel.cpp.lldb.launch.execroot"/>
+    <registryKey defaultValue="true"
                  description="Allow external targets from source directories be imported in"
                  key="bazel.cpp.sync.external.targets.from.directories"/>
     <registryKey defaultValue="false"
