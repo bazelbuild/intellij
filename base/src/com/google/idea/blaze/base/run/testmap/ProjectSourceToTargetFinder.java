@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Used to locate tests from source files for things like right-clicks.
@@ -43,7 +44,7 @@ import java.util.concurrent.Future;
 public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   @Override
-  public Future<Collection<TargetInfo>> targetsForSourceFiles(
+  public Future<@NotNull Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
     FilteredTargetMap targetMap =
         SyncCache.getInstance(project)
