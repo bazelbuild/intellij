@@ -1,3 +1,12 @@
+v2025.12.12
+===========
+* Disable fallback configurations for Nova (performance improvement) #8055
+* Remove the injected fdebug-compilation-dir for MacOS debugging #8046
+* Prevent freezes in AspectSyncSourceToTargetMap.getSourceToTargetMap #8029
+* Support for forwarding proxy configs (needs to be enabled in settings) #8044
+* Fix multiple issues with injected debug flags #8021
+* Add more general test filter for parameterized google tests #8025
+
 v2025.11.27
 ===========
 * Support for Bazel 9 #8014 #8003 #8002 #8001 #8000
