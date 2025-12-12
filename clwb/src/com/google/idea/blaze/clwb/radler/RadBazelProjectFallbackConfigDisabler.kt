@@ -18,8 +18,11 @@ package com.google.idea.blaze.clwb.radler
 import com.google.idea.blaze.base.settings.Blaze
 import com.google.idea.sdkcompat.radler.RadProjectFallbackConfigDisabler
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 
 class RadBazelProjectFallbackConfigDisabler : RadProjectFallbackConfigDisabler {
 
-  override suspend fun disableFallbackConfigForProject(project: Project): Boolean = Blaze.isBlazeProject(project)
+  override suspend fun disableFallbackConfigForProject(project: Project): Boolean {
+    return Registry.`is`("bazel.clwb.radler.fallback.configurations.disabled") && Blaze.isBlazeProject(project)
+  }
 }
