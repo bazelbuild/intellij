@@ -18,7 +18,13 @@ cc_binary(
 )
 
 cc_test(
-    name = "test",
-    srcs = ["test.cc"],
+    name = "catch",
+    srcs = ["catch.cc"],
     deps = ["@catch2//:catch2_main"],
+)
+
+cc_test(
+    name = "gtest",
+    srcs = ["gtest.cc"],
+    deps = ["@googletest//:gtest_main"],
 )

@@ -89,14 +89,18 @@ public class ExecutionTest extends ClwbHeadlessTestCase {
     final var echo = execute(Label.of("//main:echo0"), executorId, "");
     echo.assertSuccess();
 
-    final var test = execute(Label.of("//main:test"), DefaultRunExecutor.EXECUTOR_ID, "");
-    test.assertSuccess();
+    final var gtest = execute(Label.of("//main:gtest"), executorId, "");
+    gtest.assertSuccess();
+
+    final var catch2 = execute(Label.of("//main:catch"), executorId, "");
+    catch2.assertSuccess();
   }
 
   private void checkArgs(String executorId) throws Exception {
     assertThat(executeEcho("echo0", executorId, "'one argument with spaces'")).containsExactly(
         "one argument with spaces"
     );
+
     assertThat(executeEcho("echo0", executorId, "'one argument' 'another argument'")).containsExactly(
         "one argument",
         "another argument"
