@@ -101,7 +101,7 @@ class BazelDebugFlagsBuilder private constructor(
     switchBuilder.withDisableOptimization()
 
     if (isLldb() && isClang() && withClangCustomDebugDir && workspaceRoot != null) {
-      switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
+      switchBuilder.withSwitch("-fdebug-compilation-dir=$workspaceRoot")
     }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
