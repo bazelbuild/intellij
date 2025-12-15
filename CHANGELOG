@@ -1,4 +1,4 @@
-v2025.12.12
+v2025.12.15
 ===========
 * Disable fallback configurations for Nova (performance improvement) #8055
 * Remove the injected fdebug-compilation-dir for MacOS debugging #8046
