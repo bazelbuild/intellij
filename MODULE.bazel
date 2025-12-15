@@ -55,7 +55,7 @@ use_repo(python, "python_3_12", "python_versions")
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.6.2")
-bazel_binaries.download(version = "8.4.2")
+bazel_binaries.download(version = "8.5.0")
 bazel_binaries.download(version = "9.0.0rc3")
 bazel_binaries.download(version = "last_green")
 use_repo(
@@ -64,7 +64,7 @@ use_repo(
     "bazel_binaries_bazelisk",
     "build_bazel_bazel_6_5_0",
     "build_bazel_bazel_7_6_2",
-    "build_bazel_bazel_8_4_2",
+    "build_bazel_bazel_8_5_0",
     "build_bazel_bazel_9_0_0rc3",
     "build_bazel_bazel_last_green",
 )
