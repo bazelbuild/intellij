@@ -86,8 +86,8 @@ class BazelDebugFlagsBuilder private constructor(
     }
 
     val switchBuilder = when (compilerKind) {
-      MSVCCompilerKind -> MSVCSwitchBuilder()
-      ClangClCompilerKind -> ClangClSwitchBuilder()
+      // we should use the MSVCSwitchBuilder for clang-cl as well
+      MSVCCompilerKind, ClangClCompilerKind -> MSVCSwitchBuilder()
       ClangCompilerKind -> ClangSwitchBuilder()
       else -> GCCSwitchBuilder() // default to GCC, as usual
     }
