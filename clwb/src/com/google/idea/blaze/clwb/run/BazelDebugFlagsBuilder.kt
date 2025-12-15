@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb.run
 
 import com.google.common.collect.ImmutableList
+import com.google.idea.blaze.clwb.run.BlazeLLDBDriverConfiguration.LLDB_LAUNCH_EXECROOT_REGISTRY_KEY
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.system.OS
@@ -36,11 +37,12 @@ private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind
  * In theory we would like to have one builder that builds a BlazeCommand to
  * have full control over the environment in the builder.
  */
-class BazelDebugFlagsBuilder(
+class BazelDebugFlagsBuilder private constructor(
   private val debuggerKind: BlazeDebuggerKind,
   private val compilerKind: OCCompilerKind,
   private val targetOS: OS,
   private val withFissionFlag: Boolean = false,
+  private val withClangCustomDebugDir: Boolean = false,
 ) {
 
   companion object {
@@ -54,6 +56,7 @@ class BazelDebugFlagsBuilder(
       compilerKind,
       OS.CURRENT,
       withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
+      withClangCustomDebugDir = !Registry.`is`(LLDB_LAUNCH_EXECROOT_REGISTRY_KEY),
     )
   }
 
@@ -66,6 +69,8 @@ class BazelDebugFlagsBuilder(
       isLldb() -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
     }
   }
+
+  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == ClangClCompilerKind
 
   private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
 
@@ -94,6 +99,10 @@ class BazelDebugFlagsBuilder(
     }
 
     switchBuilder.withDisableOptimization()
+
+    if (isLldb() && isClang() && withClangCustomDebugDir && workspaceRoot != null) {
+      switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
+    }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
 
