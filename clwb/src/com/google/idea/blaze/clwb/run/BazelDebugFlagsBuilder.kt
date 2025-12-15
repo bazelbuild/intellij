@@ -87,7 +87,12 @@ class BazelDebugFlagsBuilder(
       else -> GCCSwitchBuilder() // default to GCC, as usual
     }
 
-    switchBuilder.withDebugInfo(2) // ignored for msvc/clangcl
+    when (compilerKind) {
+      // we have to use the "old style" debug info, /Zi causes errors with MSVC and Bazel
+      MSVCCompilerKind -> switchBuilder.withSwitch("/Z7")
+      else -> switchBuilder.withDebugInfo(2)
+    }
+
     switchBuilder.withDisableOptimization()
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
