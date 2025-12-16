@@ -18,6 +18,7 @@ package com.google.idea.blaze.clwb.run
 import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.clwb.run.BlazeLLDBDriverConfiguration.LLDB_LAUNCH_EXECROOT_REGISTRY_KEY
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.lang.workspace.compiler.*
@@ -101,7 +102,7 @@ class BazelDebugFlagsBuilder private constructor(
     switchBuilder.withDisableOptimization()
 
     if (isLldb() && isClang() && withClangCustomDebugDir && workspaceRoot != null) {
-      switchBuilder.withSwitch("-fdebug-compilation-dir=\"$workspaceRoot\"")
+      switchBuilder.withSwitch("-fdebug-compilation-dir=${FileUtilRt.toSystemIndependentName(workspaceRoot)}")
     }
 
     flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
