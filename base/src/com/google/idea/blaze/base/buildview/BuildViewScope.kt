@@ -13,6 +13,7 @@ import com.google.idea.blaze.common.PrintOutput
 import com.google.idea.blaze.common.PrintOutput.OutputType
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildDescriptor
+import com.intellij.build.BuildViewManager
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.progress.BuildProgress
@@ -33,14 +34,37 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.function.Consumer
 
-class BuildViewScope(private val project: Project, private val title: String) : BlazeScope {
+enum class IssueReportingMode {
+	SYNC,  // Sync operations: failures -> WARNING, warnings -> INFO
+	BUILD  // Build operations: failures -> ERROR, warnings -> WARNING
+}
 
-  companion object {
-    @JvmStatic
-    fun of(ctx: BlazeContext): BuildViewScope? = ctx.getScope(BuildViewScope::class.java)
-  }
+class BuildViewScope private constructor(
+	private val project: Project,
+	private val title: String,
+	val issueReportingMode: IssueReportingMode
+) : BlazeScope {
 
-  private var progress = SyncViewManager.createBuildProgress(project)
+	companion object {
+		@JvmStatic
+		fun forSync(project: Project, title: String): BuildViewScope {
+			return BuildViewScope(project, title, IssueReportingMode.SYNC)
+		}
+
+		@JvmStatic
+		fun forBuild(project: Project, title: String): BuildViewScope {
+			return BuildViewScope(project, title, IssueReportingMode.BUILD)
+		}
+
+		@JvmStatic
+		fun of(ctx: BlazeContext): BuildViewScope? = ctx.getScope(BuildViewScope::class.java)
+	}
+
+	private var progress = when (issueReportingMode) {
+		IssueReportingMode.SYNC -> SyncViewManager.createBuildProgress(project)
+		IssueReportingMode.BUILD -> BuildViewManager.createBuildProgress(project)
+	}
+
   private var console = PtyConsoleView(project)
   private var indicator = BackgroundableProcessIndicator(project, title, "Cancel", "Cancel", true)
 

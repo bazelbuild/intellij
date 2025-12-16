@@ -15,17 +15,13 @@
  */
 package com.google.idea.blaze.python.run;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.buildview.BazelBuildService;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -34,7 +30,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
@@ -44,7 +39,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.common.Interners;
 import com.google.idea.blaze.python.PySdkUtils;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -311,40 +305,25 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     SaveUtil.saveAllFiles();
-    ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
-        BlazeBeforeRunCommandHelper.runBlazeCommand(
-            BlazeCommandName.BUILD,
-            configuration,
-            BlazePyDebugHelper.getAllBlazeDebugFlags(configuration.getProject(), target),
-            ImmutableList.of(),
-            BlazeInvocationContext.runConfigContext(
-                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-            "Building debug binary");
+    final var executableFuture = BazelBuildService.buildForRunConfig(
+        project,
+        configuration,
+        BlazeInvocationContext.runConfigContext(
+            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+        BlazePyDebugHelper.getAllBlazeDebugFlags(configuration.getProject(), target),
+        ImmutableList.of(),
+        target
+    );
 
-    try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
-      final var candidateFiles = BuildResultParser.getExecutableArtifacts(
-          streamProvider,
-          Interners.STRING,
-          target.toString()
-      );
+    try {
+      final var executable = executableFuture.get().toFile();
 
-      File file = findExecutable(target, candidateFiles);
-      if (file == null) {
-        throw new ExecutionException(
-            String.format(
-                "More than 1 executable was produced when building %s; "
-                    + "don't know which one to debug",
-                target));
-      }
-      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
-      return new PyExecutionInfo(file, args);
+      LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(executable));
+      return new PyExecutionInfo(executable, args);
     } catch (InterruptedException | CancellationException e) {
-      streamProviderFuture.cancel(true);
       throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException | GetArtifactsException e) {
-      throw new ExecutionException(
-          String.format(
-              "Failed to get output artifacts when building %s: %s", target, e.getMessage()), e);
+    } catch (java.util.concurrent.ExecutionException e) {
+      throw new ExecutionException(String.format("Failed to get output artifacts when building %s", target), e);
     }
   }
 
@@ -359,22 +338,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       return ImmutableList.of();
     }
     return pyIdeInfo.getArgs();
-  }
-
-  /**
-   * Basic heuristic for choosing between multiple output files. Currently just looks for a filename
-   * matching the target name.
-   */
-  @VisibleForTesting
-  @Nullable
-  static File findExecutable(Label target, List<File> outputs) {
-    for (BlazePyExecutableOutputFinder outputFinder : BlazePyExecutableOutputFinder.EP_NAME.getExtensionList()) {
-      File executable = outputFinder.findExecutableOutput(target, outputs);
-      if (executable != null && outputs.contains(executable)) {
-        return executable;
-      }
-    }
-    return null;
   }
 
   private static class PyExecutionInfo {

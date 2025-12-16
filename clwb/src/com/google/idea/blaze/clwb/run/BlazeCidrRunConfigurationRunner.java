@@ -16,20 +16,15 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.buildview.BazelBuildService;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.command.buildresult.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultParser;
-import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.common.Interners;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -38,20 +33,22 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 
-import javax.annotation.Nullable;
+import java.nio.file.Path;
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
-/** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
+/**
+ * CLion-specific handler for {@link BlazeCommandRunConfiguration}s.
+ */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
 
   private final BlazeCommandRunConfiguration configuration;
 
-  /** Calculated during the before-run task, and made available to the debugger. */
+  /**
+   * Calculated during the before-run task, and made available to the debugger.
+   */
   File executableToDebug = null;
 
   BlazeCidrRunConfigurationRunner(BlazeCommandRunConfiguration configuration) {
@@ -70,9 +67,9 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       return true;
     }
     try {
-      File executable = getExecutableToDebug(env);
+      final var executable = getExecutableToDebug(env);
       if (executable != null) {
-        executableToDebug = executable;
+        executableToDebug = executable.toFile();
         return true;
       }
     } catch (ExecutionException e) {
@@ -101,7 +98,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
    *
    * @throws ExecutionException if no unique output artifact was found.
    */
-  private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
+  private Path getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     SaveUtil.saveAllFiles();
 
     final var flagsBuilder = BazelDebugFlagsBuilder.fromDefaults(
@@ -113,57 +110,24 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       flagsBuilder.withBuildFlags(WorkspaceRoot.fromProject(env.getProject()).toString());
     }
 
-    final var streamProviderFuture = BlazeBeforeRunCommandHelper.runBlazeCommand(
-        BlazeCommandName.BUILD,
+    Label target = getSingleTarget(configuration);
+
+    final var executableFuture = BazelBuildService.buildForRunConfig(
+        env.getProject(),
         configuration,
+        BlazeInvocationContext.runConfigContext(
+            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
         ImmutableList.of(),
         flagsBuilder.build(),
-        BlazeInvocationContext.runConfigContext(ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-        "Building debug binary"
+        target
     );
 
-    Label target = getSingleTarget(configuration);
-    try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
-      final var candidateFiles = BuildResultParser.getExecutableArtifacts(
-          streamProvider,
-          Interners.STRING,
-          target.toString()
-      );
-
-      File file = findExecutable(target, candidateFiles);
-      if (file == null) {
-        throw new ExecutionException(
-            String.format(
-                "More than 1 executable was produced when building %s; don't know which to debug",
-                target));
-      }
-
-      return file;
+    try {
+      return executableFuture.get();
     } catch (InterruptedException | CancellationException e) {
-      streamProviderFuture.cancel(true);
       throw new RunCanceledByUserException();
     } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(e);
-    } catch (GetArtifactsException e) {
       throw new ExecutionException(String.format("Failed to get output artifacts when building %s", target), e);
     }
-  }
-
-  /**
-   * Basic heuristic for choosing between multiple output files. Currently just looks for a filename
-   * matching the target name.
-   */
-  @Nullable
-  private static File findExecutable(Label target, List<File> outputs) {
-    if (outputs.size() == 1) {
-      return outputs.get(0);
-    }
-    String name = PathUtil.getFileName(target.targetName().toString());
-    for (File file : outputs) {
-      if (file.getName().equals(name)) {
-        return file;
-      }
-    }
-    return null;
   }
 }

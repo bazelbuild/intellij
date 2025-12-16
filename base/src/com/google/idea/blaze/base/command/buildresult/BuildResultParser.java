@@ -89,42 +89,4 @@ public final class BuildResultParser {
         String.format("Failed to parse bep for build id: %s", bepStream.getId()), e);
     }
   }
-
-  /**
-   * Parses the BEP stream and collects all local executable artifacts of the provided label in the default output
-   * group. LocalFileArtifact.getLocalFiles is not used by this implementation to avoid the local artifact cache.
-   *
-   * <p>Returns a non-empty list of all artifacts or throws a GetArtifactsException.
-   */
-  public static ImmutableList<File> getExecutableArtifacts(
-      BuildEventStreamProvider bepStream,
-      Interner<String> stringInterner,
-      String label)
-      throws GetArtifactsException {
-    final var parsedBepOutput = getBuildOutput(bepStream, stringInterner);
-
-    final var result = BuildResult.fromExitCode(parsedBepOutput.buildResult());
-    if (result.status != BuildResult.Status.SUCCESS) {
-      throw new GetArtifactsException(
-          String.format("Failed to parse bep for build id: %s", bepStream.getId()));
-    }
-
-    // manually find local artifacts in favour of LocalFileArtifact.getLocalFiles, to avoid the artifacts cache
-    // the artifacts cache atm does not preserve the executable flag for files (and there might be other issues)
-    final var artifacts =  BlazeBuildOutputs.fromParsedBepOutput(parsedBepOutput)
-        .getOutputGroupTargetArtifacts(DEFAULT_OUTPUT_GROUP_NAME, label)
-        .stream()
-        .filter(LocalFileArtifact.class::isInstance)
-        .map(LocalFileArtifact.class::cast)
-        .map(LocalFileArtifact::getFile)
-        .filter(File::canExecute)
-        .collect(ImmutableList.toImmutableList());
-
-    if (artifacts.isEmpty()) {
-      throw new GetArtifactsException(
-          String.format("No output artifacts found for build id: %s", bepStream.getId()));
-    }
-
-    return artifacts;
-  }
 }
