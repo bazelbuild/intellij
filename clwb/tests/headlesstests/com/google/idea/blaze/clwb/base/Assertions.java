@@ -106,6 +106,14 @@ public class Assertions {
     assertThat(list).contains(flag);
   }
 
+  public static void assertNotContainsCompilerFlag(String flag, OCCompilerSettings settings) {
+    final var switches = settings.getCompilerSwitches();
+    assertThat(switches).isNotNull();
+
+    final var list = switches.getList(Format.BASH_SHELL);
+    assertThat(list).doesNotContain(flag);
+  }
+
   public static void assertVfsLoads(Path executionRoot, List<AllowedVfsRoot> allowedRoots) {
     final var childrenInVfs = VfsUtil.getVfsChildrenAsList(executionRoot);
 

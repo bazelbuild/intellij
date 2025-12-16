@@ -68,12 +68,12 @@ public class LibCppTest extends ClwbHeadlessTestCase {
   }
 
   private void checkCompiler() {
-    final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
+    final var compilerSettings = findFileCompilerSettings("main/main.cc");
     assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
   }
 
   private void checkLibCpp() throws IOException {
-    final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
+    final var compilerSettings = findFileCompilerSettings("main/main.cc");
     final var roots = compilerSettings.getHeadersSearchRoots().getAllRoots();
 
     final var candidates = roots.stream()
