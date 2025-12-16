@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsCompilerFlag;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
+import static com.google.idea.blaze.clwb.base.Assertions.assertNotContainsCompilerFlag;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
@@ -11,6 +12,8 @@ import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.cidr.lang.CLanguageKind;
+import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
@@ -41,18 +44,28 @@ public class SimpleTest extends ClwbHeadlessTestCase {
   }
 
   private void checkCompiler() {
-    final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
+    final var compilerSettingsCC = findFileCompilerSettings("main/main.cc", CLanguageKind.CPP);
+    final var compilerSettingsC = findFileCompilerSettings("main/main.c", CLanguageKind.C);
 
     if (SystemInfo.isMac) {
-      assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     } else if (SystemInfo.isLinux) {
-      assertThat(compilerSettings.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
     } else if (SystemInfo.isWindows) {
-      assertThat(compilerSettings.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
     }
 
-    assertContainsHeader("iostream", compilerSettings);
-    assertContainsCompilerFlag("-Wall", compilerSettings);
+    assertContainsHeader("iostream", compilerSettingsCC);
+
+    assertContainsCompilerFlag("-Wall", compilerSettingsCC);
+    assertContainsCompilerFlag("-DCXXOPTS", compilerSettingsCC);
+    assertNotContainsCompilerFlag("-DCONLYOPTS", compilerSettingsCC);
+    assertContainsCompilerFlag("-Wall", compilerSettingsC);
+    assertContainsCompilerFlag("-DCONLYOPTS", compilerSettingsC);
+    assertNotContainsCompilerFlag("-DCXXOPTS", compilerSettingsC);
   }
 
   private void checkTest() {
@@ -93,7 +106,8 @@ public class SimpleTest extends ClwbHeadlessTestCase {
   }
 
   private void checkSyncStatus() {
-    assertThat(getSyncStatus("main/hello-world.cc")).isEqualTo(SyncStatus.SYNCED);
+    assertThat(getSyncStatus("main/main.cc")).isEqualTo(SyncStatus.SYNCED);
+    assertThat(getSyncStatus("main/main.c")).isEqualTo(SyncStatus.SYNCED);
     assertThat(getSyncStatus("main/test.cc")).isEqualTo(SyncStatus.SYNCED);
   }
 }
