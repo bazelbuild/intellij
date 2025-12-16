@@ -60,10 +60,12 @@ message CIdeInfo {
     repeated ArtifactLocation textual_headers = 3;
 
     repeated string copts = 4;
-    repeated string args = 5;
+    repeated string conlyopts = 5;
+    repeated string cxxopts = 6;
+    repeated string args = 7;
 
-    string include_prefix = 6;
-    string strip_include_prefix = 7;
+    string include_prefix = 8;
+    string strip_include_prefix = 9;
   }
 
   // Information collected from CcInfo provider.

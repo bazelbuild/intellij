@@ -179,13 +179,20 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeCompilerSettings compilerSettings,
       CompilerSpecificSwitchBuilder builder,
       ExecutionRootPathResolver resolver,
-      OCLanguageKind language
+      OCLanguageKind language,
+      ImmutableList<String> additionalSwitches
   ) {
     final var combinedBuilder = compilerSettings.createSwitchBuilder();
     combinedBuilder.withSwitches(builder.build());
 
     CoptsProcessor.apply(
         /* options = */ compilerSettings.getCompilerSwitches(language),
+        /* kind = */ compilerSettings.getCompilerKind(),
+        /* sink = */ combinedBuilder,
+        /* resolver = */ resolver
+    );
+    CoptsProcessor.apply(
+        /* options = */ additionalSwitches,
         /* kind = */ compilerSettings.getCompilerKind(),
         /* sink = */ combinedBuilder,
         /* resolver = */ resolver
@@ -311,10 +318,21 @@ public final class BlazeCWorkspace implements ProjectComponent {
             .map(File::getAbsolutePath)
             .forEach(compilerSwitchesBuilder::withSystemIncludePath);
 
-        final var cCompilerSwitches =
-            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.C);
-        final var cppCompilerSwitches =
-            buildSwitchBuilder(compilerSettings, compilerSwitchesBuilder, executionRootPathResolver, CLanguageKind.CPP);
+        final var cCompilerSwitches = buildSwitchBuilder(
+            compilerSettings,
+            compilerSwitchesBuilder,
+            executionRootPathResolver,
+            CLanguageKind.C,
+            cIdeInfo.ruleContext().conlyopts()
+        );
+
+        final var cppCompilerSwitches = buildSwitchBuilder(
+            compilerSettings,
+            compilerSwitchesBuilder,
+            executionRootPathResolver,
+            CLanguageKind.CPP,
+            cIdeInfo.ruleContext().cxxopts()
+        );
 
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(project, vf);

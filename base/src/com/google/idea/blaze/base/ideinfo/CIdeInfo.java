@@ -39,6 +39,10 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     public abstract ImmutableList<String> copts();
 
+    public abstract ImmutableList<String> conlyopts();
+
+    public abstract ImmutableList<String> cxxopts();
+
     public abstract ImmutableList<String> args();
 
     public abstract String includePrefix();
@@ -51,6 +55,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
           .setHeaders(ProtoWrapper.map(proto.getHeadersList(), ArtifactLocation::fromProto))
           .setTextualHeaders(ProtoWrapper.map(proto.getTextualHeadersList(), ArtifactLocation::fromProto))
           .setCopts(ProtoWrapper.internStrings(proto.getCoptsList()))
+          .setConlyopts(ProtoWrapper.internStrings(proto.getConlyoptsList()))
+          .setCxxopts(ProtoWrapper.internStrings(proto.getCxxoptsList()))
           .setArgs(ProtoWrapper.internStrings(proto.getArgsList()))
           .setIncludePrefix(ProtoWrapper.internString(proto.getIncludePrefix()))
           .setStripIncludePrefix(ProtoWrapper.internString(proto.getStripIncludePrefix()))
@@ -64,6 +70,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
           .addAllHeaders(ProtoWrapper.mapToProtos(headers()))
           .addAllTextualHeaders(ProtoWrapper.mapToProtos(textualHeaders()))
           .addAllCopts(copts())
+          .addAllConlyopts(conlyopts())
+          .addAllCxxopts(cxxopts())
           .addAllArgs(args())
           .setIncludePrefix(includePrefix())
           .setStripIncludePrefix(stripIncludePrefix())
@@ -76,6 +84,8 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
           .setHeaders(ImmutableList.of())
           .setTextualHeaders(ImmutableList.of())
           .setCopts(ImmutableList.of())
+          .setConlyopts(ImmutableList.of())
+          .setCxxopts(ImmutableList.of())
           .setArgs(ImmutableList.of())
           .setIncludePrefix("")
           .setStripIncludePrefix("");
@@ -91,6 +101,10 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
       public abstract Builder setTextualHeaders(ImmutableList<ArtifactLocation> value);
 
       public abstract Builder setCopts(ImmutableList<String> value);
+
+      public abstract Builder setConlyopts(ImmutableList<String> value);
+
+      public abstract Builder setCxxopts(ImmutableList<String> value);
 
       public abstract Builder setArgs(ImmutableList<String> value);
 

@@ -322,6 +322,8 @@ def collect_cc_rule_context(ctx):
         headers = artifacts_from_target_list_attr(ctx, "hdrs"),
         textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs"),
         copts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "copts", [])),
+        conlyopts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "conlyopts", [])),
+        cxxopts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "cxxopts", [])),
         args = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "args", [])),
         include_prefix = getattr(ctx.rule.attr, "include_prefix", ""),
         strip_include_prefix = getattr(ctx.rule.attr, "strip_include_prefix", ""),
