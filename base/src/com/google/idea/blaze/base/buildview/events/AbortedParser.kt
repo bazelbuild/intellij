@@ -3,6 +3,7 @@ package com.google.idea.blaze.base.buildview.events
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Aborted.AbortReason
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId
+import com.google.idea.blaze.base.buildview.IssueReportingMode
 import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.intellij.build.events.MessageEvent
 
@@ -63,19 +64,19 @@ class AbortedParser : BuildEventParser {
     }
   }
 
-  override fun parse(event: BuildEvent): IssueOutput? {
-    if (!event.hasAborted()) return null
+	override fun parse(event: BuildEvent, issueReportingMode: IssueReportingMode): IssueOutput? {
+		if (!event.hasAborted()) return null
 
-    // do not report skipped targets, this event is expected because sync is executed with `--skip_incompatible_explicit_targets`
-    if (event.aborted.reason == AbortReason.SKIPPED) return null
+		// do not report skipped targets, this event is expected because sync is executed with `--skip_incompatible_explicit_targets`
+		if (event.aborted.reason == AbortReason.SKIPPED) return null
 
-    val label = getLabel(event.id) ?: return null
-    val issue = BazelBuildIssue(
-      label = label,
-      title = "${event.aborted.reason}: $label",
-      description = buildDescription(event) ?: return null,
-    )
+		val label = getLabel(event.id) ?: return null
+		val issue = BazelBuildIssue(
+			label = label,
+			title = "${event.aborted.reason}: $label",
+			description = buildDescription(event) ?: return null,
+		)
 
-    return IssueOutput(issue, MessageEvent.Kind.ERROR)
-  }
+		return IssueOutput(issue, MessageEvent.Kind.ERROR)
+	}
 }

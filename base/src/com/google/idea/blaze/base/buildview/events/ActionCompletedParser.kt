@@ -1,6 +1,7 @@
 package com.google.idea.blaze.base.buildview.events
 
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.*
+import com.google.idea.blaze.base.buildview.IssueReportingMode
 import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.intellij.build.events.MessageEvent
 import java.io.IOException
@@ -31,36 +32,41 @@ class ActionCompletedParser : BuildEventParser {
     }
   }
 
-  override fun parse(event: BuildEvent): IssueOutput? {
-    if (!event.id.hasActionCompleted()) return null
-    val id = event.id.actionCompleted
+	override fun parse(event: BuildEvent, issueReportingMode: IssueReportingMode): IssueOutput? {
+		if (!event.id.hasActionCompleted()) return null
+		val id = event.id.actionCompleted
 
-    val isExternal = !id.label.startsWith("//")
+		val isExternal = !id.label.startsWith("//")
 
-    if (!event.hasAction()) return null
-    val body = event.action
+		if (!event.hasAction()) return null
+		val body = event.action
 
-    val isWarning = !body.hasFailureDetail()
+		val isWarning = !body.hasFailureDetail()
 
-    // ignore warnings from external projects
-    if (isExternal && isWarning) return null
+		// ignore warnings from external projects
+		if (isExternal && isWarning) return null
 
-    val name = if (isWarning) {
-      "BUILD_WARNING"
-    } else {
-      "BUILD_FAILURE"
-    }
+		val name = if (isWarning) {
+			"BUILD_WARNING"
+		} else {
+			"BUILD_FAILURE"
+		}
 
-    val issue = BazelBuildIssue(
-      label = id.label,
-      title = "$name: ${id.label}",
-      description = getDescription(body) ?: return null,
-    )
+		val issue = BazelBuildIssue(
+			label = id.label,
+			title = "$name: ${id.label}",
+			description = getDescription(body) ?: return null,
+		)
 
-    // TODO: if this is reused for a build view, this logic needs to be adjusted
-    return IssueOutput(
-      issue,
-      if (isWarning) MessageEvent.Kind.INFO else MessageEvent.Kind.WARNING,
-    )
-  }
+		val kind = when (issueReportingMode) {
+			IssueReportingMode.SYNC -> {
+				if (isWarning) MessageEvent.Kind.INFO else MessageEvent.Kind.WARNING
+			}
+			IssueReportingMode.BUILD -> {
+				if (isWarning) MessageEvent.Kind.WARNING else MessageEvent.Kind.ERROR
+			}
+		}
+
+		return IssueOutput(issue, kind)
+	}
 }

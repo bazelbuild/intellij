@@ -120,7 +120,7 @@ public class BlazeSyncManager {
                               Scope.root(
                                   context -> {
                                     if (BuildViewMigration.getEnabled()) {
-                                      context.push(new BuildViewScope(project,
+                                      context.push(BuildViewScope.forSync(project,
                                           getRootInvocationTitle(syncParams)));
                                     }
 
