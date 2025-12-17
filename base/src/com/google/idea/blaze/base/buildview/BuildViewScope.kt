@@ -7,6 +7,7 @@ import com.google.idea.blaze.base.scope.BlazeScope
 import com.google.idea.blaze.base.scope.OutputSink
 import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.scope.output.StatusOutput
+import com.google.idea.blaze.base.util.pluginProjectDisposable
 import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.common.Output
 import com.google.idea.blaze.common.PrintOutput
@@ -28,6 +29,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +67,7 @@ class BuildViewScope private constructor(
 		IssueReportingMode.BUILD -> BuildViewManager.createBuildProgress(project)
 	}
 
-  private var console = PtyConsoleView(project)
+  private var console = PtyConsoleView(project).also { Disposer.register(pluginProjectDisposable(project), it) }
   private var indicator = BackgroundableProcessIndicator(project, title, "Cancel", "Cancel", true)
 
   val consoleSize: TermSize? get() = console.size

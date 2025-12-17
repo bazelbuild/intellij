@@ -75,7 +75,9 @@ class PtyConsoleView(project: Project) : ExecutionConsole {
     }
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    Disposer.dispose(terminal)
+  }
 }
 
 private class Terminal(
