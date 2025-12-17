@@ -200,8 +200,11 @@ private fun findExecutable(ctx: BlazeContext, output: BlazeBuildOutputs.Legacy, 
     reportArtifactsIssue(ctx, "No output artifacts found for build $target")
   }
 
-  val name = PathUtil.getFileName(target.targetName().toString())
+  if (artifacts.size == 1) {
+    return artifacts.first().toPath()
+  }
 
+  val name = PathUtil.getFileName(target.targetName().toString())
   return artifacts.firstOrNull { it.name == name }?.toPath()
     ?: reportArtifactsIssue(ctx, "No executable found for build $target")
 }
