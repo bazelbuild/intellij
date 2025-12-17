@@ -4,8 +4,8 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "clion-oss-oldest-stable": "clion-2025.1",
-    "clion-oss-latest-stable": "clion-2025.2",
+    "clion-oss-oldest-stable": "clion-2025.2",
+    "clion-oss-latest-stable": "clion-2025.3",
     "clion-oss-under-dev": "clion-2025.3",
 }
 
@@ -46,7 +46,7 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.1", "2025.2", "2025.3"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.2", "2025.3"])
 
 def _do_select_for_plugin_api(params):
     """A version of select_for_plugin_api which accepts indirect products."""
