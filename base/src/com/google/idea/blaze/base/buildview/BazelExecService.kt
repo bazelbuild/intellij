@@ -151,7 +151,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
       return
     }
 
-    BuildEventParser.parse(event)?.let(ctx::output)
+    val issueReportingMode = BuildViewScope.of(ctx)?.issueReportingMode ?: IssueReportingMode.SYNC
+    BuildEventParser.parse(event, issueReportingMode)?.let(ctx::output)
   }
 
   private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {

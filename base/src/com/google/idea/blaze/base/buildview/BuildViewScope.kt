@@ -7,12 +7,14 @@ import com.google.idea.blaze.base.scope.BlazeScope
 import com.google.idea.blaze.base.scope.OutputSink
 import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.scope.output.StatusOutput
+import com.google.idea.blaze.base.util.pluginProjectDisposable
 import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.common.Output
 import com.google.idea.blaze.common.PrintOutput
 import com.google.idea.blaze.common.PrintOutput.OutputType
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildDescriptor
+import com.intellij.build.BuildViewManager
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.SyncViewManager
 import com.intellij.build.progress.BuildProgress
@@ -27,21 +29,45 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.ThreeState
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.function.Consumer
 
-class BuildViewScope(private val project: Project, private val title: String) : BlazeScope {
+enum class IssueReportingMode {
+	SYNC,  // Sync operations: failures -> WARNING, warnings -> INFO
+	BUILD  // Build operations: failures -> ERROR, warnings -> WARNING
+}
 
-  companion object {
-    @JvmStatic
-    fun of(ctx: BlazeContext): BuildViewScope? = ctx.getScope(BuildViewScope::class.java)
-  }
+class BuildViewScope private constructor(
+	private val project: Project,
+	private val title: String,
+	val issueReportingMode: IssueReportingMode
+) : BlazeScope {
 
-  private var progress = SyncViewManager.createBuildProgress(project)
-  private var console = PtyConsoleView(project)
+	companion object {
+		@JvmStatic
+		fun forSync(project: Project, title: String): BuildViewScope {
+			return BuildViewScope(project, title, IssueReportingMode.SYNC)
+		}
+
+		@JvmStatic
+		fun forBuild(project: Project, title: String): BuildViewScope {
+			return BuildViewScope(project, title, IssueReportingMode.BUILD)
+		}
+
+		@JvmStatic
+		fun of(ctx: BlazeContext): BuildViewScope? = ctx.getScope(BuildViewScope::class.java)
+	}
+
+	private var progress = when (issueReportingMode) {
+		IssueReportingMode.SYNC -> SyncViewManager.createBuildProgress(project)
+		IssueReportingMode.BUILD -> BuildViewManager.createBuildProgress(project)
+	}
+
+  private var console = PtyConsoleView(project).also { Disposer.register(pluginProjectDisposable(project), it) }
   private var indicator = BackgroundableProcessIndicator(project, title, "Cancel", "Cancel", true)
 
   val consoleSize: TermSize? get() = console.size
