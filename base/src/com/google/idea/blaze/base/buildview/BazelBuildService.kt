@@ -40,7 +40,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
-import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +47,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.guava.asListenableFuture
 import java.io.File
 import java.nio.file.Path
-import kotlin.use
 
 private const val DEFAULT_OUTPUT_GROUP_NAME = "default"
 
@@ -64,13 +62,13 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
       invocationContext: BlazeInvocationContext,
       requiredFlags: List<String>,
       overridableFlags: List<String>,
-      targets: Label,
+      target: Label,
     ): ListenableFuture<Path> = project.service<BazelBuildService>().buildForRunConfig(
       configuration,
       invocationContext,
       requiredFlags,
       overridableFlags,
-      targets,
+      target,
     )
   }
 
@@ -94,13 +92,19 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
   ): ListenableFuture<Path> {
     val handlerState = configuration.handler.state.asSafely<BlazeCommandRunConfigurationCommonState>()
 
+    val handlerRequiredFlags = handlerState
+      ?.blazeFlagsState
+      ?.flagsForExternalProcesses
+      ?.let(requiredFlags::plus)
+      ?: requiredFlags
+
     return executionScope { ctx ->
       val output = executeBuild(
         ctx = ctx,
         project = project,
         customBazelBinary = handlerState?.blazeBinaryState?.blazeBinary?.let(Path::of),
         invocationContext = invocationContext,
-        requiredFlags = requiredFlags,
+        requiredFlags = handlerRequiredFlags,
         overridableFlags = overridableFlags,
         targets = ImmutableList.of(target),
       )
@@ -125,7 +129,7 @@ private fun getProgressMessage(targets: ImmutableList<TargetExpression>): String
 }
 
 @Throws(ExecutionException::class)
-private suspend fun executeBuild(
+private fun executeBuild(
   ctx: BlazeContext,
   project: Project,
   customBazelBinary: Path?,
