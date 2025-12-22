@@ -62,7 +62,7 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
         // Without this, you won't be able to invoke "build" on (say) a proto_library
         .filter(TargetIdeInfo::isPlainTarget)
         .map(TargetIdeInfo::getKey)
-        .map(TargetKey::getLabel)
+        .map(TargetKey::label)
         .collect(toImmutableList());
   }
 
