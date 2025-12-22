@@ -32,9 +32,8 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.util.asSafely
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
-import kotlinx.coroutines.async
-import kotlinx.coroutines.guava.asListenableFuture
 import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.guava.future
 import java.util.*
 
 abstract class RadTestContextProvider : TestContextProvider {
@@ -46,9 +45,10 @@ abstract class RadTestContextProvider : TestContextProvider {
       return null
     }
 
-    val target = pluginProjectScope(context.project).async {
-      chooseTargetForFile(context, findTargets(context).await())
-    }.asListenableFuture()
+    val target = pluginProjectScope(context.project).future {
+      val targets = findTargets(context).await()
+      chooseTargetForFile(context, targets)
+    }
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
       .setTarget(target)
@@ -67,8 +67,8 @@ private fun findTargets(context: ConfigurationContext): ListenableFuture<Collect
   return SourceToTargetFinder.findTargetInfoFuture(
     context.project,
     virtualFile.toNioPath().toFile(),
-    Optional.of(RuleType.TEST),
-  ) ?: Futures.immediateFuture(emptyList())
+    Optional.of(RuleType.TEST)
+  )
 }
 
 private fun chooseTargetForFile(context: ConfigurationContext, targets: Collection<TargetInfo>): TargetInfo? {
