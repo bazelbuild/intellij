@@ -1,0 +1,134 @@
+/*
+ * Copyright 2025 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.clwb.run
+
+import com.google.common.collect.ImmutableList
+import com.google.idea.blaze.clwb.run.BlazeLLDBDriverConfiguration.LLDB_LAUNCH_EXECROOT_REGISTRY_KEY
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.system.OS
+import com.jetbrains.cidr.lang.workspace.compiler.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+
+private val LOG = logger<BazelDebugFlagsBuilder>()
+
+private val VALID_GDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, GCCCompilerKind)
+private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, MSVCCompilerKind)
+
+/**
+ * Builds flags for debugging a blaze target, flags are either used for just
+ * building a binary [BlazeCidrRunConfigurationRunner] or for running actually
+ * running the binary [BlazeGDBServerProvider].
+ *
+ * In theory we would like to have one builder that builds a BlazeCommand to
+ * have full control over the environment in the builder.
+ */
+class BazelDebugFlagsBuilder private constructor(
+  private val debuggerKind: BlazeDebuggerKind,
+  private val compilerKind: OCCompilerKind,
+  private val targetOS: OS,
+  private val withFissionFlag: Boolean = false,
+  private val withClangCustomDebugDir: Boolean = false,
+) {
+
+  companion object {
+
+    @JvmStatic
+    fun fromDefaults(
+      debuggerKind: BlazeDebuggerKind,
+      compilerKind: OCCompilerKind,
+    ) = BazelDebugFlagsBuilder(
+      debuggerKind,
+      compilerKind,
+      OS.CURRENT,
+      withFissionFlag = !Registry.`is`("bazel.clwb.debug.fission.disabled"),
+      withClangCustomDebugDir = !Registry.`is`(LLDB_LAUNCH_EXECROOT_REGISTRY_KEY),
+    )
+  }
+
+  private val flags = ImmutableList.builder<String>()
+
+  init {
+    // check for valid debugger/compiler combinations
+    when {
+      isGdb() -> LOG.assertTrue(compilerKind in VALID_GDB_COMPILERS)
+      isLldb() -> LOG.assertTrue(compilerKind in VALID_LLDB_COMPILERS)
+    }
+  }
+
+  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == ClangClCompilerKind
+
+  private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
+
+  private fun isGdb() = debuggerKind == BlazeDebuggerKind.BUNDLED_GDB || debuggerKind == BlazeDebuggerKind.GDB_SERVER
+
+  fun withBuildFlags(workspaceRoot: String? = null) {
+    flags.add("--compilation_mode=dbg")
+    flags.add("--strip=never")
+    flags.add("--dynamic_mode=off")
+
+    if (isGdb() && withFissionFlag) {
+      flags.add("--fission=yes")
+    }
+
+    val switchBuilder = when (compilerKind) {
+      // we should use the MSVCSwitchBuilder for clang-cl as well
+      MSVCCompilerKind, ClangClCompilerKind -> MSVCSwitchBuilder()
+      ClangCompilerKind -> ClangSwitchBuilder()
+      else -> GCCSwitchBuilder() // default to GCC, as usual
+    }
+
+    when (compilerKind) {
+      // we have to use the "old style" debug info, /Zi causes errors with MSVC and Bazel
+      MSVCCompilerKind -> switchBuilder.withSwitch("/Z7")
+      else -> switchBuilder.withDebugInfo(2)
+    }
+
+    switchBuilder.withDisableOptimization()
+
+    if (isLldb() && isClang() && withClangCustomDebugDir && workspaceRoot != null) {
+      switchBuilder.withSwitch("-fdebug-compilation-dir=${FileUtilRt.toSystemIndependentName(workspaceRoot)}")
+    }
+
+    flags.addAll(switchBuilder.buildRaw().map { "--copt=$it" })
+
+    if (isLldb() && targetOS == OS.macOS) {
+      flags.add("--linkopt=-Wl,-oso_prefix,.", "--linkopt=-Wl,-reproducible", "--remote_download_regex='.*_objs/.*.o$'")
+    }
+  }
+
+  fun withTestFlags(timeout: Duration? = 60.minutes) {
+    flags.add("--nocache_test_results")
+    flags.add("--test_strategy=exclusive")
+    flags.add("--test_sharding_strategy=disabled")
+
+    if (timeout != null) {
+      flags.add("--test_timeout=${timeout.inWholeSeconds}")
+    }
+  }
+
+  fun withRunUnderGDBServer(gdbserver: String, port: Int, wrapperScript: String?) {
+    if (wrapperScript != null) {
+      flags.add("--run_under='bash' '$wrapperScript' '$gdbserver' --once localhost:$port --target")
+    } else {
+      flags.add("--run_under='$gdbserver' --once localhost:$port")
+    }
+  }
+
+  fun build(): ImmutableList<String> = flags.build()
+}

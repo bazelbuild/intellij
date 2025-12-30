@@ -15,26 +15,17 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.ProjectLoaderImpl;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.qsync.deps.ArtifactDirectories;
-import com.google.idea.blaze.qsync.project.ProjectPath;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
 
 /** Defines where we store our blaze project data. */

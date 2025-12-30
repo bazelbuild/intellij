@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.jetbrains.cidr.lang.CLanguageKind;
+import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
@@ -76,10 +77,14 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     return configurations.get(0);
   }
 
-  protected OCCompilerSettings findFileCompilerSettings(String relativePath) {
+  protected OCCompilerSettings findFileCompilerSettings(String relativePath, OCLanguageKind language) {
     final var file = findProjectFile(relativePath);
     final var resolveConfiguration = findFileResolveConfiguration(relativePath);
 
-    return resolveConfiguration.getCompilerSettings(CLanguageKind.CPP, file);
+    return resolveConfiguration.getCompilerSettings(language, file);
+  }
+
+  protected OCCompilerSettings findFileCompilerSettings(String relativePath) {
+    return findFileCompilerSettings(relativePath, CLanguageKind.CPP);
   }
 }

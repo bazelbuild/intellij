@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.command.buildresult.bepparser.OutputArtifactPa
 import com.google.idea.blaze.base.command.buildresult.bepparser.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -108,7 +107,6 @@ public class BuildEventProtocolOutputReaderLegacyTest extends BlazeTestCase {
     ep.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
 
     ExtensionPointImpl<OutputArtifactParser> parserEp =
         registerExtensionPoint(OutputArtifactParser.EP_NAME, OutputArtifactParser.class);

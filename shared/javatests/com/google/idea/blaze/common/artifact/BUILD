@@ -4,7 +4,6 @@ package(
     default_visibility = [
         "//aswb:__subpackages__",
         "//base:__subpackages__",
-        "//querysync:__subpackages__",
         "//shared:__subpackages__",
     ],
 )

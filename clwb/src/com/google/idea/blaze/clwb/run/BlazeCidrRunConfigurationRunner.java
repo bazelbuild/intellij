@@ -16,7 +16,6 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.GetArtifactsException;
@@ -38,7 +37,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
@@ -98,36 +96,6 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     return (Label) targets.get(0);
   }
 
-  private ImmutableList<String> getExtraDebugFlags(ExecutionEnvironment env) {
-    if (Registry.is("bazel.clwb.debug.extraflags.disabled")) {
-      return ImmutableList.of();
-    }
-
-    final var debuggerKind = RunConfigurationUtils.getDebuggerKind(configuration);
-    if (debuggerKind == BlazeDebuggerKind.GDB_SERVER) {
-      return BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
-    }
-
-    final var flagsBuilder = ImmutableList.<String>builder();
-
-    if (debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB && !Registry.is("bazel.trim.absolute.path.disabled")) {
-      flagsBuilder.add("--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()));
-
-      if (SystemInfo.isMac) {
-        flagsBuilder.add("--linkopt=-Wl,-oso_prefix,.");
-      }
-    }
-
-    flagsBuilder.add("--compilation_mode=dbg");
-    flagsBuilder.add("--copt=-O0");
-    flagsBuilder.add("--copt=-g");
-    flagsBuilder.add("--strip=never");
-    flagsBuilder.add("--dynamic_mode=off");
-    flagsBuilder.addAll(BlazeGDBServerProvider.getOptionalFissionArguments());
-
-    return flagsBuilder.build();
-  }
-
   /**
    * Builds blaze C/C++ target in debug mode, and returns the output build artifact.
    *
@@ -136,15 +104,23 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
   private File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
     SaveUtil.saveAllFiles();
 
-    ListenableFuture<BuildEventStreamProvider> streamProviderFuture =
-        BlazeBeforeRunCommandHelper.runBlazeCommand(
-            BlazeCommandName.BUILD,
-            configuration,
-            ImmutableList.of(),
-            getExtraDebugFlags(env),
-            BlazeInvocationContext.runConfigContext(
-                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-            "Building debug binary");
+    final var flagsBuilder = BazelDebugFlagsBuilder.fromDefaults(
+        RunConfigurationUtils.getDebuggerKind(configuration),
+        RunConfigurationUtils.getCompilerKind(configuration)
+    );
+
+    if (!Registry.is("bazel.clwb.debug.extraflags.disabled")) {
+      flagsBuilder.withBuildFlags(WorkspaceRoot.fromProject(env.getProject()).toString());
+    }
+
+    final var streamProviderFuture = BlazeBeforeRunCommandHelper.runBlazeCommand(
+        BlazeCommandName.BUILD,
+        configuration,
+        ImmutableList.of(),
+        flagsBuilder.build(),
+        BlazeInvocationContext.runConfigContext(ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+        "Building debug binary"
+    );
 
     Label target = getSingleTarget(configuration);
     try (BuildEventStreamProvider streamProvider = streamProviderFuture.get()) {
@@ -169,9 +145,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     } catch (java.util.concurrent.ExecutionException e) {
       throw new ExecutionException(e);
     } catch (GetArtifactsException e) {
-      throw new ExecutionException(
-          String.format(
-              "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
+      throw new ExecutionException(String.format("Failed to get output artifacts when building %s", target), e);
     }
   }
 

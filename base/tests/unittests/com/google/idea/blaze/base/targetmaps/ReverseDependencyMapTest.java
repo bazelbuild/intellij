@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -47,7 +46,6 @@ public class ReverseDependencyMapTest extends BlazeTestCase {
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     kindProvider.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
-    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
   }
 
   @Test

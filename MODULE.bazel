@@ -1,11 +1,10 @@
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_java", version = "9.0.3")
+bazel_dep(name = "rules_java", version = "9.3.0")
 bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-bazel_dep(name = "protobuf", version = "33.1")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "protobuf", version = "33.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
-bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
 bazel_dep(name = "rules_jvm_external", version = "6.9")
 
 # temporary to bump version of the transitve dependency (drop wit Bazel 9 release)
@@ -21,7 +20,7 @@ git_override(
 
 # required for aspect tests
 bazel_dep(name = "rules_shell", version = "0.6.1")
-bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "abseil-cpp", version = "20250814.1")
 
 # import clwb test projects for aspect tests
@@ -37,20 +36,28 @@ local_repository(
     path = "clwb/tests/projects/virtual_includes/lib/external",
 )
 
-# custom rules kotlin version, patches are required
-bazel_dep(name = "rules_kotlin", version = "2.2.0")
-git_override(
-    module_name = "rules_kotlin",
-    commit = "89fd270f1e77766ee6afa2f658c327771b90a3ce",
+# custom rules_bazel_integration_test version, patches are required until we write our own version of these rules :c
+bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
+single_version_override(
+    module_name = "rules_bazel_integration_test",
     patch_strip = 1,
-    patches = [
-        "//third_party/kotlin/patches:strip_stdlib.patch",
-        "//third_party/kotlin/patches:win_classpath.patch",
-        "//third_party/kotlin/patches:bazel_9.patch",
-        "//third_party/kotlin/patches:jarjar.patch",
-    ],
-    remote = "https://github.com/bazelbuild/rules_kotlin.git",
+    patches = ["//third_party/bazel/patches:rules_bazel_integration_test.patch"],
 )
+
+# custom rules kotlin version, patches are required
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
+# git_override(
+#     module_name = "rules_kotlin",
+#     commit = "89fd270f1e77766ee6afa2f658c327771b90a3ce",
+#     patch_strip = 1,
+#     patches = [
+#         "//third_party/kotlin/patches:strip_stdlib.patch",
+#         "//third_party/kotlin/patches:win_classpath.patch",
+#         "//third_party/kotlin/patches:bazel_9.patch",
+#         "//third_party/kotlin/patches:jarjar.patch",
+#     ],
+#     remote = "https://github.com/bazelbuild/rules_kotlin.git",
+# )
 
 register_toolchains("//third_party/kotlin:toolchain")
 
@@ -66,7 +73,7 @@ use_repo(python, "python_3_12", "python_versions")
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.6.2")
-bazel_binaries.download(version = "8.4.2")
+bazel_binaries.download(version = "8.5.0")
 bazel_binaries.download(version = "9.0.0rc3")
 bazel_binaries.download(version = "last_green")
 use_repo(
@@ -75,7 +82,7 @@ use_repo(
     "bazel_binaries_bazelisk",
     "build_bazel_bazel_6_5_0",
     "build_bazel_bazel_7_6_2",
-    "build_bazel_bazel_8_4_2",
+    "build_bazel_bazel_8_5_0",
     "build_bazel_bazel_9_0_0rc3",
     "build_bazel_bazel_last_green",
 )
@@ -161,15 +168,15 @@ intellij_platform.sdk(
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion252",
-    sha256 = "29b8cda11752215aaf273de283ea6245c9c55eb54cb5ef30e0765277eea9130a",
-    version = "2025.2.4",
+    sha256 = "48c600eb555f646ffd686226bf2e2ed6c3dd6b7342b58b4eb950fe9c966e8195",
+    version = "2025.2.5",
 )
 intellij_platform.sdk(
     name = "clion",
     alias = "clion_2025_3",
     build_file = "//intellij_platform_sdk:BUILD.clion253",
-    sha256 = "a6658d1339ca0578e1a60e24f2b6cf5c9ba77f6e34e0131d111d74af7f014e9d",
-    version = "253.28294.125-EAP-SNAPSHOT",
+    sha256 = "1accb0e5f73a29bf1c88f7762363841f80c469b8c6e98ad170b10e5a638c0d9a",
+    version = "2025.3",
 )
 intellij_platform.plugin(
     name = "PythonCore",
@@ -189,7 +196,7 @@ intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2025_3",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "fa3dc8a5038736e8c4aef5a8da42ab933d32ac9b416a6f5f900697aefe799487",
-    version = "253.28294.169",
+    sha256 = "c7f13984d9bcd9a7ed3a8243e1f414157c4c57b788211494696bdf8a5598b99c",
+    version = "253.28294.334",
 )
 use_repo(intellij_platform, "clion_2025_1", "clion_2025_2", "clion_2025_3", "python_2025_1", "python_2025_2", "python_2025_3")

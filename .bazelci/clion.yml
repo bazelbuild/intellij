@@ -91,7 +91,7 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
-    soft_fail: true
+    soft_fail: false
   CLion-Windows-OSS-under-dev:
     name: CLion Windows OSS Under Development
     platform: windows
@@ -105,7 +105,7 @@ tasks:
       - --test_output=errors
     test_targets:
       - //clwb:headless_tests
-    soft_fail: true
+    soft_fail: false
   CLion-MacOS-OSS-under-dev:
     name: CLion MacOS OSS Under Development
     platform: macos_arm64

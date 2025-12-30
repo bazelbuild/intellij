@@ -19,11 +19,6 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper;
-import com.google.idea.blaze.base.qsync.action.BuildDependenciesHelper.DepsBuildType;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.actions.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -49,15 +44,6 @@ class BlazeCompileFileAction extends BlazeProjectAction {
   }
 
   private boolean isEnabled(Project project, AnActionEvent e) {
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      VirtualFile vf = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      if (vf == null) {
-        return false;
-      }
-      QuerySyncManager querySyncManager = QuerySyncManager.getInstance(project);
-      return querySyncManager.isProjectLoaded()
-          && !querySyncManager.getTargetsToBuild(vf).isEmpty();
-    }
     return !getTargets(e).isEmpty();
   }
 
@@ -65,18 +51,6 @@ class BlazeCompileFileAction extends BlazeProjectAction {
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (virtualFile == null) {
-      return;
-    }
-
-    if (Blaze.getProjectType(project).equals(ProjectType.QUERY_SYNC)) {
-      BuildDependenciesHelper buildDependenciesHelper =
-          new BuildDependenciesHelper(project, DepsBuildType.SELF);
-      buildDependenciesHelper.determineTargetsAndRun(
-          virtualFile,
-          popup -> popup.showCenteredInCurrentWindow(project),
-          labels ->
-              BlazeBuildService.getInstance(project)
-                  .buildFileForLabels(virtualFile.getName(), labels));
       return;
     }
 

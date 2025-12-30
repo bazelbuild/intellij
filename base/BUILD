@@ -45,7 +45,6 @@ kt_jvm_library(
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//querysync",
         "//sdkcompat",
         "//shared",
         "//shared:artifact",
@@ -545,7 +544,6 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "//querysync",
         "//shared",
         "//shared:artifact",
         "//shared/java/com/google/idea/blaze/common",
@@ -555,6 +553,13 @@ intellij_unit_test_suite(
         "//third_party/java/auto_value",
         "//third_party/java/junit",
         "@com_google_guava_guava//jar",
+    ],
+)
+
+test_suite(
+    name = "unit_tests_kt",
+    tests = [
+        "//base/tests/unittests/com/google/idea/blaze/base/dependencies:QueryBuilderTest",
     ],
 )
 
@@ -594,8 +599,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "//querysync",
-        "//querysync/javatests/com/google/idea/blaze/qsync/artifacts:mock_artifact_cache",
         "//shared:exception",
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",

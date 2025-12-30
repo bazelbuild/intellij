@@ -33,8 +33,6 @@ import com.google.idea.blaze.base.command.mod.BlazeModException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.execution.BazelGuard;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
-import com.google.idea.blaze.base.logging.utils.querysync.BuildDepsStatsScope;
-import com.google.idea.blaze.base.logging.utils.querysync.SyncQueryStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -50,7 +48,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,48 +63,6 @@ import java.util.function.Function;
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
-  public BlazeBuildOutputs.Legacy runLegacy(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context,
-      Map<String, String> envVars) {
-    try {
-      performGuardCheck(project, context);
-    } catch (ExecutionDeniedException e) {
-      return BlazeBuildOutputs.noOutputsForLegacy(BuildResult.FATAL_ERROR);
-    }
-
-    BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
-    BuildDepsStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
-    if (buildResult.status == Status.FATAL_ERROR) {
-      return BlazeBuildOutputs.noOutputsForLegacy(buildResult);
-    }
-    if (buildResult.status == Status.BUILD_ERROR) {
-      context.setHasError();
-    }
-    context.output(SummaryOutput.output(SummaryOutput.Prefix.TIMESTAMP, "Build command finished. Retrieving BEP outputs ..."));
-    try {
-      Interner<String> stringInterner =
-          Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
-              .map(SharedStringPoolScope::getStringInterner)
-              .orElse(null);
-      ParsedBepOutput.Legacy buildOutput;
-      try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
-        buildOutput = BuildResultParser.getBuildOutputForLegacySync(bepStream, stringInterner);
-      }
-      context.output(PrintOutput.log("BEP outputs retrieved (%s).", StringUtilRt.formatFileSize(buildOutput.getBepBytesConsumed())));
-      return BlazeBuildOutputs.fromParsedBepOutputForLegacy(buildOutput);
-    } catch (GetArtifactsException e) {
-      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
-      context.setHasError();
-      return BlazeBuildOutputs.noOutputsForLegacy(buildResult);
-    }
-  }
-
-  @Override
   public BlazeBuildOutputs run(Project project, BlazeCommand.Builder blazeCommandBuilder,
                                BuildResultHelper buildResultHelper, BlazeContext context, Map<String, String> envVars) throws BuildException {
     try {
@@ -118,8 +73,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
     BuildResult buildResult =
         issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
-    BuildDepsStatsScope.fromContext(context)
-        .ifPresent(stats -> stats.setBazelExitCode(buildResult.exitCode));
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
@@ -142,125 +95,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
       context.setHasError();
       return BlazeBuildOutputs.noOutputs(buildResult);
-    }
-  }
-
-  @Override
-  public BlazeTestResults runTest(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context,
-      Map<String, String> envVars) {
-    try {
-      performGuardCheck(project, context);
-    } catch (ExecutionDeniedException e) {
-      return BlazeTestResults.NO_RESULTS;
-    }
-
-    // For tests, we have to pass the environment variables as `--test_env`, otherwise they don't get forwarded
-    for (Map.Entry<String, String> env : envVars.entrySet()) {
-      blazeCommandBuilder.addBlazeFlags(BlazeFlags.TEST_ENV, String.format("%s=%s", env.getKey(), env.getValue()));
-    }
-
-    BuildResult buildResult =
-        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), envVars, context);
-    if (buildResult.status == Status.FATAL_ERROR) {
-      return BlazeTestResults.NO_RESULTS;
-    }
-    context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
-    try(final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
-      return BuildResultParser.getTestResults(bepStream);
-    } catch (GetArtifactsException e) {
-      context.output(PrintOutput.log("Failed to get build outputs: " + e.getMessage()));
-      context.setHasError();
-      return BlazeTestResults.NO_RESULTS;
-    }
-  }
-
-  @Override
-  public InputStream runQuery(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException {
-    performGuardCheckAsBuildException(project, context);
-
-    try (Closer closer = Closer.create()) {
-      Path tempFile =
-          Files.createTempFile(
-              String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
-              ".stdout");
-      OutputStream out = closer.register(Files.newOutputStream(tempFile));
-      BlazeCommand command = blazeCommandBuilder.build();
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-      Function<String, String> rootReplacement =
-          WorkspaceRootReplacement.create(workspaceRoot.path(), command);
-      boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      int retVal =
-          ExternalTask.builder(workspaceRoot)
-              .addBlazeCommand(command)
-              .context(context)
-              .stdout(out)
-              .stderr(
-                  LineProcessingOutputStream.of(
-                      line -> {
-                        line = rootReplacement.apply(line);
-                        // errors are expected, so limit logging to info level
-                        if (isUnitTestMode) {
-                          // This is essential output in bazel-in-bazel tests if they fail.
-                          System.out.println(line.stripTrailing());
-                        }
-                        Logger.getInstance(this.getClass()).info(line.stripTrailing());
-                        context.output(PrintOutput.output(line.stripTrailing()));
-                        return true;
-                      }))
-              .ignoreExitCode(true)
-              .build()
-              .run();
-      SyncQueryStatsScope.fromContext(context).ifPresent(stats -> stats.setBazelExitCode(retVal));
-      BazelExitCodeException.throwIfFailed(
-          blazeCommandBuilder.build(), retVal, ThrowOption.ALLOW_PARTIAL_SUCCESS);
-      return new BufferedInputStream(
-          Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE));
-    } catch (IOException e) {
-      throw new BuildException(e);
-    }
-  }
-
-  @Override
-  @MustBeClosed
-  public InputStream runBlazeInfo(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException {
-    performGuardCheckAsBuildException(project, context);
-
-    try (Closer closer = Closer.create()) {
-      Path tmpFile =
-          Files.createTempFile(
-              String.format("intellij-bazel-%s-", blazeCommandBuilder.build().getName()),
-              ".stdout");
-      OutputStream out = closer.register(Files.newOutputStream(tmpFile));
-      OutputStream stderr =
-          closer.register(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)));
-      int exitCode =
-          ExternalTask.builder(WorkspaceRoot.fromProject(project))
-              .addBlazeCommand(blazeCommandBuilder.build())
-              .context(context)
-              .stdout(out)
-              .stderr(stderr)
-              .ignoreExitCode(true)
-              .build()
-              .run();
-      BazelExitCodeException.throwIfFailed(blazeCommandBuilder.build(), exitCode);
-      return new BufferedInputStream(
-          Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
-    } catch (IOException e) {
-      throw new BuildException(e);
     }
   }
 
@@ -319,16 +153,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
             .build()
             .run();
     return BuildResult.fromExitCode(retVal);
-  }
-
-  @Override
-  public Optional<Integer> getMaxCommandLineLength() {
-    // Return a conservative value.
-    // `getconf ARG_MAX` returns large values (1048576 on mac, 2097152 on linux) but this is
-    // much larger than the actual command line limit seen in practice.
-    // On linux, `xargs --show-limits` says "Size of command buffer we are actually using: 131072"
-    // so choose a value somewhere south of that, which seems to work.
-    return Optional.of(130000);
   }
 
   private void performGuardCheck(Project project, BlazeContext context)

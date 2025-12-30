@@ -8,7 +8,6 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
-import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStatsScope;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor;
 import com.google.idea.blaze.base.project.ExtendableBazelProjectCreator;
@@ -16,7 +15,6 @@ import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -118,9 +116,8 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   }
 
   /**
-   * Gets the path to the bazelisk wrapper script and performs some basic checks.
-   * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
-   * environment variable.
+   * Runs a executable in the current execution root (the execroot might not
+   * exist yet) and returns stdout or fails the test.
    */
   private static Path getTestBazelPath() {
     final var bitBazelBinary = System.getenv("BIT_BAZEL_BINARY");
@@ -140,11 +137,9 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     if (myLazyBazelInfo != null) {
       return myLazyBazelInfo;
     }
-
     final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
-    // run bazel binary in project root to avoid downloading it twice
     final var result = ExternalTask.builder(getTestProjectRoot())
         .args(myBazelBinary.toString(), "info")
         .stderr(errStream)
@@ -154,8 +149,11 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .get();
 
     if (result != 0) {
-      abort("cannot run bazel info: " + errStream);
+      abort(String.format("execution '%s' failed (%d): %s", String.join(" ", args), result, errStream));
     }
+
+    return outStream.toString();
+  }
 
     myLazyBazelInfo = BazelInfo.parse(outStream.toString());
     return myLazyBazelInfo;
@@ -165,8 +163,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myBazelBinary = getTestBazelPath();
-    BlazeUserSettings.getInstance().setBazelBinaryPath(myBazelBinary.toString());
+    final var bazelBinary = getTestBazelPath();
+    BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
+
+    myBazelInfo = getTestBazelInfo(bazelBinary);
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);
@@ -294,40 +294,6 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .setSyncMode(SyncMode.FULL)
         .setSyncOrigin("test")
         .setAddProjectViewTargets(true);
-  }
-
-  protected boolean runQuerySync() {
-    final var future = QuerySyncManager.getInstance(myProject).onStartup(QuerySyncActionStatsScope.create(getClass(), null));
-
-    return pullFuture(future, 10, TimeUnit.MINUTES);
-  }
-
-  protected SyncOutput enableAnalysisFor(VirtualFile file) {
-    final var context = BlazeContext.create();
-
-    final var output = new SyncOutput();
-    output.install(context);
-
-    final var manager = QuerySyncManager.getInstance(myProject);
-    final var targets = manager.getTargetsToBuild(file).targets();
-
-    final var projects = manager.getLoadedProject();
-    assertThat(projects).isPresent();
-
-    final var future = CompletableFuture.runAsync(() -> {
-      try {
-        projects.get().enableAnalysis(context, targets);
-      } catch (Exception e) {
-        abort("enable analysis failed");
-      }
-    }, ApplicationManager.getApplication()::executeOnPooledThread);
-
-    pullFuture(future, 10, TimeUnit.MINUTES);
-
-    context.close();
-    LOG.info(String.format("PROJECT BUILD LOG:%n%s", output.collectLog()));
-
-    return output;
   }
 
   protected VirtualFile findProjectFile(String relativePath) {

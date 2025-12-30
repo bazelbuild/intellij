@@ -171,7 +171,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
    */
   private static String queryDeveloperDir(BlazeContext context, BuildInvoker invoker,
                                           WorkspaceRoot workspaceRoot, String xcodeVersion, Project project) throws XcodeCompilerSettingsException {
-    BlazeCommand.Builder runXcodeLocator = BlazeCommand.builder(invoker, BlazeCommandName.RUN, project);
+    BlazeCommand.Builder runXcodeLocator = BlazeCommand.builder(invoker, BlazeCommandName.RUN);
     runXcodeLocator.addTargets(
         Label.fromStringSafe("@bazel_tools//tools/osx:xcode-locator"));
     runXcodeLocator.addExeFlags(xcodeVersion).build();

@@ -26,6 +26,10 @@ class RadGoogleTestContextProvider : RadTestContextProvider() {
     val suite = test.suites?.firstOrNull() ?: "*"
     val name = test.test ?: "*"
 
-    return "$suite.$name"
+    // derive 3 patterns from the suite and test name:
+    // 1. match regular test
+    // 2. match parameterized thest without installation prefix
+    // 3. match parameterized test with installation prefix
+    return "$suite.$name:$suite.$name/*:*/$suite.$name/*"
   }
 }

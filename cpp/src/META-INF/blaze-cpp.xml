@@ -67,9 +67,9 @@
                     os="mac"
                     overrides="true"/>
 
-    <registryKey defaultValue="false"
-                 description="Disable absolute path trimming in debug clang builds"
-                 key="bazel.trim.absolute.path.disabled"/>
+    <registryKey defaultValue="true"
+                 description="Launch LLDB from execution root"
+                 key="bazel.cpp.lldb.launch.execroot"/>
     <registryKey defaultValue="true"
                  description="Allow external targets from source directories be imported in"
                  key="bazel.cpp.sync.external.targets.from.directories"/>
@@ -95,9 +95,5 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.cpp.HeaderRootTrimmer"
                     serviceImplementation="com.google.idea.blaze.cpp.HeaderRootTrimmerImpl"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
-    <QuerySyncListenerProvider implementation="com.google.idea.blaze.cpp.qsync.CcProjectModelUpdater$Provider" />
   </extensions>
 </idea-plugin>

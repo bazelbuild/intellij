@@ -24,6 +24,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.intellij.mock.MockProject;
+import kotlinx.coroutines.GlobalScope;
 import org.mockito.MockedStatic;
 
 import com.google.common.collect.ImmutableList;
@@ -54,7 +55,6 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -106,7 +106,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(QuerySyncSettings.class, new QuerySyncSettings());
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
@@ -143,7 +142,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
     projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
-    projectServices.register(SyncCache.class, new SyncCache(project));
+    projectServices.register(SyncCache.class, new SyncCache(project, GlobalScope.INSTANCE));
     projectServices.register(HeaderRootTrimmer.class, new HeaderRootTrimmerMock());
 
     context.addOutputSink(IssueOutput.class, errorCollector);

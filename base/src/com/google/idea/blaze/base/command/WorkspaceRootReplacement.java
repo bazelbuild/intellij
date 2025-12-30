@@ -35,7 +35,7 @@ public class WorkspaceRootReplacement {
 
   public static Function<String, String> create(Path workspaceRoot, BlazeCommand command) {
     return command
-        .getEffectiveWorkspaceRoot()
+        .workspaceRoot()
         .map(
             effectiveRoot ->
                 (Function<String, String>)

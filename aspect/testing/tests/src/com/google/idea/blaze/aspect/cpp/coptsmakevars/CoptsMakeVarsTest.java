@@ -17,9 +17,11 @@ package com.google.idea.blaze.aspect.cpp.coptsmakevars;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import java.io.IOException;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,21 +38,34 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
     return target.getCIdeInfo();
   }
 
+  private ImmutableList<List<String>> getAllCopts(CIdeInfo ideInfo) {
+    return ImmutableList.of(
+        ideInfo.getRuleContext().getCoptsList(),
+        ideInfo.getRuleContext().getConlyoptsList(),
+        ideInfo.getRuleContext().getCxxoptsList()
+    );
+  }
+
   @Test
   public void testCoptsPrefinedMakeVars() throws IOException {
     final var ideInfo = getCIdeInfo(":simple_prefined");
     assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(2);
 
     // These predefined variables' values are dependent on build system and configuration.
-    assertThat(ideInfo.getRuleContext().getCoptsList().get(0)).containsMatch("^-DPREFINED_BINDIR=bazel-out/[0-9a-z_-]+/bin$");
-    assertThat(ideInfo.getRuleContext().getCoptsList().get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
+    for (final var copts : getAllCopts(ideInfo)) {
+      assertThat(copts.get(0)).containsMatch("^-DPREFINED_BINDIR=bazel-out/[0-9a-z_-]+/bin$");
+      assertThat(copts.get(1)).isEqualTo("-DPREFINED_BINDIR2=$(BINDIR)");
+    }
   }
 
   @Test
   public void testCoptsEmptyVariable() throws IOException {
     final var ideInfo = getCIdeInfo(":empty_variable");
-    assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(1);
-    assertThat(ideInfo.getRuleContext().getCoptsList()).contains("-Wall");
+
+    for (final var copts : getAllCopts(ideInfo)) {
+      assertThat(copts).hasSize(1);
+      assertThat(copts).contains("-Wall");
+    }
   }
 
   @Test
@@ -58,13 +73,24 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
     final var ideInfo = getCIdeInfo(":simple_make_var");
     assertThat(ideInfo.getRuleContext().getCoptsList()).hasSize(4);
 
-    assertThat(ideInfo.getRuleContext().getCopts(0)).isEqualTo(
-        "-DEXECPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getRuleContext().getCopts(1)).isEqualTo(
-        "-DROOTPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getRuleContext().getCopts(2)).isEqualTo(
-        "-DRLOCATIONPATH=\"_main/aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
-    assertThat(ideInfo.getRuleContext().getCopts(3)).isEqualTo(
-        "-DLOCATION=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
+    for (final var copts : getAllCopts(ideInfo)) {
+      assertThat(copts.get(0)).isEqualTo(
+          "-DEXECPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
+      assertThat(copts.get(1)).isEqualTo(
+          "-DROOTPATH=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
+      assertThat(copts.get(2)).isEqualTo(
+          "-DRLOCATIONPATH=\"_main/aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
+      assertThat(copts.get(3)).isEqualTo(
+          "-DLOCATION=\"aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars/simple/simple.cc\"");
+    }
+  }
+
+  @Test
+  public void testDifferentCopts() throws IOException {
+    final var ideInfo = getCIdeInfo(":simple_different_copts");
+
+    assertThat(ideInfo.getRuleContext().getCoptsList()).containsExactly("-DCOPTS");
+    assertThat(ideInfo.getRuleContext().getConlyoptsList()).containsExactly("-DCONLYOPTS");
+    assertThat(ideInfo.getRuleContext().getCxxoptsList()).containsExactly("-DCXXOPTS");
   }
 }

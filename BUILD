@@ -23,6 +23,7 @@ test_suite(
     name = "clwb_tests",
     tests = [
         "//base:unit_tests",
+        "//base:unit_tests_kt",
         "//clwb:headless_tests",
         "//clwb:integration_tests",
         "//clwb:unit_tests",

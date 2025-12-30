@@ -20,11 +20,10 @@ def _integration_test_suite(name, srcs, deps = []):
             "-Didea.suppressed.plugins.set.selector=classic",
             # enable detailed logging in tests to diagnose issues in CI
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
-            # the location of the gdbserver wrapper script, required at runtime
-            "-Dclwb.gdbserverPath=$(rootpath //clwb:gdbserver_wrapper)",
+            "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
         ],
         deps = deps + [
-            ":clwb_lib",
+            "//clwb:plugin_library",
             "//base",
             "//shared",
             "//common/util:process",
@@ -36,9 +35,6 @@ def _integration_test_suite(name, srcs, deps = []):
             "@org_opentest4j_opentest4j//jar",
             "//testing/src/com/google/idea/testing/headless",
         ],
-        data = [
-          "//clwb:gdbserver_wrapper",
-        ]
     )
 
 def clwb_integration_test(name, srcs, deps = []):

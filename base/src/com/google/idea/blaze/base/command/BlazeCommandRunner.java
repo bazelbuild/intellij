@@ -43,52 +43,6 @@ public interface BlazeCommandRunner {
       Map<String, String> envVars)
       throws BuildException;
 
-  /**
-   * Runs a blaze build command, parses the build results into a {@link BlazeBuildOutputs} object
-   * using the given {@link BuildResultHelper}.
-   */
-  BlazeBuildOutputs.Legacy runLegacy(
-    Project project,
-    BlazeCommand.Builder blazeCommandBuilder,
-    BuildResultHelper buildResultHelper,
-    BlazeContext context,
-    Map<String, String> envVars)
-    throws BuildException;
-
-  /**
-   * Runs a blaze test command, parses the test results into a {@link BlazeTestResults} object using
-   * the given {@link BuildResultHelper}.
-   */
-  BlazeTestResults runTest(
-          Project project,
-          BlazeCommand.Builder blazeCommandBuilder,
-          BuildResultHelper buildResultHelper,
-          BlazeContext context,
-          Map<String, String> envVars)
-          throws BuildException;
-
-  /**
-   * Runs a blaze query command.
-   *
-   * @return {@link InputStream} from the stdout of the blaze invocation using the given {@link
-   *     BuildResultHelper} and null if the query fails
-   */
-  @MustBeClosed
-  InputStream runQuery(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException;
-
-  @MustBeClosed
-  InputStream runBlazeInfo(
-      Project project,
-      BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
-      BlazeContext context)
-      throws BuildException;
-
   @MustBeClosed
   InputStream runBlazeMod(
       Project project,
@@ -97,17 +51,8 @@ public interface BlazeCommandRunner {
       BlazeContext context)
       throws BuildException;
 
-  /** Allows enabling the use of command runner for restricted set of users. */
-  default boolean canUseCli() {
-    return true;
-  }
-
   /** Get a list of additional build flags. */
   default List<String> getExtraBuildFlags(BlazeCommand.Builder blazeCommandBuilder) {
     return ImmutableList.of();
-  }
-
-  default Optional<Integer> getMaxCommandLineLength() {
-    return Optional.empty();
   }
 }
