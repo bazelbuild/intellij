@@ -54,14 +54,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
 
   protected Path myProjectRoot;
-  protected Path myBazelBinary;
-
-  private @Nullable BazelInfo myLazyBazelInfo;
+  protected BazelInfo myBazelInfo;
 
   protected static <T> T pullFuture(Future<T> future, long timeout, TimeUnit unit) {
     final var deadline = System.currentTimeMillis() + unit.toMillis(timeout);
@@ -119,29 +116,12 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    * Runs a executable in the current execution root (the execroot might not
    * exist yet) and returns stdout or fails the test.
    */
-  private static Path getTestBazelPath() {
-    final var bitBazelBinary = System.getenv("BIT_BAZEL_BINARY");
-    assertThat(bitBazelBinary).isNotNull();
-
-    final var bazel = Path.of(normalizePath(bitBazelBinary));
-    assertPathExists(bazel);
-
-    return bazel.toAbsolutePath();
-  }
-
-  /**
-   * Runs bazel info to get the current execution root. The execroot might not
-   * exist yet.
-   */
-  protected BazelInfo getTestBazelInfo() throws ExecutionException, InterruptedException {
-    if (myLazyBazelInfo != null) {
-      return myLazyBazelInfo;
-    }
+  private static String exec(String ... args) throws ExecutionException, InterruptedException {
     final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
     final var result = ExternalTask.builder(getTestProjectRoot())
-        .args(myBazelBinary.toString(), "info")
+        .args(args)
         .stderr(errStream)
         .stdout(outStream)
         .build()
@@ -155,8 +135,26 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     return outStream.toString();
   }
 
-    myLazyBazelInfo = BazelInfo.parse(outStream.toString());
-    return myLazyBazelInfo;
+  /**
+   * Gets the path to the bazelisk binary and performs some basic checks.
+   * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
+   * environment variable.
+   *
+   * To avoid argument passing issues on Windows caused by sh_binary a patch to
+   * rules_bazel_integration test is applied to resolve to the actual bazelisk
+   * binary (see https://github.com/bazelbuild/bazel/issues/17487).
+   */
+  private static Path getTestBazelPath() throws ExecutionException, InterruptedException {
+    final var bitBazelWrapper = System.getenv("BIT_BAZEL_BINARY");
+    assertThat(bitBazelWrapper).isNotNull();
+
+    final var bitBazeliskBinary = exec(normalizePath(bitBazelWrapper));
+    assertThat(bitBazeliskBinary).isNotEmpty();
+
+    final var bazel = Path.of(bitBazeliskBinary.trim());
+    assertPathExists(bazel);
+
+    return bazel.toAbsolutePath();
   }
 
   @Override
@@ -166,7 +164,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     final var bazelBinary = getTestBazelPath();
     BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
 
-    myBazelInfo = getTestBazelInfo(bazelBinary);
+    myBazelInfo = BazelInfo.parse(exec(bazelBinary.toString(), "info"));
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);

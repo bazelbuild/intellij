@@ -52,7 +52,7 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(getTestBazelInfo(), "proto"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "proto"));
   }
 
   private void checkProto() {

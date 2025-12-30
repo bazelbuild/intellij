@@ -49,8 +49,8 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(getTestBazelInfo(), "lib/strip_absolut/_virtual_includes"));
-    roots.add(AllowedVfsRoot.bazelBinRecursive(getTestBazelInfo(), "external/clwb_virtual_includes_external+"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
+    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "external/clwb_virtual_includes_external+"));
   }
 
   private void checkIncludes() {
