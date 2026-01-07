@@ -12,10 +12,6 @@ def scala_info_in_target(target):
     for provider in dir(target):
         if "ScalaInfo" in str(provider):
             return True
-    # Fallback: check if any provider's type name contains "ScalaInfo"
-    for p in target:
-        if "ScalaInfo" in str(type(p)):
-            return True
     return False
 # TEMPLATE-IGNORE-END
 
