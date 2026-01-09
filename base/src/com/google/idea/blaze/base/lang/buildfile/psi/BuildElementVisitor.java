@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ public class BuildElementVisitor extends PsiElementVisitor {
   }
 
   public void visitLoadStatement(LoadStatement node) {
+    visitElement(node);
+  }
+
+  public void visitIncludeStatement(IncludeStatement node) {
     visitElement(node);
   }
 
