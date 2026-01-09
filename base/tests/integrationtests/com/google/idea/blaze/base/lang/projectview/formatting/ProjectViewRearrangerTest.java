@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,18 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
-import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Collection;
 
 /** Tests rearranging of project view files */
 @RunWith(JUnit4.class)
 public class ProjectViewRearrangerTest extends ProjectViewIntegrationTestCase {
 
   private PsiFile setInput(String... fileContents) {
-    return testFixture.configureByText(".blazeproject", Joiner.on("\n").join(fileContents));
+    return testFixture.configureByText(".bazelproject", Joiner.on("\n").join(fileContents));
   }
 
   private void assertResult(String... resultingFileContents) {
