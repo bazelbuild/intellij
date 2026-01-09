@@ -34,7 +34,7 @@ single_version_override(
 )
 
 # custom rules kotlin version, patches are required
-bazel_dep(name = "rules_kotlin", version = "2.2.1")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
 single_version_override(
     module_name = "rules_kotlin",
     patch_strip = 1,
