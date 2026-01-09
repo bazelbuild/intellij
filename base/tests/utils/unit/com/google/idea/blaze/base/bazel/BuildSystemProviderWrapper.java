@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BuildEventStreamProvider;
@@ -36,12 +35,13 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A subclass of {@link BuildSystemProvider} that allows functionality to be overridden in tests.
@@ -179,6 +179,9 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   public ImmutableList<String> possibleModuleFileNames() {
     return inner().possibleModuleFileNames();
   }
+
+  @Override
+  public ImmutableList<String> possibleModuleFileNameWildcards() { return inner().possibleModuleFileNameWildcards(); }
 
   /**
    * Sets a boolean value to toggle the outcome of getBlazeInfo() to be returned by {@code
