@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,12 @@ package com.google.idea.blaze.base.lang.buildfile.psi;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument.Keyword;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.blaze.base.lang.buildfile.references.AttributeSpecificStringLiteralReferenceProvider;
-import com.google.idea.blaze.base.lang.buildfile.references.ExternalWorkspaceReferenceFragment;
-import com.google.idea.blaze.base.lang.buildfile.references.LabelReference;
-import com.google.idea.blaze.base.lang.buildfile.references.LoadedSymbolReference;
-import com.google.idea.blaze.base.lang.buildfile.references.PackageReferenceFragment;
-import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
+import com.google.idea.blaze.base.lang.buildfile.references.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+
 import javax.annotation.Nullable;
 
 /** PSI node for string literal expressions */
@@ -157,6 +153,10 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
       }
       return new LoadedSymbolReference(this, importReference);
     }
+    IncludeStatement include = getIncludeStatementParent();
+    if (include != null && this.equals(include.getImportPsiElement())) {
+      return new IncludeReference(this, false);
+    }
     return new LabelReference(this, true);
   }
 
@@ -179,6 +179,12 @@ public class StringLiteral extends BuildElementImpl implements LiteralExpression
       parent = parent.getParent();
     }
     return parent instanceof LoadedSymbol ? (LoadStatement) parent.getParent() : null;
+  }
+
+  @Nullable
+  public IncludeStatement getIncludeStatementParent() {
+    PsiElement parent = getParent();
+    return parent instanceof IncludeStatement ? (IncludeStatement) parent : null;
   }
 
   @Override
