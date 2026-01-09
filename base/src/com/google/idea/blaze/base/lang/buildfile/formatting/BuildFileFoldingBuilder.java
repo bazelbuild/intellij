@@ -107,8 +107,25 @@ public class BuildFileFoldingBuilder implements FoldingBuilder {
   private static void foldLongStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
     boolean isMultiLine = node.textContains('\n');
     if (isMultiLine) {
-      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+      String placeholder = getStringPlaceholder(node);
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange(), null, placeholder));
     }
+  }
+
+  private static String getStringPlaceholder(ASTNode node) {
+    PsiElement psi = node.getPsi();
+    if (psi instanceof StringLiteral) {
+      StringLiteral str = (StringLiteral) psi;
+      QuoteType type = str.getQuoteType();
+      String contents = str.getStringContents();
+      if (contents.contains("\n")) {
+        int newlineIx = contents.indexOf('\n');
+        String firstLine = newlineIx == -1 ? contents : contents.substring(0, newlineIx);
+        return type.wrap(firstLine + "...");
+      }
+      return type.wrap("...");
+    }
+    return "...";
   }
 
   private static void foldSequentialComments(List<FoldingDescriptor> descriptors, ASTNode node) {
