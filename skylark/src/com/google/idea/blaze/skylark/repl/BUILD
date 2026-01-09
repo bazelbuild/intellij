@@ -3,7 +3,7 @@ load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 intellij_plugin_library(
     name = "repl",
     srcs = glob(["*.kt"]),
-    plugin_xmls = ["plugin.xml"],
+    plugin_xmls = ["library.xml"],
     visibility = ["//skylark:__subpackages__"],
     deps = [
         "//base",
