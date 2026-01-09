@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.lang.projectview;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
@@ -26,13 +24,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Tests for the project view file parser */
 @RunWith(JUnit4.class)
@@ -67,7 +68,7 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
   public void testIncludeScalarSections() {
     assertThat(
             parse(
-                "import java/com/google/work/.blazeproject",
+                "import java/com/google/work/.bazelproject",
                 "",
                 "workspace_type: intellij_plugin",
                 "",
@@ -88,13 +89,13 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
 
   @Test
   public void testUnrecognizedKeyword() {
-    parse("impart java/com/google/work/.blazeproject", "", "workspace_trype: intellij_plugin");
+    parse("impart java/com/google/work/.bazelproject", "", "workspace_trype: intellij_plugin");
 
     assertContainsErrors("Unrecognized keyword: impart", "Unrecognized keyword: workspace_trype");
   }
 
   private String parse(String... lines) {
-    PsiFile file = workspace.createPsiFile(new WorkspacePath(".blazeproject"), lines);
+    PsiFile file = workspace.createPsiFile(new WorkspacePath(".bazelproject"), lines);
     collectErrors(file);
     return treeToString(file);
   }
