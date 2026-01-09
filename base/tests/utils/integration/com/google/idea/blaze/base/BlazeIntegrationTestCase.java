@@ -49,11 +49,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -213,6 +215,13 @@ public abstract class BlazeIntegrationTestCase {
 
   private CodeInsightTestFixture createTestFixture() {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+
+    if (isLightTestCase()) {
+      TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+              factory.createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR, "test-project");
+      IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
+      return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
+    }
 
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
         factory.createFixtureBuilder("test-project");
