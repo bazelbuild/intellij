@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package com.google.idea.blaze.base.run.state;
-
-import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,6 +33,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import static com.google.common.truth.Truth.assertThat;
+
 /** Tests for {@link BlazeCommandRunConfigurationCommonState}. */
 @RunWith(JUnit4.class)
 public class BlazeCommandRunConfigurationCommonStateTest extends BlazeIntegrationTestCase {
@@ -45,9 +45,9 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeIntegratio
   private BlazeCommandRunConfigurationCommonState state;
 
   @Before
-  public void init() throws Throwable {
-    super.setUp();
-
+  public void init() {
+    // Note: super.setUp() is called automatically by JUnit since BlazeIntegrationTestCase.setUp()
+    // is also annotated with @Before. Do not call super.setUp() here explicitly.
     registerProjectService(BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 

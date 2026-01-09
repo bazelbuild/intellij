@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -218,7 +217,7 @@ public abstract class BlazeIntegrationTestCase {
 
     if (isLightTestCase()) {
       TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-              factory.createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR, "test-project");
+              factory.createLightFixtureBuilder("test-project");
       IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
       return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
     }
