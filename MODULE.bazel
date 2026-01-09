@@ -9,13 +9,11 @@ bazel_dep(name = "rules_jvm_external", version = "6.9")
 
 # temporary to bump version of the transitve dependency (drop wit Bazel 9 release)
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
-bazel_dep(name = "rules_android", version = "0.6.6")
-git_override(
+bazel_dep(name = "rules_android", version = "0.7.0")
+single_version_override(
     module_name = "rules_android",
-    commit = "a11ce9d817a9a66e4ff2074bbe5c2fa264733547",
     patch_strip = 1,
     patches = ["//third_party/android/patches:remove_sdk_check.patch"],
-    remote = "https://github.com/bazelbuild/rules_android.git",
 )
 
 # required for aspect tests
