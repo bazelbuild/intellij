@@ -22,6 +22,7 @@ filegroup(
 test_suite(
     name = "clwb_tests",
     tests = [
+        "//base:integration_tests",
         "//base:unit_tests",
         "//base:unit_tests_kt",
         "//clwb:headless_tests",
