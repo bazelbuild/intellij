@@ -15,6 +15,9 @@ test --zip_undeclared_test_outputs
 # Enabled by default in bazel 8
 common --incompatible_use_plus_in_repo_names
 
+# Required for nested bazel invocations in repo rules
+common --repo_env=BAZEL_REAL
+
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
