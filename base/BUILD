@@ -581,6 +581,9 @@ intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
     jvm_flags = [
+        # NOTE: options copied form intellij_integration_test rule, ideally this should be migrated to this rule but the
+        # overhead is probably to big.
+
         # disables the default bazel security manager, causes tests to fail on windows
         "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
         # fixes preferences not writable on mac
