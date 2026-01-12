@@ -169,3 +169,15 @@ intellij_platform.plugin(
     version = "253.30387.90",
 )
 use_repo(intellij_platform, "clion_2025_2", "clion_2025_3", "python_2025_2", "python_2025_3")
+
+bazel_source_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "bazel_source_jars")
+
+bazel_source_jars(
+    name = "bazel_jars",
+    jars = [
+        "//src/tools/execlog:parser_deploy.jar",
+        "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",
+    ],
+    sha256 = "3ced8a871476350b7843270b81aa1a7b7515382b9ee30393ad5babb407e3dd95",
+    version = "8.5.0",
+)
