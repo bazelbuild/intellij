@@ -30,6 +30,24 @@ def _compute_plugin_layout(prefix, targets):
 
     return mapping
 
+def _derive_test_class(class_name, test_directory, package = None):
+    """Derives the fully qualified test class name.
+
+    If the package name is not provided explicitly the package name is derived
+    from the current Bazel package.
+    """
+    if package:
+        return "%s.%s" % (package, class_name)
+
+    parts = native.package_name().split("/")
+
+    if test_directory not in parts:
+        fail("cannot derive test package name for:", class_name)
+
+    start = parts.index(test_directory)
+    return ".".join(parts[start + 1:] + [class_name])
+
 intellij_common = struct(
     compute_plugin_layout = _compute_plugin_layout,
+    derive_test_class = _derive_test_class,
 )
