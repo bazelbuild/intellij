@@ -27,9 +27,15 @@ def _bazel_impl(rctx):
         output = _BAZLE_REPO_DIR,
     )
 
+    # windows requires non-hermetic build to avoid long paths issues :(
+    if "windows" in rctx.os.name.lower():
+        build_cmd = [bazel, "build"]
+    else:
+        build_cmd = [bazel, "--output_user_root=%s" % rctx.path("output"), "build"]
+
     for target in rctx.attr.jars:
         result = rctx.execute(
-            [bazel, "--output_user_root=%s" % rctx.path("output"), "build", target],
+            build_cmd + [target],
             working_directory = _BAZLE_REPO_DIR,
         )
 
