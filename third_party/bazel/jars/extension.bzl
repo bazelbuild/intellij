@@ -1,12 +1,12 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
 _BAZEL_URL_TEMPLATE = "https://github.com/bazelbuild/bazel/archive/refs/tags/{version}.zip"
-_BAZLE_REPO_DIR = "repo"
+_BAZEL_REPO_DIR = "repo"
 
 def _resolve_target_artifact(rctx, target):
     """Finds the generated artifact in the local bazel-bin directory."""
     return rctx.path(paths.join(
-        _BAZLE_REPO_DIR,
+        _BAZEL_REPO_DIR,
         "bazel-bin",
         target.removeprefix("//").replace(":", "/"),
     ))
@@ -24,7 +24,7 @@ def _bazel_impl(rctx):
         _BAZEL_URL_TEMPLATE.format(version = rctx.attr.version),
         strip_prefix = "bazel-%s" % rctx.attr.version,
         sha256 = rctx.attr.sha256,
-        output = _BAZLE_REPO_DIR,
+        output = _BAZEL_REPO_DIR,
     )
 
     # windows requires non-hermetic build to avoid long paths issues :(
@@ -36,7 +36,7 @@ def _bazel_impl(rctx):
     for target in rctx.attr.jars:
         result = rctx.execute(
             build_cmd + [target],
-            working_directory = _BAZLE_REPO_DIR,
+            working_directory = _BAZEL_REPO_DIR,
         )
 
         if result.return_code != 0:
