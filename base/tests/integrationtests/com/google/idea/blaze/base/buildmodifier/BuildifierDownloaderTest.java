@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestModeFlags;
@@ -60,6 +61,8 @@ public class BuildifierDownloaderTest extends LightPlatformTestCase {
   }
 
   private void doTest(OS os, CpuArch arch) {
+    assumeTrue(OS.CURRENT == OS.Linux);
+
     TestModeFlags.set(BuildifierDownloader.OS_KEY, os);
     TestModeFlags.set(BuildifierDownloader.CPU_ARCH_KEY, arch);
 
