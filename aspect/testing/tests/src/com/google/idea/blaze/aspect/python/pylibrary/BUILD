@@ -11,6 +11,7 @@ py_library(
     name = "simple",
     srcs = ["simple.py"],
     srcs_version = "PY3",
+    strict_deps = False,
 )
 
 intellij_aspect_test_fixture(
