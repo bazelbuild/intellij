@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -54,7 +55,8 @@ class RunJarService {
   @Throws(IOException::class)
   private fun findJavaExecutable(): Path {
     val home = System.getProperty("java.home") ?: throw IOException("java.home not found")
-    val java = Path.of(home, "bin", "java")
+    val extension = if (OS.CURRENT == OS.Windows) ".exe" else ""
+    val java = Path.of(home, "bin", "java$extension")
 
     if (!Files.exists(java)) throw IOException("java executable not found: $java")
     if (!Files.isExecutable(java)) throw IOException("java executable is not executable: $java")
