@@ -747,9 +747,10 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     ide_info_files = []
     sources = sources_from_target(ctx)
-    # Detect Scala targets via ScalaInfo provider rather than rule name prefix.
-    # This allows custom rules that forward ScalaInfo to be treated correctly.
-    is_scala = scala_info_in_target(target)
+    # Detect Scala targets via ScalaInfo provider, with fallback to rule name prefix
+    # for backwards compatibility. This allows custom rules that forward ScalaInfo
+    # to be treated correctly while still supporting standard scala_* rules.
+    is_scala = scala_info_in_target(target) or ctx.rule.kind.startswith("scala")
     jars = [library_artifact(output, is_scala) for output in java_outputs]
     class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
     output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
