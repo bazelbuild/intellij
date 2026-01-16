@@ -10,7 +10,7 @@ query --deleted_packages=clwb/tests/projects/clang_cl,clwb/tests/projects/clang_
 common --noincompatible_disallow_empty_glob
 
 # Required for nested bazel invocations in repo rules
-common --repo_env=BAZEL_REAL --repo_env=BAZEL_VC --repo_env=BAZEL_SH
+common --repo_env=BAZEL_REAL
 
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks

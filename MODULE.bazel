@@ -170,14 +170,23 @@ intellij_platform.plugin(
 )
 use_repo(intellij_platform, "clion_2025_2", "clion_2025_3", "python_2025_2", "python_2025_3")
 
-bazel_source_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "bazel_source_jars")
+# download bazel sources as a http_file sepearatly so that they can be bumped by the ranovate bot
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
-bazel_source_jars(
+http_file(
+    name = "bazel_srcs",
+    sha256 = "d57b2a9362147784b579fa5f418fa2f9322a476ef89ed4251e9061a2858c4a79",
+    url = "https://github.com/bazelbuild/bazel/archive/refs/tags/9.0.0rc5.tar.gz",
+)
+
+# build tools deploy jars for the tools required by the plugin
+bazel_build_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "bazel_build_jars")
+
+bazel_build_jars(
     name = "bazel_jars",
+    srcs = "@bazel_srcs//file:downloaded",
     jars = [
         "//src/tools/execlog:parser_deploy.jar",
         "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",
     ],
-    sha256 = "3ced8a871476350b7843270b81aa1a7b7515382b9ee30393ad5babb407e3dd95",
-    version = "8.5.0",
 )
