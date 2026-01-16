@@ -1,12 +1,9 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
-_BAZEL_URL_TEMPLATE = "https://github.com/bazelbuild/bazel/archive/refs/tags/{version}.zip"
-_BAZEL_REPO_DIR = "repo"
-
-def _resolve_target_artifact(rctx, target):
+def _resolve_target_artifact(rctx, target, source_dir):
     """Finds the generated artifact in the local bazel-bin directory."""
     return rctx.path(paths.join(
-        _BAZEL_REPO_DIR,
+        source_dir,
         "bazel-bin",
         target.removeprefix("//").replace(":", "/"),
     ))
@@ -15,17 +12,13 @@ def _resolve_target_jar_name(target):
     """Derives the jar name from the target name."""
     return target.split(":")[1]
 
-def _bazel_impl(rctx):
+def _bazel_build_jars_impl(rctx):
     bazel = rctx.getenv("BAZEL_REAL")
     if not bazel:
         fail("BAZEL_REAL environment variable is not set, are you using bazelisk?")
 
-    rctx.download_and_extract(
-        _BAZEL_URL_TEMPLATE.format(version = rctx.attr.version),
-        strip_prefix = "bazel-%s" % rctx.attr.version,
-        sha256 = rctx.attr.sha256,
-        output = _BAZEL_REPO_DIR,
-    )
+    rctx.extract(rctx.path(rctx.attr.srcs), type = "tar.gz")
+    source_dir = rctx.execute(["ls"]).stdout.strip()
 
     # windows requires non-hermetic build to avoid long paths issues :(
     if "windows" in rctx.os.name.lower():
@@ -34,24 +27,21 @@ def _bazel_impl(rctx):
         build_cmd = [bazel, "--output_user_root=%s" % rctx.path("output"), "build"]
 
     for target in rctx.attr.jars:
-        result = rctx.execute(
-            build_cmd + [target],
-            working_directory = _BAZEL_REPO_DIR,
-        )
+        rctx.report_progress("building: %s" % target)
+        result = rctx.execute(build_cmd + [target], working_directory = source_dir)
 
         if result.return_code != 0:
             fail("could not build %s: %s" % (target, result.stderr))
 
-        rctx.symlink(_resolve_target_artifact(rctx, target), _resolve_target_jar_name(target))
+        rctx.symlink(_resolve_target_artifact(rctx, target, source_dir), _resolve_target_jar_name(target))
 
     files = ", ".join(["'%s'" % _resolve_target_jar_name(target) for target in rctx.attr.jars])
     rctx.file("BUILD", content = "exports_files([%s])" % files)
 
-bazel_source_jars = repository_rule(
-    implementation = _bazel_impl,
+bazel_build_jars = repository_rule(
+    implementation = _bazel_build_jars_impl,
     attrs = {
-        "version": attr.string(mandatory = True),
-        "sha256": attr.string(mandatory = True),
+        "srcs": attr.label(mandatory = True),
         "jars": attr.string_list(mandatory = True),
     },
 )
