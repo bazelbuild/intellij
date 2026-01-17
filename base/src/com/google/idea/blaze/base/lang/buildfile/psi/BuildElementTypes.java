@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public interface BuildElementTypes {
       new BuildElementType("aug_assign", AugmentedAssignmentStatement.class);
   BuildElementType FLOW_STATEMENT = new BuildElementType("flow", FlowStatement.class);
   BuildElementType LOAD_STATEMENT = new BuildElementType("load", LoadStatement.class);
+  BuildElementType INCLUDE_STATEMENT = new BuildElementType("include", IncludeStatement.class);
   BuildElementType FUNCTION_STATEMENT =
       new BuildElementType("function_def", FunctionStatement.class);
   BuildElementType FOR_STATEMENT = new BuildElementType("for", ForStatement.class);
@@ -110,6 +111,7 @@ public interface BuildElementTypes {
           ASSIGNMENT_STATEMENT,
           FLOW_STATEMENT,
           LOAD_STATEMENT,
+          INCLUDE_STATEMENT,
           FUNCTION_STATEMENT,
           FOR_STATEMENT,
           IF_STATEMENT);

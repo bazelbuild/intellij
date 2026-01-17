@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.qsync.settings.QuerySyncSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -54,21 +53,16 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.ui.UIUtil;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.io.*;
 
 /** Base test class for blaze integration tests. {@link UsefulTestCase} */
 public abstract class BlazeIntegrationTestCase {
@@ -155,7 +149,6 @@ public abstract class BlazeIntegrationTestCase {
           }
         });
 
-    registerApplicationService(QuerySyncSettings.class, new QuerySyncSettings());
     registerProjectService(TasksToolWindowService.class, new NoopTasksToolWindowService());
     if (isLightTestCase()) {
       registerApplicationService(
@@ -221,13 +214,6 @@ public abstract class BlazeIntegrationTestCase {
   private CodeInsightTestFixture createTestFixture() {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
 
-    if (isLightTestCase()) {
-      TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8, "test-project");
-      IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
-      return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
-    }
-
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
         factory.createFixtureBuilder("test-project");
     return factory.createCodeInsightFixture(fixtureBuilder.getFixture());
@@ -264,17 +250,8 @@ public abstract class BlazeIntegrationTestCase {
     ServiceHelper.registerApplicationService(key, implementation, getTestRootDisposable());
   }
 
-  protected <T> void registerApplicationComponent(Class<T> key, T implementation) {
-    ServiceHelper.registerApplicationComponent(key, implementation, getTestRootDisposable());
-  }
-
   protected <T> void registerProjectService(Class<T> key, T implementation) {
     ServiceHelper.registerProjectService(
-        getProject(), key, implementation, getTestRootDisposable());
-  }
-
-  public <T> void registerProjectComponent(Class<T> key, T implementation) {
-    ServiceHelper.registerProjectComponent(
         getProject(), key, implementation, getTestRootDisposable());
   }
 
