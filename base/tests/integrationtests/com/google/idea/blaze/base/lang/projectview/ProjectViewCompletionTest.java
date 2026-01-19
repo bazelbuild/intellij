@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.lang.projectview;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.projectview.completion.ProjectViewKeywordCompletionContributor;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -26,19 +24,22 @@ import com.google.idea.blaze.base.projectview.section.sections.Sections;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFile;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Tests auto-complete in project view files */
 @RunWith(JUnit4.class)
 public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
 
   private PsiFile setInput(String... fileContents) {
-    return testFixture.configureByText(".blazeproject", Joiner.on("\n").join(fileContents));
+    return testFixture.configureByText(".bazelproject", Joiner.on("\n").join(fileContents));
   }
 
   private void assertResult(String... resultingFileContents) {
@@ -162,11 +163,11 @@ public class ProjectViewCompletionTest extends ProjectViewIntegrationTestCase {
   public void testNonDirectoriesIncludedForSectionsAcceptingFiles() {
     setInput("import java<caret>");
 
-    workspace.createFile(new WorkspacePath("java/.blazeproject"));
+    workspace.createFile(new WorkspacePath("java/.bazelproject"));
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
     assertThat(completionItems).isNull();
-    assertResult("import java/.blazeproject<caret>");
+    assertResult("import java/.bazelproject<caret>");
   }
 
   @Test

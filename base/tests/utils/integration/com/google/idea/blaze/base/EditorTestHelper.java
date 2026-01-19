@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.sdkcompat.testFramework.EditorTestHelperCompat;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -25,22 +25,20 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.EditorTestUtil.CaretAndSelectionState;
-import com.intellij.testFramework.EditorTestUtil.CaretInfo;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import java.util.Arrays;
+
 import javax.annotation.Nullable;
+import java.util.Arrays;
 
 /** Helper methods for editor tests. */
-public class EditorTestHelper {
+public class EditorTestHelper extends EditorTestHelperCompat {
   private final Project project;
   private final CodeInsightTestFixture testFixture;
 
@@ -120,20 +118,6 @@ public class EditorTestHelper {
   public final void pressButton(final String action) {
     CommandProcessor.getInstance()
         .executeCommand(project, () -> testFixture.performEditorAction(action), "", null);
-  }
-
-  public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) throws Throwable {
-    final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
-    EdtTestUtil.runInEdtAndWait(
-        () ->
-            EditorTestUtil.setCaretsAndSelection(
-                editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
-  }
-
-  public void assertCaretPosition(Editor editor, int lineNumber, int columnNumber) {
-    CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
-    EditorTestUtil.verifyCaretAndSelectionState(
-        editor, new CaretAndSelectionState(ImmutableList.of(info), null));
   }
 
   public void replaceStringContents(StringLiteral string, String newStringContents) {

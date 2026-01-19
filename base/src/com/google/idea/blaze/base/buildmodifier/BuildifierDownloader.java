@@ -56,7 +56,7 @@ public final class BuildifierDownloader {
   /**
    * Hardcoded buildifier version, update it to bump the version.
    */
-  private static final String BUILDIFIER_VERSION = "7.1.2";
+  private static final String BUILDIFIER_VERSION = "8.2.1";
 
   private static final Path DOWNLOAD_PATH = PathManager.getPluginsDir().resolve("buildifier");
   private static final String DOWNLOAD_URL = "https://github.com/bazelbuild/buildtools/releases/download";

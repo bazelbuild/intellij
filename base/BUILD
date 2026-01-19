@@ -580,6 +580,21 @@ intellij_plugin(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    jvm_flags = [
+        # NOTE: options copied from intellij_integration_test rule, ideally this should be migrated to this rule but the
+        # overhead is probably too big.
+
+        # disables the default bazel security manager, causes tests to fail on windows
+        "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
+        # fixes preferences not writable on mac
+        "-Djava.util.prefs.PreferencesFactory=com.google.idea.testing.headless.InMemoryPreferencesFactory",
+        # suppressed plugin sets for classic, radler is currently disabled for tests
+        "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
+        "-Didea.suppressed.plugins.set.selector=classic",
+        # enable detailed logging in tests to diagnose issues in CI
+        "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
+        "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
+    ],
     plugins = [":com.google.idea.blaze.base"],
     required_plugins = "com.google.idea.blaze.base",
     tags = ["noci:studio-win"],
@@ -603,6 +618,7 @@ intellij_integration_test_suite(
         "//shared/java/com/google/idea/blaze/common",
         "//shared/java/com/google/idea/blaze/common/artifact",
         "//shared/javatests/com/google/idea/blaze/common:test_utils",
+        "//testing/src/com/google/idea/testing/headless",
         "//third_party/java/auto_value",
         "//third_party/java/junit",
         "@com_google_guava_guava//jar",

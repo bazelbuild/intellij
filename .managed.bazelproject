@@ -9,6 +9,7 @@ directories:
   -testing/test_deps/projects
 
 targets:
+  //:clwb_tests
   //clwb:all
   //clwb:clwb_bazel_dev
   //aspect/testing/...

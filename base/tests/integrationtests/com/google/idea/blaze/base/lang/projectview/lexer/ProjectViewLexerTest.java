@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.google.idea.blaze.base.lang.projectview.lexer;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.lang.projectview.ProjectViewIntegrationTestCase;
 import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewLexerBase.Token;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static com.google.common.truth.Truth.assertThat;
 
 /** Tests for the project view file lexer */
 @RunWith(JUnit4.class)
@@ -56,7 +56,7 @@ public class ProjectViewLexerTest extends ProjectViewIntegrationTestCase {
   public void testIncludeScalarSections() {
     String result =
         tokenize(
-            "import java/com/google/work/.blazeproject",
+            "import java/com/google/work/.bazelproject",
             "",
             "workspace_type: intellij_plugin",
             "",
@@ -82,7 +82,7 @@ public class ProjectViewLexerTest extends ProjectViewIntegrationTestCase {
   public void testUnrecognizedKeyword() {
     String result =
         tokenize(
-            "impart java/com/google/work/.blazeproject", "", "workspace_trype: intellij_plugin");
+            "impart java/com/google/work/.bazelproject", "", "workspace_trype: intellij_plugin");
 
     assertThat(result)
         .isEqualTo(Joiner.on(" ").join("identifier identifier", "identifier : identifier"));
