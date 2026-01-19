@@ -21,6 +21,7 @@ load(
     "expand_make_variables",
 )
 load(":python_info.bzl", "get_py_info", "py_info_in_target")
+load(":scala_info.bzl", "scala_info_in_target")
 
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
@@ -173,13 +174,19 @@ def get_source_jars(output):
         return [output.source_jar]
     return []
 
-def library_artifact(java_output, rule_kind = None):
-    """Creates a LibraryArtifact representing a given java_output."""
+def library_artifact(java_output, is_scala = False):
+    """Creates a LibraryArtifact representing a given java_output.
+
+    Args:
+        java_output: The Java output to create a library artifact from.
+        is_scala: If True, omit interface_jar (Scala targets don't use ijar).
+                  This is detected via ScalaInfo provider rather than rule name.
+    """
     if java_output == None or java_output.class_jar == None:
         return None
     src_jars = get_source_jars(java_output)
 
-    if rule_kind != None and rule_kind.startswith("scala"):
+    if is_scala:
         interface_jar = None
     else:
         interface_jar = artifact_location(java_output.ijar)
@@ -740,7 +747,11 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     ide_info_files = []
     sources = sources_from_target(ctx)
-    jars = [library_artifact(output, ctx.rule.kind) for output in java_outputs]
+    # Detect Scala targets via ScalaInfo provider, with fallback to rule name prefix
+    # for backwards compatibility. This allows custom rules that forward ScalaInfo
+    # to be treated correctly while still supporting standard scala_* rules.
+    is_scala = scala_info_in_target(target) or ctx.rule.kind.startswith("scala")
+    jars = [library_artifact(output, is_scala) for output in java_outputs]
     class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
     output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
     resolve_files = output_jars

@@ -32,6 +32,8 @@ private const val TEMPLATE_JAVA = "java_info.template.bzl"
 private const val REALIZED_JAVA = "java_info.bzl"
 private const val TEMPLATE_PYTHON = "python_info.template.bzl"
 private const val REALIZED_PYTHON = "python_info.bzl"
+private const val TEMPLATE_SCALA = "scala_info.template.bzl"
+private const val REALIZED_SCALA = "scala_info.bzl"
 private const val TEMPLATE_CODE_GENERATOR = "code_generator_info.template.bzl"
 private const val REALIZED_CODE_GENERATOR = "code_generator_info.bzl"
 private const val TEMPLATE_INTELLIJ_INFO = "intellij_info.template.bzl"
@@ -90,6 +92,13 @@ class AspectTemplateWriter : AspectWriter {
     )
     TemplateWriter.evaluate(
       dst,
+      REALIZED_SCALA,
+      ASPECT_TEMPLATE_DIRECTORY,
+      TEMPLATE_SCALA,
+      templateOptions
+    )
+    TemplateWriter.evaluate(
+      dst,
       REALIZED_INTELLIJ_INFO,
       ASPECT_TEMPLATE_DIRECTORY,
       TEMPLATE_INTELLIJ_INFO,
@@ -111,11 +120,15 @@ class AspectTemplateWriter : AspectWriter {
     val isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_python")))
 
+    val isScalaEnabled = activeLanguages.contains(LanguageClass.SCALA) &&
+        (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_scala")))
+
     return ImmutableMap.of(
       "bazel8OrAbove", if (isAtLeastBazel8) "true" else "false",
       "bazel9OrAbove", if (isAtLeastBazel9) "true" else "false",
       "isJavaEnabled", if (isJavaEnabled) "true" else "false",
-      "isPythonEnabled", if (isPythonEnabled) "true" else "false"
+      "isPythonEnabled", if (isPythonEnabled) "true" else "false",
+      "isScalaEnabled", if (isScalaEnabled) "true" else "false"
     )
   }
 
