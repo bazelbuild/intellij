@@ -1,3 +1,9 @@
+v2026.01.19
+===========
+* Updated plugin description #8099
+* Updated UI for the run before build step #8070
+* Fix none type issue in xcode cquery #8111
+
 v2025.12.16
 ===========
 * Support for cxxopts and conlyopts #8068
