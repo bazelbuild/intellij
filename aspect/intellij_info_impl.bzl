@@ -334,7 +334,7 @@ def collect_cc_compilation_context(ctx, target):
 
     compilation_context = target[CcInfoCompat].compilation_context
 
-    # collect not propageted attributes before potentially mergeing with implementaion deps
+    # collect non-propagated attributes before potentially merging with implementation deps
     local_defines = compilation_context.local_defines.to_list()
 
     # merge current compilation context with context of implementation dependencies
