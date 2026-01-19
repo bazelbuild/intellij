@@ -55,7 +55,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
 
     // compilation context
     final var compilationCtx = target.getCIdeInfo().getCompilationContext();
-    assertThat(compilationCtx.getDefinesList()).containsExactly("VERSION2");
+    assertThat(compilationCtx.getDefinesList()).containsExactly("VERSION2", "LOCAL_DEFINE");
     assertThat(compilationCtx.getSystemIncludesList()).contains(testRelative("foo/bar"));
     assertThat(compilationCtx.getQuoteIncludesList()).contains(".");
     assertThat(relativePathsForArtifacts(compilationCtx.getHeadersList()))
