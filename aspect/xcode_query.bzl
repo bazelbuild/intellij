@@ -11,7 +11,8 @@ def hasattrs(obj, attrs):
     return all_items_are_true([hasattr(obj, attr) for attr in attrs])
 
 def format(target):
-    all_providers = providers(target)
+    all_providers = providers(target) or []
+
     for key in all_providers:
         provider = all_providers[key]
 
