@@ -70,7 +70,7 @@ private suspend fun findTargets(context: ConfigurationContext): Collection<Targe
     context.project,
     virtualFile.toNioPath().toFile(),
     Optional.of(RuleType.TEST),
-  )?.await() ?: emptyList()
+  ).await()
 }
 
 /**
