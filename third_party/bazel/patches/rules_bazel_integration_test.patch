@@ -18,7 +18,7 @@ index b60dab8..26dbcc1 100755
  # Export environment variables so that test runner does not need to parse args.
  export BIT_BAZEL_BINARY="${bazel}"
  export BIT_WORKSPACE_DIR="${workspace_dir_path}"
-+export BAZELISK_HOME="${TEST_SRCDIR}"
++export BAZELISK_HOME="${TEST_TMPDIR}"
 
  # Make sure that we have a TEST_TMPDIR.
  if [[ -z "${TEST_TMPDIR:-}" ]]; then

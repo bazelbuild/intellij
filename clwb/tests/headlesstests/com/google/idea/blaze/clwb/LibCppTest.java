@@ -48,17 +48,12 @@ public class LibCppTest extends ClwbHeadlessTestCase {
     final var builder = super.projectViewText(version);
 
     // set the compiler to clang, only required for linux
-    if (version.isAtLeast(8, 0, 0)) {
-      builder.addBuildFlag(
-          "--repo_env=CC=/usr/bin/clang",
-          "--repo_env=CXX=/usr/bin/clang"
-      );
-    } else {
-      builder.addBuildFlag(
-          "--action_env=CC=/usr/bin/clang",
-          "--action_env=CXX=/usr/bin/clang"
-      );
-    }
+    builder.addBuildFlag(
+        "--repo_env=CC=/usr/bin/clang",
+        "--repo_env=CXX=/usr/bin/clang",
+        "--action_env=CC=/usr/bin/clang",
+        "--action_env=CXX=/usr/bin/clang"
+    );
 
     return builder.addBuildFlag(
         // use libc++ instead of libstdc++
