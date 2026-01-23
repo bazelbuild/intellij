@@ -96,6 +96,11 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2026.1",
+    values = {"define": "ij_product=intellij-2026.1"},
+)
+
+config_setting(
     name = "intellij-2025.1-mac",
     values = {
         "define": "ij_product=intellij-2025.1",
@@ -120,6 +125,14 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2026.1-mac",
+    values = {
+        "define": "ij_product=intellij-2026.1",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2025.1",
     values = {"define": "ij_product=intellij-ue-2025.1"},
 )
@@ -132,6 +145,11 @@ config_setting(
 config_setting(
     name = "intellij-ue-2025.3",
     values = {"define": "ij_product=intellij-ue-2025.3"},
+)
+
+config_setting(
+    name = "intellij-ue-2026.1",
+    values = {"define": "ij_product=intellij-ue-2026.1"},
 )
 
 config_setting(
@@ -154,6 +172,14 @@ config_setting(
     name = "intellij-ue-2025.3-mac",
     values = {
         "define": "ij_product=intellij-ue-2025.3",
+        "cpu": "darwin_x86_64",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2026.1-mac",
+    values = {
+        "define": "ij_product=intellij-ue-2026.1",
         "cpu": "darwin_x86_64",
     },
 )
@@ -201,6 +227,7 @@ java_library(
 java_library(
     exports = [
         "//third_party/java/truth",
+        "//third_party/test_framework:test_framework_for_test",
         "@bytebuddy//jar",
         "@bytebuddy_agent//jar",
         "@mockito//jar",
