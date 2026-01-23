@@ -44,9 +44,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.guava.asListenableFuture
+import kotlinx.coroutines.future.asCompletableFuture
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.Future
 
 private const val DEFAULT_OUTPUT_GROUP_NAME = "default"
 
@@ -63,7 +64,7 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
       requiredFlags: List<String>,
       overridableFlags: List<String>,
       target: Label,
-    ): ListenableFuture<Path> = project.service<BazelBuildService>().buildForRunConfig(
+    ): Future<Path> = project.service<BazelBuildService>().buildForRunConfig(
       configuration,
       invocationContext,
       requiredFlags,
@@ -89,7 +90,7 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
     requiredFlags: List<String>,
     overridableFlags: List<String>,
     target: Label,
-  ): ListenableFuture<Path> {
+  ): Future<Path> {
     val handlerState = configuration.handler.state.asSafely<BlazeCommandRunConfigurationCommonState>()
 
     val handlerRequiredFlags = handlerState
@@ -110,7 +111,7 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
       )
 
       findExecutable(ctx, output, target)
-    }.asListenableFuture()
+    }.asCompletableFuture()
   }
 }
 
