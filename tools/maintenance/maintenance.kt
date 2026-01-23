@@ -29,11 +29,12 @@ import javax.xml.parsers.DocumentBuilderFactory
 fun main(args: Array<String>) { 
     val out = Paths.get("${args[0]}.out")
     Files.copy(Paths.get(args[0]), out, StandardCopyOption.REPLACE_EXISTING)
-
+    bumpPlugins("261", out)
     bumpPlugins("253", out)
     bumpPlugins("252", out)
     bumpRelease("2025.2", "252", out)
     bumpRelease("2025.3", "253", out)
+    bumpEap("261", out)
     // bumpMavenPackages("junit:junit", "JUNIT", out)
 }
 
