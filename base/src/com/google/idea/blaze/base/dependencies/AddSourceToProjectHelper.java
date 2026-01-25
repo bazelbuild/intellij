@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.dependencies;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -61,8 +60,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -71,6 +68,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.swing.event.HyperlinkEvent;
+import org.jetbrains.annotations.NotNull;
 
 class AddSourceToProjectHelper {
 
@@ -338,9 +336,8 @@ class AddSourceToProjectHelper {
     return Futures.transform(
         SourceToTargetHelper.findTargetsBuildingSourceFile(
             context.project, context.workspacePath.relativePath()),
-        (Function<List<TargetInfo>, List<TargetInfo>>)
-            (List<TargetInfo> result) ->
-                result == null || sourceInProjectTargets(context, fromTargetInfo(result))
+            (result) ->
+                result.isEmpty() || sourceInProjectTargets(context, fromTargetInfo(result))
                     ? ImmutableList.of()
                     : result,
         MoreExecutors.directExecutor());
