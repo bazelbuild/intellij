@@ -26,7 +26,7 @@ local_repository(
 )
 
 # custom rules_bazel_integration_test version, patches are required until we write our own version of these rules :c
-bazel_dep(name = "rules_bazel_integration_test", version = "0.35.0")
+bazel_dep(name = "rules_bazel_integration_test", version = "0.36.0")
 single_version_override(
     module_name = "rules_bazel_integration_test",
     patch_strip = 1,
