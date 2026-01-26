@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   @Override
+  @NotNull
   public Future<@NotNull Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
     FilteredTargetMap targetMap =
@@ -52,7 +53,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
     if (targetMap == null) {
       return Futures.immediateFuture(ImmutableList.of());
     }
-      ImmutableSortedSet<TargetInfo> targets =
+    ImmutableSortedSet<TargetInfo> targets =
         targetMap.targetsForSourceFiles(sourceFiles).stream()
             .map(TargetIdeInfo::toTargetInfo)
             .filter(target -> ruleType.isEmpty() || target.getRuleType().equals(ruleType.get()))

@@ -24,7 +24,8 @@ import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /** Finds information about targets matching a given label. */
 public interface TargetFinder {
@@ -38,7 +39,8 @@ public interface TargetFinder {
    *
    * <p>Future returns null if this no non-null result was found.
    */
-  static ListenableFuture<TargetInfo> findTargetInfoFuture(Project project, Label label) {
+  @NotNull
+  static ListenableFuture<@Nullable TargetInfo> findTargetInfoFuture(Project project, Label label) {
     Iterable<Future<TargetInfo>> futures =
         Iterables.transform(
             Arrays.asList(EP_NAME.getExtensions()), f -> f.findTarget(project, label));
