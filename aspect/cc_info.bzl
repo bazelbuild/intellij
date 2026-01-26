@@ -10,18 +10,17 @@
 load("@rules_cc//cc:defs.bzl", "CcInfo", "cc_common")
 
 CC_USE_GET_TOOL_FOR_ACTION = True
-# TEMPLATE-IGNORE-END
 
 CcInfoCompat = CcInfo
-
-# TEMPLATE-IGNORE-BEGIN
 cc_common_compat = cc_common
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
 ## #if( $isCcEnabled == "true")
+##CcInfoCompat = CcInfo
 ##cc_common_compat = cc_common
 ## #else
+##CcInfoCompat = None
 ##cc_common_compat = None
 ##  #end
 # TEMPLATE-INCLUDE-END
