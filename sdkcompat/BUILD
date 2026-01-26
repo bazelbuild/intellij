@@ -18,6 +18,7 @@ java_library(
     exports = select_for_version({
         "2025.2": ["//sdkcompat/v252"],
         "2025.3": ["//sdkcompat/v253"],
+        "2026.1": ["//sdkcompat/v261"],
     }),
 )
 
@@ -28,5 +29,6 @@ java_library(
     exports = select_for_version({
         "2025.2": ["//sdkcompat/v252:v252_radler"],
         "2025.3": ["//sdkcompat/v253:v253_radler"],
+        "2026.1": ["//sdkcompat/v261:v261_radler"],
     }),
 )

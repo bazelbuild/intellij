@@ -27,11 +27,11 @@ import (
 	"strings"
 )
 
-var old = "2025.2"
-var new = "2025.3"
-var old_api = "252"
-var new_api = "253"
-var new_label = "2025_3"
+var old = "2025.3"
+var new = "2026.1"
+var old_api = "253"
+var new_api = "261"
+var new_label = "2026_1"
 
 var jsonPath = "override.json"
 var overrideJson = `{
@@ -53,7 +53,6 @@ func main() {
 	runBuildozer(fmt.Sprintf("new config_setting clion-%s after clion-%s", new, old), "//intellij_platform_sdk:__pkg__")
 	runBuildozer("set values {}", "//intellij_platform_sdk:clion-"+new+"")
 	runBuildozer("dict_add values define:ij_product=clion-"+new+"", "//intellij_platform_sdk:clion-"+new+"")
-	runBuildozer(fmt.Sprintf("new config_setting clion-%s-mac after clion-%s-mac", new, old), "//intellij_platform_sdk:__pkg__")
 	runBuildozer("set values {}", "//intellij_platform_sdk:clion-"+new+"-mac")
 	runBuildozer("dict_add values define:ij_product=clion-"+new+"", "//intellij_platform_sdk:clion-"+new+"-mac")
 	runBuildozer("dict_add values cpu:darwin_x86_64", "//intellij_platform_sdk:clion-"+new+"-mac")
