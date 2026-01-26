@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.clwb.radler
 
-import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.JdkFutureAdapters
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.idea.blaze.base.dependencies.TargetInfo
 import com.google.idea.blaze.base.model.primitives.RuleType
@@ -30,11 +30,13 @@ import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.google.idea.sdkcompat.radler.RadTestPsiElement
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.util.asSafely
+import com.intellij.util.io.await
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.guava.asListenableFuture
-import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.ide.PooledThreadExecutor
 import java.util.*
 
 abstract class RadTestContextProvider : TestContextProvider {
@@ -47,7 +49,7 @@ abstract class RadTestContextProvider : TestContextProvider {
     }
 
     val target = pluginProjectScope(context.project).async {
-      chooseTargetForFile(context, findTargets(context).await())
+      chooseTargetForFile(context, findTargets(context))
     }.asListenableFuture()
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
@@ -61,14 +63,24 @@ abstract class RadTestContextProvider : TestContextProvider {
   protected abstract fun createTestFilter(test: RadTestElementModel): String?
 }
 
-private fun findTargets(context: ConfigurationContext): ListenableFuture<Collection<TargetInfo>> {
-  val virtualFile = context.location?.virtualFile ?: return Futures.immediateFuture(emptyList())
+private suspend fun findTargets(context: ConfigurationContext): Collection<TargetInfo> {
+  val virtualFile = context.location?.virtualFile ?: return emptyList()
 
   return SourceToTargetFinder.findTargetInfoFuture(
     context.project,
     virtualFile.toNioPath().toFile(),
     Optional.of(RuleType.TEST),
-  ) ?: Futures.immediateFuture(emptyList())
+  ).await()
+}
+
+/**
+ * Temporary workaround for converting Deferred to ListenableFuture since kotlinx.coroutines.guava.asListenableFuture is
+ * not available due to some bundling issues of CLion 252 and 253.
+ *
+ * #api253
+ */
+private fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
+  return JdkFutureAdapters.listenInPoolThread(asCompletableFuture(), PooledThreadExecutor.INSTANCE)
 }
 
 private fun chooseTargetForFile(context: ConfigurationContext, targets: Collection<TargetInfo>): TargetInfo? {

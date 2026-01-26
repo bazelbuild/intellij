@@ -27,9 +27,11 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Searches through the transitive rdeps map for blaze rules of a certain type which build a given
@@ -44,7 +46,8 @@ public interface SourceToTargetFinder {
    * Finds all rules of the given type 'reachable' from source file (i.e. with source included in
    * srcs, deps or runtime_deps).
    */
-  default Future<Collection<TargetInfo>> targetsForSourceFile(
+  @NotNull
+  default Future<@NotNull Collection<TargetInfo>> targetsForSourceFile(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
     return targetsForSourceFiles(project, ImmutableSet.of(sourceFile), ruleType);
   }
@@ -53,7 +56,8 @@ public interface SourceToTargetFinder {
    * Finds all rules of the given type 'reachable' from the given source files (i.e. with one of the
    * sources included in srcs, deps or runtime_deps).
    */
-  Future<Collection<TargetInfo>> targetsForSourceFiles(
+  @NotNull
+  Future<@NotNull Collection<TargetInfo>> targetsForSourceFiles(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType);
 
   /**
@@ -62,7 +66,8 @@ public interface SourceToTargetFinder {
    *
    * <p>Future returns null if there was no non-empty result found.
    */
-  static ListenableFuture<Collection<TargetInfo>> findTargetInfoFuture(
+  @NotNull
+  static ListenableFuture<@NotNull Collection<TargetInfo>> findTargetInfoFuture(
       Project project, File sourceFile, Optional<RuleType> ruleType) {
     return findTargetInfoFuture(project, ImmutableSet.of(sourceFile), ruleType);
   }
@@ -71,15 +76,17 @@ public interface SourceToTargetFinder {
    * Iterates through the all {@link SourceToTargetFinder}'s, returning a {@link Future}
    * representing the first non-empty result, prioritizing any which are immediately available.
    *
-   * <p>Future returns null if there was no non-empty result found.
+   * <p>Future returns an empty collection if there was no non-empty result found.
    */
-  static ListenableFuture<Collection<TargetInfo>> findTargetInfoFuture(
+  @NotNull
+  static ListenableFuture<@NotNull Collection<TargetInfo>> findTargetInfoFuture(
       Project project, Set<File> sourceFiles, Optional<RuleType> ruleType) {
     Iterable<Future<Collection<TargetInfo>>> futures =
         Iterables.transform(
             Arrays.asList(EP_NAME.getExtensions()),
             f -> f.targetsForSourceFiles(project, sourceFiles, ruleType));
-    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, t -> t != null && !t.isEmpty());
+    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, t -> t != null && !t.isEmpty(),
+            Collections.emptyList());
   }
 
   /**
