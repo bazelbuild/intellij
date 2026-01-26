@@ -86,11 +86,6 @@ filegroup(
 )
 
 java_import(
-    name = "hg4idea",
-    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
-)
-
-java_import(
     name = "javascript",
     jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
 )
