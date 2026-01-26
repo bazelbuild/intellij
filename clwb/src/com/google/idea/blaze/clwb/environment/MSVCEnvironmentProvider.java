@@ -18,6 +18,7 @@ package com.google.idea.blaze.clwb.environment;
 
 import com.google.idea.blaze.cpp.BlazeCompilerSettings;
 import com.google.idea.blaze.cpp.CppEnvironmentProvider;
+import com.google.idea.sdkcompat.clion.OSTypeCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,7 +30,6 @@ import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCacheService;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
-import com.jetbrains.cidr.toolchains.OSType;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -66,7 +66,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
       return null;
     }
 
-    final var toolchain = new CPPToolchains.Toolchain(OSType.getCurrent());
+    final var toolchain = new CPPToolchains.Toolchain(OSTypeCompat.getCurrent());
     toolchain.setName(TOOLCHAIN_NAME);
     toolchain.setToolSetKind(Kind.MSVC);
     toolchain.setToolSetPath(toolSetPath);

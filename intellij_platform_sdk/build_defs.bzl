@@ -6,7 +6,7 @@ load("@rules_java//java:defs.bzl", "java_import")
 INDIRECT_IJ_PRODUCTS = {
     "clion-oss-oldest-stable": "clion-2025.2",
     "clion-oss-latest-stable": "clion-2025.3",
-    "clion-oss-under-dev": "clion-2025.3",
+    "clion-oss-under-dev": "clion-2026.1",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
@@ -46,7 +46,7 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.2", "2025.3"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.2", "2025.3", "2026.1"])
 
 def _do_select_for_plugin_api(params):
     """A version of select_for_plugin_api which accepts indirect products."""
@@ -142,51 +142,6 @@ def select_build_name():
         params[ij_product] = ["%s-%s" % (value.ide, value.version)]
 
     return _do_select_for_plugin_api(params)
-
-def no_mockito_extensions(name, jars, **kwargs):
-    """Removes mockito extensions from jars.
-
-    Args:
-        name: Name of the resulting java_import target.
-        jars: List of jars from which to remove mockito extensions.
-        **kwargs: Arbitrary attributes for the java_import target.
-    """
-
-    output_jars = []
-    for input_jar in jars:
-        output_jar_name = name + "_" + input_jar.replace("/", "_")
-        output_jar = name + "/" + input_jar
-        native.genrule(
-            name = output_jar_name,
-            srcs = [input_jar],
-            outs = [output_jar],
-            cmd = """
-            tmpdir=$$(mktemp -d)
-            zipper="$$(pwd)/$(execpath @bazel_tools//tools/zip:zipper)"
-            "$$zipper" x "$<" -d ".out"
-            mv ".out" "$$tmpdir"
-
-            pushd "$$tmpdir/.out" >/dev/null
-            rm -fr "mockito-extensions"
-
-            # We store the results from `find` in a file to deal with filenames with spaces
-            files_to_tar_file=$$(mktemp)
-            find . -type f | sed 's:^./::' > "$${files_to_tar_file}"
-
-            "$$zipper" cC "../out.jar" "@$${files_to_tar_file}"
-            popd
-
-            cp "$$tmpdir/out.jar" "$@"
-            chmod u+rw "$@"
-            """,
-            tools = ["@bazel_tools//tools/zip:zipper"],
-        )
-        output_jars.append(output_jar_name)
-    java_import(
-        name = name,
-        jars = output_jars,
-        **kwargs
-    )
 
 # Since 2022.3, JVM 17 is required to start IntelliJ
 # https://blog.jetbrains.com/platform/2022/08/intellij-project-migrates-to-java-17/

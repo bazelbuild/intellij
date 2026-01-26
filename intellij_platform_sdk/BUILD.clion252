@@ -16,7 +16,6 @@
 #
 # Plugin source jars for CLion, accessed remotely.
 
-load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 load("@rules_java//java:defs.bzl", "java_import")
 
 package(default_visibility = ["//visibility:public"])
@@ -25,21 +24,11 @@ java_import(
     name = "sdk",
     jars = glob([
             "lib/*.jar",
-            "lib/modules/*.jar"
-        ],
-        exclude = [
-            # mockito-extensions needs to be removed from this jar.
-            "lib/testFramework.jar",
+            "lib/modules/*.jar",
         ],
     ),
     tags = ["intellij-provided-by-sdk"],
-    exports = [":jars_without_mockito_extensions"],
     deps = ["@error_prone_annotations//jar"],
-)
-
-no_mockito_extensions(
-    name = "jars_without_mockito_extensions",
-    jars = ["lib/testFramework.jar"],
 )
 
 java_import(
@@ -59,7 +48,6 @@ java_import(
         "plugins/cidr-base/lib/modules/*.jar",
         "plugins/cidr-lang/lib/*.jar",
         "plugins/cidr-lang/lib/modules/*.jar",
-        "plugins/clion/lib/*.jar",
         "plugins/clion-cmake/lib/*.jar",
         "plugins/clion-cmake/lib/modules/*.jar",
         "plugins/clion-test-google/lib/*.jar",
@@ -83,11 +71,6 @@ java_import(
 filegroup(
     name = "clion_tools",
     srcs = glob(["bin/**/*"]),
-)
-
-java_import(
-    name = "hg4idea",
-    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
 java_import(

@@ -15,16 +15,16 @@
  */
 package com.google.idea.blaze.clwb;
 
+import com.google.idea.sdkcompat.clion.OSTypeCompat;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
-import com.jetbrains.cidr.toolchains.OSType;
 
 /** Handles changes to toolchains between different api versions */
 public class ToolchainUtils {
   public static Toolchain getToolchain() {
     Toolchain toolchain = CPPToolchains.getInstance().getDefaultToolchain();
     if (toolchain == null) {
-      toolchain = new Toolchain(OSType.getCurrent());
+      toolchain = new Toolchain(OSTypeCompat.getCurrent());
       toolchain.setName(Toolchain.getDefault());
     }
     return toolchain;

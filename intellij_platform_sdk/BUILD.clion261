@@ -25,6 +25,9 @@ java_import(
     jars = glob([
             "lib/*.jar",
             "lib/modules/*.jar",
+            "maven/test-framework.jar", #MAVEN:platform:test-framework
+            "maven/test-framework-common.jar", #MAVEN:platform:test-framework-common
+            "maven/test-framework-core.jar", #MAVEN:platform:test-framework-core
         ],
     ),
     tags = ["intellij-provided-by-sdk"],
@@ -76,27 +79,27 @@ filegroup(
 
 java_import(
     name = "javascript",
-    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
+    jars = glob(["plugins/javascript-plugin/**/*.jar"]),
 )
 
 java_import(
     name = "css",
-    jars = glob(["plugins/css-impl/lib/*.jar"]),
+    jars = glob(["plugins/css-plugin/lib/**/*.jar"]),
 )
 
 java_import(
     name = "tslint",
-    jars = glob(["plugins/tslint/lib/*.jar"]),
+    jars = glob(["plugins/tslint/lib/**/*.jar"]),
 )
 
 java_import(
     name = "terminal",
-    jars = glob(["plugins/terminal/lib/terminal.jar"]),
+    jars = glob(["plugins/terminal/lib/**/*.jar"]),
 )
 
 java_import(
     name = "python",
-    jars = glob(["plugins/python-ce/lib/*.jar"]),
+    jars = glob(["plugins/python-ce/lib/**/*.jar"]),
 )
 
 filegroup(

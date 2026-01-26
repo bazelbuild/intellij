@@ -53,6 +53,11 @@ config_setting(
     values = {"define": "ij_product=clion-2025.3"},
 )
 
+config_setting(
+    name = "clion-2026.1",
+    values = {"define": "ij_product=clion-2026.1"},
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -115,13 +120,6 @@ java_library(
         "//third_party/java/truth",
         "@diffutils//jar",
     ],
-)
-
-# IntelliJ Mercurial plugin
-java_library(
-    name = "hg4idea",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory([":hg4idea"]),
 )
 
 # terminal plugin
