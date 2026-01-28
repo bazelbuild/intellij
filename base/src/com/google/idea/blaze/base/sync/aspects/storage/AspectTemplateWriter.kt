@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.ProjectViewSet
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
+import com.google.idea.blaze.base.sync.aspects.CustomRuleSourceConfig
 import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
 import com.google.idea.blaze.base.sync.codegenerator.CodeGeneratorRuleNameHelper
 import com.google.idea.blaze.base.util.TemplateWriter
@@ -63,12 +64,26 @@ class AspectTemplateWriter : AspectWriter {
       .map { LanguageClassRuleNames(it, ruleNamesForLanguageClass(it, viewSet)) }
       .toList()
 
+    // Collect custom rule source configurations
+    val customRuleSourceConfigs = CustomRuleSourceConfig.EP_NAME.extensionList
+      .map { config ->
+        CustomRuleSourceConfigInfo(
+          ruleKind = config.ruleKind,
+          languageClass = config.languageClass.name,
+          sourceAttrs = config.sourceAttributes.toList()
+        )
+      }
+      .toList()
+
     TemplateWriter.evaluate(
       dst,
       REALIZED_CODE_GENERATOR,
       ASPECT_TEMPLATE_DIRECTORY,
       TEMPLATE_CODE_GENERATOR,
-      ImmutableMap.of<String, List<LanguageClassRuleNames>>("languageClassRuleNames", languageClassRuleNames)
+      ImmutableMap.of<String, Any>(
+        "languageClassRuleNames", languageClassRuleNames,
+        "customRuleSourceConfigs", customRuleSourceConfigs
+      )
     )
   }
 
@@ -137,6 +152,20 @@ class AspectTemplateWriter : AspectWriter {
 
     override fun toString(): String {
       return String.format("[%s] -> [%s]", languageClass, ruleNames.joinToString(","))
+    }
+  }
+
+  /** This class models custom rule source configurations for template generation. */
+  data class CustomRuleSourceConfigInfo(
+    val ruleKind: String,
+    val languageClass: String,
+    val sourceAttrs: List<String>
+  ) {
+    val sourceAttrsCommaSeparated: String
+      get() = sourceAttrs.joinToString(", ") { "\"$it\"" }
+
+    override fun toString(): String {
+      return String.format("[%s (%s)] -> [%s]", ruleKind, languageClass, sourceAttrs.joinToString(","))
     }
   }
 

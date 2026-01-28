@@ -11,11 +11,11 @@ def java_info_in_target(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isJavaEnabled == "true" )
-##  return JavaInfo in target
-##  #else
-##  return None
-##  #end
+##    #if( $isJavaEnabled == "true" )
+##    return JavaInfo in target
+##    #else
+##    return None
+##    #end
 # TEMPLATE-INCLUDE-END
 
 def get_java_info(target):
@@ -27,14 +27,14 @@ def get_java_info(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isJavaEnabled == "true" )
-##  if JavaInfo in target:
-##      return target[JavaInfo]
-##  else:
-##      return None
-##  #else
-##  return None
-##  #end
+##    #if( $isJavaEnabled == "true" )
+##    if JavaInfo in target:
+##        return target[JavaInfo]
+##    else:
+##        return None
+##    #else
+##    return None
+##    #end
 # TEMPLATE-INCLUDE-END
 
 def java_info_reference():
@@ -43,11 +43,11 @@ def java_info_reference():
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isJavaEnabled == "true" )
-##  return [JavaInfo]
-##  #else
-##  return []
-##  #end
+##    #if( $isJavaEnabled == "true" )
+##    return [JavaInfo]
+##    #else
+##    return []
+##    #end
 # TEMPLATE-INCLUDE-END
 
 
@@ -58,10 +58,10 @@ def get_provider_from_target(provider_name, target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isJavaEnabled == "true" )
-##  provider = getattr(java_common, provider_name, None)
-##  return target[provider] if provider and provider in target else None
-##  #else
-##  return None
-##  #end
+##    #if( $isJavaEnabled == "true" )
+##    provider = getattr(java_common, provider_name, None)
+##    return target[provider] if provider and provider in target else None
+##    #else
+##    return None
+##    #end
 # TEMPLATE-INCLUDE-END
