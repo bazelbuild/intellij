@@ -18,6 +18,7 @@ cc_library(
         "other/headers",
     ],
     defines = ["VERSION2"],
+    local_defines = ["LOCAL_DEFINE"],
     includes = ["foo/bar"],
     textual_hdrs = ["simple/simple_textual.h"],
 )

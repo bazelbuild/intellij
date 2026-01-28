@@ -334,6 +334,9 @@ def collect_cc_compilation_context(ctx, target):
 
     compilation_context = target[CcInfoCompat].compilation_context
 
+    # collect non-propagated attributes before potentially merging with implementation deps
+    local_defines = compilation_context.local_defines.to_list()
+
     # merge current compilation context with context of implementation dependencies
     if ctx.rule.kind.startswith("cc_") and hasattr(ctx.rule.attr, "implementation_deps"):
         impl_deps = ctx.rule.attr.implementation_deps
@@ -347,7 +350,7 @@ def collect_cc_compilation_context(ctx, target):
 
     return struct(
         headers = [artifact_location(it) for it in compilation_context.headers.to_list()],
-        defines = compilation_context.defines.to_list(),
+        defines = compilation_context.defines.to_list() + local_defines,
         includes = compilation_context.includes.to_list(),
         quote_includes = compilation_context.quote_includes.to_list(),
         # both system and external includes are added using `-isystem`
