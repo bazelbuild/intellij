@@ -115,7 +115,6 @@ public class AutoSyncHandler implements ProjectComponent {
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin(AutoSyncProvider.AUTO_SYNC_REASON + "." + reason)
             .setAddProjectViewTargets(true)
-            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .setBackgroundSync(true)
             .build();
     queueSync(params);
@@ -217,7 +216,6 @@ public class AutoSyncHandler implements ProjectComponent {
         .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
         .addTargetExpressions(params1.targetExpressions())
         .addTargetExpressions(params2.targetExpressions())
-        .setAddWorkingSet(params1.addWorkingSet() || params2.addWorkingSet())
         .setAddProjectViewTargets(
             params1.addProjectViewTargets() || params2.addProjectViewTargets())
         .build();
