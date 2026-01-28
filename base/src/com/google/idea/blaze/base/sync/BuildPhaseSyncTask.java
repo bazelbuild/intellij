@@ -64,18 +64,15 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /** Runs the 'blaze build' phase of sync. */
@@ -154,13 +151,6 @@ public final class BuildPhaseSyncTask {
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException, ExecutionException, InterruptedException {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
-    if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
-      Collection<TargetExpression> workingSetTargets = getWorkingSetTargets(context);
-      if (!workingSetTargets.isEmpty()) {
-        targets.addAll(workingSetTargets);
-        printTargets(context, "working set", workingSetTargets);
-      }
-    }
     if (syncParams.addProjectViewTargets()) {
       ProjectTargets projectTargets =
           SyncProjectTargetsHelper.getProjectTargets(
@@ -320,39 +310,6 @@ public final class BuildPhaseSyncTask {
     return ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
         .add(projectState.getProjectViewSet())
         .build();
-  }
-
-  private static final BoolExperiment queryWorkingSetTargets =
-      new BoolExperiment("query.working.set.targets", true);
-
-  private Collection<TargetExpression> getWorkingSetTargets(BlazeContext context)
-      throws SyncCanceledException, SyncFailedException, ExecutionException, InterruptedException {
-    WorkingSet workingSet = projectState.getWorkingSet();
-    if (workingSet == null) {
-      return ImmutableList.of();
-    }
-    ImmutableList<WorkspacePath> sources =
-        ImmutableList.<WorkspacePath>builder()
-            .addAll(workingSet.addedFiles)
-            .addAll(workingSet.modifiedFiles)
-            .build();
-
-    if (queryWorkingSetTargets.getValue()) {
-      return findTargetsBuildingSourceFiles(sources, context);
-    }
-
-    BuildTargetFinder buildTargetFinder =
-        new BuildTargetFinder(project, workspaceRoot, getImportRoots());
-
-    Set<TargetExpression> result = Sets.newHashSet();
-    for (WorkspacePath workspacePath : sources) {
-      File file = workspaceRoot.fileForPath(workspacePath);
-      TargetExpression targetExpression = buildTargetFinder.findTargetForFile(file);
-      if (targetExpression != null) {
-        result.add(targetExpression);
-      }
-    }
-    return result;
   }
 
   /**
