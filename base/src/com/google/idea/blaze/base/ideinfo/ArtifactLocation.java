@@ -39,12 +39,21 @@ public final class ArtifactLocation
 
   @SuppressWarnings("NoInterning")
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
-    return ProjectDataInterner.intern(
-        new ArtifactLocation(
-            proto.getRootExecutionPathFragment().intern(),
-            proto.getRelativePath(),
-            proto.getIsSource(),
-            proto.getIsExternal()));
+    ArtifactLocation artifact =
+        ProjectDataInterner.intern(
+            new ArtifactLocation(
+                proto.getRootExecutionPathFragment().intern(),
+                proto.getRelativePath(),
+                proto.getIsSource(),
+                proto.getIsExternal()));
+
+    // Apply registered transformers
+    for (ArtifactLocationTransformer transformer :
+        ArtifactLocationTransformer.EP_NAME.getExtensionList()) {
+      artifact = transformer.transform(artifact);
+    }
+
+    return artifact;
   }
 
   @Override
