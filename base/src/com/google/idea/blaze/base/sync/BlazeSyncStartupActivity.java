@@ -62,7 +62,6 @@ public class BlazeSyncStartupActivity implements StartupActivity.DumbAware {
         .setSyncMode(SyncMode.STARTUP)
         .setSyncOrigin(SYNC_REASON)
         .setAddProjectViewTargets(true)
-        .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();
   }
 }

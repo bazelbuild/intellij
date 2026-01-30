@@ -179,7 +179,6 @@ public class LegacyAdditionalLanguagesHelper
                 .setSyncMode(SyncMode.INCREMENTAL)
                 .setSyncOrigin("added_language_support")
                 .setAddProjectViewTargets(true)
-                .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());
   }
 }
