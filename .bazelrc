@@ -6,16 +6,16 @@ build --tool_java_language_version=21 --tool_java_runtime_version=21
 build --deleted_packages=clwb/tests/projects/clang_cl,clwb/tests/projects/clang_cl/main,clwb/tests/projects/execution/main,clwb/tests/projects/external_includes/main,clwb/tests/projects/llvm_toolchain/main,clwb/tests/projects/llvm_toolchain/wasm,clwb/tests/projects/protobuf,clwb/tests/projects/protobuf/main,clwb/tests/projects/protobuf/proto,clwb/tests/projects/simple/.clwb/aspects,clwb/tests/projects/simple/main,clwb/tests/projects/target_compatible/main,clwb/tests/projects/virtual_includes/.clwb/aspects,clwb/tests/projects/virtual_includes/lib/external,clwb/tests/projects/virtual_includes/lib/impl_deps,clwb/tests/projects/virtual_includes/lib/raw_files,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,examples/cpp/simple_project/src,examples/cpp/simple_project/src/lib,examples/python/simple_code_generator/example,examples/python/simple_code_generator/generated,examples/python/simple_code_generator/lib,examples/python/simple_code_generator/rules,examples/python/with_numpy,examples/python/with_numpy/app,examples/python/with_numpy/lib
 query --deleted_packages=clwb/tests/projects/clang_cl,clwb/tests/projects/clang_cl/main,clwb/tests/projects/execution/main,clwb/tests/projects/external_includes/main,clwb/tests/projects/llvm_toolchain/main,clwb/tests/projects/llvm_toolchain/wasm,clwb/tests/projects/protobuf,clwb/tests/projects/protobuf/main,clwb/tests/projects/protobuf/proto,clwb/tests/projects/simple/.clwb/aspects,clwb/tests/projects/simple/main,clwb/tests/projects/target_compatible/main,clwb/tests/projects/virtual_includes/.clwb/aspects,clwb/tests/projects/virtual_includes/lib/external,clwb/tests/projects/virtual_includes/lib/impl_deps,clwb/tests/projects/virtual_includes/lib/raw_files,clwb/tests/projects/virtual_includes/lib/strip_absolut,clwb/tests/projects/virtual_includes/lib/strip_relative,clwb/tests/projects/virtual_includes/main,examples/cpp/simple_project/src,examples/cpp/simple_project/src/lib,examples/python/simple_code_generator/example,examples/python/simple_code_generator/generated,examples/python/simple_code_generator/lib,examples/python/simple_code_generator/rules,examples/python/with_numpy,examples/python/with_numpy/app,examples/python/with_numpy/lib
 
-common --enable_bzlmod
+# Required for rules java atm
 common --noincompatible_disallow_empty_glob
-
-# Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
-test --zip_undeclared_test_outputs
-
-# Enabled by default in bazel 8
-common --incompatible_use_plus_in_repo_names
 
 # Required for CLion integration tests on windows
 startup --windows_enable_symlinks
 build --enable_runfiles
 build --legacy_external_runfiles
+
+# Workaround for rules_android issue since CI defines these environment variables
+common --repo_env=ANDROID_HOME=""
+common --repo_env=ANDROID_SDK_ROOT=""
+common --repo_env=ANDROID_NDK_HOME=""
+common --repo_env=ANDROID_NDK_ROOT=""
