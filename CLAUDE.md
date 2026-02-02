@@ -69,7 +69,7 @@ bazel test //aspect/... --define=ij_product=clion-oss-under-dev
 Tests are organized into three categories:
 - `unittests/` - Fast, isolated unit tests
 - `integrationtests/` - Still relatively fast, used for interacting with IntelliJ platform
-- `headlesstests/` - Slow, require headless CLion, used for testing the entier sync process 
+- `headlesstests/` - Slow, require headless CLion, used for testing the entire sync process 
 
 ### Project View Files
 
