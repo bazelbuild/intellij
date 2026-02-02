@@ -135,10 +135,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.syncStatusPopupShown = syncStatusPopupShown;
   }
 
-  public boolean getExpandSyncToWorkingSet() {
-    return false;
-  }
-
   public boolean getShowPerformanceWarnings() {
     return showPerformanceWarnings;
   }

@@ -144,11 +144,9 @@
       <group id ="Blaze.SyncMenuGroup" text="_Sync" popup="true">
         <reference ref="Blaze.IncrementalSyncProject"/>
         <reference ref="Blaze.FullSyncProject"/>
-        <reference ref="Blaze.SyncWorkingSet"/>
         <reference ref="Blaze.PartialSync"/>
         <reference ref="Blaze.UpdateDirectories"/>
         <reference ref="Blaze.CleanProjectTargets"/>
-        <reference ref="Blaze.ExpandSyncToWorkingSet"/>
         <reference ref="Blaze.ShowPerformanceWarnings"/>
       </group>
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
