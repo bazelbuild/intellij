@@ -31,7 +31,7 @@ public class AliasTest extends BazelIntellijAspectTest {
   public void testAlias() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":alias_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":test");
-    assertThat(dependenciesForTarget(target)).contains(dep(":real"));
+    assertThat(dependenciesForTarget(target)).contains(dep(findTarget(testFixture, ":real")));
     assertThat(findTarget(testFixture, ":real")).isNotNull();
   }
 }
