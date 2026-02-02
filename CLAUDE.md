@@ -444,7 +444,7 @@ find . -name "*.xml" -exec grep -l "extensionPoint.*myExtensionPoint" {} \;
 
 ### Using the IntelliJ Monorepo for Research
 
-When implementing features or fixing bugs, leverage the IntelliJ IDEA source code (located at `/Volumes/Projects/intellij/ultimate` or `community/` for external contributors) as reference:
+When implementing features or fixing bugs, leverage the IntelliJ IDEA source code (located at <path-to-intellij-monorepo>/ultimate or community/ for external contributors) as reference:
 
 1. **Before implementing a feature**: Search the IntelliJ source for similar implementations
 2. **When using unfamiliar APIs**: Find real usage examples in the IDE source
