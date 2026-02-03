@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.io.File;
+
 import javax.annotation.Nullable;
+import java.io.File;
 
 /**
  * Extension points specify the build systems supported by this plugin.<br>
@@ -142,6 +144,9 @@ public interface BuildSystemProvider {
   /** The MODULE.bazel file in Bazel repository root if bzlmod is used. */
   ImmutableList<String> possibleModuleFileNames();
 
+  /** Files allowed to be included from MODULE files. */
+  ImmutableList<String> possibleModuleFileNameWildcards();
+
   /** The WORKSPACE file in the repository root. */
   ImmutableList<String> possibleWorkspaceFileNames();
 
@@ -193,6 +198,7 @@ public interface BuildSystemProvider {
     possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleFileExtensions().forEach(s -> list.add(new ExtensionFileNameMatcher(s)));
     possibleModuleFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
+    possibleModuleFileNameWildcards().forEach(s -> list.add(new WildcardFileNameMatcher(s)));
     return list.build();
   }
 
