@@ -67,7 +67,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private FocusBehavior showBlazeConsoleOnRun = FocusBehavior.ALWAYS;
   private FocusBehavior showProblemsViewOnRun = FocusBehavior.NEVER;
   private boolean syncStatusPopupShown = false;
-  private boolean expandSyncToWorkingSet = false;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
   private boolean useNewSyncView = true;
@@ -134,14 +133,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setSyncStatusPopupShown(boolean syncStatusPopupShown) {
     this.syncStatusPopupShown = syncStatusPopupShown;
-  }
-
-  public boolean getExpandSyncToWorkingSet() {
-    return expandSyncToWorkingSet;
-  }
-
-  public void setExpandSyncToWorkingSet(boolean expandSyncToWorkingSet) {
-    this.expandSyncToWorkingSet = expandSyncToWorkingSet;
   }
 
   public boolean getShowPerformanceWarnings() {
@@ -255,7 +246,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("showBlazeProblemsViewOnSync", settings.showBlazeProblemsViewOnSync.name());
       builder.put("showBlazeConsoleOnRun", settings.showBlazeConsoleOnRun.name());
       builder.put("showProblemsViewOnRun", settings.showProblemsViewOnRun.name());
-      builder.put("expandSyncToWorkingSet", Boolean.toString(settings.expandSyncToWorkingSet));
       builder.put("formatBuildFilesOnSave", Boolean.toString(settings.formatBuildFilesOnSave));
       builder.put(
           "showAddFileToProjectNotification",

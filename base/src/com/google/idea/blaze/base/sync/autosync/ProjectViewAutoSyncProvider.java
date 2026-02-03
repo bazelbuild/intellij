@@ -61,7 +61,6 @@ class ProjectViewAutoSyncProvider implements AutoSyncProvider {
         .setSyncMode(SyncMode.INCREMENTAL)
         .setSyncOrigin(AUTO_SYNC_REASON + ".ProjectViewAutoSyncProvider")
         .setAddProjectViewTargets(true)
-        .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .setBackgroundSync(true)
         .build();
   }

@@ -126,12 +126,7 @@ final class ProjectStateSyncTask {
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         createBazelInfoFuture(context, syncFlags, params.syncMode());
 
-    ListenableFuture<WorkingSet> workingSetFuture;
-    if (params.addWorkingSet() || (BlazeUserSettings.getInstance().getExpandSyncToWorkingSet() && params.syncMode() == SyncMode.FULL)) {
-      workingSetFuture = vcsHandler.getWorkingSet(context, executor);
-    } else {
-      workingSetFuture = Futures.immediateFuture(null);
-    }
+    ListenableFuture<WorkingSet> workingSetFuture = Futures.immediateFuture(null);
 
     FutureResult<BlazeInfo> blazeInfoResult =
         FutureUtil.waitForFuture(context, blazeInfoFuture)

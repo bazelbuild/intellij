@@ -290,7 +290,6 @@ public class BlazeSyncManager {
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin(reason)
             .setAddProjectViewTargets(true)
-            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
     requestProjectSync(syncParams);
   }
@@ -307,7 +306,6 @@ public class BlazeSyncManager {
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin(reason)
             .setAddProjectViewTargets(true)
-            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
     requestProjectSync(syncParams);
   }
@@ -368,22 +366,6 @@ public class BlazeSyncManager {
             .setSyncMode(SyncMode.NO_BUILD)
             .setSyncOrigin(reason)
             .setBackgroundSync(inBackground)
-            .build();
-    requestProjectSync(syncParams);
-  }
-
-  /**
-   * Runs a sync of the 'working set' (the locally modified files).
-   *
-   * @param reason a description of what triggered this sync
-   */
-  public void workingSetSync(String reason) {
-    BlazeSyncParams syncParams =
-        BlazeSyncParams.builder()
-            .setTitle("Sync Working Set")
-            .setSyncMode(SyncMode.PARTIAL)
-            .setSyncOrigin(reason)
-            .setAddWorkingSet(true)
             .build();
     requestProjectSync(syncParams);
   }

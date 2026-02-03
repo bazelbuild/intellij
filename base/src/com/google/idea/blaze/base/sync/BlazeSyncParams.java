@@ -38,8 +38,6 @@ public abstract class BlazeSyncParams {
 
   public abstract boolean addProjectViewTargets();
 
-  public abstract boolean addWorkingSet();
-
   public abstract ImmutableSet<TargetExpression> targetExpressions();
 
   /**
@@ -53,8 +51,7 @@ public abstract class BlazeSyncParams {
   public static Builder builder() {
     return new AutoValue_BlazeSyncParams.Builder()
         .setBackgroundSync(false)
-        .setAddProjectViewTargets(false)
-        .setAddWorkingSet(false);
+        .setAddProjectViewTargets(false);
   }
 
   /** Builder for {@link BlazeSyncParams}. */
@@ -70,8 +67,6 @@ public abstract class BlazeSyncParams {
     public abstract Builder setBackgroundSync(boolean value);
 
     public abstract Builder setAddProjectViewTargets(boolean value);
-
-    public abstract Builder setAddWorkingSet(boolean value);
 
     public abstract Builder setTargetExpressions(Collection<? extends TargetExpression> targets);
 
@@ -114,7 +109,6 @@ public abstract class BlazeSyncParams {
         .addSourceFilesToSync(first.sourceFilesToSync())
         .addSourceFilesToSync(second.sourceFilesToSync())
         .setAddProjectViewTargets(first.addProjectViewTargets() || second.addProjectViewTargets())
-        .setAddWorkingSet(first.addWorkingSet() || second.addWorkingSet())
         .build();
   }
 

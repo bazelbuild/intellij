@@ -50,19 +50,10 @@
           keymap="$default"
           first-keystroke="alt shift Y"/>
     </action>
-    <action id="Blaze.SyncWorkingSet"
-      class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction"
-      text="Sync Working Set"
-      icon="BlazeIcons.Logo">
-    </action>
     <action id="Blaze.CleanProjectTargets"
         class="com.google.idea.blaze.base.sync.actions.CleanProjectTargetsSyncAction"
         text="Clean Project Targets"
         icon="AllIcons.Actions.Refresh">
-    </action>
-    <action id="Blaze.ExpandSyncToWorkingSet"
-      class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
-      text="Expand Sync to Working Set">
     </action>
     <action id="Blaze.ShowPerformanceWarnings"
       class="com.google.idea.blaze.base.sync.actions.ShowPerformanceWarningsToggleAction"
@@ -153,11 +144,9 @@
       <group id ="Blaze.SyncMenuGroup" text="_Sync" popup="true">
         <reference ref="Blaze.IncrementalSyncProject"/>
         <reference ref="Blaze.FullSyncProject"/>
-        <reference ref="Blaze.SyncWorkingSet"/>
         <reference ref="Blaze.PartialSync"/>
         <reference ref="Blaze.UpdateDirectories"/>
         <reference ref="Blaze.CleanProjectTargets"/>
-        <reference ref="Blaze.ExpandSyncToWorkingSet"/>
         <reference ref="Blaze.ShowPerformanceWarnings"/>
       </group>
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
