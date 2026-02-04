@@ -12,8 +12,8 @@ def scala_info_in_target(target):
 
 # TEMPLATE-INCLUDE-BEGIN
 ###if( $isScalaEnabled == "true" )
-##  return ScalaInfo in target
+##    return ScalaInfo in target
 ###else
-##  return False
+##    return False
 ###end
 # TEMPLATE-INCLUDE-END
