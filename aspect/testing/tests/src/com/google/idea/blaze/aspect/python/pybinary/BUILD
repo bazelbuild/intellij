@@ -11,6 +11,7 @@ py_binary(
     name = "simple",
     srcs = ["simple.py"],
     python_version = "PY3",
+    strict_deps = False,
 )
 
 py_binary(
@@ -18,6 +19,7 @@ py_binary(
     srcs = ["simple.py"],
     main = "simple.py",
     python_version = "PY3",
+    strict_deps = False,
 )
 
 py_binary(
@@ -30,6 +32,7 @@ py_binary(
     ],
     main = "simple.py",
     python_version = "PY3",
+    strict_deps = False,
 )
 
 py_binary(
@@ -41,6 +44,7 @@ py_binary(
     data = [":datadepfile"],
     main = "simple.py",
     python_version = "PY3",
+    strict_deps = False,
 )
 
 genrule(
