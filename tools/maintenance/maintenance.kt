@@ -32,8 +32,8 @@ fun main(args: Array<String>) {
 
     bumpPlugins("253", out)
     bumpPlugins("252", out)
-    bumpEap("253", out)
     bumpRelease("2025.2", "252", out)
+    bumpRelease("2025.3", "253", out)
     // bumpMavenPackages("junit:junit", "JUNIT", out)
 }
 
