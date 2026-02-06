@@ -81,10 +81,14 @@ public class VirtualIncludesHandler {
       return ImmutableList.of();
     }
 
-    final var info = targetMap.get(key);
-    if (info == null) {
+    // Look up by label alone since we don't know the configuration ID from the path
+    final var infos = targetMap.get(key.label());
+    if (infos.isEmpty()) {
       return ImmutableList.of();
     }
+
+    // Use the first matching target (there may be multiple configurations)
+    final var info = infos.get(0);
 
     if (info.getSources().stream().anyMatch((it) -> !it.isSource())) {
       // target contains generated sources which cannot be found in the project root, fallback to virtual include directory
