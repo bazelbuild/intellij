@@ -80,7 +80,7 @@ final public class BlazeCTargetInfoService implements PersistentStateComponent<B
 
     service.infoMap.clear();
     targetInfoMap.forEach((key, info) -> {
-      service.infoMap.put(key.getLabel().toString(), info);
+      service.infoMap.put(key.label().toString(), info);
     });
   }
 
