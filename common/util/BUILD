@@ -50,6 +50,12 @@ kt_jvm_library(
     deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
+kt_jvm_library(
+    name = "runjar",
+    srcs = ["src/com/google/idea/common/util/RunJarService.kt"],
+    deps = ["//intellij_platform_sdk:plugin_api"],
+)
+
 java_test(
     name = "CommandLineTaskTest",
     size = "medium",
