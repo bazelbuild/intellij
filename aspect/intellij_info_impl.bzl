@@ -13,8 +13,8 @@ load(
     "struct_omit_none",
     "to_artifact_location",
 )
-load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "cc_common_compat", "cc_info_in_target", "cc_info_reference", "get_cc_info")
-load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES")
+load(":cc_info.bzl", "CC_USE_GET_TOOL_FOR_ACTION", "CcInfoCompat", "cc_common_compat", "cc_info_in_target", "cc_info_reference", "get_cc_info")
+load(":code_generator_info.bzl", "CODE_GENERATOR_RULE_NAMES", "get_custom_rule_source_config")
 load(":java_info.bzl", "get_java_info", "get_provider_from_target", "java_info_in_target", "java_info_reference")
 load(
     ":make_variables.bzl",
@@ -1130,6 +1130,63 @@ def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
         java_package = getattr(ctx.rule.attr, "package", None),
     )
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset([aar_file]))
+def collect_custom_rule_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Collects information from rules registered with custom source attributes."""
+    
+    config = get_custom_rule_source_config(ctx.rule.kind)
+    if not config:
+        return False
+    
+    # Collect sources from configured attributes
+    sources = []
+    for attr_name in config.source_attrs:
+        if hasattr(ctx.rule.attr, attr_name):
+            attr_value = getattr(ctx.rule.attr, attr_name)
+            if type(attr_value) == "list":
+                for src in attr_value:
+                    if hasattr(src, "files"):
+                        sources.extend(src.files.to_list())
+    
+    if not sources:
+        return False
+    
+    # Separate generated from source files
+    generated = [f for f in sources if not f.is_source]
+    source_files = [f for f in sources if f.is_source]
+    
+    # Add appropriate ide_info based on language class
+    language_class = config.language_class.lower()
+    
+    if language_class == "go":
+        ide_info["go_ide_info"] = struct_omit_none(
+            sources = [artifact_location(f) for f in source_files],
+            generated = [artifact_location(f) for f in generated],
+        )
+        update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
+        update_sync_output_groups(output_groups, "intellij-compile-go", depset(sources))
+        update_sync_output_groups(output_groups, "intellij-resolve-go", depset(sources))
+    elif language_class == "python":
+        ide_info["py_ide_info"] = struct_omit_none(
+            sources = [artifact_location(f) for f in source_files],
+        )
+        update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
+        update_sync_output_groups(output_groups, "intellij-compile-py", depset(sources))
+        update_sync_output_groups(output_groups, "intellij-resolve-py", depset(sources))
+    elif language_class == "c" or language_class == "cpp":
+        # For C/C++, we need more complex handling, but provide basic support
+        ide_info["c_ide_info"] = struct(
+            rule_context = struct(
+                sources = [artifact_location(f) for f in source_files],
+            ),
+            compilation_context = struct(),
+        )
+        update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
+        update_sync_output_groups(output_groups, "intellij-compile-cpp", depset(sources))
+        update_sync_output_groups(output_groups, "intellij-resolve-cpp", depset(sources))
+    else:
+        # Generic handling for other languages
+        update_sync_output_groups(output_groups, "intellij-info-generic", depset([ide_info_file]))
+    
     return True
 
 def build_test_info(ctx):
@@ -1351,6 +1408,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_kotlin_toolchain_info(target, ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_custom_rule_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):
