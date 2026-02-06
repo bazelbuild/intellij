@@ -4,15 +4,20 @@ module(
 )
 
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_java", version = "9.0.3")
-bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_android", version = "0.7.1")
+remote_android_extensions = use_extension(
+    "@rules_android//bzlmod_extensions:android_extensions.bzl",
+    "remote_android_tools_extensions")
+use_repo(remote_android_extensions, "android_tools")
+bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_python", version = "1.8.3")
 bazel_dep(name = "rules_proto", version = "7.1.0")
-bazel_dep(name = "protobuf", version = "33.1")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "protobuf", version = "33.5")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
 bazel_dep(name = "rules_bazel_integration_test", version = "0.34.0")
 bazel_dep(name = "rules_jvm_external", version = "6.9")
-bazel_dep(name = "rules_kotlin", version = "2.1.9")
+bazel_dep(name = "rules_kotlin", version = "2.2.2")
 bazel_dep(name = "rules_scala", version = "7.1.5")
 bazel_dep(name = "rules_go", version = "0.59.0", repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.47.0", repo_name = "bazel_gazelle")
@@ -43,19 +48,12 @@ scala_dev_deps.scalatest()
 # configure python core rules_python
 register_toolchains("//third_party/kotlin:toolchain")
 
-python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(
-    configure_coverage_tool = True,
-    python_version = "3.12",
-)
-use_repo(python, "python_3_12", "python_versions")
-
 # configure bazel binaries for rules_bazel_integration_test
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "6.5.0")
 bazel_binaries.download(version = "7.6.2")
 bazel_binaries.download(version = "8.4.2")
-bazel_binaries.download(version = "9.0.0rc3")
+bazel_binaries.download(version = "9.0.0")
 bazel_binaries.download(version = "last_green")
 use_repo(
     bazel_binaries,
@@ -64,7 +62,7 @@ use_repo(
     "build_bazel_bazel_6_5_0",
     "build_bazel_bazel_7_6_2",
     "build_bazel_bazel_8_4_2",
-    "build_bazel_bazel_9_0_0rc3",
+    "build_bazel_bazel_9_0_0",
     "build_bazel_bazel_last_green",
 )
 
@@ -145,6 +143,7 @@ go_repository(
 )
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
@@ -184,6 +183,18 @@ http_archive(
     url = IC_253_URL,
 )
 
+# The plugin api for intellij_ce_2026_1. This is required to build IJwB and run integration tests.
+IC_261_SHA = "b7f3dd1e248049101a6167bf6d9e482dd70f4c5ac193bca434450e41abc2d94c"
+
+IC_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/261.20362.25-EAP-SNAPSHOT/ideaIC-261.20362.25-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ce_2026_1",
+    build_file = "@//intellij_platform_sdk:BUILD.idea261",
+    sha256 = IC_261_SHA,
+    url = IC_261_URL,
+)
+
 # The plugin api for intellij_ce_2025_1. This is required to build IJwB and run integration tests.
 IU_251_SHA = "6437eb50dcaebecc34c454370c693184f39fbded99ba9a7059f5189badfe4a7b"
 
@@ -218,6 +229,17 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue253",
     sha256 = IU_253_SHA,
     url = IU_253_URL,
+)
+
+IU_261_SHA = "b8102f91f2755b3f1d03565b40adaad0f6dde628c406f562f19ed6f4c4b68bb0"
+
+IU_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/261.20362.25-EAP-SNAPSHOT/ideaIU-261.20362.25-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ue_2026_1",
+    build_file = "@//intellij_platform_sdk:BUILD.ue261",
+    sha256 = IU_261_SHA,
+    url = IU_261_URL,
 )
 
 DEVKIT_BUILD_FILE = """
@@ -259,6 +281,17 @@ http_archive(
     build_file_content = DEVKIT_BUILD_FILE,
     sha256 = DEVKIT_253_SHA,
     url = DEVKIT_253_URL,
+)
+
+DEVKIT_261_SHA = "4b240e2588d6697d542f7cb2a9fdfc74884343c56a31c236637bc4ece537fa72"
+
+DEVKIT_261_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/DevKit/261.20362.25/DevKit-261.20362.25.zip"
+
+http_archive(
+    name = "devkit_2026_1",
+    build_file_content = DEVKIT_BUILD_FILE,
+    sha256 = DEVKIT_261_SHA,
+    url = DEVKIT_261_URL,
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -307,6 +340,17 @@ http_archive(
     url = PYTHON_PLUGIN_253_URL,
 )
 
+PYTHON_PLUGIN_261_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/261.20362.25/PythonCore-261.20362.25.zip"
+
+PYTHON_PLUGIN_261_SHA = "7ec94a4a6e81dc86b0eed5102ee4a56c1d289e6d63e9b721508eaf2eef60c91f"
+
+http_archive(
+    name = "python_2026_1",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_261_SHA,
+    url = PYTHON_PLUGIN_261_URL,
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -346,6 +390,17 @@ http_archive(
     build_file_content = _GO_BUILD_FILE,
     sha256 = GO_PLUGIN_253_SHA,
     url = GO_PLUGIN_253_URL,
+)
+
+GO_PLUGIN_261_SHA = "bc5218aa21c92be6ffb3802996924429be010d78123d4bb501f93446a8a22a28"
+
+GO_PLUGIN_261_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/261.20362.25/org.jetbrains.plugins.go-261.20362.25.zip"
+
+http_archive(
+    name = "go_2026_1",
+    build_file_content = _GO_BUILD_FILE,
+    sha256 = GO_PLUGIN_261_SHA,
+    url = GO_PLUGIN_261_URL,
 )
 
 _SCALA_BUILD_FILE = """
@@ -389,6 +444,17 @@ http_archive(
     url = SCALA_PLUGIN_253_URL,
 )
 
+SCALA_PLUGIN_261_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2026.1.2/org.intellij.scala-2026.1.2.zip"
+
+SCALA_PLUGIN_261_SHA = "0f06516bb7b6612029b9d9608dc2fe377b7d3d1a5731cd8ec6b5b6b4b8ae4393"
+
+http_archive(
+    name = "scala_2026_1",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_261_SHA,
+    url = SCALA_PLUGIN_261_URL,
+)
+
 _TOML_BUILD_FILE = """
 java_import(
     name = "toml",
@@ -428,4 +494,62 @@ http_archive(
     build_file_content = _TOML_BUILD_FILE,
     sha256 = TOML_PLUGIN_253_SHA,
     url = TOML_PLUGIN_253_URL,
+)
+
+TOML_PLUGIN_261_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.toml.lang/261.20362.25/org.toml.lang-261.20362.25.zip"
+
+TOML_PLUGIN_261_SHA = "9800210ab0650a7eb8258d31772f8e2646e86f136443cccd8a58a90cc85e5b1f"
+
+http_archive(
+    name = "toml_2026_1",
+    build_file_content = _TOML_BUILD_FILE,
+    sha256 = TOML_PLUGIN_261_SHA,
+    url = TOML_PLUGIN_261_URL,
+)
+
+ARTIFACTS_VERISION = "261.17801.55"
+
+TEST_FRAMEWORK_JAR_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework/" + ARTIFACTS_VERISION + "/test-framework-" + ARTIFACTS_VERISION + ".jar"
+TEST_FRAMEWORK_JAR_261_SHA = "e3e120a46d4d10a52d26f67f79ba561b2598bbf45df069e7f707b7046a9506cb"
+
+http_jar(
+    name = "test_framework_261",
+    url = TEST_FRAMEWORK_JAR_261_URL,
+    sha256 = TEST_FRAMEWORK_JAR_261_SHA,
+)
+
+TEST_FRAMEWORK_COMMON_JAR_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework-common/" + ARTIFACTS_VERISION + "/test-framework-common-" + ARTIFACTS_VERISION + ".jar"
+TEST_FRAMEWORK_COMMON_JAR_261_SHA = "b9e01391e5a4d3e8bbf2408ffe6274792ffa2923669d63e7ec76eb54a3b31c43"
+
+http_jar(
+    name = "test_framework_common_261",
+    url = TEST_FRAMEWORK_COMMON_JAR_261_URL,
+    sha256 = TEST_FRAMEWORK_COMMON_JAR_261_SHA,
+)
+
+TEST_FRAMEWORK_CORE_JAR_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework-core/" + ARTIFACTS_VERISION + "/test-framework-core-" + ARTIFACTS_VERISION + ".jar"
+TEST_FRAMEWORK_CORE_JAR_261_SHA = "63e548b6cd90b12cabe3f7d4df0cdec4dfde048c5c8fa9e46ddafb2da9f12b18"
+
+http_jar(
+    name = "test_framework_core_261",
+    url = TEST_FRAMEWORK_CORE_JAR_261_URL,
+    sha256 = TEST_FRAMEWORK_CORE_JAR_261_SHA,
+)
+
+JAVA_TEST_FRAMEWORK_JAR_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/java/java-test-framework/" + ARTIFACTS_VERISION + "/java-test-framework-" + ARTIFACTS_VERISION + ".jar"
+JAVA_TEST_FRAMEWORK_JAR_261_SHA = "9825d603c3caa6583892b7b6767009a328a0983ad0a5aa090798a344ab85b160"
+
+http_jar(
+    name = "java_test_framework_261",
+    url = JAVA_TEST_FRAMEWORK_JAR_261_URL,
+    sha256 = JAVA_TEST_FRAMEWORK_JAR_261_SHA,
+)
+
+JAVA_TEST_FRAMEWORK_SHARED_JAR_261_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/java/java-test-framework-shared/" + ARTIFACTS_VERISION + "/java-test-framework-shared-" + ARTIFACTS_VERISION + ".jar"
+JAVA_TEST_FRAMEWORK_SHARED_JAR_261_SHA = "5fcbab5acf9ae4d00c63303b8ec6204454c0c76527b3c8461a93b8ed754ff1c7"
+
+http_jar(
+    name = "java_test_framework_shared_261",
+    url = JAVA_TEST_FRAMEWORK_SHARED_JAR_261_URL,
+    sha256 = JAVA_TEST_FRAMEWORK_SHARED_JAR_261_SHA,
 )

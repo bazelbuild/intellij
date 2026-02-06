@@ -8,7 +8,7 @@ query --deleted_packages=aspect/testing/tests/src/com/google/idea/blaze/aspect/i
 
 common --enable_bzlmod
 common --noincompatible_disallow_empty_glob
-common --define=ij_product=intellij-2025.3
+common --define=ij_product=intellij-ue-2026.1
 
 # Disabled by default in bazel 8, https://github.com/bazelbuild/bazel/issues/24578
 test --zip_undeclared_test_outputs
