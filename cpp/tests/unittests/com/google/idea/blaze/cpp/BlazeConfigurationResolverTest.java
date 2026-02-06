@@ -800,9 +800,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
 
     assertCToolchainIdeInfoForTarget(
-        targetWith32Dep.build().getKey().toString(), aarch32Toolchain.build());
+        targetWith32Dep.build().getKey().label().toString(), aarch32Toolchain.build());
     assertCToolchainIdeInfoForTarget(
-        targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
+        targetWith64Dep.build().getKey().label().toString(), aarch64Toolchain.build());
   }
 
   @Test

@@ -82,13 +82,12 @@ data class BlazeResolveConfiguration(
 }
 
 private fun computeDisplayName(targets: Collection<TargetKey>): String {
-  val minTargetKey = targets.minOrNull()
-  Preconditions.checkNotNull(minTargetKey)
+  val minTargetKey = requireNotNull(targets.minOrNull())
 
   return if (targets.size == 1) {
-    minTargetKey.toString()
+    minTargetKey.label().toString()
   } else {
-    String.format("%s and %d other target(s)", minTargetKey, targets.size - 1)
+    String.format("%s and %d other target(s)", minTargetKey.label(), targets.size - 1)
   }
 }
 
