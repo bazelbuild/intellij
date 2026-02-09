@@ -338,11 +338,8 @@ public final class SyncPhaseCoordinator {
           new StatusOutput(
               "Couldn't load previously cached project data; full sync will be needed"));
     }
-    if (data == null) {
-      return null;
-    }
-    Preconditions.checkState(data instanceof BlazeProjectData, "Invalid project data type");
-    return (BlazeProjectData) data;
+
+    return data;
   }
 
   private void doFilterProjectTargets(

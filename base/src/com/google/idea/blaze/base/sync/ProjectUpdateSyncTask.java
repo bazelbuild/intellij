@@ -161,12 +161,8 @@ final class ProjectUpdateSyncTask {
     Preconditions.checkState(
         Blaze.getProjectType(project) == ProjectType.ASPECT_SYNC,
         "This should only happen in legacy sync");
-    BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (data == null) {
-      return null;
-    }
-    Preconditions.checkState(data instanceof BlazeProjectData, "Invalid project data type");
-    return (BlazeProjectData) data;
+
+    return BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {

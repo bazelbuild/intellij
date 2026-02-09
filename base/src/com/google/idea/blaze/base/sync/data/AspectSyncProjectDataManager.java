@@ -83,9 +83,8 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
   }
 
   @Override
-  public void saveProject(
-      final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
-    this.projectData = (BlazeProjectData) projectData;
+  public void saveProject(final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
+    this.projectData = projectData;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
