@@ -38,168 +38,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The result of a Bazel build.
+ * The result of a (potentially sharded) blaze build.
  */
-public interface BlazeBuildOutputs {
-
-  /**
-   * A list of the artifacts outputted by the given target to the given output group.
-   *
-   * <p>Note that the same artifact may be outputted by multiple targets and into multiple output groups.
-   */
-  ImmutableList<OutputArtifact> getOutputGroupTargetArtifacts(String outputGroup, String label);
-
-  /**
-   * A de-duplicated list of the artifacts outputted to the given output group.
-   *
-   * <p>Note that the same artifact may be outputted by multiple targets and into multiple output groups. Such artifacts are included in the
-   * resulting list only once.
-   */
-  ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup);
-
-  /**
-   * Label of any targets that were not build because of build errors.
-   */
-  ImmutableSet<String> targetsWithErrors();
-
-  /**
-   * The final status of the Bazel build.
-   */
-  BuildResult buildResult();
-
-  /**
-   * An obscure ID that can be used to identify the build in the external environment.
-   *
-   * <p><em>DO NOT</em> attempt to interpret or compare.
-   */
-  String idForLogging();
-
-  String buildId();
-
-  /**
-   * @return true if the build outputs are empty.
-   */
-  boolean isEmpty();
-
-  /** The result of a (potentially sharded) blaze build.
-   *
-   *<p><em>NOTE</em>:The implementation supporting sharded builds is slow and memory hungry. It should only be used with the legacy sync.
-   **/
-  interface Legacy extends BlazeBuildOutputs {
-
-
-    /**
-     * {@link OutputArtifact} out of all {@link BepArtifactData} from a build
-     */
-    ImmutableSet<OutputArtifact> getAllOutputArtifacts();
-
-    /**
-     * {@link BepArtifactData} by {@link OutputArtifact#getBazelOutRelativePath()} for all artifacts from a
-     * build.
-     */
-    ImmutableMap<String, BepArtifactData> artifacts();
-
-    /**
-     * The artifacts transitively associated with each top-level target.
-     */
-    ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts();
-
-    ImmutableMap<String, BuildResult> buildShardResults();
-
-    ImmutableList<OutputArtifact> getOutputGroupArtifactsLegacySyncOnly(
-      Predicate<String> outputGroupFilter);
-
-    Legacy updateOutputs(Legacy nextOutputs);
-
-    ImmutableList<String> getBuildIds();
-
-    long bepBytesConsumed();
-
-    boolean allBuildsFailed();
-  }
-
-
-  static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
-    return new BlazeBuildOutputsImpl(
-      buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L);
-  }
-
-  static BlazeBuildOutputs.Legacy noOutputsForLegacy(BuildResult buildResult) {
-    return new BlazeBuildOutputsImpl(
-      buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L);
-  }
-
-  @VisibleForTesting
-  static BlazeBuildOutputs noOutputsForTesting(String buildId, BuildResult buildResult) {
-    return new BlazeBuildOutputsImpl(
-      buildResult,
-      ImmutableMap.of(),
-      ImmutableMap.of(buildId, buildResult),
-      ImmutableSet.of(),
-      0L);
-  }
-
-
-  static BlazeBuildOutputs fromParsedBepOutput(ParsedBepOutput parsedOutput) {
-    return new BlazeBuildOutputs() {
-      @Override
-      public ImmutableList<OutputArtifact> getOutputGroupTargetArtifacts(String outputGroup, String label) {
-        return ImmutableList.copyOf(parsedOutput.getOutputGroupTargetArtifacts(outputGroup, label));
-      }
-
-      @Override
-      public ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup) {
-        return ImmutableList.copyOf(parsedOutput.getOutputGroupArtifacts(outputGroup));
-      }
-
-      @Override
-      public ImmutableSet<String> targetsWithErrors() {
-        return ImmutableSet.copyOf(parsedOutput.targetsWithErrors());
-      }
-
-      @Override
-      public BuildResult buildResult() {
-        return BuildResult.fromExitCode(parsedOutput.buildResult());
-      }
-
-      @Override
-      public String idForLogging() {
-        return parsedOutput.idForLogging();
-      }
-
-      @Override
-      public String buildId() {
-        return "";
-      }
-
-      @Override
-      public boolean isEmpty() {
-        return false;
-      }
-    };
-  }
-
-  static BlazeBuildOutputs.Legacy fromParsedBepOutputForLegacy(
-    ParsedBepOutput.Legacy parsedOutput) {
-    final var result = BuildResult.fromExitCode(parsedOutput.getBuildResult());
-    ImmutableMap<String, BuildResult> buildIdWithResult =
-      parsedOutput.getBuildId() != null
-      ? ImmutableMap.of(parsedOutput.getBuildId(), result)
-      : ImmutableMap.of();
-    return new BlazeBuildOutputsImpl(
-      result,
-      result.status == Status.FATAL_ERROR
-      ? ImmutableMap.of()
-      : parsedOutput.getFullArtifactData(),
-      buildIdWithResult,
-      parsedOutput.getTargetsWithErrors(),
-      parsedOutput.getBepBytesConsumed());
-  }
-
-  /**
-   * The result of a (potentially sharded) blaze build.
-   */
-  class BlazeBuildOutputsImpl implements BlazeBuildOutputs, Legacy {
+public class BlazeBuildOutputs {
     private final BuildResult buildResult;
     // Maps build id to the build result of individual shards
     private final ImmutableMap<String, BuildResult> buildShardResults;
@@ -217,7 +58,7 @@ public interface BlazeBuildOutputs {
      */
     private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
 
-    private BlazeBuildOutputsImpl(
+    private BlazeBuildOutputs(
       BuildResult buildResult,
       Map<String, BepArtifactData> artifacts,
       ImmutableMap<String, BuildResult> buildShardResults,
@@ -234,8 +75,39 @@ public interface BlazeBuildOutputs {
       this.perTargetArtifacts = perTarget.build();
     }
 
+    public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
+      return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L);
+    }
+
+    @VisibleForTesting
+    public static BlazeBuildOutputs noOutputsForTesting(String buildId, BuildResult buildResult) {
+      return new BlazeBuildOutputs(
+        buildResult,
+        ImmutableMap.of(),
+        ImmutableMap.of(buildId, buildResult),
+        ImmutableSet.of(),
+        0L
+      );
+    }
+
+    public static BlazeBuildOutputs fromParsedBepOutput(ParsedBepOutput parsedOutput) {
+      final var result = BuildResult.fromExitCode(parsedOutput.getBuildResult());
+      final var buildIdWithResult = parsedOutput.getBuildId() != null
+        ? ImmutableMap.of(parsedOutput.getBuildId(), result)
+        : ImmutableMap.<String, BuildResult>of();
+
+      return new BlazeBuildOutputs(
+        result,
+        result.status == Status.FATAL_ERROR
+        ? ImmutableMap.of()
+        : parsedOutput.getFullArtifactData(),
+        buildIdWithResult,
+        parsedOutput.getTargetsWithErrors(),
+        parsedOutput.getBepBytesConsumed()
+      );
+    }
+
     /** Returns the output artifacts generated for target with given label. */
-    @Override
     public ImmutableList<OutputArtifact> getOutputGroupTargetArtifacts(String outputGroup, String label) {
       // TODO: solodkyy - This is slow although it is invoked at most two times.
       return artifacts.values().stream()
@@ -245,7 +117,6 @@ public interface BlazeBuildOutputs {
     }
 
   /** Returns all output artifacts. */
-  @Override
   public ImmutableSet<OutputArtifact> getAllOutputArtifacts() {
     return artifacts.values().stream()
         .map((it) -> it.artifact)
@@ -253,7 +124,6 @@ public interface BlazeBuildOutputs {
   }
 
   @VisibleForTesting
-  @Override
   public ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup) {
     // TODO: solodkyy - This is slow although it is invoked at most two times.
     return artifacts.values().stream()
@@ -262,23 +132,19 @@ public interface BlazeBuildOutputs {
         .collect(toImmutableList());
   }
 
-    @Override
     public ImmutableMap<String, BepArtifactData> artifacts() {
       return artifacts;
     }
 
-    @Override
     public ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts() {
       return perTargetArtifacts;
     }
 
-    @Override
     public ImmutableMap<String, BuildResult> buildShardResults() {
       return buildShardResults;
     }
 
     @VisibleForTesting
-    @Override
     public ImmutableList<OutputArtifact> getOutputGroupArtifactsLegacySyncOnly(
       Predicate<String> outputGroupFilter) {
       return artifacts.values().stream()
@@ -287,7 +153,6 @@ public interface BlazeBuildOutputs {
         .collect(toImmutableList());
     }
 
-    @Override
     public ImmutableSet<String> targetsWithErrors() {
       return targetsWithErrors;
     }
@@ -295,8 +160,7 @@ public interface BlazeBuildOutputs {
     /**
      * Merges this {@link BlazeBuildOutputs} with a newer set of outputs.
      */
-    @Override
-    public BlazeBuildOutputs.Legacy updateOutputs(BlazeBuildOutputs.Legacy nextOutputs) {
+    public BlazeBuildOutputs updateOutputs(BlazeBuildOutputs nextOutputs) {
 
       // first combine common artifacts
       Map<String, BepArtifactData> combined = new LinkedHashMap<>(artifacts);
@@ -332,7 +196,7 @@ public interface BlazeBuildOutputs {
           }
         }
       }
-      return new BlazeBuildOutputsImpl(
+      return new BlazeBuildOutputs(
         BuildResult.combine(buildResult(), nextOutputs.buildResult()),
         combined,
         Stream.concat(
@@ -344,13 +208,10 @@ public interface BlazeBuildOutputs {
         Sets.union(targetsWithErrors, nextOutputs.targetsWithErrors()).immutableCopy(),
         bepBytesConsumed + nextOutputs.bepBytesConsumed());
     }
-
-    @Override
     public ImmutableList<String> getBuildIds() {
       return buildShardResults.keySet().asList();
     }
 
-    @Override
     public long bepBytesConsumed() {
       return bepBytesConsumed;
     }
@@ -358,31 +219,25 @@ public interface BlazeBuildOutputs {
     /**
      * Returns true if all component builds had fatal errors.
      */
-    @Override
     public boolean allBuildsFailed() {
       return !buildShardResults.isEmpty()
              && buildShardResults.values().stream()
                .allMatch(result -> result.status == Status.FATAL_ERROR);
     }
 
-    @Override
     public BuildResult buildResult() {
       return buildResult;
     }
 
-    @Override
     public String idForLogging() {
       return getBuildIds().stream().collect(Collectors.joining(","));
     }
 
-    @Override
     public String buildId() {
       return getOnlyElement(getBuildIds());
     }
 
-    @Override
     public boolean isEmpty() {
       return artifacts.isEmpty();
     }
-  }
 }

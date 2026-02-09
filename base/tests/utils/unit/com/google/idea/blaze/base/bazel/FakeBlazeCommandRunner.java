@@ -46,13 +46,7 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
     BlazeBuildOutputs runBuild(BuildResultHelper buildResultHelper) throws BuildException;
   }
 
-  @FunctionalInterface
-  public interface LegacyBuildFunction {
-    BlazeBuildOutputs.Legacy runBuild(BuildResultHelper buildResultHelper) throws BuildException;
-  }
-
   private final BuildFunction resultsFunction;
-  private final LegacyBuildFunction legacyResultsFunction;
   private BlazeCommand command;
 
   public FakeBlazeCommandRunner() {
@@ -62,18 +56,11 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
             return BlazeBuildOutputs.fromParsedBepOutput(
               BuildResultParser.getBuildOutput(bepStream, Interners.STRING));
           }
-        },
-        buildResultHelper -> {
-          try (final var bepStream = buildResultHelper.getBepStream(Optional.empty())) {
-            return BlazeBuildOutputs.fromParsedBepOutputForLegacy(
-                BuildResultParser.getBuildOutputForLegacySync(bepStream, Interners.STRING));
-          }
         });
   }
 
-  public FakeBlazeCommandRunner(BuildFunction buildFunction, LegacyBuildFunction legacyBuildFunction) {
+  public FakeBlazeCommandRunner(BuildFunction buildFunction) {
     this.resultsFunction = buildFunction;
-    this.legacyResultsFunction = legacyBuildFunction;
   }
 
   @Override

@@ -138,7 +138,7 @@ private fun executeBuild(
   requiredFlags: List<String>,
   overridableFlags: List<String>,
   targets: ImmutableList<TargetExpression>,
-): BlazeBuildOutputs.Legacy {
+): BlazeBuildOutputs {
   val projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet()
   val progressMessage = getProgressMessage(targets)
 
@@ -185,7 +185,7 @@ private fun reportArtifactsIssue(ctx: BlazeContext, msg: String): Nothing {
 }
 
 @Throws(GetArtifactsException::class)
-private fun findExecutable(ctx: BlazeContext, output: BlazeBuildOutputs.Legacy, target: Label): Path {
+private fun findExecutable(ctx: BlazeContext, output: BlazeBuildOutputs, target: Label): Path {
   // should only be called if the build succeeds
   require(output.buildResult().status == BuildResult.Status.SUCCESS)
 

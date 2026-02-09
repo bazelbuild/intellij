@@ -179,7 +179,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   /** Returns the {@link OutputArtifact}s we want to track between syncs. */
   private static ImmutableSet<OutputArtifact> getTrackedOutputs(
-      BlazeBuildOutputs.Legacy buildOutput) {
+      BlazeBuildOutputs buildOutput) {
     // don't track intellij-info.txt outputs -- they're already tracked in
     // BlazeIdeInterfaceState
     Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
@@ -264,7 +264,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ListenableFuture<?> fetchLocalFilesFuture =
         PrefetchService.getInstance()
             .prefetchFiles(
-                /* files= */ LocalFileArtifact.getLocalFilesForLegacySync(diff.getUpdatedOutputs()),
+                /* files= */ LocalFileArtifact.getLocalFiles(diff.getUpdatedOutputs()),
                 /* refetchCachedFiles= */ true,
                 /* fetchFileTypes= */ false);
     if (!FutureUtil.waitForFuture(context, fetchLocalFilesFuture)
@@ -586,7 +586,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   @Override
-  public BlazeBuildOutputs.Legacy build(
+  public BlazeBuildOutputs build(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -600,7 +600,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       boolean invokeParallel) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
 
-    final Ref<BlazeBuildOutputs.Legacy> combinedResult = new Ref<>();
+    final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
 
     // The build is a sync iff INFO output group is present
     boolean isSync = outputGroups.contains(OutputGroup.INFO);
@@ -664,7 +664,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   progressTracker.onBuildStarted(context);
 
                   try {
-                    BlazeBuildOutputs.Legacy result =
+                    BlazeBuildOutputs result =
                         runBuildForTargets(
                             project,
                             invoker,
@@ -702,7 +702,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (combinedResult.isNull()
         || (!BuildPhaseSyncTask.continueSyncOnOom.getValue()
             && buildResult.status == Status.FATAL_ERROR)) {
-      return BlazeBuildOutputs.noOutputsForLegacy(buildResult);
+      return BlazeBuildOutputs.noOutputs(buildResult);
     }
     return combinedResult.get();
   }
@@ -711,7 +711,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private void printShardFinishedSummary(
       BlazeContext context,
       String taskName,
-      BlazeBuildOutputs.Legacy result,
+      BlazeBuildOutputs result,
       BuildInvoker invoker) {
     if (result.buildResult().status == Status.SUCCESS) {
       return;
@@ -753,7 +753,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   /** Runs a blaze build for the given output groups. */
-  private static BlazeBuildOutputs.Legacy runBuildForTargets(
+  private static BlazeBuildOutputs runBuildForTargets(
       Project project,
       BuildInvoker invoker,
       BlazeContext context,

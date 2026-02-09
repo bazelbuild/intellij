@@ -243,7 +243,7 @@ public final class BuildPhaseSyncTask {
                 .getCapabilities()
                 .contains(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS));
 
-    BlazeBuildOutputs.Legacy blazeBuildResult =
+    BlazeBuildOutputs blazeBuildResult =
         getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
@@ -379,7 +379,7 @@ public final class BuildPhaseSyncTask {
     return targets.build();
   }
 
-  private BlazeBuildOutputs.Legacy getBlazeBuildResult(
+  private BlazeBuildOutputs getBlazeBuildResult(
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,

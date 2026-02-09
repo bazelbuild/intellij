@@ -21,137 +21,58 @@ import com.google.common.collect.ImmutableSet
 import com.google.idea.blaze.common.artifact.OutputArtifact
 import org.jetbrains.annotations.TestOnly
 
-/** A data class representing blaze's build event protocol (BEP) output for a build.  */
-interface ParsedBepOutput {
+/**
+ * A data class representing blaze's build event protocol (BEP) output for a build.
+ *
+ * @property buildId The build identifier
+ * @property workspaceStatus URI of the source that the build consumed, if available. The format will be VCS specific.
+ * @property fileSets A map from file set ID to file set, with the same ordering as the BEP stream
+ * @property buildResult The build exit code
+ * @property bepBytesConsumed Number of bytes consumed from BEP stream
+ * @property targetsWithErrors The set of build targets that had an error
+ */
+data class ParsedBepOutput(
+  val buildId: String?,
+  val workspaceStatus: ImmutableMap<String, String>,
+  val fileSets: ImmutableMap<String, FileSet>,
+  val syncStartTimeMillis: Long,
+  val buildResult: Int,
+  val bepBytesConsumed: Long,
+  val targetsWithErrors: ImmutableSet<String>
+) {
   /**
-   * The exit code of the Bazel build.
+   * Returns all output artifacts of the build.
    */
-  fun buildResult(): Int
-
-  /**
-   * The total number of bytes in the build event protocol output.
-   */
-  fun bepBytesConsumed(): Long
-
-  /**
-   * An obscure ID that can be used to identify the build in the external environment.
-   *
-   *
-   * *DO NOT* attempt to interpret or compare.
-   */
-  fun idForLogging(): String
-
-  /**
-   * A list of the artifacts outputted by the given target to the given output group.
-   *
-   *
-   * Note that the same artifact may be outputted by multiple targets and into multiple output groups.
-   */
-  fun getOutputGroupTargetArtifacts(
-    outputGroup: String,
-    label: String
-  ): List<OutputArtifact>
-
-  /**
-   * A de-duplicated list of the artifacts outputted to the given output group.
-   *
-   *
-   * Note that the same artifact may be outputted by multiple targets and into multiple output groups. Such artifacts are included in the
-   * resulting list only once.
-   */
-  fun getOutputGroupArtifacts(outputGroup: String): List<OutputArtifact>
-
-  /**
-   * Label of any targets that were not build because of build errors.
-   */
-  fun targetsWithErrors(): Set<String>
-
   @TestOnly
-  fun getAllOutputArtifactsForTesting(): List<OutputArtifact>
+  fun getAllOutputArtifactsForTesting(): Set<OutputArtifact> {
+    return fileSets
+      .values
+      .flatMap { it.parsedOutputs }
+      .toSet()
+  }
 
-  class Legacy internal constructor(
-    val buildId: String?,
-    /**
-     * Returns URI of the source that the build consumed, if available. The format will be VCS
-     * specific. If present, the value will be can be used with [com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler.vcsStateForSourceUri].
-     */
-    val workspaceStatus: ImmutableMap<String, String>,
-    /**
-     * A map from file set ID to file set, with the same ordering as the BEP stream.
-     */
-    @field:VisibleForTesting
-    @JvmField
-    val fileSets: ImmutableMap<String, FileSet>,
-    private val syncStartTimeMillis: Long,
-    /**
-     * Returns the build result.
-     */
-    val buildResult: Int,
-    val bepBytesConsumed: Long,
-    /**
-     * Returns the set of build targets that had an error.
-     */
-    val targetsWithErrors: ImmutableSet<String>
-  ) {
-    /**
-     * Returns all output artifacts of the build.
-     */
-    @TestOnly
-    fun getAllOutputArtifactsForTesting(): Set<OutputArtifact> {
-      return fileSets
+  /**
+   * Returns a map from artifact key to [BepArtifactData] for all artifacts reported during
+   * the build.
+   */
+  fun getFullArtifactData(): ImmutableMap<String, BepArtifactData> {
+    return ImmutableMap.copyOf(
+      fileSets
         .values
-        .flatMap { it.parsedOutputs }
-        .toSet()
-    }
+        .flatMap { it.toPerArtifactData() }
+        .groupBy { it.artifact.bazelOutRelativePath }
+        .mapValues { BepArtifactData.combine(it.value) }
+    )
+  }
 
-    /**
-     * Returns a map from artifact key to [BepArtifactData] for all artifacts reported during
-     * the build.
-     */
-    fun getFullArtifactData(): ImmutableMap<String, BepArtifactData> {
-      return ImmutableMap.copyOf(
-        fileSets
-          .values
-          .flatMap { it.toPerArtifactData() }
-          .groupBy { it.artifact.bazelOutRelativePath }
-          .mapValues { BepArtifactData.combine(it.value) }
-      )
-    }
+  data class FileSet(
+    val parsedOutputs: List<OutputArtifact>,
+    val outputGroups: Set<String>,
+    val targets: Set<String>
+  ) {
 
-    class FileSet internal constructor(
-      @VisibleForTesting
-      val parsedOutputs: List<OutputArtifact>,
-      outputGroups: Set<String>,
-      targets: Set<String>
-    ) {
-      @VisibleForTesting
-      val outputGroups: Set<String>
-
-      @VisibleForTesting
-      val targets: Set<String>
-
-      init {
-        this.outputGroups = ImmutableSet.copyOf<String>(outputGroups)
-        this.targets = ImmutableSet.copyOf<String>(targets)
-      }
-
-      fun toPerArtifactData(): Sequence<BepArtifactData> {
-        return parsedOutputs.asSequence()
-          .map { BepArtifactData(it, outputGroups, targets) }
-      }
-    }
-
-    companion object {
-      @VisibleForTesting
-      val EMPTY: Legacy = Legacy(
-        "build-id",
-        ImmutableMap.of<String, String>(),
-        ImmutableMap.of<String?, FileSet?>(),
-        0,
-        0,
-        0,
-        ImmutableSet.of<String?>()
-      )
+    fun toPerArtifactData(): Sequence<BepArtifactData> {
+      return parsedOutputs.asSequence().map { BepArtifactData(it, outputGroups, targets) }
     }
   }
 }
