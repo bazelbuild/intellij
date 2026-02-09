@@ -48,44 +48,6 @@ private val parallelBepPoolingEnabled: BoolExperiment = BoolExperiment("bep.pars
 private val maxThreads: IntExperiment = IntExperiment("bep.parsing.concurrency.limit", 5)
 
 /**
- * Parses BEP events into {@link ParsedBepOutput}.
- */
-@Throws(BuildEventStreamProvider.BuildEventStreamException::class)
-fun parseBepArtifacts(stream: BuildEventStreamProvider, nullableInterner: Interner<String>?): ParsedBepOutput {
-  val state = parseBep(stream, nullableInterner)
-  val bepBytesConsumed = stream.getBytesConsumed()
-  return object : ParsedBepOutput {
-    override fun buildResult(): Int {
-      return state.buildResult
-    }
-
-    override fun bepBytesConsumed(): Long {
-      return bepBytesConsumed
-    }
-
-    override fun idForLogging(): String {
-      return state.buildId ?: "unknown"
-    }
-
-    override fun getOutputGroupTargetArtifacts(outputGroup: String, label: String): List<OutputArtifact> {
-      return state.traverseFileSets(state.outputs.outputGroupTargetFileSetStream(outputGroup, label)).toDistinctOutputArtifacts().toList()
-    }
-
-    override fun getOutputGroupArtifacts(outputGroup: String): List<OutputArtifact> {
-      return state.traverseFileSets(state.outputs.outputGroupFileSetStream(outputGroup)).toDistinctOutputArtifacts().toList()
-    }
-
-    override fun targetsWithErrors(): Set<String> {
-      return ImmutableSet.copyOf(state.targetsWithErrors)
-    }
-
-    override fun getAllOutputArtifactsForTesting(): List<OutputArtifact> {
-      return state.traverseFileSets(state.outputs.fileSetStream()).toDistinctOutputArtifacts().toList()
-    }
-  }
-}
-
-/**
  * Parses BEP events into {@link ParsedBepOutput}. String references in {@link BuildEventStreamProtos.NamedSetOfFiles}
  * are interned to conserve memory.
  *
@@ -93,14 +55,14 @@ fun parseBepArtifacts(stream: BuildEventStreamProvider, nullableInterner: Intern
  * shards running in parallel, so a {@link Interner} is used to share references.
  */
 @Throws(BuildEventStreamProvider.BuildEventStreamException::class)
-fun parseBepArtifactsForLegacySync(stream: BuildEventStreamProvider, nullableInterner: Interner<String>?): ParsedBepOutput.Legacy {
+fun parseBepArtifacts(stream: BuildEventStreamProvider, nullableInterner: Interner<String>?): ParsedBepOutput {
   val semaphore = application.service<BepParserSemaphore>()
   semaphore.start()
   try {
     val state = parseBep(stream, nullableInterner)
-    val fileSetMap: ImmutableMap<String, ParsedBepOutput.Legacy.FileSet> =
+    val fileSetMap: ImmutableMap<String, ParsedBepOutput.FileSet> =
       fillInTransitiveFileSetData(state.fileSets, state.outputs, state.startTimeMillis)
-    return ParsedBepOutput.Legacy(
+    return ParsedBepOutput(
       state.buildId,
       state.workspaceStatus,
       fileSetMap,
@@ -284,8 +246,8 @@ private class FileSetBuilder {
     return namedSet != null && configId != null
   }
 
-  fun build(startTimeMillis: Long): ParsedBepOutput.Legacy.FileSet {
-    return ParsedBepOutput.Legacy.FileSet(parseFiles(namedSet!!, startTimeMillis).toList(), outputGroups, targets)
+  fun build(startTimeMillis: Long): ParsedBepOutput.FileSet {
+    return ParsedBepOutput.FileSet(parseFiles(namedSet!!, startTimeMillis).toList(), outputGroups, targets)
   }
 }
 
@@ -364,7 +326,7 @@ private fun fillInTransitiveFileSetData(
   namedFileSets: FileSets,
   data: OutputGroupTargetConfigFileSetMap,
   startTimeMillis: Long,
-): ImmutableMap<String, ParsedBepOutput.Legacy.FileSet> {
+): ImmutableMap<String, ParsedBepOutput.FileSet> {
   val fileSets = namedFileSets.toImmutableMap().mapValues { FileSetBuilder().apply { namedSet = it.value } }
   val topLevelFileSets = HashSet<String>()
   data.fileSetStream().forEach { entry ->

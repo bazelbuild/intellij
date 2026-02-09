@@ -47,6 +47,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.common.artifact.OutputArtifact;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -60,6 +61,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
@@ -111,7 +113,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
                 "config-id",
                 ImmutableList.of(outputGroup("name", ImmutableList.of("set-id")))));
 
-    List<OutputArtifact> parsedFilenames =
+    Set<OutputArtifact> parsedFilenames =
         BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getAllOutputArtifactsForTesting();
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
@@ -125,7 +127,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
         BuildEvent.newBuilder()
             .setCompleted(BuildEventStreamProtos.TargetComplete.getDefaultInstance());
 
-    List<OutputArtifact> parsedFilenames =
+    Set<OutputArtifact> parsedFilenames =
         BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(targetFinishedEvent)), null).getAllOutputArtifactsForTesting();
 
     assertThat(parsedFilenames).isEmpty();
@@ -151,7 +153,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
                 "config-id",
                 ImmutableList.of(outputGroup("name", ImmutableList.of("set-id")))));
 
-    List<OutputArtifact> parsedFilenames =
+    Set<OutputArtifact> parsedFilenames =
         BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getAllOutputArtifactsForTesting();
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
@@ -195,7 +197,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
+    Set<OutputArtifact> parsedFilenames =
         BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getAllOutputArtifactsForTesting();
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
@@ -231,7 +233,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
+    Set<OutputArtifact> parsedFilenames =
         BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getAllOutputArtifactsForTesting();
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
@@ -262,9 +264,10 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
-              BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getOutputGroupTargetArtifacts(
-                "group-name", "//some:target");
+    ImmutableList<OutputArtifact> parsedFilenames =
+              BlazeBuildOutputs.fromParsedBepOutput(
+                BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null))
+                .getOutputGroupTargetArtifacts("group-name", "//some:target");
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
@@ -302,9 +305,10 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
-              BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getOutputGroupTargetArtifacts(
-                "group-name", "//some:target");
+    ImmutableList<OutputArtifact> parsedFilenames =
+              BlazeBuildOutputs.fromParsedBepOutput(
+                BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null))
+                .getOutputGroupTargetArtifacts("group-name", "//some:target");
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
@@ -348,9 +352,10 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
-        BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getOutputGroupArtifacts(
-                                     "group-name");
+    ImmutableList<OutputArtifact> parsedFilenames =
+        BlazeBuildOutputs.fromParsedBepOutput(
+          BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null))
+          .getOutputGroupArtifacts("group-name");
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
@@ -389,9 +394,10 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
             .map(File::new)
             .collect(toImmutableList());
 
-    List<OutputArtifact> parsedFilenames =
-        BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null).getOutputGroupArtifacts(
-                                     "group-1");
+    ImmutableList<OutputArtifact> parsedFilenames =
+        BlazeBuildOutputs.fromParsedBepOutput(
+          BepParser.parseBepArtifacts(BuildEventStreamProvider.fromInputStream(asInputStream(events)), null))
+          .getOutputGroupArtifacts("group-1");
 
     assertThat(LocalFileArtifact.getLocalFiles(parsedFilenames))
         .containsExactlyElementsIn(allFiles)
@@ -583,7 +589,7 @@ public class BuildEventProtocolOutputReaderTest extends BlazeTestCase {
   }
 
   private static ImmutableList<File> getOutputXmlFiles(BlazeTestResult result) {
-    return LocalFileArtifact.getLocalFilesForLegacySync(result.getOutputXmlFiles());
+    return LocalFileArtifact.getLocalFiles(result.getOutputXmlFiles());
   }
 
   private static InputStream asInputStream(BuildEvent.Builder... events) throws Exception {
