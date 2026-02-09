@@ -158,13 +158,11 @@ public class LocalInvoker extends AbstractBuildInvoker {
   }
 
   @Override
-  @Nullable
-  public InputStream invokeInfo(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) {
+  public InputStream invokeInfo(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) throws BuildException {
     try {
       performGuardCheck(project, blazeContext);
     } catch (ExecutionDeniedException e) {
-      logger.error(e);
-      return null;
+      throw new BuildException("Execution denied: " + e.getMessage(), e);
     }
 
     BlazeCommand blazeCommand = blazeCommandBuilder.build();
@@ -188,9 +186,10 @@ public class LocalInvoker extends AbstractBuildInvoker {
       BazelExitCodeException.throwIfFailed(blazeCommand, exitCode);
       return new BufferedInputStream(
           Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
-    } catch (IOException | BuildException e) {
-      logger.error(e);
-      return null;
+    } catch (IOException e) {
+      throw new BuildException("Failed to execute info command '" + blazeCommand.name() + "': " + e.getMessage(), e);
+    } catch (BuildException e) {
+      throw e;
     }
   }
 
