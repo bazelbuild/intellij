@@ -108,12 +108,11 @@ public class LocalInvoker extends AbstractBuildInvoker {
   }
 
   @Override
-  public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) {
+  public InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) throws BuildException {
     try {
       performGuardCheck(project, blazeContext);
     } catch (ExecutionDeniedException e) {
-      logger.error(e);
-      return null;
+      throw new BuildException("Execution denied: " + e.getMessage(), e);
     }
 
     BlazeCommand blazeCommand = blazeCommandBuilder.build();
@@ -151,9 +150,10 @@ public class LocalInvoker extends AbstractBuildInvoker {
           blazeCommand, retVal, BazelExitCodeException.ThrowOption.ALLOW_PARTIAL_SUCCESS);
       return new BufferedInputStream(
           Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE));
-    } catch (IOException | BuildException e) {
-      logger.error(e);
-      return null;
+    } catch (IOException e) {
+      throw new BuildException("Failed to execute query command '" + blazeCommand.name() + "': " + e.getMessage(), e);
+    } catch (BuildException e) {
+      throw e;
     }
   }
 

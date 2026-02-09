@@ -103,7 +103,8 @@ public interface BuildSystem {
     /**
      * Runs a blaze query command.
      *
-     * @return {@link InputStream} from the stdout of the blaze invocation and null if the query fails
+     * @return {@link InputStream} from the stdout of the blaze invocation
+     * @throws BuildException if the query fails for any reason (execution denied, IO error, or query error)
      */
     @MustBeClosed
     InputStream invokeQuery(BlazeCommand.Builder blazeCommandBuilder, BlazeContext blazeContext) throws BuildException;
