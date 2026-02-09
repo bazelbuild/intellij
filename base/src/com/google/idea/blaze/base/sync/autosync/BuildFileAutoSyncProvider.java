@@ -44,7 +44,7 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null
-        ? projectData.getWorkspacePathResolver().getWorkspacePath(new File(file.getPath()))
+        ? projectData.workspacePathResolver().getWorkspacePath(new File(file.getPath()))
         : null;
   }
 

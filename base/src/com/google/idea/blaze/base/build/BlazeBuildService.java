@@ -164,8 +164,8 @@ public class BlazeBuildService {
                     project,
                     context,
                     projectView,
-                    projectData.getWorkspacePathResolver(),
-                    projectData.getWorkspaceLanguageSettings())
+                    projectData.workspacePathResolver(),
+                    projectData.workspaceLanguageSettings())
                 .getTargetsToSync();
           } catch (SyncCanceledException | ExecutionException | InterruptedException e) {
             context.setCancelled();
@@ -250,7 +250,7 @@ public class BlazeBuildService {
                             project,
                             context,
                             projectView,
-                            projectData.getWorkspacePathResolver(),
+                            projectData.workspacePathResolver(),
                             targets,
                             buildInvoker,
                             SyncStrategy.SERIAL);
@@ -263,11 +263,11 @@ public class BlazeBuildService {
                                 project,
                                 context,
                                 workspaceRoot,
-                                projectData.getBlazeVersionData(),
+                                projectData.blazeVersionData(),
                                 buildInvoker,
                                 projectView,
                                 shardedTargets.shardedTargets,
-                                projectData.getWorkspaceLanguageSettings(),
+                                projectData.workspaceLanguageSettings(),
                                 ImmutableSet.of(OutputGroup.COMPILE),
                                 BlazeInvocationContext.OTHER_CONTEXT,
                                 shardedTargets.shardedTargets.shardCount() > 1);

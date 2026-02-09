@@ -64,7 +64,7 @@ public class PythonPrefetchFileSource implements PrefetchFileSource, OutputsProv
       ImportRoots importRoots,
       BlazeProjectData blazeProjectData,
       Set<File> files) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
+    if (!blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
         || !prefetchAllPythonSources.getValue()) {
       return;
     }
@@ -77,9 +77,9 @@ public class PythonPrefetchFileSource implements PrefetchFileSource, OutputsProv
           WorkspacePath path = WorkspacePath.createIfValid(location.relativePath());
           return path != null && !importRoots.containsWorkspacePath(path);
         };
-    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder();
     List<File> sourceFiles =
-        blazeProjectData.getTargetMap().targets().stream()
+        blazeProjectData.targetMap().targets().stream()
             .filter(t -> t.getPyIdeInfo() != null)
             .map(TargetIdeInfo::getPyIdeInfo)
             .map(PyIdeInfo::getSources)

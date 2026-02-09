@@ -114,13 +114,13 @@ private fun computeSources(
 ): ImmutableList<VirtualFile> {
   val builder = ImmutableList.builder<VirtualFile>()
 
-  val ideInfo = blazeProjectData.targetMap[targetKey]
+  val ideInfo = blazeProjectData.targetMap()[targetKey]
   if (ideInfo?.getcIdeInfo() == null) {
     return ImmutableList.of()
   }
 
   for (source in ideInfo.sources) {
-    val path = blazeProjectData.artifactLocationDecoder.decode(source).toPath()
+    val path = blazeProjectData.artifactLocationDecoder().decode(source).toPath()
 
     val virtualFile = VirtualFileSystemProvider.getInstance().system.findFileByNioFile(path)
     if (virtualFile == null || !OCFileTypeHelpers.isSourceFile(virtualFile.name)) {

@@ -240,7 +240,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       return ImmutableList.of();
     }
 
-    return projectData.getTargetMap().get(label)
+    return projectData.targetMap().get(label)
         .stream()
         .map(TargetIdeInfo::getcIdeInfo)
         .filter(Objects::nonNull)
@@ -294,7 +294,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         if (projectData == null) {
           executionRoot = workspaceRoot.directory().toPath();
         } else {
-          executionRoot = projectData.getBlazeInfo().getExecutionRoot().toPath();
+          executionRoot = projectData.blazeInfo().getExecutionRoot().toPath();
         }
 
         // the working directory must be the execroot to make breakpoints work

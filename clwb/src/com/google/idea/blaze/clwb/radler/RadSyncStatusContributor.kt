@@ -26,7 +26,7 @@ class RadSyncStatusContributor : LegacySyncStatusContributor {
   }
 
   override fun handlesFile(projectData: BlazeProjectData, file: VirtualFile): Boolean {
-    if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
+    if (!projectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return false;
     }
 

@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
-import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -155,7 +154,7 @@ final class ProjectUpdateSyncTask {
   }
 
   @Nullable
-  private static AspectSyncProjectData getOldProjectData(Project project, SyncMode syncMode) {
+  private static BlazeProjectData getOldProjectData(Project project, SyncMode syncMode) {
     if (syncMode == SyncMode.FULL) {
       return null;
     }
@@ -166,8 +165,8 @@ final class ProjectUpdateSyncTask {
     if (data == null) {
       return null;
     }
-    Preconditions.checkState(data instanceof AspectSyncProjectData, "Invalid project data type");
-    return (AspectSyncProjectData) data;
+    Preconditions.checkState(data instanceof BlazeProjectData, "Invalid project data type");
+    return (BlazeProjectData) data;
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
@@ -210,7 +209,7 @@ final class ProjectUpdateSyncTask {
                 artifactLocationDecoder,
                 targetMap,
                 syncStateBuilder,
-                oldProjectData != null ? oldProjectData.getSyncState() : null,
+                oldProjectData != null ? oldProjectData.syncState() : null,
                 syncMode);
           }
         });
@@ -222,15 +221,16 @@ final class ProjectUpdateSyncTask {
     }
 
     BlazeProjectData newProjectData =
-        new AspectSyncProjectData(
-            targetData,
-            blazeInfo,
-            projectState.getBlazeVersionData(),
-            projectState.getWorkspacePathResolver(),
-            artifactLocationDecoder,
-            projectState.getLanguageSettings(),
-            projectState.getExternalWorkspaceData(),
-            syncStateBuilder.build());
+        BlazeProjectData.builder()
+            .targetData(targetData)
+            .blazeInfo(blazeInfo)
+            .blazeVersionData(projectState.getBlazeVersionData())
+            .workspacePathResolver(projectState.getWorkspacePathResolver())
+            .artifactLocationDecoder(artifactLocationDecoder)
+            .workspaceLanguageSettings(projectState.getLanguageSettings())
+            .externalWorkspaceData(projectState.getExternalWorkspaceData())
+            .syncState(syncStateBuilder.build())
+            .build();
 
     FileCaches.onSync(
         project,
@@ -310,7 +310,7 @@ final class ProjectUpdateSyncTask {
 
       if (Registry.is("bazel.sync.mark.dirty")) {
         final var file = VfsUtil.findFileByIoFile(
-            /* file = */ blazeProjectData.getBlazeInfo().getExecutionRoot(),
+            /* file = */ blazeProjectData.blazeInfo().getExecutionRoot(),
             /* refreshIfNeeded = */ false
         );
 
@@ -320,7 +320,7 @@ final class ProjectUpdateSyncTask {
       }
 
       LocalFileSystem.getInstance().refreshIoFiles(
-          /* files = */ List.of(blazeProjectData.getBlazeInfo().getExecutionRoot()),
+          /* files = */ List.of(blazeProjectData.blazeInfo().getExecutionRoot()),
           /* async = */ false,
           /* recursive = */ true,
           /* onFinish = */ null
@@ -400,7 +400,7 @@ final class ProjectUpdateSyncTask {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       workspaceModuleType =
           syncPlugin.getWorkspaceModuleType(
-              newBlazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType());
+              newBlazeProjectData.workspaceLanguageSettings().getWorkspaceType());
       if (workspaceModuleType != null) {
         break;
       }

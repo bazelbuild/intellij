@@ -83,7 +83,7 @@ final class BlazeConfigurationResolver {
         ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
-            context, blazeProjectData.getTargetMap());
+            context, blazeProjectData.targetMap());
 
     Optional<XcodeCompilerSettings> xcodeSettings =
             BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project, blazeProjectData);
@@ -102,7 +102,7 @@ final class BlazeConfigurationResolver {
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
     Predicate<TargetIdeInfo> targetFilter =
-        getTargetFilter(projectViewFilter, project, blazeProjectData.getWorkspacePathResolver());
+        getTargetFilter(projectViewFilter, project, blazeProjectData.workspacePathResolver());
     BlazeConfigurationResolverResult.Builder builder = BlazeConfigurationResolverResult.builder();
     buildBlazeConfigurationData(
         context, blazeProjectData, toolchainLookupMap, compilerSettings, targetFilter, builder);
@@ -187,7 +187,7 @@ final class BlazeConfigurationResolver {
               ConcurrentMap<TargetKey, BlazeResolveConfigurationData> targetToData =
                   Maps.newConcurrentMap();
               List<ListenableFuture<?>> targetToDataFutures =
-                  blazeProjectData.getTargetMap().targets().stream()
+                  blazeProjectData.targetMap().targets().stream()
                       .filter(targetFilter)
                       .map(
                           target ->

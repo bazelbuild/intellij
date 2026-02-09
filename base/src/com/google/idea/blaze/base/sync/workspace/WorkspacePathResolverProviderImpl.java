@@ -53,7 +53,7 @@ public class WorkspacePathResolverProviderImpl implements WorkspacePathResolverP
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (projectData != null) {
-        return projectData.getWorkspacePathResolver();
+        return projectData.workspacePathResolver();
       }
     }
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);

@@ -74,7 +74,7 @@ final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
       BlazeProjectData blazeProjectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (blazeProjectData != null) {
-        gdbFile = blazeProjectData.getWorkspacePathResolver().resolveToFile(relativePath);
+        gdbFile = blazeProjectData.workspacePathResolver().resolveToFile(relativePath);
       }
       absolutePath = gdbFile == null ? null : gdbFile.getPath();
     }

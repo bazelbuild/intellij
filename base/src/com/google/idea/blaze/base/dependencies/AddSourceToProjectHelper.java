@@ -367,7 +367,7 @@ class AddSourceToProjectHelper {
    */
   private static boolean sourceInProjectTargets(
       LocationContext context, Collection<TargetKey> targetsBuildingSource) {
-    if (targetsBuildingSource.stream().anyMatch(context.syncData.getTargetMap()::contains)) {
+    if (targetsBuildingSource.stream().anyMatch(context.syncData.targetMap()::contains)) {
       return true;
     }
     ImportRoots roots = context.getImportRoots();

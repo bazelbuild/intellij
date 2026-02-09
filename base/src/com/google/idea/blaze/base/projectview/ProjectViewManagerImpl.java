@@ -127,7 +127,7 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData != null) {
-      return projectData.getWorkspacePathResolver();
+      return projectData.workspacePathResolver();
     }
     // otherwise try to compute the workspace path resolver from scratch
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);

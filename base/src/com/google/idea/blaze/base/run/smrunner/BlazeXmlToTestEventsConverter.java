@@ -463,7 +463,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
         BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (projectData != null) {
-          return projectData.getBlazeVersionData().bazelIsAtLeastVersion(major, minor, bugfix);
+          return projectData.blazeVersionData().bazelIsAtLeastVersion(major, minor, bugfix);
         }
       }
     }

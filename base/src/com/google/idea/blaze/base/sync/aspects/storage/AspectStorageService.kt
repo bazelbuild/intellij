@@ -116,12 +116,12 @@ class AspectStorageService(private val project: Project, private val scope: Coro
   fun prepare(parentCtx: BlazeContext?, projectData: BlazeProjectData, versionData: BlazeVersionData) {
     val state = SyncProjectState.builder()
       .setProjectViewSet(ProjectViewSet.EMPTY) // not used by any AspectWriter
-      .setLanguageSettings(projectData.workspaceLanguageSettings)
-      .setExternalWorkspaceData(projectData.externalWorkspaceData)
-      .setWorkspacePathResolver(projectData.workspacePathResolver)
+      .setLanguageSettings(projectData.workspaceLanguageSettings())
+      .setExternalWorkspaceData(projectData.externalWorkspaceData())
+      .setWorkspacePathResolver(projectData.workspacePathResolver())
       .setWorkingSet(null)
       .setBlazeVersionData(versionData)
-      .setBlazeInfo(projectData.blazeInfo)
+      .setBlazeInfo(projectData.blazeInfo())
       .build()
 
     prepare(parentCtx, state)
@@ -158,11 +158,11 @@ class AspectStorageService(private val project: Project, private val scope: Coro
   private fun detectBazelIgnoreAndEmitWarning(ctx: BlazeContext, aspectPath: Path) {
     val projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData() ?: return
 
-    val bazelIgnore = projectData.workspacePathResolver.resolveToFile(BAZEL_IGNORE_FILE).toPath()
+    val bazelIgnore = projectData.workspacePathResolver().resolveToFile(BAZEL_IGNORE_FILE).toPath()
     if (!Files.exists(bazelIgnore)) return
 
     val aspectFile = aspectPath.toFile()
-    val aspectRelativePath = projectData.workspacePathResolver.getWorkspacePath(aspectFile)?.asPath() ?: return
+    val aspectRelativePath = projectData.workspacePathResolver().getWorkspacePath(aspectFile)?.asPath() ?: return
 
     val lines = try {
       Files.lines(bazelIgnore).map(String::trim).toList()

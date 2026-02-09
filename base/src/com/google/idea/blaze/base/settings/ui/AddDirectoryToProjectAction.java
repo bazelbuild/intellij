@@ -104,7 +104,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
     // the dialog entirely
     OpenBlazeWorkspaceFileActionDialog dialog =
         new OpenBlazeWorkspaceFileActionDialog(
-            project, projectView, projectData.getWorkspacePathResolver());
+            project, projectView, projectData.workspacePathResolver());
     if (fixedDirectory != null) {
       dialog.fileTextField.getField().setText(fixedDirectory.getAbsolutePath());
       dialog.fileTextField.getField().setEnabled(false);

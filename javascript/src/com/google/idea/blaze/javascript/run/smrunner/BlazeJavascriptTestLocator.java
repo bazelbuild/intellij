@@ -134,7 +134,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     if (projectData == null) {
       return null;
     }
-    TargetMap targetMap = projectData.getTargetMap();
+    TargetMap targetMap = projectData.targetMap();
     TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
     if (target == null
         || target.getKind().getRuleType() != RuleType.TEST
@@ -171,7 +171,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     PsiManager psiManager = PsiManager.getInstance(project);
     return OutputArtifactResolver.resolveAll(
             project,
-            projectData.getArtifactLocationDecoder(),
+            projectData.artifactLocationDecoder(),
             getJasmineSources(projectData, target))
         .stream()
         .map(f -> VfsUtils.resolveVirtualFile(f, /* refreshIfNeeded= */ false))
@@ -224,7 +224,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
 
   private static ImmutableSet<ArtifactLocation> getJasmineSources(
       BlazeProjectData projectData, TargetIdeInfo target) {
-    TargetMap targetMap = projectData.getTargetMap();
+    TargetMap targetMap = projectData.targetMap();
     if (!target.getSources().isEmpty()) {
       return target.getSources();
     }

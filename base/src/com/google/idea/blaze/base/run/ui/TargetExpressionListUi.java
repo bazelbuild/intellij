@@ -237,7 +237,7 @@ public class TargetExpressionListUi extends JPanel {
             .collect(toImmutableList());
       }
 
-      return projectData.getTargetMap().targets().stream()
+      return projectData.targetMap().targets().stream()
           .filter(TargetIdeInfo::isPlainTarget)
           .map(TargetIdeInfo::getKey)
           .map(TargetKey::getLabel)

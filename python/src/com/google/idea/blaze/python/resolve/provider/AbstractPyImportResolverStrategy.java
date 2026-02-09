@@ -137,10 +137,10 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
   PySourcesIndex buildSourcesIndex(Project project, BlazeProjectData projectData) {
     ImmutableSetMultimap.Builder<String, QualifiedName> shortNames = ImmutableSetMultimap.builder();
     Map<QualifiedName, PsiElementProvider> map = new HashMap<>();
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
+    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
+    for (TargetIdeInfo target : projectData.targetMap().targets()) {
       List<QualifiedName> importRoots = assembleImportRoots(target);
-      for (ArtifactLocation source : getPySources(projectData.getWorkspacePathResolver(), target)) {
+      for (ArtifactLocation source : getPySources(projectData.workspacePathResolver(), target)) {
         List<QualifiedName> sourceImports = assembleSourceImportsFromImportRoots(importRoots,
             toImportString(source));
         for (QualifiedName sourceImport : sourceImports) {

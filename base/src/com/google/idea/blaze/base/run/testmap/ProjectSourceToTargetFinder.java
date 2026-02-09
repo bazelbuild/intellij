@@ -65,7 +65,7 @@ public class ProjectSourceToTargetFinder implements SourceToTargetFinder {
 
   private static FilteredTargetMap computeTargetMap(Project project, BlazeProjectData projectData) {
     return computeTargetMap(
-        project, projectData.getArtifactLocationDecoder(), projectData.getTargetMap());
+        project, projectData.artifactLocationDecoder(), projectData.targetMap());
   }
 
   private static FilteredTargetMap computeTargetMap(

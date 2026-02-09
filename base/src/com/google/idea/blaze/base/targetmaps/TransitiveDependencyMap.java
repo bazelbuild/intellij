@@ -59,7 +59,7 @@ public class TransitiveDependencyMap {
       return false;
     }
 
-    return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.getTargetMap())
+    return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.targetMap())
         .anyMatch(possibleDependency::equals);
   }
 
@@ -78,7 +78,7 @@ public class TransitiveDependencyMap {
       return ImmutableSet.of();
     }
     ImmutableSet<TargetKey> possibleDepsSet = ImmutableSet.copyOf(possibleDependencies);
-    return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.getTargetMap())
+    return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.targetMap())
         .filter(possibleDepsSet::contains)
         .distinct()
         .limit(possibleDepsSet.size())
@@ -92,7 +92,7 @@ public class TransitiveDependencyMap {
       return ImmutableSet.of();
     }
     // TODO: see if we need caching.
-    return getTransitiveDependencies(targetKey, blazeProjectData.getTargetMap());
+    return getTransitiveDependencies(targetKey, blazeProjectData.targetMap());
   }
 
   public static ImmutableCollection<TargetKey> getTransitiveDependencies(

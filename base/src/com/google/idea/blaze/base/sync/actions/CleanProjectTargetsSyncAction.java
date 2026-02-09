@@ -82,7 +82,7 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
 
                       ImmutableSet<Label> deleted =
                           findDeletedTargets(
-                              project, projectData.getTargetMap().targets().asList(), context);
+                              project, projectData.targetMap().targets().asList(), context);
                       if (deleted == null) {
                         return;
                       }

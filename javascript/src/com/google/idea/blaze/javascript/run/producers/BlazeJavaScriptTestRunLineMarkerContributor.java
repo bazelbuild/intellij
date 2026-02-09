@@ -129,7 +129,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
                 ImmutableList.of(), BlazeSyncModificationTracker.getInstance(project));
           }
           ImmutableMultimap<TargetKey, TargetKey> rdeps = ReverseDependencyMap.get(project);
-          TargetMap targetMap = projectData.getTargetMap();
+          TargetMap targetMap = projectData.targetMap();
           return Result.create(
               SourceToTargetFinder.findTargetsForSourceFile(
                       project,

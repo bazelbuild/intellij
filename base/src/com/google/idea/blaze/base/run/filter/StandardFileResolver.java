@@ -37,7 +37,7 @@ public class StandardFileResolver implements FileResolver {
     if (projectData == null) {
       return null;
     }
-    return projectData.getWorkspacePathResolver().resolveToFile(fileString);
+    return projectData.workspacePathResolver().resolveToFile(fileString);
   }
 
   /**

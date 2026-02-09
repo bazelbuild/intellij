@@ -53,7 +53,7 @@ public class TestTargetSourcesHeuristic implements TestTargetHeuristic {
       return false;
     }
 
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
+    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
     for (ArtifactLocation src : sources.get()) {
       if (Objects.equals(decoder.resolveSource(src), sourceFile)) {
         return true;

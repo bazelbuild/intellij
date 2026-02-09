@@ -69,7 +69,7 @@ final class BuildFileUtils {
     File parentFile = parentPackage.buildFile.getFile().getParentFile();
     WorkspacePath packagePath =
         parentFile != null
-            ? blazeProjectData.getWorkspacePathResolver().getWorkspacePath(parentFile)
+            ? blazeProjectData.workspacePathResolver().getWorkspacePath(parentFile)
             : null;
     if (packagePath == null) {
       return null;

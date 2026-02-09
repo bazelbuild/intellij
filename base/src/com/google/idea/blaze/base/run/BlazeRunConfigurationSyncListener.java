@@ -69,7 +69,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     }
 
     Set<File> xmlFiles =
-        getImportedRunConfigurations(projectViewSet, blazeProjectData.getWorkspacePathResolver());
+        getImportedRunConfigurations(projectViewSet, blazeProjectData.workspacePathResolver());
     Transactions.submitTransactionAndWait(
         () -> {
           // First, import from specified XML files. Then auto-generate from targets.

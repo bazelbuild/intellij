@@ -329,7 +329,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   private static ImmutableList<String> getPythonArgsFor(
       BlazeProjectData projectData, Label target) {
-    TargetIdeInfo ideInfo = projectData.getTargetMap().get(TargetKey.forPlainTarget(target));
+    TargetIdeInfo ideInfo = projectData.targetMap().get(TargetKey.forPlainTarget(target));
     if (ideInfo == null) {
       return ImmutableList.of();
     }

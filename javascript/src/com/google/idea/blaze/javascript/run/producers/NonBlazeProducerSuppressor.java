@@ -58,7 +58,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
       return;
     }
 
-    WorkspaceLanguageSettings languageSettings = projectData.getWorkspaceLanguageSettings();
+    WorkspaceLanguageSettings languageSettings = projectData.workspaceLanguageSettings();
     boolean javascriptOrTypescriptActive = languageSettings != null
             && BlazeUserSettings.getInstance().isJavascriptTestrunnersEnabled()
             && (languageSettings.isLanguageActive(LanguageClass.JAVASCRIPT) || languageSettings.isLanguageActive(LanguageClass.TYPESCRIPT));

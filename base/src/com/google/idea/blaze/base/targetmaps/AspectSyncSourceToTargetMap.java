@@ -56,7 +56,7 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
       return ImmutableList.of();
     }
     return getRulesForSourceFile(sourceFile).stream()
-        .map(blazeProjectData.getTargetMap()::get)
+        .map(blazeProjectData.targetMap()::get)
         .filter(Objects::nonNull)
         // TODO(tomlu): For non-plain targets we need to rdep our way back to a target to build
         // Without this, you won't be able to invoke "build" on (say) a proto_library
@@ -97,9 +97,9 @@ public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
   @SuppressWarnings("unused")
   private static ImmutableMultimap<File, TargetKey> computeSourceToTargetMap(
       Project project, BlazeProjectData blazeProjectData) {
-    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ArtifactLocationDecoder decoder = blazeProjectData.artifactLocationDecoder();
     ImmutableMultimap.Builder<File, TargetKey> sourceToTargetMap = ImmutableMultimap.builder();
-    for (TargetIdeInfo target : blazeProjectData.getTargetMap().targets()) {
+    for (TargetIdeInfo target : blazeProjectData.targetMap().targets()) {
       ProgressManager.checkCanceled();
 
       TargetKey key = target.getKey();

@@ -199,7 +199,7 @@ public class BlazeSyncManager {
     SetView<LanguageClass> newLanguages =
         Sets.difference(
             projectState.getLanguageSettings().getActiveLanguages(),
-            oldProjectData.getWorkspaceLanguageSettings().getActiveLanguages());
+            oldProjectData.workspaceLanguageSettings().getActiveLanguages());
     // Don't care if languages are removed from project view because the corresponding targets will
     // be removed from the targetMap anyway at the end of the sync
     if (newLanguages.isEmpty()) {

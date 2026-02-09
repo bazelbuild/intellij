@@ -77,7 +77,7 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
     if (data == null) {
       return null;
     }
-    WorkspacePathResolver workspacePathResolver = data.getWorkspacePathResolver();
+    WorkspacePathResolver workspacePathResolver = data.workspacePathResolver();
     Optional<VirtualFile> workspaceRoot = getWorkspaceRoot(includeString, workspacePathResolver);
     if (!workspaceRoot.isPresent()) {
       return null;

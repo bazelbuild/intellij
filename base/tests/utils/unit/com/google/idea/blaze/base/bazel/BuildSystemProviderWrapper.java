@@ -182,7 +182,7 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
   /**
    * Sets a boolean value to toggle the outcome of getBlazeInfo() to be returned by {@code
-   * getBuildSystem().getBuildInvoker().getBlazeInfo()}.
+   * getBuildSystem().getBuildInvoker().blazeInfo()}.
    *
    * <p>If not set, or set to {@code false}, the {@link BlazeInfo} will be provided by the wrapped
    * instance.

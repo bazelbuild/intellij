@@ -109,7 +109,7 @@ class HeaderCacheService(private val project: Project) {
       cacheTracker.clear()
     }
 
-    for ((key, target) in projectData.targetMap.map()) {
+    for ((key, target) in projectData.targetMap().map()) {
       refreshTarget(projectData, key, target)
     }
   }
@@ -135,7 +135,7 @@ class HeaderCacheService(private val project: Project) {
         Files.newOutputStream(
           path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
         ).use { dst ->
-          projectData.artifactLocationDecoder.resolveOutput(header).inputStream.use { src ->
+          projectData.artifactLocationDecoder().resolveOutput(header).inputStream.use { src ->
             src.transferTo(dst)
           }
         }

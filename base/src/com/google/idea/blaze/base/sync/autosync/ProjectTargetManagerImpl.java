@@ -100,7 +100,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null
-        && projectData.getTargetMap().contains(TargetKey.forPlainTarget(target));
+        && projectData.targetMap().contains(TargetKey.forPlainTarget(target));
   }
 
   @Override
