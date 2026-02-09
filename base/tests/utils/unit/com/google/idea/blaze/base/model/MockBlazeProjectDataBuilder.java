@@ -166,6 +166,7 @@ public class MockBlazeProjectDataBuilder {
         .workspaceLanguageSettings(workspaceLanguageSettings)
         .externalWorkspaceData(externalWorkspaceData)
         .syncState(syncState)
+        .configurationData(BlazeConfigurationData.EMPTY)
         .build();
   }
 }

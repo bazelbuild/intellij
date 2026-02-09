@@ -65,6 +65,8 @@ public abstract class BlazeProjectData {
 
   public abstract SyncState syncState();
 
+  public abstract BlazeConfigurationData configurationData();
+
   public static Builder builder() {
     return new AutoValue_BlazeProjectData.Builder();
   }
@@ -88,6 +90,8 @@ public abstract class BlazeProjectData {
 
     public abstract Builder syncState(SyncState value);
 
+    public abstract Builder configurationData(BlazeConfigurationData value);
+
     public abstract BlazeProjectData build();
   }
 
@@ -108,6 +112,10 @@ public abstract class BlazeProjectData {
         .workspaceLanguageSettings(WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()))
         .externalWorkspaceData(ExternalWorkspaceData.fromProto(proto.getExternalWorkspaceData()))
         .syncState(SyncState.fromProto(proto.getSyncState()))
+        .configurationData(
+            proto.hasConfigurationData()
+                ? BlazeConfigurationData.fromProto(proto.getConfigurationData())
+                : BlazeConfigurationData.EMPTY)
         .build();
   }
 
@@ -137,6 +145,7 @@ public abstract class BlazeProjectData {
         .setWorkspaceLanguageSettings(workspaceLanguageSettings().toProto())
         .setSyncState(syncState().toProto())
         .setExternalWorkspaceData(externalWorkspaceData().toProto())
+        .setConfigurationData(configurationData().toProto())
         .build();
   }
 

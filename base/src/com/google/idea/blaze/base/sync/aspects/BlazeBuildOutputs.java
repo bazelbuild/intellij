@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Sets;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
 import com.google.idea.blaze.base.command.buildresult.bepparser.BepArtifactData;
@@ -58,17 +59,24 @@ public class BlazeBuildOutputs {
      */
     private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
 
+    /**
+     * Build configurations extracted from BEP, keyed by configuration ID.
+     */
+    private final ImmutableMap<String, BuildEventStreamProtos.Configuration> configurations;
+
     private BlazeBuildOutputs(
       BuildResult buildResult,
       Map<String, BepArtifactData> artifacts,
       ImmutableMap<String, BuildResult> buildShardResults,
       ImmutableSet<String> targetsWithErrors,
-      long bepBytesConsumed) {
+      long bepBytesConsumed,
+      ImmutableMap<String, BuildEventStreamProtos.Configuration> configurations) {
       this.buildResult = buildResult;
       this.artifacts = ImmutableMap.copyOf(artifacts);
       this.buildShardResults = buildShardResults;
       this.targetsWithErrors = targetsWithErrors;
       this.bepBytesConsumed = bepBytesConsumed;
+      this.configurations = configurations;
 
       ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
       artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
@@ -76,7 +84,7 @@ public class BlazeBuildOutputs {
     }
 
     public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
-      return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L);
+      return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableMap.of(), ImmutableSet.of(), 0L, ImmutableMap.of());
     }
 
     @VisibleForTesting
@@ -86,7 +94,8 @@ public class BlazeBuildOutputs {
         ImmutableMap.of(),
         ImmutableMap.of(buildId, buildResult),
         ImmutableSet.of(),
-        0L
+        0L,
+        ImmutableMap.of()
       );
     }
 
@@ -103,7 +112,8 @@ public class BlazeBuildOutputs {
         : parsedOutput.getFullArtifactData(),
         buildIdWithResult,
         parsedOutput.getTargetsWithErrors(),
-        parsedOutput.getBepBytesConsumed()
+        parsedOutput.getBepBytesConsumed(),
+        parsedOutput.getConfigurations()
       );
     }
 
@@ -157,6 +167,10 @@ public class BlazeBuildOutputs {
       return targetsWithErrors;
     }
 
+    public ImmutableMap<String, BuildEventStreamProtos.Configuration> configurations() {
+      return configurations;
+    }
+
     /**
      * Merges this {@link BlazeBuildOutputs} with a newer set of outputs.
      */
@@ -206,7 +220,11 @@ public class BlazeBuildOutputs {
             // On duplicate buildIds, preserve most recent result
             toImmutableMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1)),
         Sets.union(targetsWithErrors, nextOutputs.targetsWithErrors()).immutableCopy(),
-        bepBytesConsumed + nextOutputs.bepBytesConsumed());
+        bepBytesConsumed + nextOutputs.bepBytesConsumed(),
+        ImmutableMap.<String, BuildEventStreamProtos.Configuration>builder()
+            .putAll(configurations)
+            .putAll(nextOutputs.configurations())
+            .build());
     }
     public ImmutableList<String> getBuildIds() {
       return buildShardResults.keySet().asList();

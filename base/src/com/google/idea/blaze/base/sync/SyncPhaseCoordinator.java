@@ -382,6 +382,7 @@ public final class SyncPhaseCoordinator {
                     projectState,
                     targetData,
                     oldProjectData.blazeInfo(),
+                    /* buildOutputs= */ null,
                     childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
@@ -589,6 +590,7 @@ public final class SyncPhaseCoordinator {
                     updateTask.projectState(),
                     targetData,
                     updateTask.buildResult().getBlazeInfo(),
+                    updateTask.buildResult().getBuildResult(),
                     childContext);
               },
               new TimingScope("Project update phase", EventType.Other));
