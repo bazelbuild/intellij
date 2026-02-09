@@ -12,6 +12,7 @@ py_test(
     srcs = ["simple.py"],
     python_version = "PY3",
     srcs_version = "PY3",
+    strict_deps = False,
 )
 
 intellij_aspect_test_fixture(
