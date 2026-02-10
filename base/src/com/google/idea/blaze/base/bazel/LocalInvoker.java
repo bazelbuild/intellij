@@ -152,8 +152,6 @@ public class LocalInvoker extends AbstractBuildInvoker {
           Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE));
     } catch (IOException e) {
       throw new BuildException("Failed to execute query command '" + blazeCommand.name() + "': " + e.getMessage(), e);
-    } catch (BuildException e) {
-      throw e;
     }
   }
 
@@ -188,8 +186,6 @@ public class LocalInvoker extends AbstractBuildInvoker {
           Files.newInputStream(tmpFile, StandardOpenOption.DELETE_ON_CLOSE));
     } catch (IOException e) {
       throw new BuildException("Failed to execute info command '" + blazeCommand.name() + "': " + e.getMessage(), e);
-    } catch (BuildException e) {
-      throw e;
     }
   }
 
