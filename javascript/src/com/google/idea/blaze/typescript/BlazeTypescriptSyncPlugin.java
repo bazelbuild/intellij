@@ -218,7 +218,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
     if (!blazeProjectData
-        .getWorkspaceLanguageSettings()
+        .workspaceLanguageSettings()
         .isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return true;
     }

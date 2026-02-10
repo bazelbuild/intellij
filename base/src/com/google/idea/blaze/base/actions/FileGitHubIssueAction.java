@@ -149,7 +149,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData != null) {
-      bodyParam.append(String.format("Bazel: %s\n", projectData.getBlazeVersionData()));
+      bodyParam.append(String.format("Bazel: %s\n", projectData.blazeVersionData()));
     }
 
     try {

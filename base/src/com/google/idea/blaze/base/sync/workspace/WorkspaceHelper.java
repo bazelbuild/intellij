@@ -186,7 +186,7 @@ public class WorkspaceHelper {
 
   @VisibleForTesting
   public static Path getExternalSourceRoot(BlazeProjectData projectData) {
-    return Paths.get(projectData.getBlazeInfo().getOutputBase().getAbsolutePath(), "external").normalize();
+    return Paths.get(projectData.blazeInfo().getOutputBase().getAbsolutePath(), "external").normalize();
   }
 
   /** resolve workspace root for a named external repository. needs context since the same name can mean something different in different workspaces. */
@@ -217,10 +217,10 @@ public class WorkspaceHelper {
 
     BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData != null) {
-      File externalBase = new File(blazeProjectData.getBlazeInfo().getOutputBase(), "external");
+      File externalBase = new File(blazeProjectData.blazeInfo().getOutputBase(), "external");
 
       File workspaceDir = new File(externalBase, workspaceName);
-      ExternalWorkspace workspace = blazeProjectData.getExternalWorkspaceData().getByRepoName(workspaceName);
+      ExternalWorkspace workspace = blazeProjectData.externalWorkspaceData().getByRepoName(workspaceName);
       if (workspace != null) {
         workspaceDir = new File(externalBase, workspace.name());
       }

@@ -79,7 +79,7 @@ class AddTsConfigNotificationProvider
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null
-        || !projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
+        || !projectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return null;
     }
     Label tsConfig = getTsConfigLabelForFile(project, file);

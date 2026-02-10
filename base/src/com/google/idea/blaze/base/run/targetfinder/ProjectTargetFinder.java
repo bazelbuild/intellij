@@ -34,7 +34,7 @@ class ProjectTargetFinder implements TargetFinder {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     TargetInfo ret = null;
     if (projectData != null) {
-      BuildTarget buildTarget = projectData.getBuildTarget(label);
+      BuildTarget buildTarget = projectData.buildTarget(label);
       ret = buildTarget != null ? TargetInfo.builder(label, buildTarget.kind()).build() : null;
     }
     return Futures.immediateFuture(ret);

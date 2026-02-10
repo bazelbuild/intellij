@@ -34,7 +34,7 @@ class BazelShowTargetInfo : BazelDebugAction() {
     val info = withContext(Dispatchers.EDT) {
       suspendCancellableCoroutine { cont ->
         JBPopupFactory.getInstance()
-          .createListPopup(TargetPopupStep(cont, data.targetMap.targets().toList()))
+          .createListPopup(TargetPopupStep(cont, data.targetMap().targets().toList()))
           .showCenteredInCurrentWindow(project)
       }
     }

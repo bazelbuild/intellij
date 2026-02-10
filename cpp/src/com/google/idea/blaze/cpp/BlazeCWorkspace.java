@@ -252,7 +252,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages = new HashMap<>();
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles = new HashMap<>();
       for (TargetKey targetKey : resolveConfiguration.getTargets()) {
-        final var targetIdeInfo = blazeProjectData.getTargetMap().get(targetKey);
+        final var targetIdeInfo = blazeProjectData.targetMap().get(targetKey);
         if (targetIdeInfo == null || !targetIdeInfo.getKind().hasLanguage(LanguageClass.C)) {
           continue;
         }
@@ -370,7 +370,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
           workspaceModifiable,
           id,
           id,
-          blazeProjectData.getBlazeInfo().getExecutionRoot(),
+          blazeProjectData.blazeInfo().getExecutionRoot(),
           configLanguages,
           configSourceFiles);
 

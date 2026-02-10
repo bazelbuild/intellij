@@ -70,7 +70,7 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
 
   static ImmutableList<File> getLibraryFiles(
       Project project, BlazeProjectData projectData, ImportRoots importRoots) {
-    if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
+    if (!projectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return ImmutableList.of();
     }
     return Stream.concat(
@@ -81,8 +81,8 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
 
   private static Stream<File> filesFromTargetMap(
       Project project, BlazeProjectData projectData, ImportRoots importRoots) {
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    return projectData.getTargetMap().targets().stream()
+    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
+    return projectData.targetMap().targets().stream()
         .filter(t -> t.getTsIdeInfo() != null)
         .map(TargetIdeInfo::getTsIdeInfo)
         .map(TsIdeInfo::getSources)

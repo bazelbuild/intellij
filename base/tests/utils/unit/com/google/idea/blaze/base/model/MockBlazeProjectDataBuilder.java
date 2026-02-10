@@ -156,15 +156,16 @@ public class MockBlazeProjectDataBuilder {
             ? this.externalWorkspaceData
             : ExternalWorkspaceData.EMPTY;
 
-    return new AspectSyncProjectData(
-        new ProjectTargetData(
-            targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
-        blazeInfo,
-        blazeVersionData,
-        workspacePathResolver,
-        artifactLocationDecoder,
-        workspaceLanguageSettings,
-        externalWorkspaceData,
-        syncState);
+    return BlazeProjectData.builder()
+        .targetData(new ProjectTargetData(
+            targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY))
+        .blazeInfo(blazeInfo)
+        .blazeVersionData(blazeVersionData)
+        .workspacePathResolver(workspacePathResolver)
+        .artifactLocationDecoder(artifactLocationDecoder)
+        .workspaceLanguageSettings(workspaceLanguageSettings)
+        .externalWorkspaceData(externalWorkspaceData)
+        .syncState(syncState)
+        .build();
   }
 }

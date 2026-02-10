@@ -50,7 +50,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
     if (blazeProjectData == null) {
       return;
     }
-    new OpenBlazeWorkspaceFileActionDialog(project, blazeProjectData.getWorkspacePathResolver())
+    new OpenBlazeWorkspaceFileActionDialog(project, blazeProjectData.workspacePathResolver())
         .show();
   }
 

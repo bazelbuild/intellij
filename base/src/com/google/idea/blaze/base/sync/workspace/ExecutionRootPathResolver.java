@@ -58,10 +58,10 @@ public interface ExecutionRootPathResolver {
     return new ExecutionRootPathResolverImpl(
         Blaze.getBuildSystemProvider(project),
         WorkspaceRoot.fromProject(project),
-        projectData.getBlazeInfo().getExecutionRoot(),
-        projectData.getBlazeInfo().getOutputBase(),
-        projectData.getWorkspacePathResolver(),
-        projectData.getTargetMap()
+        projectData.blazeInfo().getExecutionRoot(),
+        projectData.blazeInfo().getOutputBase(),
+        projectData.workspacePathResolver(),
+        projectData.targetMap()
     );
   }
 

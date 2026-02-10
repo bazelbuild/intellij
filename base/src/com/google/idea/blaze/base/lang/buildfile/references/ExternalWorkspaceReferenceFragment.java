@@ -117,7 +117,7 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
       return BuildLookupElement.EMPTY_ARRAY;
     }
 
-    return blazeProjectData.getExternalWorkspaceData().workspaces.values().stream()
+    return blazeProjectData.externalWorkspaceData().workspaces.values().stream()
         .map(ExternalWorkspaceLookupElement::new)
         .toArray(BuildLookupElement[]::new);
   }

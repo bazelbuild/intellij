@@ -224,7 +224,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
         .toString();
 
     final String queryTarget;
-    if (projectData.getBlazeVersionData().bazelIsAtLeastVersion(9, 0, 0)) {
+    if (projectData.blazeVersionData().bazelIsAtLeastVersion(9, 0, 0)) {
       queryTarget = HOST_XCODES_TARGET;
     } else {
       queryTarget = CURRENT_XCODE_CONFIG_TARGET;

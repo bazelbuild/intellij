@@ -52,7 +52,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.lang.LegacyAdditionalLanguagesHelper;
-import com.google.idea.blaze.base.model.AspectSyncProjectData;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -152,7 +152,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       SyncProjectState projectState,
       BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
-      @Nullable AspectSyncProjectData oldProjectData) {
+      @Nullable BlazeProjectData oldProjectData) {
     TargetMapAndInterfaceState state =
         updateTargetMap(
             project,
@@ -196,7 +196,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       SyncProjectState projectState,
       BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
-      @Nullable AspectSyncProjectData oldProjectData) {
+      @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
     if (buildResult.getBuildResult().buildResult().status == BuildResult.Status.BUILD_ERROR
@@ -204,9 +204,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       mergeWithOldState = true;
     }
 
-    TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.getTargetMap() : null;
+    TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.targetMap() : null;
     BlazeIdeInterfaceState prevState =
-        oldProjectData != null ? oldProjectData.getTargetData().ideInterfaceState : null;
+        oldProjectData != null ? oldProjectData.targetData().ideInterfaceState : null;
 
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =

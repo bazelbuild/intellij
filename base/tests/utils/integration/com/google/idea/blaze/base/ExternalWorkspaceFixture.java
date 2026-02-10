@@ -55,11 +55,11 @@ public class ExternalWorkspaceFixture {
       BlazeProjectData blazeProjectData = BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
       assertNotNull(blazeProjectData);
 
-      File outputBase = blazeProjectData.getBlazeInfo().getOutputBase();
+      File outputBase = blazeProjectData.blazeInfo().getOutputBase();
 
 
       WorkspaceRoot workspaceRoot = new WorkspaceRoot(Paths.get(
-          blazeProjectData.getBlazeInfo().getOutputBase().getAbsolutePath(),
+          blazeProjectData.blazeInfo().getOutputBase().getAbsolutePath(),
           "external", workspace.name()).normalize().toFile());
 
       File workspaceRootFile = workspaceRoot.directory();

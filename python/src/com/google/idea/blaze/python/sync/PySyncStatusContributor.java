@@ -42,7 +42,7 @@ class PySyncStatusContributor implements LegacySyncStatusContributor {
 
   @Override
   public boolean handlesFile(BlazeProjectData projectData, VirtualFile file) {
-    return projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
+    return projectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON)
         && file.getName().endsWith(".py");
   }
 }

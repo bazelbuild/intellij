@@ -113,7 +113,7 @@ public class LegacyAdditionalLanguagesHelper
     if (projectData == null) {
       return null;
     }
-    WorkspaceLanguageSettings settings = projectData.getWorkspaceLanguageSettings();
+    WorkspaceLanguageSettings settings = projectData.workspaceLanguageSettings();
     if (settings.isLanguageActive(language)) {
       return null;
     }

@@ -38,7 +38,6 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
-import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -322,7 +321,7 @@ public final class SyncPhaseCoordinator {
   }
 
   @Nullable
-  private AspectSyncProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
+  private BlazeProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
     if (mode == SyncMode.FULL) {
       return null;
     }
@@ -339,11 +338,8 @@ public final class SyncPhaseCoordinator {
           new StatusOutput(
               "Couldn't load previously cached project data; full sync will be needed"));
     }
-    if (data == null) {
-      return null;
-    }
-    Preconditions.checkState(data instanceof AspectSyncProjectData, "Invalid project data type");
-    return (AspectSyncProjectData) data;
+
+    return data;
   }
 
   private void doFilterProjectTargets(
@@ -357,7 +353,7 @@ public final class SyncPhaseCoordinator {
       if (!context.shouldContinue()) {
         return;
       }
-      AspectSyncProjectData oldProjectData = getOldProjectData(context, params.syncMode());
+      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
       if (oldProjectData == null) {
         String message = "Can't filter project targets: project has never been synced.";
         context.output(PrintOutput.error(message));
@@ -376,7 +372,7 @@ public final class SyncPhaseCoordinator {
                 }
                 ProjectTargetData targetData =
                     oldProjectData
-                        .getTargetData()
+                        .targetData()
                         .filter(filter, projectState.getLanguageSettings());
 
                 fillInBuildStats(stats, projectState, /* buildResult= */ null);
@@ -385,7 +381,7 @@ public final class SyncPhaseCoordinator {
                     params.syncMode(),
                     projectState,
                     targetData,
-                    oldProjectData.getBlazeInfo(),
+                    oldProjectData.blazeInfo(),
                     childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
@@ -650,7 +646,7 @@ public final class SyncPhaseCoordinator {
         }
         int librariesCount = BlazeLibraryCollector.getLibraries(projectViewSet, projectData).size();
         stats
-            .setTargetMapSize(projectData.getTargetMap().targets().size())
+            .setTargetMapSize(projectData.targetMap().targets().size())
             .setLibraryCount(librariesCount);
         onSyncComplete(
             project, context, projectViewSet, buildIds, projectData, syncParams, syncResult);

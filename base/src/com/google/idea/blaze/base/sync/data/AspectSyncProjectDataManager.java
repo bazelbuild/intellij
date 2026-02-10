@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.common.util.ConcurrencyUtil;
@@ -48,7 +47,7 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
   // a per-project single-threaded executor to write project data to disk
   private final ListeningExecutorService writeDataExecutor;
 
-  @Nullable private volatile AspectSyncProjectData projectData;
+  @Nullable private volatile BlazeProjectData projectData;
 
   public AspectSyncProjectDataManager(Project project) {
     this.project = project;
@@ -67,7 +66,7 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
     }
     try {
       File file = getCacheFile(project, importSettings);
-      projectData = AspectSyncProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
+      projectData = BlazeProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
       return projectData;
     } catch (Throwable e) {
       if (!(e instanceof FileNotFoundException)) {
@@ -84,9 +83,8 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
   }
 
   @Override
-  public void saveProject(
-      final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
-    this.projectData = (AspectSyncProjectData) projectData;
+  public void saveProject(final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
+    this.projectData = projectData;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -115,7 +113,7 @@ public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
   private static void logFileSize(BlazeProjectData projectData, File cacheFile) {
     ImmutableMap.Builder<String, String> data = ImmutableMap.builder();
     data.put("size", Long.toString(FileOperationProvider.getInstance().getFileSize(cacheFile)));
-    Long clientCl = projectData.getBlazeVersionData().clientCl;
+    Long clientCl = projectData.blazeVersionData().clientCl;
     if (clientCl != null) {
       data.put("cl", Long.toString(clientCl));
     }

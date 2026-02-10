@@ -71,7 +71,7 @@ public class BlazePyResolverUtils {
     if (artifact != null) {
       return Optional.ofNullable(OutputArtifactResolver.resolve(project, artifact));
     }
-    return Optional.of(new File(projectData.getBlazeInfo().getGenfilesDirectory(), relativePath));
+    return Optional.of(new File(projectData.blazeInfo().getGenfilesDirectory(), relativePath));
   }
 
   /**
@@ -86,7 +86,7 @@ public class BlazePyResolverUtils {
       return null;
     }
 
-    WorkspacePathResolver pathResolver = projectData.getWorkspacePathResolver();
+    WorkspacePathResolver pathResolver = projectData.workspacePathResolver();
     File file = pathResolver.resolveToFile(relativePath);
     return resolveFile(context.getPsiManager(), file);
   }

@@ -64,9 +64,9 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
-    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
-    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
-    Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
+    Mockito.when(projectData.workspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
+    Mockito.when(projectData.targetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.artifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
 
     // code under test
@@ -128,9 +128,9 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
-    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
-    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
-    Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
+    Mockito.when(projectData.workspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
+    Mockito.when(projectData.targetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.artifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
 
     // code under test
@@ -188,9 +188,9 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
-    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
-    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
-    Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
+    Mockito.when(projectData.workspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
+    Mockito.when(projectData.targetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.artifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
 
     // code under test
@@ -251,9 +251,9 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     Project project = Mockito.mock(Project.class);
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
 
-    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
-    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
-    Mockito.when(projectData.getArtifactLocationDecoder()).thenReturn(
+    Mockito.when(projectData.workspacePathResolver()).thenReturn(Mockito.mock(WorkspacePathResolver.class));
+    Mockito.when(projectData.targetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.artifactLocationDecoder()).thenReturn(
         new MockArtifactLocationDecoder(new File("/workspaceroot"), false));
 
     // code under test
@@ -341,9 +341,9 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     BlazeProjectData projectData = Mockito.mock(BlazeProjectData.class);
     WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(new WorkspaceRoot(rootDirectory));
 
-    Mockito.when(projectData.getWorkspacePathResolver()).thenReturn(workspacePathResolver);
-    Mockito.when(projectData.getTargetMap()).thenReturn(targetMap);
-    Mockito.when(projectData.getArtifactLocationDecoder())
+    Mockito.when(projectData.workspacePathResolver()).thenReturn(workspacePathResolver);
+    Mockito.when(projectData.targetMap()).thenReturn(targetMap);
+    Mockito.when(projectData.artifactLocationDecoder())
         .thenReturn(new MockArtifactLocationDecoder(rootDirectory, false));
 
     // code under test

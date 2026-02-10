@@ -49,7 +49,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
       SyncMode syncMode) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
+    if (!blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       return;
     }
 
@@ -66,6 +66,6 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public boolean refreshExecutionRoot(Project project, BlazeProjectData blazeProjectData) {
-    return blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
+    return blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.C);
   }
 }

@@ -37,7 +37,7 @@ public class ReverseDependencyMap {
   @VisibleForTesting
   static ImmutableMultimap<TargetKey, TargetKey> createRdepsMap(
       Project project, BlazeProjectData projectData) {
-    TargetMap targetMap = projectData.getTargetMap();
+    TargetMap targetMap = projectData.targetMap();
     ImmutableMultimap.Builder<TargetKey, TargetKey> builder = ImmutableMultimap.builder();
     for (TargetIdeInfo target : targetMap.targets()) {
       TargetKey key = target.getKey();

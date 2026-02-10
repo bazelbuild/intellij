@@ -53,7 +53,7 @@ public class DependencyFinder {
   private static ImmutableMap<TargetKey, TargetIdeInfo> getTargetMap(Project project) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null ? projectData.getTargetMap().map() : ImmutableMap.of();
+    return projectData != null ? projectData.targetMap().map() : ImmutableMap.of();
   }
 
   @Nullable

@@ -82,7 +82,7 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
+    if (!blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
       return;
     }
 
@@ -99,7 +99,7 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
+    if (!blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
       return true;
     }
     if (!PluginUtils.isPluginEnabled(DART_PLUGIN_ID)) {
@@ -117,7 +117,7 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
   @Override
   public LibrarySource getLibrarySource(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
+    if (!blazeProjectData.workspaceLanguageSettings().isLanguageActive(LanguageClass.DART)) {
       return null;
     }
     return BlazeDartLibrarySource.INSTANCE;

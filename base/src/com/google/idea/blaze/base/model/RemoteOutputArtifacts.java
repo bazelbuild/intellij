@@ -46,7 +46,7 @@ public final class RemoteOutputArtifacts
     implements ProtoWrapper<ProjectData.RemoteOutputArtifacts> {
 
   public static RemoteOutputArtifacts fromProjectData(@Nullable BlazeProjectData projectData) {
-    return projectData == null ? EMPTY : projectData.getRemoteOutputs();
+    return projectData == null ? EMPTY : projectData.remoteOutputs();
   }
 
   public static RemoteOutputArtifacts EMPTY = new RemoteOutputArtifacts(ImmutableMap.of());

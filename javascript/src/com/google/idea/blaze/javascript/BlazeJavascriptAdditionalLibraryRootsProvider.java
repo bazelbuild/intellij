@@ -58,7 +58,7 @@ final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalL
 
   static ImmutableList<File> getLibraryFiles(
       Project project, BlazeProjectData projectData, ImportRoots importRoots) {
-    if (!JavascriptPrefetchFileSource.languageActive(projectData.getWorkspaceLanguageSettings())) {
+    if (!JavascriptPrefetchFileSource.languageActive(projectData.workspaceLanguageSettings())) {
       return ImmutableList.of();
     }
     Set<String> jsExtensions = JavascriptPrefetchFileSource.getJavascriptExtensions();
@@ -75,8 +75,8 @@ final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalL
           WorkspacePath workspacePath = WorkspacePath.createIfValid(location.relativePath());
           return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
         };
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    return projectData.getTargetMap().targets().stream()
+    ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
+    return projectData.targetMap().targets().stream()
         .filter(t -> t.getJsIdeInfo() != null)
         .map(TargetIdeInfo::getJsIdeInfo)
         .map(JsIdeInfo::getSources)

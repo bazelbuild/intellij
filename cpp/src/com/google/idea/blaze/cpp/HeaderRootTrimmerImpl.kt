@@ -81,7 +81,7 @@ private fun collectExecutionRootPaths(
 ): Set<ExecutionRootPath> {
   val paths = mutableSetOf<ExecutionRootPath>()
 
-  for (target in projectData.targetMap.targets()) {
+  for (target in projectData.targetMap().targets()) {
     if (!targetFilter.test(target)) continue
     val compilationCtx = target.getcIdeInfo()?.compilationContext() ?: continue
 
@@ -114,10 +114,10 @@ private fun collectHeaderRoots(
   for (directory in possibleDirectories) {
     val add = when {
       // only allow bazel-bin as a header search path when the registry key is set
-      path.isBazelBin(projectData.blazeInfo) -> allowBazelBin
+      path.isBazelBin(projectData.blazeInfo()) -> allowBazelBin
 
       // if it is not an output directory, there should be now big binary artifacts
-      !path.isOutputDirectory(projectData.blazeInfo) -> true
+      !path.isOutputDirectory(projectData.blazeInfo()) -> true
 
       // if it is an output directory, but there are headers, we need to allow it
       genRootMayContainHeaders(directory) -> true

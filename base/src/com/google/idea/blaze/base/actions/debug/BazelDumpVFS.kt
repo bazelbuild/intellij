@@ -25,7 +25,7 @@ import kotlin.io.path.extension
 class BazelDumpVFS : BazelDebugAction() {
 
   override suspend fun exec(project: Project, data: BlazeProjectData): String {
-    val root = data.blazeInfo.executionRoot
+    val root = data.blazeInfo().executionRoot
       ?: fail("no execution root found")
 
     return readAction {

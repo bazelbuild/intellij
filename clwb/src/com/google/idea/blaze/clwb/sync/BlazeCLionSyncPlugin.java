@@ -50,7 +50,7 @@ class BlazeCLionSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public SourceFolderProvider getSourceFolderProvider(BlazeProjectData projectData) {
-    if (!projectData.getWorkspaceLanguageSettings().isWorkspaceType(WorkspaceType.C)) {
+    if (!projectData.workspaceLanguageSettings().isWorkspaceType(WorkspaceType.C)) {
       return null;
     }
     return GenericSourceFolderProvider.INSTANCE;

@@ -109,7 +109,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
     if (projectData == null) {
       return ImmutableList.of();
     }
-    TargetMap targetMap = projectData.getTargetMap();
+    TargetMap targetMap = projectData.targetMap();
     return ReverseDependencyMap.get(project)
         .get(TargetKey.forPlainTarget(wrappedTest.label))
         .stream()
