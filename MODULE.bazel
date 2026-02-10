@@ -41,6 +41,9 @@ single_version_override(
     patches = ["//third_party/kotlin/patches:strip_stdlib.patch"],
 )
 
+# override rules_android to use latest version (fixes compatibility issue)
+bazel_dep(name = "rules_android", version = "0.7.1")
+
 register_toolchains("//third_party/kotlin:toolchain")
 
 # configure python cor rules_python
