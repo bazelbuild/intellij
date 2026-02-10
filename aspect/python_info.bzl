@@ -11,14 +11,14 @@ def py_info_in_target(target):
 
 # TEMPLATE-INCLUDE-BEGIN
 ###if( $isPythonEnabled == "true" )
-##  if RulesPyInfo in target:
-##    return True
+##    if RulesPyInfo in target:
+##        return True
 ###end
 ###if( $bazel8OrAbove != "true")
-##  if PyInfo in target:
-##    return True
+##    if PyInfo in target:
+##        return True
 ###end
-##  return False
+##    return False
 # TEMPLATE-INCLUDE-END
 
 def get_py_info(target):
@@ -31,13 +31,13 @@ def get_py_info(target):
 
 # TEMPLATE-INCLUDE-BEGIN
 ###if( $isPythonEnabled == "true" )
-##  if RulesPyInfo in target:
-##    return target[RulesPyInfo]
+##    if RulesPyInfo in target:
+##        return target[RulesPyInfo]
 ###end
 ###if( $bazel8OrAbove != "true")
-##  if PyInfo in target:
-##    return target[PyInfo]
+##    if PyInfo in target:
+##        return target[PyInfo]
 ###end
-##  return None
+##    return None
 # TEMPLATE-INCLUDE-END
 
