@@ -16,18 +16,22 @@
 package com.google.idea.blaze.skylark.repl
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.execution.console.ConsoleHistoryController
 import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.Project
 import icons.BlazeIcons
-import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.Icon
+import javax.swing.KeyStroke
 
 private const val CONSOLE_TITLE = "Starlark REPL"
 private const val FILE_EXTENSION = ".bzl"
@@ -37,10 +41,7 @@ class SkylarkReplConsole(
   val handler: OSProcessHandler,
 ) : AbstractConsoleRunnerWithHistory<LanguageConsoleView>(project, CONSOLE_TITLE, null) {
 
-  // This manual tracking of the history is required because
-  // `AbstractConsoleRunnerWithHistory`, despite its name, does not provide the
-  // history functionality that we need.
-  private lateinit var manager: HistoryManger
+  private lateinit var historyController: SkylarkConsoleHistoryController
 
   override fun createProcess() = handler.process
 
@@ -54,53 +55,59 @@ class SkylarkReplConsole(
     consoleView.virtualFile.rename(this, consoleView.virtualFile.name + FILE_EXTENSION)
     consoleView.prompt = ">>"
 
-    manager = HistoryManger(consoleView.consoleEditor)
-    consoleView.consoleEditor.contentComponent.addKeyListener(manager)
-    consoleView.consoleEditor.isOneLineMode = true
+    historyController = SkylarkConsoleHistoryController(consoleView)
+    historyController.isMultiline = true
+    historyController.install()
+
+    HistoryUpAction(consoleView).registerCustomShortcutSet(
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0)),
+      consoleView.consoleEditor.component
+    )
+
+    HistoryDownAction(consoleView).registerCustomShortcutSet(
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0)),
+      consoleView.consoleEditor.component
+    )
 
     return consoleView
   }
 
-  override fun createExecuteActionHandler() = object : ProcessBackedConsoleExecuteActionHandler(handler, false) {
-    override fun sendText(text: String?) {
-      if (!text.isNullOrBlank()) manager.add(text)
-      super.sendText(text)
-    }
-  }
+  override fun createExecuteActionHandler() = ProcessBackedConsoleExecuteActionHandler(handler, false)
 }
 
-private class HistoryManger(private val editor: EditorEx) : KeyAdapter() {
-
-  private val history = mutableListOf<String>()
-  private var historyIndex = 0
-
-  fun add(entry: String) {
-    history.add(entry.removeSuffix("\n"))
-    historyIndex = history.size - 1
+// UP arrow navigates to previous history when caret is on first line
+private class HistoryUpAction(private val consoleView: LanguageConsoleView) : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    ConsoleHistoryController.getController(consoleView)?.historyNext?.actionPerformed(e)
   }
 
-  override fun keyReleased(event: KeyEvent) {
-    val entry = getNextEntry(event) ?: return
+  override fun update(e: AnActionEvent) {
+    val editor = consoleView.currentEditor
+    val onFirstLine = editor.document.getLineNumber(editor.caretModel.offset) == 0
+    val noAutocomplete = LookupManager.getActiveLookup(editor) == null
 
-    WriteAction.run<Throwable> {
-      editor.document.setText(entry)
-      editor.caretModel.moveToOffset(entry.length)
-    }
+    e.presentation.isEnabled = onFirstLine && noAutocomplete
+    e.presentation.isVisible = false
   }
 
-  private fun getNextEntry(event: KeyEvent): String? {
-    if (history.isEmpty()) return null
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+}
 
-    if (event.keyCode == KeyEvent.VK_UP && editor.document.text != history[historyIndex]) {
-      return history[historyIndex]
-    }
-    if (event.keyCode == KeyEvent.VK_UP && historyIndex > 0) {
-      return history[--historyIndex]
-    }
-    if (event.keyCode == KeyEvent.VK_DOWN && historyIndex < (history.size - 1)) {
-      return history[++historyIndex]
-    }
-
-    return null
+// DOWN arrow navigates to next history when caret is on last line
+class HistoryDownAction(private val consoleView: LanguageConsoleView) : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    ConsoleHistoryController.getController(consoleView)?.historyPrev?.actionPerformed(e)
   }
+
+  override fun update(e: AnActionEvent) {
+    val editor = consoleView.currentEditor
+    val lineCount = editor.document.lineCount
+    val onLastLine = lineCount == 0 || editor.document.getLineNumber(editor.caretModel.offset) == lineCount - 1
+    val noAutocomplete = LookupManager.getActiveLookup(editor) == null
+
+    e.presentation.isEnabled = onLastLine && noAutocomplete
+    e.presentation.isVisible = false
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
