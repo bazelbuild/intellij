@@ -53,7 +53,7 @@ public final class ArtifactLocation
       artifact = transformer.transform(artifact);
     }
 
-    return artifact;
+    return ProjectDataInterner.intern(artifact);
   }
 
   @Override

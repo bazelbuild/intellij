@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**

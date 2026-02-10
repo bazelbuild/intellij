@@ -12,23 +12,19 @@ Create a class implementing `com.google.idea.blaze.base.ideinfo.ArtifactLocation
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocationTransformer;
 public class CffArtifactTransformer implements ArtifactLocationTransformer {
-  
   @Override
   public ArtifactLocation transform(ArtifactLocation artifact) {
     String path = artifact.getRelativePath();
-    
     if (path.endsWith("_cffgen.go")) {
       String newPath = path
           .replace("cff_", "")
-          .replace("_cffgen.go", ".go")
-      
-      return new ArtifactLocation.Builder()
+          .replace("_cffgen.go", ".go");
+      return ArtifactLocation.Builder.copy(artifact)
           .setRelativePath(newPath)
           .setIsSource(true)
           .setIsExternal(false)
           .build();
     }
-    
     return artifact;
   }
 }
