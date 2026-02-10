@@ -4,7 +4,11 @@ load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 kt_kotlinc_options(
     name = "kotlinc_options",
     include_stdlibs = "none",
-    jvm_target = "17",
+    jvm_target = select_for_plugin_api({
+        "intellij-2026.1": "21",
+        "intellij-ue-2026.1": "21",
+        "default": "17",
+    }),
 )
 
 # choose lowest api version depending on what we target atm:
@@ -15,9 +19,11 @@ define_kt_toolchain(
         "intellij-2025.1": "2.0",
         "intellij-2025.2": "2.0",
         "intellij-2025.3": "2.3",
+        "intellij-2026.1": "2.4",
         "intellij-ue-2025.1": "2.0",
         "intellij-ue-2025.2": "2.0",
         "intellij-ue-2025.3": "2.3",
+        "intellij-ue-2026.1": "2.4",
     }),
     jvm_target = "17",
     kotlinc_options = ":kotlinc_options",
@@ -25,8 +31,10 @@ define_kt_toolchain(
         "intellij-2025.1": "2.0",
         "intellij-2025.2": "2.0",
         "intellij-2025.3": "2.3",
+        "intellij-2026.1": "2.4",
         "intellij-ue-2025.1": "2.0",
         "intellij-ue-2025.2": "2.0",
         "intellij-ue-2025.3": "2.3",
+        "intellij-ue-2026.1": "2.4",
     }),
 )

@@ -1,5 +1,7 @@
 # TEMPLATE-INCLUDE-BEGIN
-###if( $isJavaEnabled == "true" && $bazel8OrAbove == "true" )
+###if( $isJavaEnabled == "true" && $bazel9OrAbove == "true" )
+##load("@compatibility_proxy//:proxy.bzl", "JavaInfo", "java_common")
+###elseif( $isJavaEnabled == "true" && $bazel8OrAbove == "true" )
 ##load("@rules_java//java/common:java_info.bzl", "JavaInfo")
 ##load("@rules_java//java/common:java_common.bzl", "java_common")
 ###end

@@ -13,15 +13,17 @@ licenses(["notice"])
 create_sdkcompat_visibility_package()
 
 java_library(
+    name = "sdkcompat",
+    visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_plugin_api({
         "intellij-2025.1": ["//sdkcompat/v251"],
         "intellij-2025.2": ["//sdkcompat/v252"],
         "intellij-2025.3": ["//sdkcompat/v253"],
+        "intellij-2026.1": ["//sdkcompat/v261"],
         "intellij-ue-2025.1": ["//sdkcompat/v251"],
         "intellij-ue-2025.2": ["//sdkcompat/v252"],
         "intellij-ue-2025.3": ["//sdkcompat/v253"],
+        "intellij-ue-2026.1": ["//sdkcompat/v261"],
         "default": [],
     }),
-    name = "sdkcompat",
-    visibility = SDK_COMPAT_VISIBILITY,
 )
