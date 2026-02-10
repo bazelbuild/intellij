@@ -1142,43 +1142,37 @@ def collect_custom_rule_info(target, ctx, semantics, ide_info, ide_info_file, ou
     for attr_name in config.source_attrs:
         if hasattr(ctx.rule.attr, attr_name):
             attr_value = getattr(ctx.rule.attr, attr_name)
-            if type(attr_value) == "list":
-                for src in attr_value:
+            if attr_value:
+                items = attr_value if type(attr_value) == "list" else [attr_value]
+                for src in items:
                     if hasattr(src, "files"):
                         sources.extend(src.files.to_list())
     
     if not sources:
         return False
-    
-    # Separate generated from source files
-    generated = [f for f in sources if not f.is_source]
-    source_files = [f for f in sources if f.is_source]
-    
-    # Add appropriate ide_info based on language class
+
+    # IDE expects a single sources list (same shape as standard collect_*_info)
+    sources_artifacts = [artifact_location(f) for f in sources]
     language_class = config.language_class.lower()
-    
+
     if language_class == "go":
         ide_info["go_ide_info"] = struct_omit_none(
-            sources = [artifact_location(f) for f in source_files],
-            generated = [artifact_location(f) for f in generated],
+            sources = sources_artifacts,
         )
         update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
         update_sync_output_groups(output_groups, "intellij-compile-go", depset(sources))
         update_sync_output_groups(output_groups, "intellij-resolve-go", depset(sources))
     elif language_class == "python":
         ide_info["py_ide_info"] = struct_omit_none(
-            sources = [artifact_location(f) for f in source_files],
+            sources = sources_artifacts,
         )
         update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
         update_sync_output_groups(output_groups, "intellij-compile-py", depset(sources))
         update_sync_output_groups(output_groups, "intellij-resolve-py", depset(sources))
     elif language_class == "c" or language_class == "cpp":
-        # For C/C++, we need more complex handling, but provide basic support
-        ide_info["c_ide_info"] = struct(
-            rule_context = struct(
-                sources = [artifact_location(f) for f in source_files],
-            ),
-            compilation_context = struct(),
+        # Flat c_ide_info structure matching collect_cpp_info (source field, no nesting)
+        ide_info["c_ide_info"] = struct_omit_none(
+            source = sources_artifacts,
         )
         update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
         update_sync_output_groups(output_groups, "intellij-compile-cpp", depset(sources))

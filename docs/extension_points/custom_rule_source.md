@@ -94,9 +94,9 @@ Install your plugin alongside the ijwb plugin and Sync.
 
 The system automatically handles different language classes:
 
-- **GO**: Creates `go_ide_info` with sources and generated files
-- **PYTHON**: Creates `py_ide_info` with sources
-- **C/CPP**: Creates `c_ide_info` with sources in rule context
+- **GO**: Creates `go_ide_info` with a single `sources` list (all files, including generated)
+- **PYTHON**: Creates `py_ide_info` with a single `sources` list (all files, including generated)
+- **C/CPP**: Creates flat `c_ide_info` with a `source` field (same shape as standard cc rules)
 - **Other languages**: Falls back to generic output groups
 
 
