@@ -231,7 +231,6 @@ public class WildcardTargetExpander {
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(filter);
     try (InputStream queryResultStream = buildBinary.invokeQuery(builder, context)) {
-      verify(queryResultStream != null);
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
           .lines()
           .forEach(outputProcessor::processLine);
