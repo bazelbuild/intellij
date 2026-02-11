@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import javax.annotation.Nullable;
@@ -41,16 +42,16 @@ public final class BlazeConfigurationData implements ProtoWrapper<ProjectData.Bl
 
   @Override
   public ProjectData.BlazeConfigurationData toProto() {
-    final var builder = ProjectData.BlazeConfigurationData.newBuilder();
-    configurations.forEach((id, config) -> builder.putConfigurations(id, config.toProto()));
-    return builder.build();
+    return ProjectData.BlazeConfigurationData.newBuilder()
+        .putAllConfigurations(Maps.transformValues(configurations, BlazeConfiguration::toProto))
+        .build();
   }
 
   public static BlazeConfigurationData fromProto(ProjectData.BlazeConfigurationData proto) {
-    final var builder = ImmutableMap.<String, BlazeConfiguration>builder();
-    proto.getConfigurationsMap().forEach((id, config) -> builder.put(id, BlazeConfiguration.fromProto(config)));
-
-    return create(builder.build());
+    final var configurations = ImmutableMap.copyOf(
+        Maps.transformValues(proto.getConfigurationsMap(), BlazeConfiguration::fromProto)
+    );
+    return create(configurations);
   }
 
   @Nullable

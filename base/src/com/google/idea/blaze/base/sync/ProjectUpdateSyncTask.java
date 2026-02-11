@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
@@ -192,11 +193,10 @@ final class ProjectUpdateSyncTask {
           : BlazeConfigurationData.EMPTY;
     }
     // New build occurred - extract fresh configurations from BEP
-    ImmutableMap.Builder<String, BlazeConfiguration> builder = ImmutableMap.builder();
-    buildOutputs
-        .configurations()
-        .forEach((id, bepConfig) -> builder.put(id, BlazeConfiguration.fromProto(bepConfig)));
-    return BlazeConfigurationData.create(builder.build());
+    final var configurations = ImmutableMap.copyOf(
+        Maps.transformValues(buildOutputs.configurations(), BlazeConfiguration::fromProto)
+    );
+    return BlazeConfigurationData.create(configurations);
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
