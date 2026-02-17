@@ -19,3 +19,7 @@ common --repo_env=ANDROID_HOME=""
 common --repo_env=ANDROID_SDK_ROOT=""
 common --repo_env=ANDROID_NDK_HOME=""
 common --repo_env=ANDROID_NDK_ROOT=""
+
+# Avoids frequent protoc rebuilds 
+build --@protobuf//bazel/toolchains:prefer_prebuilt_protoc
+
