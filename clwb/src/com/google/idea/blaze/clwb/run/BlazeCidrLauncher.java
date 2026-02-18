@@ -88,14 +88,17 @@ import javax.annotation.Nullable;
  * uses the Google Test infrastructure for presenting test results.
  */
 public final class BlazeCidrLauncher extends CidrLauncher {
+
+  /**
+   * This environment variable used by Bazel to pass the content of the --test_filter flag to the test framework.
+   */
+  private static final String TEST_FILTER_ENV_VARIABLE = "TESTBRIDGE_TEST_ONLY";
+
   private final Project project;
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeCidrRunConfigState handlerState;
   private final BlazeCidrRunConfigurationRunner runner;
   private final ExecutionEnvironment env;
-
-  private static final String DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING =
-      "bazel.test_filter.googletest_update";
 
   BlazeCidrLauncher(
       BlazeCommandRunConfiguration configuration,
@@ -143,33 +146,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       testHandlerFlags = testUiSession.getBlazeFlags();
     }
 
-    ProjectViewSet projectViewSet =
-        Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
-
-    if (shouldDisplayBazelTestFilterWarning()) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        String messageContents =
-                "<html>The Google Test framework did not apply test filtering correctly before "
-                        + "git commit <a href='https://github.com/google/googletest/commit/"
-                        + "ba96d0b1161f540656efdaed035b3c062b60e006"
-                        + "'>ba96d0b<a>.<br/>"
-                        + "Please ensure you are past this commit if you are using it.<br/><br/>"
-                        + "More information on the bazel <a href='https://github.com/bazelbuild/bazel/issues/"
-                        + "4411'>issue</a></html>";
-
-        int selectedOption =
-                Messages.showDialog(
-                        getProject(),
-                        messageContents,
-                        "Please update 'Google Test' past ba96d0b...",
-                        new String[] {"Close", "Don't show again"},
-                        0, // Default to "Close"
-                        Messages.getWarningIcon());
-        if (selectedOption == 1) {
-          PropertiesComponent.getInstance().setValue(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, "true");
-        }
-      });
-    }
+    ProjectViewSet projectViewSet = Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder(
@@ -283,8 +260,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       // otherwise is handled in createProcess
       updateCommandlineWithEnvironmentData(commandLine);
 
-      if (CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())) {
-        convertBlazeTestFilterToExecutableFlag().ifPresent(commandLine::addParameters);
+      // the test filter needs to be passed manually since the binary is not run by bazel
+      final var testFilter = getTestFilter();
+      if (testFilter != null) {
+        commandLine.withEnvironment(TEST_FILTER_ENV_VARIABLE, testFilter);
       }
 
       final DebuggerDriverConfiguration debuggerDriver;
@@ -336,37 +315,23 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder()));
   }
 
-  /** Get the correct test prefix for blaze/bazel */
-  private String getTestFilterArgument() {
-    if (Blaze.getBuildSystemName(project).equals(BuildSystemName.Blaze)) {
-      return "--gunit_filter";
-    }
-    return "--gtest_filter";
-  }
-
-  private boolean shouldDisplayBazelTestFilterWarning() {
-    return Blaze.getBuildSystemName(getProject()).equals(BuildSystemName.Bazel)
-        && CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())
-        && handlerState.getTestFilterFlag() != null
-        && !PropertiesComponent.getInstance()
-            .getBoolean(DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING, false)
-        && GoogleTestUtilAdapter.findGoogleTestSymbol(getProject()) != null;
-  }
-
   /**
-   * Convert blaze/bazel test filter to the equivalent executable flag
-   *
-   * @return An (Optional) flag to append to the executable's flag list
+   * Extracts the --test_filter value from the Blaze flags, if present.
    */
-  private Optional<String> convertBlazeTestFilterToExecutableFlag() {
-    String testArgument = getTestFilterArgument();
-    String testFilter = handlerState.getTestFilterFlag();
+  private @Nullable String getTestFilter() {
+    final var flag = handlerState.getTestFilterFlag();
 
-    if (testFilter == null) {
-      return Optional.empty();
+    final var prefix = BlazeFlags.TEST_FILTER + "=";
+    if (flag == null || !flag.startsWith(prefix)) {
+      return null;
     }
 
-    return Optional.of(testFilter.replaceFirst(BlazeFlags.TEST_FILTER, testArgument));
+    final var filter = flag.substring(prefix.length());
+    if (filter.isBlank()) {
+      return null;
+    }
+
+    return filter;
   }
 
   @Override
