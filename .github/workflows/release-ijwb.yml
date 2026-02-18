@@ -33,7 +33,9 @@ jobs:
 
       - name: Update version.bzl
         run: |
-          echo "VERSION = '${{ inputs.version }}'" > version.bzl
+          echo "VERSION = '${INPUTS_VERSION}'" > version.bzl
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
 
       - name: Build Plugin Zip
         run: bazel build //ijwb:ijwb_bazel_zip --define=ij_product=${{ matrix.product }}
