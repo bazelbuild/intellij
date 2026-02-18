@@ -134,6 +134,9 @@
     <action id="Bazel.DumpProxyConfiguration"
       class="com.google.idea.blaze.base.actions.debug.BazelDumpProxyConfiguration"
       text="Bazel dump proxy configuration"/>
+    <action id="Bazel.DumpConfigurationData"
+      class="com.google.idea.blaze.base.actions.debug.BazelDumpConfigurationData"
+      text="Bazel dump configuration data"/>
     <action id="Bazel.SwitchProjectViewFile"
       class="com.google.idea.blaze.base.actions.SwitchProjectViewAction"
       text="Switch Project View"

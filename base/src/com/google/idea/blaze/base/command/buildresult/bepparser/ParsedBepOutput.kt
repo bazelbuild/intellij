@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult.bepparser
 import com.google.common.annotations.VisibleForTesting
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos
 import com.google.idea.blaze.common.artifact.OutputArtifact
 import org.jetbrains.annotations.TestOnly
 
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.TestOnly
  * @property buildResult The build exit code
  * @property bepBytesConsumed Number of bytes consumed from BEP stream
  * @property targetsWithErrors The set of build targets that had an error
+ * @property configurations Map from configuration ID to configuration details from BEP
  */
 data class ParsedBepOutput(
   val buildId: String?,
@@ -38,7 +40,8 @@ data class ParsedBepOutput(
   val syncStartTimeMillis: Long,
   val buildResult: Int,
   val bepBytesConsumed: Long,
-  val targetsWithErrors: ImmutableSet<String>
+  val targetsWithErrors: ImmutableSet<String>,
+  val configurations: ImmutableMap<String, BuildEventStreamProtos.Configuration>
 ) {
   /**
    * Returns all output artifacts of the build.

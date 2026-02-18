@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
@@ -24,6 +26,8 @@ import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.model.BlazeConfiguration;
+import com.google.idea.blaze.base.model.BlazeConfigurationData;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -48,6 +52,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -120,11 +125,12 @@ final class ProjectUpdateSyncTask {
       SyncProjectState projectState,
       ProjectTargetData targetData,
       BlazeInfo blazeInfo,
+      @Nullable BlazeBuildOutputs buildOutputs,
       BlazeContext context)
       throws SyncCanceledException, SyncFailedException {
     SaveUtil.saveAllFiles();
     ProjectUpdateSyncTask task =
-        new ProjectUpdateSyncTask(project, syncMode, projectState, targetData, blazeInfo);
+        new ProjectUpdateSyncTask(project, syncMode, projectState, targetData, blazeInfo, buildOutputs);
     task.run(context);
   }
 
@@ -135,6 +141,7 @@ final class ProjectUpdateSyncTask {
   private final SyncProjectState projectState;
   private final ProjectTargetData targetData;
   private final BlazeInfo blazeInfo;
+  @Nullable private final BlazeBuildOutputs buildOutputs;
   @Nullable private final BlazeProjectData oldProjectData;
 
   private ProjectUpdateSyncTask(
@@ -142,7 +149,8 @@ final class ProjectUpdateSyncTask {
       SyncMode syncMode,
       SyncProjectState projectState,
       ProjectTargetData targetData,
-      BlazeInfo blazeInfo) {
+      BlazeInfo blazeInfo,
+      @Nullable BlazeBuildOutputs buildOutputs) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
@@ -150,6 +158,7 @@ final class ProjectUpdateSyncTask {
     this.projectState = projectState;
     this.targetData = targetData;
     this.blazeInfo = Preconditions.checkNotNull(blazeInfo, "Null BlazeInfo");
+    this.buildOutputs = buildOutputs;
     this.oldProjectData = getOldProjectData(project, syncMode);
   }
 
@@ -163,6 +172,31 @@ final class ProjectUpdateSyncTask {
         "This should only happen in legacy sync");
 
     return BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+  }
+
+  /**
+   * Extracts configuration data from build outputs and converts it to BlazeConfigurationData.
+   *
+   * <p>If buildOutputs is null (e.g., when filtering targets without a build), preserves
+   * configuration data from oldProjectData to avoid losing previously synced configurations.
+   *
+   * @param buildOutputs the build outputs containing configurations, or null if not available
+   * @param oldProjectData the previous project data, or null if this is a full sync
+   * @return configuration data from the build, or from oldProjectData if no build occurred, or EMPTY
+   */
+  private static BlazeConfigurationData extractConfigurations(
+      @Nullable BlazeBuildOutputs buildOutputs, @Nullable BlazeProjectData oldProjectData) {
+    if (buildOutputs == null) {
+      // No new build occurred - preserve old configuration data to avoid data loss
+      return oldProjectData != null
+          ? oldProjectData.configurationData()
+          : BlazeConfigurationData.EMPTY;
+    }
+    // New build occurred - extract fresh configurations from BEP
+    final var configurations = ImmutableMap.copyOf(
+        Maps.transformValues(buildOutputs.configurations(), BlazeConfiguration::fromProto)
+    );
+    return BlazeConfigurationData.create(configurations);
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
@@ -226,6 +260,7 @@ final class ProjectUpdateSyncTask {
             .workspaceLanguageSettings(projectState.getLanguageSettings())
             .externalWorkspaceData(projectState.getExternalWorkspaceData())
             .syncState(syncStateBuilder.build())
+            .configurationData(extractConfigurations(buildOutputs, oldProjectData))
             .build();
 
     FileCaches.onSync(

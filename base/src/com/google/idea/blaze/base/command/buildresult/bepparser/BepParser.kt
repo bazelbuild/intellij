@@ -27,6 +27,7 @@ import com.google.common.collect.Queues
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.ACTION_COMPLETED
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.BUILD_FINISHED
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.CONFIGURATION
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.NAMED_SET
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.STARTED
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.IdCase.TARGET_COMPLETED
@@ -69,7 +70,8 @@ fun parseBepArtifacts(stream: BuildEventStreamProvider, nullableInterner: Intern
       state.startTimeMillis,
       state.buildResult,
       stream.getBytesConsumed(),
-      ImmutableSet.copyOf(state.targetsWithErrors))
+      ImmutableSet.copyOf(state.targetsWithErrors),
+      ImmutableMap.copyOf(state.configurations))
   }
   finally {
     semaphore.end()
@@ -166,6 +168,7 @@ private class BepParserState {
   val outputs = OutputGroupTargetConfigFileSetMap()
   val fileSets = FileSets()
   val targetsWithErrors = mutableSetOf<String>()
+  val configurations = mutableMapOf<String, BuildEventStreamProtos.Configuration>()
   var workspaceStatus: ImmutableMap<String, String> = ImmutableMap.of()
   var buildId: String? = null
   var startTimeMillis: Long = 0L
@@ -301,6 +304,13 @@ private fun parseBep(stream: BuildEventStreamProvider, nullableInterner: Interne
 
       BUILD_FINISHED -> {
         state.buildResult = event.finished.exitCode.code
+      }
+
+      CONFIGURATION -> {
+        Preconditions.checkState(event.hasConfiguration())
+        val configId = interner.intern(event.id.configuration.id)
+        val configuration = event.configuration
+        state.configurations[configId] = configuration
       }
 
       else -> Unit
