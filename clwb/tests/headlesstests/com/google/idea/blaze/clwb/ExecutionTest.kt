@@ -222,21 +222,42 @@ private class ExecutionResultListener(
   private val future: CompletableFuture<Int>
 ) : ExecutionListener {
 
+  private var waitForRemoteDebugProcess = false
+
   override fun processStarted(executor: String, env: ExecutionEnvironment, handler: ProcessHandler) {
     if (executor == DefaultRunExecutor.EXECUTOR_ID) {
       handler.addProcessListener(listener)
+      return
     }
 
-    if (executor == DefaultDebugExecutor.EXECUTOR_ID) {
-      val session = XDebuggerManager.getInstance(project).currentSession
-      assertThat(session).isNotNull()
-
-      when (val debugProcess = session?.debugProcess) {
-        is BlazeCidrRemoteDebugProcess -> debugProcess.targetProcess.addProcessListener(listener)
-        is CidrLocalDebugProcess -> debugProcess.processHandler.addProcessListener(listener)
-        else -> future.completeExceptionally(IllegalStateException("unexpected debug process type"))
-      }
+    if (executor != DefaultDebugExecutor.EXECUTOR_ID) {
+      future.completeExceptionally(IllegalStateException("unexpected executor id"))
+      return
     }
+
+    val session = XDebuggerManager.getInstance(project).currentSession
+    requireNotNull(session)
+
+    val debugProcess = session.debugProcess
+    if (debugProcess is CidrLocalDebugProcess) {
+      debugProcess.processHandler.addProcessListener(listener)
+      return
+    }
+
+    if (debugProcess is BlazeCidrRemoteDebugProcess) {
+      waitForRemoteDebugProcess = true
+
+      debugProcess.targetProcess.addProcessListener(listener)
+      debugProcess.targetProcess.addProcessListener(object : ProcessListener {
+        override fun processTerminated(event: ProcessEvent) {
+          future.complete(event.exitCode)
+        }
+      })
+
+      return
+    }
+
+    future.completeExceptionally(IllegalStateException("unexpected debug process type"))
   }
 
   override fun processNotStarted(executor: String, env: ExecutionEnvironment, cause: Throwable) {
@@ -244,6 +265,8 @@ private class ExecutionResultListener(
   }
 
   override fun processTerminated(executor: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-    future.complete(exitCode)
+    if (!waitForRemoteDebugProcess) {
+      future.complete(exitCode)
+    }
   }
 }
