@@ -1,4 +1,4 @@
-bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_cc", version = "0.2.17")
 
 # temporary to fix missings loads in toolchains_llvm (drop wit Bazel 9 release)
 bazel_dep(name = "toolchains_llvm", version = "1.6.0")
