@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 /**
  * Fake implementation of {@link BuildSystemProvider} for use in unit tests.
@@ -38,7 +39,8 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
         .setLanguageSupportDocumentationUrlFunction(s -> "")
         .setPossibleBuildFileNames(ImmutableList.of())
         .setPossibleWorkspaceFileNames(ImmutableList.of())
-        .setpossibleModuleFileNames(ImmutableList.of());
+        .setPossibleModuleFileNames(ImmutableList.of())
+        .setPossibleModuleFileNameWildcards(ImmutableList.of());
   }
 
   @Override
@@ -96,6 +98,11 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
     return getPossibleModuleFileNames();
   }
 
+  public abstract ImmutableList<String> getPossibleModuleFileNameWildcards();
+
+  @Override
+  public ImmutableList<String> possibleModuleFileNameWildcards() { return getPossibleModuleFileNameWildcards(); }
+
   /**
    * Builder for {@link FakeBuildSystemProvider}.
    *
@@ -127,6 +134,8 @@ public abstract class FakeBuildSystemProvider implements BuildSystemProvider {
 
     public abstract Builder setPossibleWorkspaceFileNames(ImmutableList<String> value);
 
-    public abstract Builder setpossibleModuleFileNames(ImmutableList<String> value);
+    public abstract Builder setPossibleModuleFileNames(ImmutableList<String> value);
+
+    public abstract Builder setPossibleModuleFileNameWildcards(ImmutableList<String> value);
   }
 }

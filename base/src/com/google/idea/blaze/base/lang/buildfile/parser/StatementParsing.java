@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,20 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  // Unlike in Python grammar, 'load' is only allowed as a top-level statement
+  // Unlike in Python grammar, 'load' and 'include' are only allowed as top-level statements
   public void parseTopLevelStatement() {
-    if (currentToken() == TokenKind.IDENTIFIER && "load".equals(builder.getTokenText())) {
-      parseLoadStatement();
-    } else {
-      parseStatement();
+    if (currentToken() == TokenKind.IDENTIFIER) {
+      String tokenText = builder.getTokenText();
+      if ("load".equals(tokenText)) {
+        parseLoadStatement();
+        return;
+      }
+      if ("include".equals(tokenText)) {
+        parseIncludeStatement();
+        return;
+      }
     }
+    parseStatement();
   }
 
   // simple_stmt | compound_stmt
@@ -106,6 +113,20 @@ public class StatementParsing extends Parsing {
       builder.error("'load' statements must include at least one loaded function");
     }
     marker.done(BuildElementTypes.LOAD_STATEMENT);
+  }
+
+  // include '(' STRING ')'
+  private void parseIncludeStatement() {
+    PsiBuilder.Marker marker = builder.mark();
+    expect(TokenKind.IDENTIFIER); // consume "include"
+    expect(TokenKind.LPAREN);
+    if (currentToken() != TokenKind.STRING) {
+      builder.error("'include' statements require a label");
+    } else {
+      parseStringLiteral(false);
+    }
+    expect(TokenKind.RPAREN);
+    marker.done(BuildElementTypes.INCLUDE_STATEMENT);
   }
 
   /** [IDENTIFIER '='] STRING */

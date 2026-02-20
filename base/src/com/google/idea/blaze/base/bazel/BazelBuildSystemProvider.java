@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   private static final ImmutableList<String> BUILD_FILE_NAMES =
       ImmutableList.of("BUILD.bazel", "BUILD");
+  private static final String MODULE_FILE_NAME = "MODULE.bazel";
 
   private final BuildSystem buildSystem = new BazelBuildSystem();
 
@@ -74,6 +75,11 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   @Override
   public ImmutableList<String> possibleModuleFileNames() {
-    return ImmutableList.of("MODULE.bazel");
+    return ImmutableList.of(MODULE_FILE_NAME);
+  }
+
+  @Override
+  public ImmutableList<String> possibleModuleFileNameWildcards() {
+    return ImmutableList.of("*." + MODULE_FILE_NAME);
   }
 }
