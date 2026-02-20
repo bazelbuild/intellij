@@ -23,20 +23,21 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob([
-            "lib/*.jar",
-            "lib/modules/*.jar",
-        ],
-        exclude = [
-            "lib/testFramework.jar",
-        ],
-    ),
+        "lib/*.jar",
+        "lib/modules/*.jar",
+    ]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
 
 java_import(
     name = "test_framework",
-    jars = ["lib/testFramework.jar"],
+    jars = glob([
+        "maven/test-framework.jar", #MAVEN:platform:test-framework
+        "maven/test-framework-common.jar", #MAVEN:platform:test-framework-common
+        "maven/test-framework-core.jar", #MAVEN:platform:test-framework-core
+        "maven/java-rt.jar", #MAVEN:java:java-rt
+    ]),
 )
 
 java_import(
@@ -84,27 +85,27 @@ filegroup(
 
 java_import(
     name = "javascript",
-    jars = glob(["plugins/javascript-plugin/lib/*.jar"]),
+    jars = glob(["plugins/javascript-plugin/**/*.jar"]),
 )
 
 java_import(
     name = "css",
-    jars = glob(["plugins/css-impl/lib/*.jar"]),
+    jars = glob(["plugins/css-plugin/lib/**/*.jar"]),
 )
 
 java_import(
     name = "tslint",
-    jars = glob(["plugins/tslint/lib/*.jar"]),
+    jars = glob(["plugins/tslint/lib/**/*.jar"]),
 )
 
 java_import(
     name = "terminal",
-    jars = glob(["plugins/terminal/lib/terminal.jar"]),
+    jars = glob(["plugins/terminal/lib/**/*.jar"]),
 )
 
 java_import(
     name = "python",
-    jars = glob(["plugins/python-ce/lib/*.jar"]),
+    jars = glob(["plugins/python-ce/lib/**/*.jar"]),
 )
 
 filegroup(

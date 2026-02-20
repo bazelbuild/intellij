@@ -149,10 +149,16 @@ intellij_platform.sdk(
 )
 intellij_platform.sdk(
     name = "clion",
-    alias = "clion_2025_3",
     build_file = "//intellij_platform_sdk:BUILD.clion253",
     sha256 = "7f4f5afceb08ec862d0f1561c72be67d8bdd334887883404fcc1a05bd973da9a",
     version = "2025.3.2",
+)
+intellij_platform.sdk(
+    name = "clion",
+    alias = "clion_2026_1",
+    build_file = "//intellij_platform_sdk:BUILD.clion261",
+    sha256 = "6e9a337f149b054749a5ea3e1aeac6463bd0fe52d003fd4ceadd264af73d2000",
+    version = "261.21525-EAP-CANDIDATE-SNAPSHOT",
 )
 intellij_platform.plugin(
     name = "PythonCore",
@@ -168,7 +174,14 @@ intellij_platform.plugin(
     sha256 = "5eab0c43cdeba0ab011740566c8a03c8ed6517ad4174d0e67048d0c14ed72cf0",
     version = "253.30387.90",
 )
-use_repo(intellij_platform, "clion_2025_2", "clion_2025_3", "python_2025_2", "python_2025_3")
+intellij_platform.plugin(
+    name = "PythonCore",
+    alias = "python_2026_1",
+    build_file = "//intellij_platform_sdk:BUILD.python",
+    sha256 = "0402eecb672edbdf9f8bfc8d6c94ab7f919dd4d04e36a31731ce8482deabd464",
+    version = "261.17801.55",
+)
+use_repo(intellij_platform, "clion_2025_2", "clion_2025_3", "clion_2026_1", "python_2025_2", "python_2025_3", "python_2026_1")
 
 # download bazel sources as a http_file sepearatly so that they can be bumped by the ranovate bot
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")

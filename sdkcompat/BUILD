@@ -16,9 +16,9 @@ java_library(
     name = "sdkcompat",
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_version({
-        "2025.1": ["//sdkcompat/v251"],
         "2025.2": ["//sdkcompat/v252"],
         "2025.3": ["//sdkcompat/v253"],
+        "2026.1": ["//sdkcompat/v261"],
     }),
 )
 
@@ -27,8 +27,8 @@ java_library(
     name = "sdkcompat_radler",
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_version({
-        "2025.1": ["//sdkcompat/v251:v251_radler"],
         "2025.2": ["//sdkcompat/v252:v252_radler"],
         "2025.3": ["//sdkcompat/v253:v253_radler"],
+        "2026.1": ["//sdkcompat/v261:v261_radler"],
     }),
 )
