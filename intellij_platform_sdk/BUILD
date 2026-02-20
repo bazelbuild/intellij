@@ -66,6 +66,7 @@ java_library(
     visibility = ["//visibility:private"],
     exports = select_from_plugin_api_directory([
         ":clion_plugins",
+        ":test_framework",
         ":sdk",
     ]),
 )

@@ -26,9 +26,17 @@ java_import(
             "lib/*.jar",
             "lib/modules/*.jar",
         ],
+        exclude = [
+            "lib/testFramework.jar",
+        ],
     ),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
+)
+
+java_import(
+    name = "test_framework",
+    jars = ["lib/testFramework.jar"],
 )
 
 java_import(

@@ -23,15 +23,21 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob([
-            "lib/*.jar",
-            "lib/modules/*.jar",
-            "maven/test-framework.jar", #MAVEN:platform:test-framework
-            "maven/test-framework-common.jar", #MAVEN:platform:test-framework-common
-            "maven/test-framework-core.jar", #MAVEN:platform:test-framework-core
-        ],
-    ),
+        "lib/*.jar",
+        "lib/modules/*.jar",
+    ]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
+)
+
+java_import(
+    name = "test_framework",
+    jars = glob([
+        "maven/test-framework.jar", #MAVEN:platform:test-framework
+        "maven/test-framework-common.jar", #MAVEN:platform:test-framework-common
+        "maven/test-framework-core.jar", #MAVEN:platform:test-framework-core
+        "maven/java-rt.jar", #MAVEN:java:java-rt
+    ]),
 )
 
 java_import(
