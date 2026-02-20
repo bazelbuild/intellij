@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# dummy wrapper script to populate the BAZEL_REAL environment variable
+exec "${BAZEL_REAL}" "$@"
