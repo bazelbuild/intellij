@@ -163,11 +163,12 @@ def stringify_label(label):
     # okay with the fixture setups.
     return s.lstrip("@") if s.startswith("@@//") or s.startswith("@//") else s
 
-def make_target_key(label, aspect_ids):
+def make_target_key(ctx, label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
     return struct_omit_none(
         aspect_ids = tuple(aspect_ids) if aspect_ids else None,
         label = stringify_label(label),
+        configuration_id = getattr(ctx.configuration, "short_id", ""),  # looks like, will be picked to 8.5 and 7.7
     )
 
 def make_dep(dep, dependency_type):
@@ -590,7 +591,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     file_name = file_name + ".intellij-info.txt"
     ide_info_file = ctx.actions.declare_file(file_name)
 
-    target_key = make_target_key(target.label, aspect_ids)
+    target_key = make_target_key(ctx, target.label, aspect_ids)
     ide_info = dict(
         build_file_artifact_location = build_file_artifact_location(ctx),
         features = ctx.features,

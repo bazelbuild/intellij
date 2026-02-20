@@ -76,7 +76,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     ImmutableCollection<TargetKey> syncedTargets =
         SourceToTargetMap.getInstance(project).getRulesForSourceFile(source);
     if (!syncedTargets.isEmpty()) {
-      return syncedTargets.stream().anyMatch(t -> syncInProgress(t.getLabel()))
+      return syncedTargets.stream().anyMatch(t -> syncInProgress(t.label()))
           ? SyncStatus.RESYNCING
           : SyncStatus.SYNCED;
     }

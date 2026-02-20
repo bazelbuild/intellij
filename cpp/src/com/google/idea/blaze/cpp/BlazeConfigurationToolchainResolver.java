@@ -188,7 +188,7 @@ public final class BlazeConfigurationToolchainResolver {
   private static boolean usesAppleCcToolchain(TargetIdeInfo target) {
     return target.getDependencies().stream()
         .map(Dependency::getTargetKey)
-        .map(TargetKey::getLabel)
+        .map(TargetKey::label)
         .map(TargetExpression::toString)
         .anyMatch(s -> s.startsWith("//tools/osx/crosstool"));
   }

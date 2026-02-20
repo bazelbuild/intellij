@@ -88,7 +88,7 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
                       }
                       BlazeSyncManager.getInstance(project)
                           .filterProjectTargets(
-                              targetKey -> !deleted.contains(targetKey.getLabel()),
+                              targetKey -> !deleted.contains(targetKey.label()),
                               /* reason= */ "CleanProjectTargetsSyncAction");
                       removeInvalidRunConfigurations(project, deleted);
                     }));
@@ -113,14 +113,14 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
       toKeep.forEach(t -> foundTargets.add(t.label));
     }
     return targets.stream()
-        .map(t -> t.getKey().getLabel())
+        .map(t -> t.getKey().label())
         .filter(l -> !foundTargets.contains(l))
         .collect(toImmutableSet());
   }
 
   private static String getQuery(List<TargetIdeInfo> targets) {
     return targets.stream()
-        .map(t -> String.format("'%s'", t.getKey().getLabel()))
+        .map(t -> String.format("'%s'", t.getKey().label()))
         .collect(joining("+"));
   }
 

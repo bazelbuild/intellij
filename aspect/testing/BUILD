@@ -33,6 +33,7 @@ test_suite(
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/cctest:CcTestTest",
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/cctoolchain:CcToolchainTest",
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/coptsmakevars:CoptsMakeVarsTest",
+        "//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/transition:TransitionTest",
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/alias:AliasTest",
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/analysistest:AnalysisTestTest",
         "//aspect/testing/tests/src/com/google/idea/blaze/aspect/general/artifacts:ArtifactTest",

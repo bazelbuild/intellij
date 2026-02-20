@@ -160,7 +160,7 @@ public abstract class BlazeProjectData {
 
     // otherwise just return any matching target
     return map.targets().stream()
-        .filter(t -> Objects.equals(label, t.getKey().getLabel()))
+        .filter(t -> Objects.equals(label, t.getKey().label()))
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
@@ -178,7 +178,7 @@ public abstract class BlazeProjectData {
 
   public ImmutableList<Label> targets() {
     return targetMap().targets().stream()
-        .map(it -> it.getKey().getLabel())
+        .map(it -> it.getKey().label())
         .collect(ImmutableList.toImmutableList());
   }
 

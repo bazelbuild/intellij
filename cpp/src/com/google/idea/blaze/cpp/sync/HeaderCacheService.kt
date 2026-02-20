@@ -141,7 +141,7 @@ class HeaderCacheService(private val project: Project) {
         }
       } catch (e: IOException) {
         cacheTracker.remove(header.relativePath())
-        LOG.warn("failed to copy generated header ${header.relativePath()} for ${key.label}", e)
+        LOG.warn("failed to copy generated header ${header.relativePath()} for ${key.label()}", e)
       }
     }
   }

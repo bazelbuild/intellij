@@ -76,7 +76,7 @@ class BlazeWebTestLocator implements SMTestLocator {
         continue;
       }
       Kind kind = target.getKind();
-      Label label = targetKey.getLabel();
+      Label label = targetKey.label();
       if (Stream.of("_wrapped_test", "_debug").noneMatch(label.targetName().toString()::endsWith)) {
         continue;
       }

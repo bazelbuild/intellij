@@ -800,9 +800,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
 
     assertCToolchainIdeInfoForTarget(
-        targetWith32Dep.build().getKey().toString(), aarch32Toolchain.build());
+        targetWith32Dep.build().getKey().label().toString(), aarch32Toolchain.build());
     assertCToolchainIdeInfoForTarget(
-        targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
+        targetWith64Dep.build().getKey().label().toString(), aarch64Toolchain.build());
   }
 
   @Test
@@ -854,7 +854,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
      assertThatResolving(projectView, targetMap).producesConfigurationsFor(
          "//test:target and 1 other target(s)");
      assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
-         .map(targetKey -> targetKey.getLabel().toString())
+         .map(targetKey -> targetKey.label().toString())
          .collect(Collectors.toList())).containsAtLeast("//test:target",
          "@external_dependency//foo:bar");
    }

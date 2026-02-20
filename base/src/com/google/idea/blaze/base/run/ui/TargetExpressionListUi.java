@@ -240,7 +240,7 @@ public class TargetExpressionListUi extends JPanel {
       return projectData.targetMap().targets().stream()
           .filter(TargetIdeInfo::isPlainTarget)
           .map(TargetIdeInfo::getKey)
-          .map(TargetKey::getLabel)
+          .map(TargetKey::label)
           .filter(importRoots::importAsSource)
           .map(TargetExpression::toString)
           .collect(toImmutableList());
