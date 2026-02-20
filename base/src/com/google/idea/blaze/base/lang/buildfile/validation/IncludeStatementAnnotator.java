@@ -44,7 +44,7 @@ public class IncludeStatementAnnotator extends BuildAnnotator {
 
     String targetString = target.getStringContents();
     if (targetString == null || targetString.isEmpty()) {
-      markError(target, "include() requires a file path");
+      markError(target, "include() requires a label");
       return;
     }
 

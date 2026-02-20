@@ -121,7 +121,7 @@ public class StatementParsing extends Parsing {
     expect(TokenKind.IDENTIFIER); // consume "include"
     expect(TokenKind.LPAREN);
     if (currentToken() != TokenKind.STRING) {
-      builder.error("'include' statements require a file path");
+      builder.error("'include' statements require a label");
     } else {
       parseStringLiteral(false);
     }

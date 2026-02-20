@@ -15,151 +15,45 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.references;
 
-import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
+import com.google.idea.blaze.base.lang.buildfile.psi.IncludeStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
-import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.util.ArrayUtil;
-
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
 
 /** Resolves include statements in MODULE.bazel files to *.MODULE.bazel fragment files. */
-public class IncludeReference extends PsiReferenceBase<StringLiteral> {
+public class IncludeReference extends LabelReference {
 
   public IncludeReference(StringLiteral element, boolean soft) {
-    super(element, new TextRange(0, element.getTextLength()), soft);
-  }
-
-  @Nullable
-  @Override
-  public PsiElement resolve() {
-    String path = myElement.getStringContents();
-    if (path == null) {
-      return null;
-    }
-
-    Label label = getLabel(path);
-    if (label == null) {
-      return null;
-    }
-
-    return getReferenceManager().resolveLabel(label);
+    super(element, soft);
   }
 
   @Override
-  public Object[] getVariants() {
+  public Object @NonNull [] getVariants() {
+    if (!validLabelLocation(myElement)) {
+      return EMPTY_ARRAY;
+    }
+
     String labelString = LabelUtils.trimToDummyIdentifier(myElement.getStringContents());
     return getFileLookups(labelString);
   }
 
-  private BuildLookupElement[] getFileLookups(String labelString) {
-    if (labelString.startsWith("//") || labelString.equals("/") || labelString.startsWith("@")) {
-      return getNonLocalFileLookups(labelString);
+  @Override
+  protected boolean skylarkExtensionReference(StringLiteral element) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof IncludeStatement includeStatement)) {
+      return false;
     }
-    return getPackageLocalFileLookups(labelString);
+    return includeStatement.getImportPsiElement() == element;
   }
 
-  /**
-   * Handle non-local labels like "//:foo", "//pkg:foo", or "@repo//pkg:foo". Combines directory
-   * navigation (before colon) with file completion (after colon).
-   */
-  private BuildLookupElement[] getNonLocalFileLookups(String labelString) {
-    // File completion within resolved package (handles case after colon)
-    BuildLookupElement[] includeFileLookups = getIncludeFileLookups(labelString);
-
-    // Package/directory navigation (handles case before colon)
-    // Note: nonLocalFileLookup returns null when label contains colon, by design
-    FileLookupData lookupData = FileLookupData.nonLocalFileLookup(labelString, myElement);
-    BuildLookupElement[] packageLookups =
-        lookupData != null
-            ? getReferenceManager().resolvePackageLookupElements(lookupData)
-            : BuildLookupElement.EMPTY_ARRAY;
-
-    return ArrayUtil.mergeArrays(includeFileLookups, packageLookups);
-  }
-
-  /**
-   * Get *.MODULE.bazel file completions within a resolved package. Handles "//:foo<CARET>",
-   * "//pkg:foo<CARET>", "@repo//pkg:foo<CARET>".
-   */
-  private BuildLookupElement[] getIncludeFileLookups(String labelString) {
-    String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
-    String externalWorkspace = LabelUtils.getExternalWorkspaceComponent(labelString);
-    BuildFile parentFile = myElement.getContainingFile();
-    if (parentFile == null) {
-      return BuildLookupElement.EMPTY_ARRAY;
-    }
-
-    BlazePackage containingPackage = BlazePackage.getContainingPackage(parentFile);
-    if (containingPackage == null) {
-      return BuildLookupElement.EMPTY_ARRAY;
-    }
-
-    BuildFile referencedBuildFile =
-        LabelUtils.getReferencedBuildFile(
-            containingPackage.buildFile, externalWorkspace, packagePrefix);
-
-    boolean hasColon = labelString.indexOf(':') != -1;
-    VirtualFileFilter filter =
-        file ->
+  @Override
+  protected @NonNull VirtualFileFilter getAllowedFilesFilter(BuildFile parentFile, boolean hasColon) {
+    return file ->
             (file.getName().endsWith(".MODULE.bazel")
-                && !file.getName().equals("MODULE.bazel")
-                && !file.getPath().equals(parentFile.getFilePath()))
-                || (hasColon && file.isDirectory());
-
-    FileLookupData lookupData =
-        FileLookupData.packageLocalFileLookup(labelString, myElement, referencedBuildFile, filter);
-
-    return lookupData != null
-        ? getReferenceManager().resolvePackageLookupElements(lookupData)
-        : BuildLookupElement.EMPTY_ARRAY;
-  }
-
-  /** Handle package-local labels like ":foo" or "foo". */
-  private BuildLookupElement[] getPackageLocalFileLookups(String labelString) {
-    BuildFile parentFile = myElement.getContainingFile();
-    if (parentFile == null) {
-      return BuildLookupElement.EMPTY_ARRAY;
-    }
-
-    BlazePackage containingPackage = BlazePackage.getContainingPackage(parentFile);
-    if (containingPackage == null) {
-      return BuildLookupElement.EMPTY_ARRAY;
-    }
-
-    boolean hasColon = labelString.indexOf(':') != -1;
-    VirtualFileFilter filter =
-        file ->
-            (file.getName().endsWith(".MODULE.bazel")
-                && !file.getName().equals("MODULE.bazel")
-                && !file.getPath().equals(parentFile.getFilePath()))
-                || (hasColon && file.isDirectory());
-
-    FileLookupData lookupData =
-        FileLookupData.packageLocalFileLookup(
-            labelString, myElement, containingPackage.buildFile, filter);
-
-    return lookupData != null
-        ? getReferenceManager().resolvePackageLookupElements(lookupData)
-        : BuildLookupElement.EMPTY_ARRAY;
-  }
-
-  private BuildReferenceManager getReferenceManager() {
-    return BuildReferenceManager.getInstance(myElement.getProject());
-  }
-
-  @Nullable
-  private Label getLabel(String labelString) {
-    if (labelString.indexOf('*') != -1) {
-      // don't handle globs
-      return null;
-    }
-    BlazePackage blazePackage = myElement.getBlazePackage();
-    return LabelUtils.createLabelFromString(blazePackage, labelString);
+                    && !file.getName().equals("MODULE.bazel")
+                    && !file.getPath().equals(parentFile.getFilePath()))
+                    || (hasColon && file.isDirectory());
   }
 }
