@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import javax.annotation.Nullable;
 
 /**
@@ -55,7 +56,19 @@ public final class BlazeConfigurationData implements ProtoWrapper<ProjectData.Bl
   }
 
   @Nullable
-  public BlazeConfiguration get(String configId) {
-    return configurations.get(configId);
+  public BlazeConfiguration get(TargetKey key) {
+    // if no configuration id is provided, return null
+    if (key.configurationId().isBlank()) {
+      return null;
+    }
+
+    for (final var entry : configurations.entrySet()) {
+      // the short_id provided by the aspect is the prefix of the actual configuration hash
+      if (entry.getKey().startsWith(key.configurationId())) {
+        return entry.getValue();
+      }
+    }
+
+    return null;
   }
 }

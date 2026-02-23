@@ -194,6 +194,12 @@ clwb_headless_test(
     project = "protobuf",
 )
 
+clwb_headless_test(
+    name = "transition_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/TransitionTest.java"],
+    project = "transition",
+)
+
 test_suite(
     name = "headless_tests",
     tests = [
@@ -206,6 +212,7 @@ test_suite(
         ":protobuf_headless_test",
         ":simple_headless_test",
         ":target_compatible_headless_test",
+        ":transition_headless_test",
         ":virtual_includes_headless_test",
     ],
 )

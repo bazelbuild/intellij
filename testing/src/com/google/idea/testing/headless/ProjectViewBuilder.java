@@ -7,6 +7,7 @@ import java.util.List;
 public class ProjectViewBuilder {
 
   private final List<String> directories = new ArrayList<>();
+  private final List<String> targets = new ArrayList<>();
   private final List<String> build_flags = new ArrayList<>();
   private final List<String> sync_flags = new ArrayList<>();
 
@@ -20,6 +21,12 @@ public class ProjectViewBuilder {
 
   public ProjectViewBuilder addRootDirectory() {
     directories.add(".");
+    return this;
+  }
+
+  public ProjectViewBuilder addTarget(String... values) {
+    targets.addAll(Arrays.asList(values));
+    derive_targets_from_directories = false;
     return this;
   }
 
@@ -50,6 +57,11 @@ public class ProjectViewBuilder {
     if (!directories.isEmpty()) {
       builder.append("directories:\n");
       directories.stream().map(ProjectViewBuilder::toElement).forEach(builder::append);
+    }
+
+    if (!targets.isEmpty()) {
+      builder.append("targets:\n");
+      targets.stream().map(ProjectViewBuilder::toElement).forEach(builder::append);
     }
 
     if (!build_flags.isEmpty()) {
