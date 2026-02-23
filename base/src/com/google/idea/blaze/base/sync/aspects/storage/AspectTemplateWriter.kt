@@ -64,7 +64,7 @@ class AspectTemplateWriter : AspectWriter {
       REALIZED_CODE_GENERATOR,
       ASPECT_TEMPLATE_DIRECTORY,
       TEMPLATE_CODE_GENERATOR,
-      ImmutableMap.of<String, List<LanguageClassRuleNames>?>("languageClassRuleNames", languageClassRuleNames)
+      ImmutableMap.of<String, List<LanguageClassRuleNames>>("languageClassRuleNames", languageClassRuleNames)
     )
   }
 
