@@ -46,21 +46,29 @@ jobs:
 
       - name: Update version.bzl
         run: |
-          echo "VERSION = '${{ inputs.version }}'" > version.bzl
+          echo "VERSION = '${INPUTS_VERSION}'" > version.bzl
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
 
       - name: Check CHANGELOG for version
         if: ${{ !inputs.eap }} # EAP builds don't have a CHANGELOG entry
         run: |
-          grep -qF $(echo "${{ inputs.version }}" | cut -d'.' -f1-3) CHANGELOG
+          grep -qF $(echo "${INPUTS_VERSION}" | cut -d'.' -f1-3) CHANGELOG
+        env:
+          INPUTS_VERSION: ${{ inputs.version }}
 
       - name: Build Plugin Zip
-        run: bazel build //clwb:clwb_bazel_zip --define=ij_product=${{ matrix.product }}
+        run: bazel build //clwb:clwb_bazel_zip --define=ij_product=${MATRIX_PRODUCT}
+        env:
+          MATRIX_PRODUCT: ${{ matrix.product }}
 
       - name: Rename Plugin Zip
         run: |
-          bazel build //intellij_platform_sdk:build_name --define=ij_product=${{ matrix.product }}
+          bazel build //intellij_platform_sdk:build_name --define=ij_product=${MATRIX_PRODUCT}
           mkdir out
           mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
+        env:
+          MATRIX_PRODUCT: ${{ matrix.product }}
 
       - name: Upload Plugin Zip
         uses: actions/upload-artifact@v6
