@@ -222,7 +222,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     ImmutableList.of(src("foo/bar/binary.cc"), gen("foo/bar/generated.cc")),
                     "//:toolchain"))
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary (unknown)");
   }
 
   @Test
@@ -238,7 +238,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     ImmutableList.of(src("foo/bar/binary.cc")),
                     "//:toolchain"))
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary (unknown)");
   }
 
   @Test
@@ -268,7 +268,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     ImmutableList.of(src("third_party/library.cc")),
                     "//:toolchain"))
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary (unknown)");
   }
 
   @Test
@@ -300,7 +300,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap)
-        .producesConfigurationsFor("//foo/bar:binary", "//foo/bar:library");
+        .producesConfigurationsFor("//foo/bar:binary (unknown)", "//foo/bar:library (unknown)");
   }
 
   @Test
@@ -320,7 +320,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(ccTarget)
             .build();
     assertThatResolving(projectView, targetMap)
-        .producesCToolchainIdeInfoForTarget("//foo/bar:binary", cToolchainIdeInfoBuilder.build());
+        .producesCToolchainIdeInfoForTarget("//foo/bar:binary (unknown)", cToolchainIdeInfoBuilder.build());
   }
 
   // Java cc_library depends directly on a cc_toolchain_suite target. Should use the
@@ -343,7 +343,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(ccTarget)
             .build();
     assertThatResolving(projectView, targetMap)
-        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library (unknown)", cToolchainIdeInfoBuilder.build());
   }
 
   // Starlark cc_library depends on an intermediate cc_toolchain_alias target which has a direct
@@ -375,7 +375,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     assertThatResolving(projectView, targetMap)
         .producesCToolchainIdeInfoForTarget(
-            "//foo/bar:library", cToolchainIdeInfoBuilderAlias.build());
+            "//foo/bar:library (unknown)", cToolchainIdeInfoBuilderAlias.build());
   }
 
   // This is for an intermediate state where the cc_library starlarkification is rolled out, and
@@ -407,7 +407,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 + " Found 0 toolchains for these targets: %s",
             ccTarget.getKey());
     assertThatResolving(projectView, targetMap, errMessage)
-        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library (unknown)", cToolchainIdeInfoBuilder.build());
   }
 
   @Test
@@ -511,13 +511,13 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     assertThatResolving(projectView, targetMap)
         .producesConfigurationsFor(
-            "//foo/bar:binary",
-            "//foo/bar:library",
-            "//foo/bar:mixed",
-            "//foo/baz:test",
-            "//foo/baz:binary",
-            "//foo/baz:library",
-            "//foo:test");
+            "//foo/bar:binary (unknown)",
+            "//foo/bar:library (unknown)",
+            "//foo/bar:mixed (unknown)",
+            "//foo/baz:test (unknown)",
+            "//foo/baz:binary (unknown)",
+            "//foo/baz:library (unknown)",
+            "//foo:test (unknown)");
   }
 
   @Test
@@ -535,7 +535,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary (unknown)");
   }
 
   @Test
@@ -552,7 +552,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"))
             .build();
 
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary (unknown)");
     ImmutableList<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
     BlazeConfigurationResolverResult oldResult = resolverResult;
@@ -577,7 +577,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     createVirtualFile("/root/foo/bar/binary_helper.cc");
 
     assertThatResolving(projectView, targetMap.build())
-        .producesConfigurationsFor("//foo/bar:binary");
+        .producesConfigurationsFor("//foo/bar:binary (unknown)");
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
     targetMap =
@@ -591,7 +591,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"));
 
     assertThatResolving(projectView, targetMap.build())
-        .reusedConfigurations(ImmutableList.of(), "//foo/bar:binary");
+        .reusedConfigurations(ImmutableList.of(), "//foo/bar:binary (unknown)");
     assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
@@ -608,7 +608,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     ImmutableList.of(src("foo/bar/binary.cc")),
                     "//:toolchain"));
     assertThatResolving(projectView, targetMapBuilder.build())
-        .producesConfigurationsFor("//foo/bar:binary");
+        .producesConfigurationsFor("//foo/bar:binary (unknown)");
     Collection<BlazeResolveConfiguration> initialConfigurations =
         resolverResult.getAllConfigurations();
     BlazeConfigurationResolverResult oldResult = resolverResult;
@@ -622,7 +622,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             "//:toolchain"));
 
     assertThatResolving(projectView, targetMapBuilder.build())
-        .reusedConfigurations(initialConfigurations, "//foo/bar:library");
+        .reusedConfigurations(initialConfigurations, "//foo/bar:library (unknown)");
     assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
@@ -641,7 +641,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary (unknown)");
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
     TargetMap targetMap2 =
@@ -656,7 +656,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap2)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:library");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:library (unknown)");
     assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
@@ -675,7 +675,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary (unknown)");
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
     ProjectView projectView2 = projectView(directories("foo/zoo"), targets("//foo/zoo:library"));
@@ -691,7 +691,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//:toolchain"))
             .build();
     assertThatResolving(projectView2, targetMap2)
-        .reusedConfigurations(noReusedConfigurations, "//foo/zoo:library");
+        .reusedConfigurations(noReusedConfigurations, "//foo/zoo:library (unknown)");
     assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
@@ -711,12 +711,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary (unknown)");
     BlazeConfigurationResolverResult oldResult = resolverResult;
 
     compilerVersionChecker.setCompilerVersion("cc modified version");
     assertThatResolving(projectView, targetMap)
-        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary");
+        .reusedConfigurations(noReusedConfigurations, "//foo/bar:binary (unknown)");
     assertThat(resolverResult.isEquivalentConfigurations(oldResult)).isFalse();
   }
 
@@ -800,9 +800,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
 
     assertCToolchainIdeInfoForTarget(
-        targetWith32Dep.build().getKey().label().toString(), aarch32Toolchain.build());
+        "//foo:native_lib (unknown)", aarch32Toolchain.build());
     assertCToolchainIdeInfoForTarget(
-        targetWith64Dep.build().getKey().label().toString(), aarch64Toolchain.build());
+        "//foo:native_lib2 (unknown)", aarch64Toolchain.build());
   }
 
   @Test
@@ -852,7 +852,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
              Mockito.any(String.class))).thenReturn(new WorkspaceRoot(spyExternalDependencyRoot));
 
      assertThatResolving(projectView, targetMap).producesConfigurationsFor(
-         "//test:target and 1 other target(s)");
+         "//test:target (unknown) and 1 other target(s)");
      assertThat(resolverResult.getAllConfigurations().get(0).getTargets().stream()
          .map(targetKey -> targetKey.label().toString())
          .collect(Collectors.toList())).containsAtLeast("//test:target",
