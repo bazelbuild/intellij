@@ -1,0 +1,6 @@
+<html>
+  <body>
+    Sends the current line or selection to the Starlark REPL console for evaluation.
+    The REPL is started automatically if not already running.
+  </body>
+</html>

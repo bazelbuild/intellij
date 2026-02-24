@@ -22,12 +22,17 @@ import com.intellij.execution.console.LanguageConsoleBuilder
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import icons.BlazeIcons
 import java.awt.event.KeyEvent
 import javax.swing.Icon
@@ -45,7 +50,7 @@ class SkylarkReplConsole(
 
   override fun createProcess() = handler.process
 
-  override fun createProcessHandler(process: Process) = handler
+  override fun createProcessHandler(process: Process): OSProcessHandler = handler
 
   override fun getConsoleIcon(): Icon = BlazeIcons.BuildFile
 
@@ -69,10 +74,23 @@ class SkylarkReplConsole(
       consoleView.consoleEditor.component
     )
 
+    SkylarkReplActiveConsoleService.getInstance(project).register(this, consoleView)
+
     return consoleView
   }
 
   override fun createExecuteActionHandler() = ProcessBackedConsoleExecuteActionHandler(handler, false)
+
+  fun sendText(text: String) {
+    val view = consoleView ?: return
+
+    view.setInputText(text.trim() + "\n")
+    consoleExecuteActionHandler.runExecuteAction(view)
+  }
+
+  fun showConsole() {
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.RUN)?.activate(null)
+  }
 }
 
 // UP arrow navigates to previous history when caret is on first line
