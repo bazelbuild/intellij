@@ -28,7 +28,7 @@ def _bazel_build_jars_impl(rctx):
 
     for target in rctx.attr.jars:
         rctx.report_progress("building: %s" % target)
-        result = rctx.execute(build_cmd + [target], working_directory = source_dir, timeout = 1800)
+        result = rctx.execute(build_cmd + [target], working_directory = source_dir, timeout = 60 * 60 * 2)
 
         if result.return_code != 0:
             fail("could not build %s: %s" % (target, result.stderr))
