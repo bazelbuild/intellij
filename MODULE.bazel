@@ -158,7 +158,7 @@ intellij_platform.sdk(
     alias = "clion_2026_1",
     build_file = "//intellij_platform_sdk:BUILD.clion261",
     sha256 = "6e9a337f149b054749a5ea3e1aeac6463bd0fe52d003fd4ceadd264af73d2000",
-    version = "261.21525-EAP-CANDIDATE-SNAPSHOT",
+    version = "261.21525.25-EAP-SNAPSHOT",
 )
 intellij_platform.plugin(
     name = "PythonCore",
