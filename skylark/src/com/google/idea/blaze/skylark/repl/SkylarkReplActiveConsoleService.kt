@@ -32,6 +32,7 @@ class SkylarkReplActiveConsoleService {
 
   private val consoles = LinkedList<SkylarkReplConsole>()
 
+  @Synchronized
   fun register(console: SkylarkReplConsole, view: LanguageConsoleView) {
     consoles.addFirst(console)
 
