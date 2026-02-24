@@ -527,6 +527,46 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(newConfigurations, "//foo/bar:a (unknown) and 3 other target(s)")).isNotNull();
   }
 
+  @Test
+  public void testTargetsWithSameConfigurationId_groupedByEquivalence() {
+    final var projectView = projectView(
+        directories("foo/bar"),
+        targets("//foo/bar:one", "//foo/bar:two", "//foo/bar:three")
+    );
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:one",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/one.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:two",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/two.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:three",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/three.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(1);
+    assertThat(get(configurations, "//foo/bar:one (configA) and 2 other target(s)")).isNotNull();
+  }
+
   private static List<ArtifactLocation> sources(String... paths) {
     return Arrays.stream(paths)
         .map(path -> ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build())
