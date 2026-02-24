@@ -1,3 +1,10 @@
+v2026.02.25
+===========
+* Support for include statements in MODULE.bazel files #7702
+* Starlark REPL #8049
+* Fixed test filter flag for catch2 debug run configs #8162
+* Removed expand sync to working set functionality #8128
+
 v2026.01.26
 ===========
 * Updated plugin description #8099
