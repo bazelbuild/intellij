@@ -11,11 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modifications Copyright 2026 The Bazel Authors. All rights reserved.
 
-package com.intellij.protobuf.lang.lexer;
+package com.google.idea.blaze.base.execlog.prototext;
 
-import com.intellij.protobuf.lang.lexer.ProtoLexer.CommentStyle;
-import com.intellij.protobuf.lang.psi.ProtoTokenTypes;
+import com.google.idea.blaze.base.execlog.prototext.ProtoTextTokenTypes;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
@@ -24,19 +25,8 @@ import com.intellij.psi.tree.IElementType;
 %%
 
 %{
-  private CommentStyle commentStyle;
-  private boolean allowFloatCast;
-  private boolean returnKeywords;
-
-  public _ProtoLexer(CommentStyle commentStyle, boolean allowFloatCast, boolean returnKeywords) {
+  public _ProtoLexer() {
     this(null);
-    this.commentStyle = commentStyle;
-    this.allowFloatCast = allowFloatCast;
-    this.returnKeywords = returnKeywords;
-  }
-
-  private IElementType keyword(IElementType type) {
-    return returnKeywords ? type : ProtoTokenTypes.IDENTIFIER_LITERAL;
   }
 %}
 
@@ -68,8 +58,6 @@ WhitespaceNoNewline = [\ \t\r\f\x0b] // '\x0b' is '\v' (vertical tab) in C.
 Whitespace = ({WhitespaceNoNewline} | "\n")+
 
 // Comments.
-CLineComment = "//" [^\n]*
-CBlockComment = "/*" !([^]* "*/" [^]*) "*/"?
 ShLineComment = "#" [^\n]*
 
 // Identifiers.
@@ -115,117 +103,51 @@ String = {SingleQuotedString} | {DoubleQuotedString}
 <YYINITIAL> {
   {Whitespace}              { return com.intellij.psi.TokenType.WHITE_SPACE; }
 
-  "="                       { return ProtoTokenTypes.ASSIGN; }
-  ":"                       { return ProtoTokenTypes.COLON; }
-  ","                       { return ProtoTokenTypes.COMMA; }
-  "."                       { return ProtoTokenTypes.DOT; }
-  ">"                       { return ProtoTokenTypes.GT; }
-  "{"                       { return ProtoTokenTypes.LBRACE; }
-  "["                       { return ProtoTokenTypes.LBRACK; }
-  "("                       { return ProtoTokenTypes.LPAREN; }
-  "<"                       { return ProtoTokenTypes.LT; }
-  "-"                       { return ProtoTokenTypes.MINUS; }
-  "}"                       { return ProtoTokenTypes.RBRACE; }
-  "]"                       { return ProtoTokenTypes.RBRACK; }
-  ")"                       { return ProtoTokenTypes.RPAREN; }
-  ";"                       { return ProtoTokenTypes.SEMI; }
-  "/"                       { return ProtoTokenTypes.SLASH; }
+  "="                       { return ProtoTextTokenTypes.ASSIGN; }
+  ":"                       { return ProtoTextTokenTypes.COLON; }
+  ","                       { return ProtoTextTokenTypes.COMMA; }
+  "."                       { return ProtoTextTokenTypes.DOT; }
+  ">"                       { return ProtoTextTokenTypes.GT; }
+  "{"                       { return ProtoTextTokenTypes.LBRACE; }
+  "["                       { return ProtoTextTokenTypes.LBRACK; }
+  "("                       { return ProtoTextTokenTypes.LPAREN; }
+  "<"                       { return ProtoTextTokenTypes.LT; }
+  "-"                       { return ProtoTextTokenTypes.MINUS; }
+  "}"                       { return ProtoTextTokenTypes.RBRACE; }
+  "]"                       { return ProtoTextTokenTypes.RBRACK; }
+  ")"                       { return ProtoTextTokenTypes.RPAREN; }
+  ";"                       { return ProtoTextTokenTypes.SEMI; }
+  "/"                       { return ProtoTextTokenTypes.SLASH; }
 
-  "default"                 { return keyword(ProtoTokenTypes.DEFAULT); }
-  "enum"                    { return keyword(ProtoTokenTypes.ENUM); }
-  "export"                  { return keyword(ProtoTokenTypes.EXPORT); }
-  "edition"                 { return keyword(ProtoTokenTypes.EDITION); }
-  "extend"                  { return keyword(ProtoTokenTypes.EXTEND); }
-  "extensions"              { return keyword(ProtoTokenTypes.EXTENSIONS); }
-  "group"                   { return keyword(ProtoTokenTypes.GROUP); }
-  "import"                  { return keyword(ProtoTokenTypes.IMPORT); }
-  "json_name"               { return keyword(ProtoTokenTypes.JSON_NAME); }
-  "local"                   { return keyword(ProtoTokenTypes.LOCAL); }
-  "map"                     { return keyword(ProtoTokenTypes.MAP); }
-  "max"                     { return keyword(ProtoTokenTypes.MAX); }
-  "message"                 { return keyword(ProtoTokenTypes.MESSAGE); }
-  "oneof"                   { return keyword(ProtoTokenTypes.ONEOF); }
-  "option"                  { return keyword(ProtoTokenTypes.OPTION); }
-  "optional"                { return keyword(ProtoTokenTypes.OPTIONAL); }
-  "package"                 { return keyword(ProtoTokenTypes.PACKAGE); }
-  "public"                  { return keyword(ProtoTokenTypes.PUBLIC); }
-  "repeated"                { return keyword(ProtoTokenTypes.REPEATED); }
-  "required"                { return keyword(ProtoTokenTypes.REQUIRED); }
-  "reserved"                { return keyword(ProtoTokenTypes.RESERVED); }
-  "returns"                 { return keyword(ProtoTokenTypes.RETURNS); }
-  "rpc"                     { return keyword(ProtoTokenTypes.RPC); }
-  "service"                 { return keyword(ProtoTokenTypes.SERVICE); }
-  "stream"                  { return keyword(ProtoTokenTypes.STREAM); }
-  "syntax"                  { return keyword(ProtoTokenTypes.SYNTAX); }
-  "to"                      { return keyword(ProtoTokenTypes.TO); }
-  "true"                    { return keyword(ProtoTokenTypes.TRUE); }
-  "weak"                    { return keyword(ProtoTokenTypes.WEAK); }
+  "true"                    { return ProtoTextTokenTypes.TRUE; }
+  "false"                   { return ProtoTextTokenTypes.FALSE; }
 
-  {Identifier}              { return ProtoTokenTypes.IDENTIFIER_LITERAL; }
-  {String}                  { return ProtoTokenTypes.STRING_LITERAL; }
-  {Integer}                 { yybegin(AFTER_NUMBER); return ProtoTokenTypes.INTEGER_LITERAL; }
-  {Float}                   { yybegin(AFTER_NUMBER); return ProtoTokenTypes.FLOAT_LITERAL; }
+  {Identifier}              { return ProtoTextTokenTypes.IDENTIFIER_LITERAL; }
+  {String}                  { return ProtoTextTokenTypes.STRING_LITERAL; }
+  {Integer}                 { yybegin(AFTER_NUMBER); return ProtoTextTokenTypes.INTEGER_LITERAL; }
+  {Float}                   { yybegin(AFTER_NUMBER); return ProtoTextTokenTypes.FLOAT_LITERAL; }
 
-  {IntegerWithF} {
-    yybegin(AFTER_NUMBER);
-    if (allowFloatCast) {
-      return ProtoTokenTypes.FLOAT_LITERAL;
-    } else {
-      yypushback(1); // Push the 'f' back
-      return ProtoTokenTypes.INTEGER_LITERAL;
-    }
-  }
-  {FloatWithF} {
-    yybegin(AFTER_NUMBER);
-    if (!allowFloatCast) {
-      yypushback(1); // Push the 'f' back
-    }
-    return ProtoTokenTypes.FLOAT_LITERAL;
-  }
+  {IntegerWithF}            { yybegin(AFTER_NUMBER); return ProtoTextTokenTypes.FLOAT_LITERAL; }
+  {FloatWithF}              { yybegin(AFTER_NUMBER); return ProtoTextTokenTypes.FLOAT_LITERAL; }
 
-  // C-style comments, allowed when injected into protobuf.
-  "/*" | "//" {
-    if (commentStyle == CommentStyle.C_STYLE) {
-      // Push back both characters and match with either CLineComment or CBlockComment in the
-      // COMMENT state.
-      yypushback(2);
-      yybegin(COMMENT);
-    } else {
-      // Push back the trailing '/' or '*' and return SLASH for the leading '/'.
-      yypushback(1);
-      return ProtoTokenTypes.SLASH;
-    }
-  }
-
-  // sh-style comments, allowed in standalone mode.
-  "#" {
-    if (commentStyle == CommentStyle.SH_STYLE) {
-      // Push back the symbol and enter COMMENT state to match the comment.
-      yypushback(1);
-      yybegin(COMMENT);
-    } else {
-      // Return SYMBOL for the '#'.
-      return ProtoTokenTypes.SYMBOL;
-    }
-  }
+  // sh-style comments (#).
+  "#"                       { yypushback(1); yybegin(COMMENT); }
 
   // Additional unmatched symbols are matched individually as SYMBOL.
-  {Symbol} { return ProtoTokenTypes.SYMBOL; }
+  {Symbol}                  { return ProtoTextTokenTypes.SYMBOL; }
 
   // All other unmatched characters.
-  [^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+  [^]                       { return com.intellij.psi.TokenType.BAD_CHARACTER; }
 }
 
 <COMMENT> {
-  {ShLineComment}           { yybegin(YYINITIAL); return ProtoTokenTypes.LINE_COMMENT; }
-  {CLineComment}            { yybegin(YYINITIAL); return ProtoTokenTypes.LINE_COMMENT; }
-  {CBlockComment}           { yybegin(YYINITIAL); return ProtoTokenTypes.BLOCK_COMMENT; }
+  {ShLineComment}           { yybegin(YYINITIAL); return ProtoTextTokenTypes.LINE_COMMENT; }
 }
 
 <AFTER_NUMBER> {
   // An identifier immediately following a number (with no whitespace) is an error. We return
   // the special IDENTIFIER_AFTER_NUMBER token type to signal this scenario.
-  {Identifier} { yybegin(YYINITIAL); return ProtoTokenTypes.IDENTIFIER_AFTER_NUMBER; }
+  {Identifier} { yybegin(YYINITIAL); return ProtoTextTokenTypes.IDENTIFIER_AFTER_NUMBER; }
 
   // Any other token is valid. Push the token back and return to the initial state.
   [^] { yybegin(YYINITIAL); yypushback(yylength()); }

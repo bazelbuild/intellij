@@ -15,24 +15,6 @@
  */
 package com.google.idea.blaze.base.execlog.prototext
 
-import com.intellij.lexer.FlexAdapter
-import com.intellij.lexer.LayeredLexer
-import com.intellij.lexer.MergingLexerAdapter
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 
-class ProtoTextLexer : LayeredLexer(ProtoLexer()) {
-
-  init {
-    registerLayer(
-      MergingLexerAdapter(
-        StringLexer(ProtoTextTokenTypes.STRING_LITERAL),
-        TokenSet.create(ProtoTextTokenTypes.STRING_LITERAL)
-      ), ProtoTextTokenTypes.STRING_LITERAL
-    )
-  }
-}
-
-private class StringLexer(literalType: IElementType) : FlexAdapter(_StringLexer(literalType))
-
-private class ProtoLexer : FlexAdapter(_ProtoLexer())
+class ProtoTextTokenType(debugName: String) : IElementType(debugName, ProtoTextLanguage)
