@@ -9,10 +9,10 @@ def _grammar_kit_lexer_impl(ctx):
         tools = runtime.files,
         inputs = [ctx.file.src, ctx.file._jar, ctx.file._skeleton],
         outputs = [output],
-        command = "{java} -jar {jar} --quiet --skel {sekeleton} -d {output} {src}".format(
+        command = "{java} -jar {jar} --quiet --skel {skeleton} -d {output} {src}".format(
             java = runtime.java_executable_exec_path,
             jar = ctx.file._jar.path,
-            sekeleton = ctx.file._skeleton.path,
+            skeleton = ctx.file._skeleton.path,
             output = output.dirname,
             src = ctx.file.src.path,
         ),
