@@ -1,0 +1,19 @@
+<idea-plugin>
+  <actions>
+    <action
+      id="Bazel.ParseExeclog"
+      text="Bazel Parse Execution Log"
+      class="com.google.idea.blaze.base.execlog.ExeclogParseAction"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType
+      language="prototext"
+      name="Execlog"
+      implementationClass="com.google.idea.blaze.base.execlog.ExeclogFileType"
+      fieldName="INSTANCE"/>
+    <lang.syntaxHighlighterFactory
+      language="prototext"
+      implementationClass="com.google.idea.blaze.base.execlog.ExeclogSyntaxHighlighterFactory"/>
+  </extensions>
+</idea-plugin>

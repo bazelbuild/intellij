@@ -64,7 +64,10 @@ intellij_plugin_library(
         "src/META-INF/blaze-base.xml",
     ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":base"],
+    deps = [
+        ":base",
+        "//base/src/com/google/idea/blaze/base/execlog",
+    ],
 )
 
 java_library(
