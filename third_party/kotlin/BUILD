@@ -10,8 +10,8 @@ kt_kotlinc_options(
 # https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
 define_kt_toolchain(
     name = "toolchain",
-    api_version = "2.0",
+    api_version = "2.1",
     jvm_target = "17",
     kotlinc_options = ":kotlinc_options",
-    language_version = "2.0",
+    language_version = "2.1",
 )
