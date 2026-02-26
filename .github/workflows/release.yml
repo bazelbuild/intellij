@@ -71,7 +71,7 @@ jobs:
           MATRIX_PRODUCT: ${{ matrix.product }}
 
       - name: Upload Plugin Zip
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.product }}
           path: "out/*.zip"
@@ -88,7 +88,7 @@ jobs:
 
     steps:
       - name: Download Plugin Zips
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: clion-oss-*
           merge-multiple: true
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Download Plugin Zips
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: clion-oss-*
           merge-multiple: true
