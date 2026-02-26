@@ -85,10 +85,11 @@ java_library(
     data = select_from_plugin_api_directory([":clion_tools"]),
     exports = [":plugin_api_internal"],
 )
+java_library(
+    name = "grammar_kit_libs",
+    exports = select_from_plugin_api_directory([":grammar_kit_libs"]),
+)
 
-# These libraries should only be used by open-source plugins.
-# Otherwise, prefer using the google3 versions of these libraries. Note that
-# //third_party/java/truth must be repackaged, because it pulls in Guava.
 java_library(
     name = "test_libs",
     testonly = 1,
