@@ -24,7 +24,8 @@ def _bazel_build_jars_impl(rctx):
     if "windows" in rctx.os.name.lower():
         build_cmd = [bazel, "build"]
     else:
-        build_cmd = [bazel, "--output_user_root=%s" % rctx.path("output"), "build"]
+        # prevent external RC files from overriding --output_user_root (like on GH CI)
+        build_cmd = [bazel, "--nohome_rc", "--output_user_root=%s" % rctx.path("output"), "build"]
 
     for target in rctx.attr.jars:
         rctx.report_progress("building: %s" % target)
