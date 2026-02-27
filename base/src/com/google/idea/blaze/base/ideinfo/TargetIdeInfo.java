@@ -432,6 +432,13 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @VisibleForTesting
+    @CanIgnoreReturnValue
+    public Builder setConfigurationId(String configurationId) {
+      this.key = TargetKey.forGeneralTarget(this.key.label(), this.key.aspectIds(), configurationId);
+      return this;
+    }
+
     @CanIgnoreReturnValue
     public Builder setBuildFile(ArtifactLocation buildFile) {
       this.buildFile = buildFile;

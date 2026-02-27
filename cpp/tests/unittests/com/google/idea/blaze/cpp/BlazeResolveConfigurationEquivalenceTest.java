@@ -174,7 +174,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(1);
-    assertThat(get(configurations, "//foo/bar:one and 2 other target(s)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:one (unknown) and 2 other target(s)")).isNotNull();
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(getHeaders(configuration)).isEmpty();
       assertThat(configuration.getConfigurationData().localCopts()).isEmpty();
@@ -213,9 +213,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .build();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getConfigurationData().localCopts())
+    assertThat(get(configurations, "//foo/bar:one (unknown) and 1 other target(s)").getConfigurationData().localCopts())
         .containsExactly("-DSAME=1");
-    assertThat(get(configurations, "//foo/bar:three").getConfigurationData().localCopts())
+    assertThat(get(configurations, "//foo/bar:three (unknown)").getConfigurationData().localCopts())
         .containsExactly("-DDIFFERENT=1");
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(getHeaders(configuration)).isEmpty();
@@ -257,9 +257,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
 
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(getHeaders(get(configurations, "//foo/bar:one and 1 other target(s)")))
+    assertThat(getHeaders(get(configurations, "//foo/bar:one (unknown) and 1 other target(s)")))
         .containsExactly(header("foo/same"));
-    assertThat(getHeaders(get(configurations, "//foo/bar:three")))
+    assertThat(getHeaders(get(configurations, "//foo/bar:three (unknown)")))
         .containsExactly(header("foo/different"));
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(configuration.getConfigurationData().localCopts()).isEmpty();
@@ -311,27 +311,27 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
           .put(
               ImmutableList.of("a"),
               ImmutableList.of(
-                  "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"))
+                  "//foo/bar:a (unknown) and 1 other target(s)", "//foo/bar:b (unknown) and 1 other target(s)"))
           .put(
               ImmutableList.of("b"),
               ImmutableList.of(
-                  "//foo/bar:a and 1 other target(s)", "//foo/bar:b and 1 other target(s)"))
+                  "//foo/bar:a (unknown) and 1 other target(s)", "//foo/bar:b (unknown) and 1 other target(s)"))
           .put(
               ImmutableList.of("c"),
               ImmutableList.of(
-                  "//foo/bar:a and 1 other target(s)", "//foo/bar:c and 1 other target(s)"))
+                  "//foo/bar:a (unknown) and 1 other target(s)", "//foo/bar:c (unknown) and 1 other target(s)"))
           .put(
               ImmutableList.of("a", "b"),
-              ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:c"))
+              ImmutableList.of("//foo/bar:a (unknown) and 2 other target(s)", "//foo/bar:c (unknown)"))
           .put(
               ImmutableList.of("b", "c"),
-              ImmutableList.of("//foo/bar:a", "//foo/bar:b and 2 other target(s)"))
+              ImmutableList.of("//foo/bar:a (unknown)", "//foo/bar:b (unknown) and 2 other target(s)"))
           .put(
               ImmutableList.of("a", "c"),
-              ImmutableList.of("//foo/bar:a and 2 other target(s)", "//foo/bar:b"))
+              ImmutableList.of("//foo/bar:a (unknown) and 2 other target(s)", "//foo/bar:b (unknown)"))
           .put(
               ImmutableList.of("a", "b", "c"),
-              ImmutableList.of("//foo/bar:a and 3 other target(s)"))
+              ImmutableList.of("//foo/bar:a (unknown) and 3 other target(s)"))
           .build();
 
   @Test
@@ -390,8 +390,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     List<BlazeResolveConfiguration> configurations =
         resolve(projectView, incrementalUpdateTestCaseInitialTargetMap());
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:a and 2 other target(s)")).isNotNull();
-    assertThat(get(configurations, "//foo/bar:d")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:a (unknown) and 2 other target(s)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:d (unknown)")).isNotNull();
 
     TargetMapBuilder targetMapBuilder = TargetMapBuilder.builder().addTarget(createCcToolchain());
     for (String target : ImmutableList.of("a", "b", "c")) {
@@ -434,8 +434,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     TargetMap targetMap = incrementalUpdateTestCaseInitialTargetMap();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:a and 2 other target(s)")).isNotNull();
-    assertThat(get(configurations, "//foo/bar:d")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:a (unknown) and 2 other target(s)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:d (unknown)")).isNotNull();
 
     targetMap =
         TargetMapBuilder.builder()
@@ -475,8 +475,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         configurations,
         newConfigurations,
         new ReusedConfigurationExpectations(
-            ImmutableList.of("//foo/bar:d"),
-            ImmutableList.of("//foo/bar:a and 2 other target(s)")));
+            ImmutableList.of("//foo/bar:d (unknown)"),
+            ImmutableList.of("//foo/bar:a (unknown) and 2 other target(s)")));
   }
 
   @Test
@@ -485,8 +485,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     TargetMap targetMap = incrementalUpdateTestCaseInitialTargetMap();
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
-    assertThat(get(configurations, "//foo/bar:a and 2 other target(s)")).isNotNull();
-    assertThat(get(configurations, "//foo/bar:d")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:a (unknown) and 2 other target(s)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:d (unknown)")).isNotNull();
 
     targetMap =
         TargetMapBuilder.builder()
@@ -524,7 +524,47 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(newConfigurations).hasSize(1);
     // We can't actually reuse the configurations, since they they have a different
     // set of sources covered, and CLion ties the sources to the configuration.
-    assertThat(get(newConfigurations, "//foo/bar:a and 3 other target(s)")).isNotNull();
+    assertThat(get(newConfigurations, "//foo/bar:a (unknown) and 3 other target(s)")).isNotNull();
+  }
+
+  @Test
+  public void testTargetsWithSameConfigurationId_groupedByEquivalence() {
+    final var projectView = projectView(
+        directories("foo/bar"),
+        targets("//foo/bar:one", "//foo/bar:two", "//foo/bar:three")
+    );
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:one",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/one.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:two",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/two.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:three",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/three.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(1);
+    assertThat(get(configurations, "//foo/bar:one (configA) and 2 other target(s)")).isNotNull();
   }
 
   private static List<ArtifactLocation> sources(String... paths) {

@@ -17,7 +17,7 @@ targets:
 build_flags:
   # Choose one target ij product:
   # --define=ij_product=clion-oss-latest-stable
-  # --define=ij_product=clion-oss-under-dev
+  --define=ij_product=clion-2025.3
 
   # Setup disk cache, can improve build times:
-  # --disk_cache=/tmp/bazel_cache
+  --disk_cache=/tmp/bazel_cache
