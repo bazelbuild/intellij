@@ -31,7 +31,7 @@ def _import_resources(ctx):
     output = ctx.actions.declare_file(ctx.label.name + "_resource.jar")
 
     mapping = [
-        "%s=%s" % (paths.join("resources", path), _single_file(target).path)
+        "%s=%s" % (path, _single_file(target).path)
         for path, target in ctx.attr.resources.items()
     ]
 
@@ -104,7 +104,7 @@ _intellij_plugin_library = rule(
     implementation = _intellij_plugin_library_rule_impl,
     attrs = {
         "resources": attr.string_keyed_label_dict(
-            doc = "Maps a file to a specific location inside the resource directory of the plugin.",
+            doc = "Maps a file to a specific location inside the plugin jar.",
             allow_files = True,
         ),
         "data": attr.string_keyed_label_dict(
