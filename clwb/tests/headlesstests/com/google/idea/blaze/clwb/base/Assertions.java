@@ -139,13 +139,9 @@ public class Assertions {
         .that(header.toNioPath().startsWith(service.getCacheDirectory()))
         .isTrue();
 
-    assertWithMessage(String.format("cached file is not a symlink: %s", header.getPath()))
-        .that(!symlink || Files.isSymbolicLink(header.toNioPath()))
-        .isTrue();
-
-    assertWithMessage(String.format("cached file is a symlink: %s", header.getPath()))
-        .that(symlink || !Files.isSymbolicLink(header.toNioPath()))
-        .isTrue();
+    assertWithMessage("Symlink status of cached file '%s' did not match expectation.", header.toNioPath())
+        .that(Files.isSymbolicLink(header.toNioPath()))
+        .isEqualTo(symlink);
   }
 
   public static void assertWorkspaceHeader(String fileName, OCCompilerSettings compilerSettings, Project project) {
