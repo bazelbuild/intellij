@@ -2,6 +2,7 @@ package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertCachedHeader;
+import static com.google.idea.blaze.clwb.base.Assertions.assertCachedHeaderIsSymlink;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertWorkspaceHeader;
 import static com.google.idea.blaze.clwb.base.Utils.resolveHeader;
@@ -37,13 +38,13 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
 
     assertContainsHeader("strip_absolut/strip_absolut.h", compilerSettings);
-    assertCachedHeader("strip_absolut/strip_absolut.h", compilerSettings, myProject);
+    assertCachedHeaderIsSymlink("strip_absolut/strip_absolut.h", compilerSettings, myProject);
 
     assertContainsHeader("strip_absolut/generated.h", compilerSettings);
     assertCachedHeader("strip_absolut/generated.h", compilerSettings, myProject);
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject);
+    assertCachedHeaderIsSymlink("strip_relative.h", compilerSettings, myProject);
 
     assertContainsHeader("raw_default.h", compilerSettings);
     assertWorkspaceHeader("raw_default.h", compilerSettings, myProject);
@@ -78,6 +79,6 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertThat(headersSearchRoots).isNotEmpty();
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject);
+    assertCachedHeaderIsSymlink("strip_relative.h", compilerSettings, myProject);
   }
 }
