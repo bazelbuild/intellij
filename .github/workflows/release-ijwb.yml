@@ -47,7 +47,7 @@ jobs:
           mv bazel-bin/ijwb/ijwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
 
       - name: Upload Plugin Zip
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.product }}
           path: "out/*.zip"
@@ -64,22 +64,22 @@ jobs:
 
     steps:
       - name: Download Latest Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-oss-oldest-stable
 
       - name: Download Latest UE Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-ue-oss-latest-stable
 
       - name: Download Oldest UE Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-ue-oss-oldest-stable
 
@@ -106,22 +106,22 @@ jobs:
 
     steps:
       - name: Download Latest Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-oss-latest-stable
 
       - name: Download Oldest Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-oss-oldest-stable
 
       - name: Download Latest UE Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-ue-oss-latest-stable
 
       - name: Download Oldest UE Plugin Zip
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: intellij-ue-oss-oldest-stable
 
