@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp.sync
 
 import com.google.idea.blaze.base.filecache.FileCache
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
@@ -135,18 +136,19 @@ class HeaderCacheService(private val project: Project) {
         // delete existing entry to handle type changes (symlink <-> regular file) on incremental sync
         Files.deleteIfExists(path)
 
-        val execRootFile = decoder.decode(header).toPath()
+        val artifact = decoder.resolveOutput(header)
 
-        if (Files.isSymbolicLink(execRootFile)) {
-          // for symlinked headers (e.g. _virtual_includes), create a symlink to the real file
-          val realPath = execRootFile.toRealPath()
-
-          // fall through to content-copy if symlink creation failed (e.g. Windows without Developer Mode)
-          if (tryCreateSymlink(path, realPath)) continue
+        // for local files, check if the file is a symlink (e.g. _virtual_includes)
+        if (artifact is LocalFileArtifact) {
+          val localPath = artifact.file.toPath()
+          if (Files.isSymbolicLink(localPath)) {
+            // fall through to content-copy if symlink creation failed (e.g. Windows without Developer Mode)
+            if (tryCreateSymlink(path, localPath.toRealPath())) continue
+          }
         }
 
-        // content copy for regular (generated) files or as a fallback when symlink creation fails
-        decoder.resolveOutput(header).inputStream.use { src ->
+        // content copy for regular (generated) files, remote files, or as a fallback when symlink creation fails
+        artifact.inputStream.use { src ->
           Files.newOutputStream(
             path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
           ).use { dst ->

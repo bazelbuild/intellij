@@ -51,7 +51,7 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
   @Override
   public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isSource()) {
-      return new SourceArtifact(decode(artifact));
+      return new SourceArtifact(decode(artifact), Path.of(artifact.getExecutionRootRelativePath()));
     }
 
     File file = decode(artifact);

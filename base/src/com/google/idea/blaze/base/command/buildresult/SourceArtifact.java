@@ -21,14 +21,22 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /** A source file in the blaze workspace, accessible on the local file system. */
 public class SourceArtifact implements LocalFileArtifact {
 
   private final File file;
+  private final Path artifactPath;
 
-  public SourceArtifact(File file) {
+  public SourceArtifact(File file, Path artifactPath) {
     this.file = file;
+    this.artifactPath = artifactPath;
+  }
+
+  @Override
+  public Path getArtifactPath() {
+    return artifactPath;
   }
 
   @Override
