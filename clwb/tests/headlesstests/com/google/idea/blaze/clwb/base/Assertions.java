@@ -128,7 +128,7 @@ public class Assertions {
     }
   }
 
-  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project) {
+  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project, boolean symlink) {
     final var header = resolveHeader(fileName, settings);
     assertThat(header).isNotNull();
 
@@ -138,22 +138,13 @@ public class Assertions {
     assertWithMessage(String.format("file does not reside in the include cache: %s", header.getPath()))
         .that(header.toNioPath().startsWith(service.getCacheDirectory()))
         .isTrue();
-  }
-
-  public static void assertCachedHeaderIsSymlink(String fileName, OCCompilerSettings settings, Project project) {
-    final var header = resolveHeader(fileName, settings);
-    assertThat(header).isNotNull();
-
-    final var service = HeaderCacheService.of(project);
-    assertThat(HeaderCacheService.getEnabled()).isTrue();
-
-    final var headerPath = header.toNioPath();
-    assertWithMessage(String.format("file does not reside in the include cache: %s", header.getPath()))
-        .that(headerPath.startsWith(service.getCacheDirectory()))
-        .isTrue();
 
     assertWithMessage(String.format("cached file is not a symlink: %s", header.getPath()))
-        .that(Files.isSymbolicLink(headerPath))
+        .that(!symlink || Files.isSymbolicLink(header.toNioPath()))
+        .isTrue();
+
+    assertWithMessage(String.format("cached file is a symlink: %s", header.getPath()))
+        .that(symlink || !Files.isSymbolicLink(header.toNioPath()))
         .isTrue();
   }
 

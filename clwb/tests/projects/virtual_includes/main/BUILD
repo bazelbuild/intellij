@@ -5,12 +5,13 @@ cc_binary(
     srcs = ["main.cc"],
     visibility = ["//visibility:public"],
     deps = [
+        "//lib:gen",
         "//lib/impl_deps:lib",
         "//lib/raw_files:lib",
         "//lib/strip_absolut:gen",
         "//lib/strip_absolut:lib",
         "//lib/strip_relative:lib",
-        "@clwb_virtual_includes_external//:gen"
+        "@clwb_virtual_includes_external//:gen",
     ],
 )
 
