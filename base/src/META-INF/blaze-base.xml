@@ -564,7 +564,6 @@
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener" order="first"/>
     <SyncListener implementation="com.google.idea.blaze.base.dependencies.ExternalFileProjectManagementHelper$UpdateNotificationsAfterSync"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncHandler$Listener"/>
-    <SyncListener implementation="com.google.idea.blaze.base.ideinfo.ProjectDataInterner$Updater"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.SimpleSyncListenerService"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker$Updater"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$StartSyncListener"/>
