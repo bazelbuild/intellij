@@ -74,6 +74,9 @@ java_import(
 
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
+
+        "plugins/textmate-plugin/lib/*.jar",
+        "plugins/textmate-plugin/lib/modules/*.jar",
     ]),
 )
 
@@ -124,4 +127,12 @@ java_import(
 filegroup(
     name = "application_info_json",
     srcs = ["product-info.json"],
+)
+
+java_import(
+    name = "textmate",
+    jars = glob([
+        "plugins/textmate-plugin/lib/*.jar",
+        "plugins/textmate-plugin/lib/modules/*.jar",
+    ]),
 )

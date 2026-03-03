@@ -1,0 +1,13 @@
+<idea-plugin>
+  <actions>
+    <action
+      id="Bazel.ParseExeclog"
+      text="Bazel Parse Execution Log"
+      class="com.google.idea.blaze.base.execlog.ExeclogParseAction"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <textmate.bundleProvider
+      implementation="com.google.idea.blaze.base.execlog.ExeclogBundleProvider"/>
+  </extensions>
+</idea-plugin>
