@@ -75,6 +75,9 @@ java_import(
 
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
+
+        "plugins/textmate-plugin/lib/*.jar",
+        "plugins/textmate-plugin/lib/modules/*.jar",
     ]),
 )
 

@@ -73,6 +73,8 @@ java_import(
         "plugins/platform-images/lib/*.jar", # for native debug plugin
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
+        "plugins/textmate/lib/*.jar",
+        "plugins/textmate/lib/modules/*.jar",
     ]),
 )
 
