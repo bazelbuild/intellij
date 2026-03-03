@@ -3,6 +3,27 @@
     <action
       id="Bazel.SkylarkRepl"
       text="Starlark REPL"
-      class="com.google.idea.blaze.skylark.repl.SkylarkReplAction"/>
+      description="Open an interactive Starlark REPL console"
+      class="com.google.idea.blaze.skylark.repl.SkylarkReplAction"
+      icon="BlazeIcons.BuildFile">
+      <add-to-group group-id="Blaze.MenuFooter"/>
+    </action>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <language>BUILD</language>
+      <className>com.google.idea.blaze.skylark.repl.send.SkylarkSendToReplAction$Line</className>
+      <category>Bazel</category>
+      <descriptionDirectoryName>SkylarkSendToRepl</descriptionDirectoryName>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
+    <intentionAction>
+      <language>BUILD</language>
+      <className>com.google.idea.blaze.skylark.repl.send.SkylarkSendToReplAction$Selection</className>
+      <category>Bazel</category>
+      <descriptionDirectoryName>SkylarkSendToRepl</descriptionDirectoryName>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
+  </extensions>
 </idea-plugin>
