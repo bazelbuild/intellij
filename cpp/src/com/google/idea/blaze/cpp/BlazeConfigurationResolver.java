@@ -50,6 +50,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -177,44 +178,19 @@ final class BlazeConfigurationResolver {
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
       Predicate<TargetIdeInfo> targetFilter,
       BlazeConfigurationResolverResult.Builder builder) {
-    // Type specification needed to avoid incorrect type inference during command line build.
-    Scope.push(
-        parentContext,
-        (ScopedOperation)
-            context -> {
-              context.push(new TimingScope("Build C configuration map", EventType.Other));
+    Scope.push(parentContext, context -> {
+      context.push(new TimingScope("Build C configuration map", EventType.Other));
 
-              ConcurrentMap<TargetKey, BlazeResolveConfigurationData> targetToData =
-                  Maps.newConcurrentMap();
-              List<ListenableFuture<?>> targetToDataFutures =
-                  blazeProjectData.targetMap().targets().stream()
-                      .filter(targetFilter)
-                      .map(
-                          target ->
-                              submit(
-                                  () -> {
-                                    BlazeResolveConfigurationData data =
-                                        createResolveConfiguration(
-                                            target, toolchainLookupMap, compilerSettings);
-                                    if (data != null) {
-                                      targetToData.put(target.getKey(), data);
-                                    }
-                                    return null;
-                                  }))
-                      .collect(Collectors.toList());
-              try {
-                Futures.allAsList(targetToDataFutures).get();
-              } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                context.setCancelled();
-                return;
-              } catch (ExecutionException e) {
-                IssueOutput.error("Could not build C resolve configurations: " + e).submit(context);
-                logger.error("Could not build C resolve configurations", e);
-                return;
-              }
-              findEquivalenceClasses(context, project, blazeProjectData, targetToData, builder);
-            });
+      final var targetToData = new HashMap<TargetKey, BlazeResolveConfigurationData>();
+      blazeProjectData.targetMap().targets().stream().filter(targetFilter).forEach(target -> {
+        final var data = createResolveConfiguration(target, toolchainLookupMap, compilerSettings);
+        if (data != null) {
+          targetToData.put(target.getKey(), data);
+        }
+      });
+
+      findEquivalenceClasses(context, project, blazeProjectData, targetToData, builder);
+    });
   }
 
   private static void findEquivalenceClasses(
@@ -222,35 +198,32 @@ final class BlazeConfigurationResolver {
       Project project,
       BlazeProjectData blazeProjectData,
       Map<TargetKey, BlazeResolveConfigurationData> targetToData,
-      BlazeConfigurationResolverResult.Builder builder) {
-    Multimap<BlazeResolveConfigurationData, TargetKey> dataEquivalenceClasses =
-        ArrayListMultimap.create();
-    for (Map.Entry<TargetKey, BlazeResolveConfigurationData> entry : targetToData.entrySet()) {
-      TargetKey target = entry.getKey();
-      BlazeResolveConfigurationData data = entry.getValue();
+      BlazeConfigurationResolverResult.Builder builder
+  ) {
+    final var dataEquivalenceClasses = ArrayListMultimap.<BlazeResolveConfigurationData, TargetKey>create();
+    for (final var entry : targetToData.entrySet()) {
+      final var target = entry.getKey();
+      final var data = entry.getValue();
       dataEquivalenceClasses.put(data, target);
     }
 
-    ImmutableMap.Builder<BlazeResolveConfigurationData, BlazeResolveConfiguration>
-        dataToConfiguration = ImmutableMap.builder();
-    for (Map.Entry<BlazeResolveConfigurationData, Collection<TargetKey>> entry :
-        dataEquivalenceClasses.asMap().entrySet()) {
-      BlazeResolveConfigurationData data = entry.getKey();
-      Collection<TargetKey> targets = entry.getValue();
+    final var dataToConfiguration = ImmutableMap.<BlazeResolveConfigurationData, BlazeResolveConfiguration>builder();
+    for (final var entry : dataEquivalenceClasses.asMap().entrySet()) {
+      final var data = entry.getKey();
+      final var targets = entry.getValue();
       dataToConfiguration.put(
           data,
-          BlazeResolveConfiguration.create(project, blazeProjectData, data, targets));
+          BlazeResolveConfiguration.create(project, blazeProjectData, data, targets)
+      );
     }
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "%s unique C configurations, %s C targets",
-                dataEquivalenceClasses.keySet().size(), dataEquivalenceClasses.size())));
-    builder.setUniqueConfigurations(dataToConfiguration.build());
-  }
 
-  private static <T> ListenableFuture<T> submit(Callable<T> callable) {
-    return BlazeExecutor.getInstance().submit(callable);
+    context.output(PrintOutput.log(String.format(
+        "%s unique C configurations, %s C targets",
+        dataEquivalenceClasses.keySet().size(),
+        dataEquivalenceClasses.size()
+    )));
+
+    builder.setUniqueConfigurations(dataToConfiguration.build());
   }
 
   @Nullable
