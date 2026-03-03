@@ -18,9 +18,19 @@ package com.google.idea.blaze.common.artifact;
 import com.google.errorprone.annotations.MustBeClosed;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /** A build artifact, either a source or output (generated) artifact. */
 public interface BlazeArtifact {
+
+  /**
+   * Returns the execroot-relative path of this artifact.
+   *
+   * <p>For generated artifacts this includes the bazel-out prefix (e.g. {@code
+   * bazel-out/k8-opt/bin/path/to/file.h}). For source artifacts this is the workspace-relative
+   * path (e.g. {@code path/to/file.h}).
+   */
+  Path getArtifactPath();
 
   /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
   long getLength();

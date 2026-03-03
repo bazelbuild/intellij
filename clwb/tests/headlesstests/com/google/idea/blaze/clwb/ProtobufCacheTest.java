@@ -54,6 +54,6 @@ public class ProtobufCacheTest extends ClwbHeadlessTestCase {
     assertThat(headersSearchRoots).isNotEmpty();
 
     assertContainsHeader("proto/addressbook.pb.h", compilerSettings);
-    assertCachedHeader("proto/addressbook.pb.h", compilerSettings, myProject);
+    assertCachedHeader("proto/addressbook.pb.h", compilerSettings, myProject, /* symlink = */ false);
   }
 }

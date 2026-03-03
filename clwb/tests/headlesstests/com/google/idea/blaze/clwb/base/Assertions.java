@@ -13,9 +13,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -127,7 +129,7 @@ public class Assertions {
     }
   }
 
-  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project) {
+  public static void assertCachedHeader(String fileName, OCCompilerSettings settings, Project project, boolean symlink) {
     final var header = resolveHeader(fileName, settings);
     assertThat(header).isNotNull();
 
@@ -137,6 +139,13 @@ public class Assertions {
     assertWithMessage(String.format("file does not reside in the include cache: %s", header.getPath()))
         .that(header.toNioPath().startsWith(service.getCacheDirectory()))
         .isTrue();
+
+    // symlinks do not work on Windows CI runners
+    if (!OS.CURRENT.equals(OS.Windows)) {
+      assertWithMessage("Symlink status of cached file '%s' did not match expectation.", header.toNioPath())
+          .that(Files.isSymbolicLink(header.toNioPath()))
+          .isEqualTo(symlink);
+    }
   }
 
   public static void assertWorkspaceHeader(String fileName, OCCompilerSettings compilerSettings, Project project) {

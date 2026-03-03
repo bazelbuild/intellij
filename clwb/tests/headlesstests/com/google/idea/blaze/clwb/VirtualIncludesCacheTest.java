@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertCachedHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertWorkspaceHeader;
-import static com.google.idea.blaze.clwb.base.Utils.resolveHeader;
 import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
@@ -37,13 +36,13 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
 
     assertContainsHeader("strip_absolut/strip_absolut.h", compilerSettings);
-    assertCachedHeader("strip_absolut/strip_absolut.h", compilerSettings, myProject);
+    assertCachedHeader("strip_absolut/strip_absolut.h", compilerSettings, myProject, /* symlink = */ true);
 
     assertContainsHeader("strip_absolut/generated.h", compilerSettings);
-    assertCachedHeader("strip_absolut/generated.h", compilerSettings, myProject);
+    assertCachedHeader("strip_absolut/generated.h", compilerSettings, myProject, /* symlink = */ true);
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject);
+    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ true);
 
     assertContainsHeader("raw_default.h", compilerSettings);
     assertWorkspaceHeader("raw_default.h", compilerSettings, myProject);
@@ -55,7 +54,10 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertWorkspaceHeader("raw_quote.h", compilerSettings, myProject);
 
     assertContainsHeader("external/generated.h", compilerSettings);
-    assertCachedHeader("external/generated.h", compilerSettings, myProject);
+    assertCachedHeader("external/generated.h", compilerSettings, myProject, /* symlink = */ true);
+
+    assertContainsHeader("lib/generated.h", compilerSettings);
+    assertCachedHeader("lib/generated.h", compilerSettings, myProject, /* symlink = */ false);
   }
 
   private void checkCoptIncludes() {
@@ -78,6 +80,6 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertThat(headersSearchRoots).isNotEmpty();
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject);
+    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ true);
   }
 }

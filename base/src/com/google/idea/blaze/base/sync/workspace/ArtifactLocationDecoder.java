@@ -40,15 +40,4 @@ public interface ArtifactLocationDecoder {
 
   /** Returns a {@link BlazeArtifact} corresponding to the given {@link ArtifactLocation}. */
   BlazeArtifact resolveOutput(ArtifactLocation artifact);
-
-  default List<BlazeArtifact> resolveOutputs(Collection<ArtifactLocation> artifactLocations) {
-    return artifactLocations.stream()
-        .map(this::resolveOutput)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-  }
-
-  default List<File> decodeAll(Collection<ArtifactLocation> artifactLocations) {
-    return artifactLocations.stream().map(this::decode).collect(Collectors.toList());
-  }
 }

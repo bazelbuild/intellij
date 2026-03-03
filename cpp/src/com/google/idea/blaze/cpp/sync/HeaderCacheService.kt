@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp.sync
 
 import com.google.idea.blaze.base.filecache.FileCache
+import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
@@ -91,7 +92,7 @@ class HeaderCacheService(private val project: Project) {
     cacheTracker.clear()
 
     if (Files.exists(cacheDirectory)) {
-      // On windows this could be replace with a rename and asynchronous delete for better performance.
+      // On windows this could be replaced with a rename and asynchronous delete for better performance.
       NioFiles.deleteRecursively(cacheDirectory)
     }
 
@@ -118,6 +119,7 @@ class HeaderCacheService(private val project: Project) {
     val info = target.getcIdeInfo() ?: return
 
     val targetCacheDirectory = key.cacheDirectory()
+    val decoder = projectData.artifactLocationDecoder()
 
     for (header in info.compilationContext().headers()) {
       // check if the header is inside bazel-bin
@@ -131,18 +133,47 @@ class HeaderCacheService(private val project: Project) {
       try {
         Files.createDirectories(path.parent)
 
-        // NOTE: this also copies symlinked headers like in _virtual_includes
-        Files.newOutputStream(
-          path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
-        ).use { dst ->
-          projectData.artifactLocationDecoder().resolveOutput(header).inputStream.use { src ->
+        // delete existing entry to handle type changes (symlink <-> regular file) on incremental sync
+        Files.deleteIfExists(path)
+
+        val artifact = decoder.resolveOutput(header)
+
+        // for local files, check if the file is a symlink (e.g. _virtual_includes)
+        if (artifact is LocalFileArtifact) {
+          val localPath = artifact.file.toPath()
+          if (Files.isSymbolicLink(localPath)) {
+            // fall through to content-copy if symlink creation failed (e.g. Windows without Developer Mode)
+            if (tryCreateSymlink(path, localPath.toRealPath())) continue
+          }
+        }
+
+        // content copy for regular (generated) files, remote files, or as a fallback when symlink creation fails
+        artifact.inputStream.use { src ->
+          Files.newOutputStream(
+            path, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,
+          ).use { dst ->
             src.transferTo(dst)
           }
         }
       } catch (e: IOException) {
         cacheTracker.remove(header.relativePath())
-        LOG.warn("failed to copy generated header ${header.relativePath()} for ${key.label()}", e)
+        LOG.warn("failed to cache header ${header.relativePath()} for ${key.label()}", e)
       }
+    }
+  }
+
+  /**
+   * Attempts to create a symbolic link at [link] pointing to [target].
+   * Returns true if successful, false otherwise (e.g. on Windows without Developer Mode).
+   */
+  private fun tryCreateSymlink(link: Path, target: Path): Boolean {
+    return try {
+      Files.createSymbolicLink(link, target)
+      true
+    } catch (e: IOException) {
+      LOG.debug("failed to create symlink $link -> $target, falling back to copy", e)
+      try { Files.deleteIfExists(link) } catch (_: IOException) {}
+      false
     }
   }
 

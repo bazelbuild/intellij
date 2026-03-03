@@ -50,7 +50,7 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   @Override
   public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isMainWorkspaceSourceArtifact()) {
-      return new SourceArtifact(decode(artifact));
+      return new SourceArtifact(decode(artifact), Path.of(artifact.getExecutionRootRelativePath()));
     }
     BlazeArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
     if (remoteOutput != null) {
@@ -141,7 +141,7 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     int ix1 = execRootPath.indexOf('/');
     int ix2 = execRootPath.indexOf('/', ix1 + 1);
     if (ix2 == -1) {
-      return new SourceArtifact(decode(location));
+      return new SourceArtifact(decode(location), Path.of(location.getExecutionRootRelativePath()));
     }
     return new LocalFileOutputArtifactWithoutDigest(
       decode(location), Path.of(execRootPath),
