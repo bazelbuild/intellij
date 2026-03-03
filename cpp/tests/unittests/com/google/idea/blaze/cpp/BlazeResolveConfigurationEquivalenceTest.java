@@ -567,6 +567,38 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(configurations, "//foo/bar:one (configA) and 2 other target(s)")).isNotNull();
   }
 
+  @Test
+  public void testTargetsWithDifferentConfigurationIds_groupedByEquivalence() {
+    final var projectView = projectView(
+        directories("foo/bar"),
+        targets("//foo/bar:binary", "//foo/bar:test")
+    );
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:test",
+                CppBlazeRules.RuleTypes.CC_TEST.getKind(),
+                sources("foo/bar/test.cc"),
+                copts(),
+                includes()
+            ).setConfigurationId("configB")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(1);
+    assertThat(get(configurations, "//foo/bar:binary (configA) and 1 other target(s)")).isNotNull();
+  }
+
   private static List<ArtifactLocation> sources(String... paths) {
     return Arrays.stream(paths)
         .map(path -> ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build())

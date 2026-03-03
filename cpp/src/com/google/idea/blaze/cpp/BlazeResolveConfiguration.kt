@@ -84,14 +84,13 @@ data class BlazeResolveConfiguration(
 }
 
 private fun computeDisplayName(targets: Collection<TargetKey>): String {
-  LOG.assertTrue(targets.map { it.configurationId() }.distinct().size == 1)
-
   val minTargetKey = requireNotNull(targets.minOrNull())
 
   return buildString {
     append(minTargetKey.label())
 
-    if (!minTargetKey.configurationId().isBlank()) {
+    // on resolve configuration can cover multiple Bazel configurations with same compiler option
+    if (minTargetKey.configurationId().isNotBlank()) {
       append(" (${minTargetKey.configurationId()})")
     }
 
