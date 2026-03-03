@@ -17,15 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.CIdeInfo;
-import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -34,8 +26,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.ScopedOperation;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -51,17 +41,10 @@ import com.intellij.openapi.util.registry.Registry;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 final class BlazeConfigurationResolver {
   static final String SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY = "bazel.cpp.sync.external.targets.from.directories";
@@ -80,37 +63,55 @@ final class BlazeConfigurationResolver {
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
       BlazeConfigurationResolverResult oldResult) {
-    ExecutionRootPathResolver executionRootPathResolver =
-        ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
-            context, blazeProjectData.targetMap());
+    final var executionRootPathResolver = ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
 
-    Optional<XcodeCompilerSettings> xcodeSettings =
-            BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(context, project, blazeProjectData);
+    final var toolchainLookupMap = BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
+        context,
+        blazeProjectData.targetMap()
+    );
 
-    ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings =
-        BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
-            context,
-            project,
-            toolchainLookupMap,
-            executionRootPathResolver,
-            oldResult.getCompilerSettings(),
-            xcodeSettings
-        );
+    final var xcodeSettings = BlazeConfigurationToolchainResolver.resolveXcodeCompilerSettings(
+        context,
+        project,
+        blazeProjectData
+    );
 
-    ProjectViewTargetImportFilter projectViewFilter =
-        new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
-    Predicate<TargetIdeInfo> targetFilter =
-        getTargetFilter(projectViewFilter, project, blazeProjectData.workspacePathResolver());
-    BlazeConfigurationResolverResult.Builder builder = BlazeConfigurationResolverResult.builder();
+    final var compilerSettings = BlazeConfigurationToolchainResolver.buildCompilerSettingsMap(
+        context,
+        project,
+        toolchainLookupMap,
+        executionRootPathResolver,
+        oldResult.getCompilerSettings(),
+        xcodeSettings
+    );
+
+    final var projectViewFilter = new ProjectViewTargetImportFilter(
+        Blaze.getBuildSystemName(project),
+        workspaceRoot,
+        projectViewSet
+    );
+
+    final var compilerLookupMap = BlazeConfigurationToolchainResolver.buildCompilerLookupMap(toolchainLookupMap, compilerSettings);
+    final var targetFilter = getTargetFilter(projectViewFilter, project, blazeProjectData.workspacePathResolver());
+
+    final var builder = BlazeConfigurationResolverResult.builder();
     buildBlazeConfigurationData(
-        context, blazeProjectData, toolchainLookupMap, compilerSettings, targetFilter, builder);
+        context,
+        blazeProjectData,
+        compilerLookupMap,
+        targetFilter,
+        builder
+    );
+
+    final var validHeaderRoots = HeaderRootTrimmer.getInstance(project).getValidHeaderRoots(
+        context,
+        blazeProjectData,
+        compilerLookupMap,
+        targetFilter,
+        executionRootPathResolver
+    );
+
     builder.setCompilerSettings(compilerSettings);
-    ImmutableSet<Path> validHeaderRoots =
-        HeaderRootTrimmer.getInstance(project).getValidHeaderRoots(
-            context, blazeProjectData, toolchainLookupMap, targetFilter, executionRootPathResolver);
     builder.setValidHeaderRoots(validHeaderRoots);
     builder.setXcodeSettings(xcodeSettings);
 
@@ -174,8 +175,7 @@ final class BlazeConfigurationResolver {
   private void buildBlazeConfigurationData(
       BlazeContext parentContext,
       BlazeProjectData blazeProjectData,
-      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
+      ImmutableMap<TargetKey, BlazeCompilerSettings> compilerSettings,
       Predicate<TargetIdeInfo> targetFilter,
       BlazeConfigurationResolverResult.Builder builder) {
     Scope.push(parentContext, context -> {
@@ -183,7 +183,7 @@ final class BlazeConfigurationResolver {
 
       final var targetToData = new HashMap<TargetKey, BlazeResolveConfigurationData>();
       blazeProjectData.targetMap().targets().stream().filter(targetFilter).forEach(target -> {
-        final var data = createResolveConfiguration(target, toolchainLookupMap, compilerSettings);
+        final var data = createResolveConfiguration(target, compilerSettings);
         if (data != null) {
           targetToData.put(target.getKey(), data);
         }
@@ -229,21 +229,15 @@ final class BlazeConfigurationResolver {
   @Nullable
   private BlazeResolveConfigurationData createResolveConfiguration(
       TargetIdeInfo target,
-      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettingsMap) {
-    TargetKey targetKey = target.getKey();
-    CIdeInfo cIdeInfo = target.getcIdeInfo();
+      ImmutableMap<TargetKey, BlazeCompilerSettings> compilerSettingsMap) {
+    final var cIdeInfo = target.getcIdeInfo();
     if (cIdeInfo == null) {
       return null;
     }
-    CToolchainIdeInfo toolchainIdeInfo = toolchainLookupMap.get(targetKey);
-    if (toolchainIdeInfo == null) {
-      return null;
-    }
-    BlazeCompilerSettings compilerSettings = compilerSettingsMap.get(toolchainIdeInfo);
+    final var compilerSettings = compilerSettingsMap.get(target.getKey());
     if (compilerSettings == null) {
       return null;
     }
-    return BlazeResolveConfigurationData.create(cIdeInfo, toolchainIdeInfo, compilerSettings);
+    return BlazeResolveConfigurationData.create(cIdeInfo, compilerSettings);
   }
 }
