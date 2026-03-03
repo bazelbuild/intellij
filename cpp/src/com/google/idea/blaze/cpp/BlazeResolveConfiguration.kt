@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.cpp
 
-import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider
 import com.google.idea.blaze.base.model.BlazeProjectData
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.cidr.lang.CLanguageKind
@@ -29,6 +29,8 @@ import com.jetbrains.cidr.lang.OCLanguageKind
 import org.jetbrains.annotations.VisibleForTesting
 
 private val DEFAULT_LANGUAGE_KIND = CLanguageKind.CPP
+
+private val LOG = logger<BlazeResolveConfiguration>()
 
 /** A clustering of "equivalent" Blaze targets for creating [OCResolveConfiguration].  */
 data class BlazeResolveConfiguration(
@@ -84,13 +86,19 @@ data class BlazeResolveConfiguration(
 private fun computeDisplayName(targets: Collection<TargetKey>): String {
   val minTargetKey = requireNotNull(targets.minOrNull())
 
-  return if (targets.size == 1) {
-    minTargetKey.label().toString()
-  } else {
-    String.format("%s and %d other target(s)", minTargetKey.label(), targets.size - 1)
+  return buildString {
+    append(minTargetKey.label())
+
+    // on resolve configuration can cover multiple Bazel configurations with same compiler option
+    if (minTargetKey.configurationId().isNotBlank()) {
+      append(" (${minTargetKey.configurationId()})")
+    }
+
+    if (targets.size > 1) {
+      append(" and ${targets.size - 1} other target(s)")
+    }
   }
 }
-
 
 private fun computeTargetToSources(
   project: Project,
