@@ -92,7 +92,7 @@ maven.install(
         "com.google.code.gson:gson:2.10.1",
         "com.google.errorprone:error_prone_annotations:2.23.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
-        "com.google.truth:truth:1.4.4",
+        "com.google.truth:truth:1.4.5",
         "com.google.j2objc:j2objc-annotations:2.8",
         "com.google.guava:failureaccess:1.0.2",
         "org.hamcrest:hamcrest-core:3.0",
