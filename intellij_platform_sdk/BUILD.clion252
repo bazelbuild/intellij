@@ -73,6 +73,8 @@ java_import(
         "plugins/platform-images/lib/*.jar", # for native debug plugin
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",
+        "plugins/textmate/lib/*.jar",
+        "plugins/textmate/lib/modules/*.jar",
     ]),
 )
 
@@ -123,4 +125,12 @@ java_import(
 filegroup(
     name = "application_info_json",
     srcs = ["product-info.json"],
+)
+
+java_import(
+    name = "textmate",
+    jars = glob([
+        "plugins/textmate/lib/*.jar",
+        "plugins/textmate/lib/modules/*.jar",
+    ]),
 )

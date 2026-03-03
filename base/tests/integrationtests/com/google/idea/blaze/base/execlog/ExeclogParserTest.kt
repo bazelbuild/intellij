@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.skylark.repl
+package com.google.idea.blaze.base.execlog
 
 import com.google.common.truth.Truth.assertThat
 import com.google.idea.common.util.RunJarService
@@ -25,17 +25,16 @@ import org.junit.runners.JUnit4
 import java.nio.file.Files
 
 @RunWith(JUnit4::class)
-class SkylarkReplTest : BasePlatformTestCase() {
+class ExeclogParserTest : BasePlatformTestCase() {
 
   @Test
-  fun testFindsRepl() {
-    assertThat(Files.exists(REPL_JAR_PATH)).isTrue()
+  fun testFindsParser() {
+    assertThat(Files.exists(PARSER_JAR_PATH)).isTrue()
   }
 
   @Test
-  fun testRunRepl() {
-    val output = runBlocking { RunJarService.capture(REPL_JAR_PATH, "-c", "print('hello world')") }
-    assertThat(output.stdout).isEqualTo("hello world\n")
+  fun testRunParser() {
+    val output = runBlocking { RunJarService.capture(PARSER_JAR_PATH, "--help") }
     assertThat(output.exitCode).isEqualTo(0)
   }
 }
