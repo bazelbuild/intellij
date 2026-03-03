@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.cpp
 
-import com.google.common.base.Preconditions
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider
 import com.google.idea.blaze.base.model.BlazeProjectData
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.cidr.lang.CLanguageKind
@@ -29,6 +29,8 @@ import com.jetbrains.cidr.lang.OCLanguageKind
 import org.jetbrains.annotations.VisibleForTesting
 
 private val DEFAULT_LANGUAGE_KIND = CLanguageKind.CPP
+
+private val LOG = logger<BlazeResolveConfiguration>()
 
 /** A clustering of "equivalent" Blaze targets for creating [OCResolveConfiguration].  */
 data class BlazeResolveConfiguration(
@@ -82,18 +84,20 @@ data class BlazeResolveConfiguration(
 }
 
 private fun computeDisplayName(targets: Collection<TargetKey>): String {
+  LOG.assertTrue(targets.map { it.configurationId() }.distinct().size == 1)
+
   val minTargetKey = requireNotNull(targets.minOrNull())
 
-  val name = String.format(
-    "%s (%s)",
-    minTargetKey.label().toString(),
-    minTargetKey.configurationId().ifBlank { "unknown" },
-  )
+  return buildString {
+    append(minTargetKey.label())
 
-  return if (targets.size == 1) {
-    name
-  } else {
-    String.format("%s and %d other target(s)", name, targets.size - 1)
+    if (!minTargetKey.configurationId().isBlank()) {
+      append(" (${minTargetKey.configurationId()})")
+    }
+
+    if (targets.size > 1) {
+      append(" and ${targets.size - 1} other target(s)")
+    }
   }
 }
 
