@@ -17,7 +17,7 @@ package com.google.idea.common.util
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessAdapter
+import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.components.Service
@@ -61,20 +61,7 @@ class RunJarService {
 
   @Throws(ExecutionException::class)
   private suspend fun capture(jar: Path, vararg args: String): ProcessOutput {
-    val handler = run(jar, *args)
-
-    val adapter = CapturingProcessAdapter()
-    handler.addProcessListener(adapter)
-    handler.startNotify()
-
-    try {
-      while (!handler.isProcessTerminated) {
-        delay(100.milliseconds)
-      }
-      return adapter.output
-    } finally {
-      handler.destroyProcess()
-    }
+    return CapturingProcessRunner(run(jar, *args)).runProcess()
   }
 
   @Throws(IOException::class)
