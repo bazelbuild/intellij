@@ -18,6 +18,7 @@
 
   <depends>com.intellij.modules.clion</depends>
   <depends>org.jetbrains.plugins.clion.test.google</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.clwb.googleTestUtilAdapter" interface="com.google.idea.blaze.clwb.run.GoogleTestUtilAdapter"/>

@@ -17,15 +17,19 @@ package com.google.idea.common.util
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 class RunJarService {
@@ -33,6 +37,9 @@ class RunJarService {
   companion object {
     @Throws(ExecutionException::class)
     suspend fun run(jar: Path, vararg args: String): OSProcessHandler = service<RunJarService>().run(jar, *args)
+
+    @Throws(ExecutionException::class)
+    suspend fun capture(jar: Path, vararg args: String): ProcessOutput = service<RunJarService>().capture(jar, *args)
   }
 
   @Throws(ExecutionException::class)
@@ -49,6 +56,24 @@ class RunJarService {
 
     return withContext(Dispatchers.IO) {
       OSProcessHandler(cmdLine)
+    }
+  }
+
+  @Throws(ExecutionException::class)
+  private suspend fun capture(jar: Path, vararg args: String): ProcessOutput {
+    val handler = run(jar, *args)
+
+    val adapter = CapturingProcessAdapter()
+    handler.addProcessListener(adapter)
+    handler.startNotify()
+
+    try {
+      while (!handler.isProcessTerminated) {
+        delay(100.milliseconds)
+      }
+      return adapter.output
+    } finally {
+      handler.destroyProcess()
     }
   }
 

@@ -1,0 +1,19 @@
+{
+  "name": "bazel-execlog",
+  "contributes": {
+    "languages": [
+      {
+        "id": "bazel-execlog",
+        "extensions": [".bazel-execlog"],
+        "aliases": ["Bazel Execution Log"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "bazel-execlog",
+        "scopeName": "source.bazel-execlog",
+        "path": "./execlog.tmLanguage.json"
+      }
+    ]
+  }
+}

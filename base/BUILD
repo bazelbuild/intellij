@@ -64,7 +64,10 @@ intellij_plugin_library(
         "src/META-INF/blaze-base.xml",
     ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
-    deps = [":base"],
+    deps = [
+        ":base",
+        "//base/src/com/google/idea/blaze/base/execlog",
+    ],
 )
 
 java_library(
@@ -558,9 +561,7 @@ intellij_unit_test_suite(
 
 test_suite(
     name = "unit_tests_kt",
-    tests = [
-        "//base/tests/unittests/com/google/idea/blaze/base/dependencies:QueryBuilderTest",
-    ],
+    tests = ["//base/tests/unittests/com/google/idea/blaze/base/dependencies:QueryBuilderTest"],
 )
 
 stamped_plugin_xml(
@@ -625,4 +626,9 @@ intellij_integration_test_suite(
         "@error_prone_annotations//jar",
         "@org_opentest4j_opentest4j//jar",
     ],
+)
+
+test_suite(
+    name = "integration_tests_kt",
+    tests = ["//base/tests/integrationtests/com/google/idea/blaze/base/execlog:ExeclogParserTest"],
 )

@@ -124,3 +124,11 @@ filegroup(
     name = "application_info_json",
     srcs = ["product-info.json"],
 )
+
+java_import(
+    name = "textmate",
+    jars = glob([
+        "plugins/textmate/lib/*.jar",
+        "plugins/textmate/lib/modules/*.jar",
+    ]),
+)
