@@ -872,6 +872,51 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     assertThatResolving(projectView, targetMap).producesXcodeConfiguration(expected);
   }
 
+  @Test
+  public void testSingleSourceTargetWithConfigurationId() {
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                ImmutableList.of(src("foo/bar/binary.cc")),
+                "//:toolchain"
+            ).setConfigurationId("abc123")
+        )
+        .build();
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary (abc123)");
+  }
+
+  @Test
+  public void testSameTargetDifferentConfigurations() {
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                ImmutableList.of(src("foo/bar/binary.cc")),
+                ImmutableList.of("-DCONFIG_A=1"),
+                "//:toolchain"
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                ImmutableList.of(src("foo/bar/binary.cc")),
+                ImmutableList.of("-DCONFIG_B=1"),
+                "//:toolchain"
+            ).setConfigurationId("configB")
+        )
+        .build();
+
+    assertThatResolving(projectView, targetMap).producesConfigurationsFor(
+        "//foo/bar:binary (configA)",
+        "//foo/bar:binary (configB)"
+    );
+  }
+
   private static ArtifactLocation src(String path) {
     return ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build();
   }
