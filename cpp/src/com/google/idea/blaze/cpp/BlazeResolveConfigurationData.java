@@ -31,6 +31,8 @@ public abstract class BlazeResolveConfigurationData {
   // Everything from CIdeInfo except for sources, headers, etc.
   // That is parts that influence the flags, but not the actual input files.
   public abstract ImmutableList<String> localCopts();
+  public abstract ImmutableList<String> localConlyopts();
+  public abstract ImmutableList<String> localCxxopts();
 
   // From the cpp compilation context provider.
   // These should all be for the entire transitive closure.
@@ -52,6 +54,8 @@ public abstract class BlazeResolveConfigurationData {
         .setCompilerSettings(compilerSettings)
         .setToolchainIdeInfo(toolchainIdeInfo)
         .setLocalCopts(ruleCtx.copts())
+        .setLocalConlyopts(ruleCtx.conlyopts())
+        .setLocalCxxopts(ruleCtx.cxxopts())
         .setTransitiveIncludeDirectories(compilationCtx.includes())
         .setTransitiveQuoteIncludeDirectories(compilationCtx.quoteIncludes())
         .setTransitiveDefines(compilationCtx.defines())
@@ -71,6 +75,10 @@ public abstract class BlazeResolveConfigurationData {
     public abstract Builder setToolchainIdeInfo(CToolchainIdeInfo value);
 
     public abstract Builder setLocalCopts(ImmutableList<String> value);
+
+    public abstract Builder setLocalConlyopts(ImmutableList<String> value);
+
+    public abstract Builder setLocalCxxopts(ImmutableList<String> value);
 
     public abstract Builder setTransitiveIncludeDirectories(ImmutableList<ExecutionRootPath> value);
 

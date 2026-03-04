@@ -599,6 +599,103 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     assertThat(get(configurations, "//foo/bar:binary (configA) and 1 other target(s)")).isNotNull();
   }
 
+  @Test
+  public void testSameLabelDifferentConfigs_sameCompilerSettings_grouped() {
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts("-DFOO=1"),
+                copts("-std=c11"),
+                copts("-std=c++17"),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts("-DFOO=1"),
+                copts("-std=c11"),
+                copts("-std=c++17"),
+                includes()
+            ).setConfigurationId("configB")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(1);
+    assertThat(get(configurations, "//foo/bar:binary (configA) and 1 other target(s)")).isNotNull();
+  }
+
+  @Test
+  public void testSameLabelDifferentConfigs_differentCopts_separateConfigurations() {
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts("-DARM=1"),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts("-DX86=1"),
+                includes()
+            ).setConfigurationId("configB")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(2);
+    assertThat(get(configurations, "//foo/bar:binary (configA)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:binary (configB)")).isNotNull();
+  }
+
+  @Test
+  public void testSameLabelDifferentConfigs_differentCxxopts_separateConfigurations() {
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(createCcToolchain())
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts(),
+                copts(),
+                copts("-std=c++17"),
+                includes()
+            ).setConfigurationId("configA")
+        )
+        .addTarget(createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                sources("foo/bar/binary.cc"),
+                copts(),
+                copts(),
+                copts("-std=c++20"),
+                includes()
+            ).setConfigurationId("configB")
+        )
+        .build();
+
+    final var configurations = resolve(projectView, targetMap);
+    assertThat(configurations).hasSize(2);
+    assertThat(get(configurations, "//foo/bar:binary (configA)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:binary (configB)")).isNotNull();
+  }
+
   private static List<ArtifactLocation> sources(String... paths) {
     return Arrays.stream(paths)
         .map(path -> ArtifactLocation.builder().setRelativePath(path).setIsSource(true).build())
@@ -619,12 +716,25 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
       List<ArtifactLocation> sources,
       List<String> copts,
       List<ExecutionRootPath> includes) {
+    return createCcTarget(label, kind, sources, copts, ImmutableList.of(), ImmutableList.of(), includes);
+  }
+
+  private static TargetIdeInfo.Builder createCcTarget(
+      String label,
+      Kind kind,
+      List<ArtifactLocation> sources,
+      List<String> copts,
+      List<String> conlyopts,
+      List<String> cxxopts,
+      List<ExecutionRootPath> includes) {
     TargetIdeInfo.Builder targetInfo =
         TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency("//:toolchain");
     sources.forEach(targetInfo::addSource);
     return targetInfo.setCInfo(CIdeInfo.builder()
         .setRuleContext(CIdeInfo.RuleContext.builder()
             .setCopts(ImmutableList.copyOf(copts))
+            .setConlyopts(ImmutableList.copyOf(conlyopts))
+            .setCxxopts(ImmutableList.copyOf(cxxopts))
             .setSources(ImmutableList.copyOf(sources))
             .build()
         )
