@@ -85,7 +85,7 @@ maven.install(
         "com.googlecode.java-diff-utils:diffutils:1.3.0",
         # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
         # so it fails on certain setups.
-        "net.java.dev.jna:jna:5.14.0",
+        "net.java.dev.jna:jna:5.18.1",
         "com.google.auto.value:auto-value-annotations:1.10.2",
         "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
