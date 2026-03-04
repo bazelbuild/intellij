@@ -7,27 +7,27 @@ java_plugin(
     name = "autovalue-plugin",
     generates_api = 1,
     processor_class = "com.google.auto.value.processor.AutoValueProcessor",
-    deps = ["@auto_value//jar"],
+    deps = ["@maven//:com_google_auto_value_auto_value"],
 )
 
 java_plugin(
     name = "autobuilder-plugin",
     generates_api = 1,
     processor_class = "com.google.auto.value.processor.AutoBuilderProcessor",
-    deps = ["@auto_value//jar"],
+    deps = ["@maven//:com_google_auto_value_auto_value"],
 )
 
 java_plugin(
     name = "auto_annotation_plugin",
     processor_class = "com.google.auto.value.processor.AutoAnnotationProcessor",
-    deps = ["@auto_value//jar"],
+    deps = ["@maven//:com_google_auto_value_auto_value"],
 )
 
 java_plugin(
     name = "autooneof-plugin",
     generates_api = 1,
     processor_class = "com.google.auto.value.processor.AutoOneOfProcessor",
-    deps = ["@auto_value//jar"],
+    deps = ["@maven//:com_google_auto_value_auto_value"],
 )
 
 # provides both the jar for compilation and the java_plugin.
@@ -41,7 +41,8 @@ java_library(
     ],
     visibility = ["//visibility:public"],
     exports = [
-        "@auto_value//jar",
-        "@auto_value_annotations//jar",
+        "@maven//:com_google_auto_value_auto_value",
+        "@maven//:com_google_auto_value_auto_value_annotations",
+        "@maven//:org_jspecify_jspecify",
     ],
 )
