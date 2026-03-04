@@ -115,18 +115,16 @@ public class TransitionTest extends ClwbHeadlessTestCase {
     // both targets have the different settings -> two equivalence class -> two OCResolveConfiguration
     assertThat(configurations).hasSize(2);
 
-    for (final var config : configurations) {
-      final var settings = config.getCompilerSettings(CLanguageKind.CPP, file);
-      assertThat(settings).isNotNull();
+    final var compilerSwitches = configurations.stream()
+        .map(config -> config.getCompilerSettings(CLanguageKind.CPP, file).getCompilerSwitches())
+        .filter(Objects::nonNull)
+        .map(switches -> switches.getList(Format.RAW))
+        .toList();
 
-      final var switches = settings.getCompilerSwitches();
-      assertThat(switches).isNotNull();
-
-      final var rawSwitches = switches.getList(Format.RAW);
-
-      // each per-file config must contain exactly one of -DFOO or -DBAR
-      assertThat(rawSwitches.contains("-DFOO") ^ rawSwitches.contains("-DBAR")).isTrue();
-    }
+    // each per-file config must contain exactly one of -DFOO or -DBAR
+    assertThat(compilerSwitches).hasSize(2);
+    assertThat(compilerSwitches.stream().filter(it -> it.contains("-DFOO"))).hasSize(1);
+    assertThat(compilerSwitches.stream().filter(it -> it.contains("-DBAR"))).hasSize(1);
   }
 
   /**
