@@ -388,34 +388,31 @@ public final class BlazeCWorkspace implements ProjectComponent {
       String displayName,
       File directory,
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
-      Map<VirtualFile, PerFileCompilerOpts> configSourceFiles) {
-    OCResolveConfigurationImpl.ModifiableModel config =
-        workspaceModifiable.addConfiguration(
-            id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
-    for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
-        configLanguages.entrySet()) {
-      PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      if (CppSupportChecker.isSupportedCppConfiguration(
-          configForLanguage.switches, directory.toPath())) {
-        OCCompilerSettings.ModifiableModel langSettings =
-            config.getLanguageCompilerSettings(languageEntry.getKey());
-        langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-        langSettings.setCompilerSwitches(configForLanguage.switches);
-      }
+      Map<VirtualFile, PerFileCompilerOpts> configSourceFiles
+  ) {
+    final var config = workspaceModifiable.addConfiguration(
+        /* id = */ id,
+        /* name = */ displayName,
+        /* variant = */ null,
+        /* fileSeparators = */ OCResolveConfiguration.DEFAULT_FILE_SEPARATORS
+    );
+
+    for (final var languageEntry : configLanguages.entrySet()) {
+      final var configForLanguage = languageEntry.getValue();
+      final var langSettings = config.getLanguageCompilerSettings(languageEntry.getKey());
+      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+      langSettings.setCompilerSwitches(configForLanguage.switches);
     }
 
-    for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
-      PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      if (CppSupportChecker.isSupportedCppConfiguration(
-          compilerOpts.switches, directory.toPath())) {
-        OCCompilerSettings.ModifiableModel fileCompilerSettings =
-            config.addSource(fileEntry.getKey(), compilerOpts.kind);
-        fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
-      }
+    for (final var fileEntry : configSourceFiles.entrySet()) {
+      final var compilerOpts = fileEntry.getValue();
+      final var fileCompilerSettings = config.addSource(fileEntry.getKey(), compilerOpts.kind);
+      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
     }
 
     return config;
   }
+
   /** Group compiler options for a specific file. */
   private static class PerFileCompilerOpts {
     final OCLanguageKind kind;
