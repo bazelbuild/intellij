@@ -34,11 +34,15 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.startup.ProjectActivity;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.event.HyperlinkEvent;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Notify users to convert old CMake+Blaze projects into pure Blaze projects, and avoid scanning
@@ -52,11 +56,12 @@ import javax.swing.event.HyperlinkEvent;
  * <p>#api181: After enough modules are migrated to BlazeCppModuleType, perhaps this will become
  * unnecessary. See EventLoggingService data to see how often this comes up.
  */
-class CMakeWorkspaceOverride {
+class CMakeWorkspaceOverride implements ProjectActivity {
 
-  static void undoCMakeModifications(Project project) {
+  @Override
+  public Object execute(@NonNull Project project, @NonNull Continuation<? super Unit> $completion) {
     if (!Blaze.isBlazeProject(project)) {
-      return;
+      return null;
     }
     boolean notified = false;
     for (Module module : getCMakeModules(project)) {
@@ -67,6 +72,7 @@ class CMakeWorkspaceOverride {
         notified = true;
       }
     }
+    return null;
   }
 
   /** Get any modules marked with the CMake classpath */
