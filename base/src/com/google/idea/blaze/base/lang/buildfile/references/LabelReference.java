@@ -31,9 +31,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /** Converts a blaze label into an absolute path, then resolves that path to a PsiElements */
 public class LabelReference extends PsiReferenceBase<StringLiteral> {
@@ -180,7 +180,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
             : BuildLookupElement.EMPTY_ARRAY;
   }
 
-  protected @NonNull VirtualFileFilter getAllowedFilesFilter(BuildFile parentFile, boolean hasColon) {
+  protected @NotNull VirtualFileFilter getAllowedFilesFilter(BuildFile parentFile, boolean hasColon) {
     VirtualFileFilter filter =
         file ->
             ("bzl".equals(file.getExtension()) && !file.getPath().equals(parentFile.getFilePath()))

@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.IncludeStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiElement;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /** Resolves include statements in MODULE.bazel files to *.MODULE.bazel fragment files. */
 public class IncludeReference extends LabelReference {
@@ -30,7 +30,7 @@ public class IncludeReference extends LabelReference {
   }
 
   @Override
-  public Object @NonNull [] getVariants() {
+  public Object @NotNull [] getVariants() {
     if (!validLabelLocation(myElement)) {
       return EMPTY_ARRAY;
     }
@@ -49,7 +49,7 @@ public class IncludeReference extends LabelReference {
   }
 
   @Override
-  protected @NonNull VirtualFileFilter getAllowedFilesFilter(BuildFile parentFile, boolean hasColon) {
+  protected @NotNull VirtualFileFilter getAllowedFilesFilter(BuildFile parentFile, boolean hasColon) {
     return file ->
             (file.getName().endsWith(".MODULE.bazel")
                     && !file.getName().equals("MODULE.bazel")
