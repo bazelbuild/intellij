@@ -29,6 +29,8 @@ public class TransitionTest extends ClwbHeadlessTestCase {
     final var builder = super.projectViewText(version);
 
     builder.addTarget("//main:foo_bar");
+    builder.addTarget("//main:shared_a");
+    builder.addTarget("//main:shared_b");
 
     return builder;
   }
@@ -41,6 +43,8 @@ public class TransitionTest extends ClwbHeadlessTestCase {
     checkResolveConfigurations();
     checkTargetMap();
     checkConfigurationData();
+    checkPerFileCompilerSettings();
+    checkSharedSourceFile();
   }
 
   /**
@@ -99,5 +103,45 @@ public class TransitionTest extends ClwbHeadlessTestCase {
     for (final var target : targets) {
       assertThat(configurationData.get(target.getKey())).isNotNull();
     }
+  }
+
+  /**
+   * Verify per-file compiler settings for simple.cc in both transition configurations.
+   */
+  private void checkPerFileCompilerSettings() {
+    final var file = findProjectFile("main/simple.cc");
+    final var configurations = getWorkspace().getConfigurationsForFile(file);
+
+    // both targets have the different settings -> two equivalence class -> two OCResolveConfiguration
+    assertThat(configurations).hasSize(2);
+
+    for (final var config : configurations) {
+      final var settings = config.getCompilerSettings(CLanguageKind.CPP, file);
+      assertThat(settings).isNotNull();
+
+      final var switches = settings.getCompilerSwitches();
+      assertThat(switches).isNotNull();
+
+      final var rawSwitches = switches.getList(Format.RAW);
+
+      // each per-file config must contain exactly one of -DFOO or -DBAR
+      assertThat(rawSwitches.contains("-DFOO") ^ rawSwitches.contains("-DBAR")).isTrue();
+    }
+  }
+
+  /**
+   * Two targets (shared_a, shared_b) share shared.cc with the same compilation settings. Thus, they are in the same
+   * equivalence class, and same BlazeResolveConfiguration.
+   */
+  private void checkSharedSourceFile() {
+    final var file = findProjectFile("main/shared.cc");
+    final var configurations = getWorkspace().getConfigurationsForFile(file);
+
+    // both targets have the same settings -> one equivalence class -> one OCResolveConfiguration
+    assertThat(configurations).hasSize(1);
+
+    final var settings = configurations.get(0).getCompilerSettings(CLanguageKind.CPP, file);
+    assertThat(settings).isNotNull();
+    assertThat(settings.getCompilerSwitches()).isNotNull();
   }
 }

@@ -1,0 +1,1 @@
+void shared_function() {}
