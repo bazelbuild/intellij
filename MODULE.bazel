@@ -89,7 +89,7 @@ maven.install(
         "com.google.auto.value:auto-value-annotations:1.10.2",
         "com.google.auto.value:auto-value:1.10.4",
         "com.google.code.findbugs:jsr305:3.0.2",
-        "com.google.code.gson:gson:2.10.1",
+        "com.google.code.gson:gson:2.13.2",
         "com.google.errorprone:error_prone_annotations:2.23.0",
         "com.google.guava:guava:33.3.1-jre",  # changed to jre
         "com.google.truth:truth:1.4.4",
