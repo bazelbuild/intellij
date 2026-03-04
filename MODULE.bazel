@@ -80,7 +80,7 @@ maven.install(
         "org.objenesis:objenesis:3.3",
         "net.bytebuddy:byte-buddy:1.14.0",
         "net.bytebuddy:byte-buddy-agent:1.14.10",
-        "com.google.flogger:flogger:0.8",
+        "com.google.flogger:flogger:0.9",
         "com.google.flogger:flogger-system-backend:0.8",
         "com.googlecode.java-diff-utils:diffutils:1.3.0",
         # Usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms,
