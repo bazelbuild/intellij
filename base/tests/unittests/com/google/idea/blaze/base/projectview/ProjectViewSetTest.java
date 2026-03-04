@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.projectview.section.sections.TryImportSection;
+import com.google.idea.blaze.base.projectview.section.sections.DetectScalaInfoProviderSection;
 import com.google.idea.blaze.base.projectview.section.sections.UseExclusionPatternsSection;
 import com.google.idea.blaze.base.projectview.section.sections.UseQuerySyncSection;
 import com.google.idea.blaze.base.projectview.section.sections.ViewProjectRootSection;
@@ -121,6 +122,7 @@ public class ProjectViewSetTest extends BlazeTestCase {
                         ScalarSection.builder(BuildConfigSection.KEY)
                             .set(new WorkspacePath("test")))
                     .add(ScalarSection.builder(UseExclusionPatternsSection.KEY).set(false))
+                    .add(ScalarSection.builder(DetectScalaInfoProviderSection.KEY).set(true))
                     .add(ScalarSection.builder(ViewProjectRootSection.KEY).set(false))
                     .build())
             .build();
