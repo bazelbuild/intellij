@@ -189,13 +189,12 @@ final class BlazeConfigurationResolver {
         }
       });
 
-      findEquivalenceClasses(context, project, blazeProjectData, targetToData, builder);
+      findEquivalenceClasses(context, blazeProjectData, targetToData, builder);
     });
   }
 
   private static void findEquivalenceClasses(
       BlazeContext context,
-      Project project,
       BlazeProjectData blazeProjectData,
       Map<TargetKey, BlazeResolveConfigurationData> targetToData,
       BlazeConfigurationResolverResult.Builder builder
@@ -213,7 +212,7 @@ final class BlazeConfigurationResolver {
       final var targets = entry.getValue();
       dataToConfiguration.put(
           data,
-          BlazeResolveConfiguration.create(project, blazeProjectData, data, targets)
+          BlazeResolveConfiguration.create(blazeProjectData, data, targets)
       );
     }
 
