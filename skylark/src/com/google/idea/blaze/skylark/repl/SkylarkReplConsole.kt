@@ -79,7 +79,13 @@ class SkylarkReplConsole(
     return consoleView
   }
 
-  override fun createExecuteActionHandler() = ProcessBackedConsoleExecuteActionHandler(handler, false)
+  override fun createExecuteActionHandler() = object : ProcessBackedConsoleExecuteActionHandler(handler, false) {
+
+    /** Sends zero byte sentinel after each input chunk so the patched REPL knows when input ends. */
+    override fun execute(text: String, console: LanguageConsoleView) {
+      super.execute(text + Char(0), console)
+    }
+  }
 
   fun sendText(text: String) {
     val view = consoleView ?: return
