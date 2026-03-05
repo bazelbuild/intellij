@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.startup.ProjectActivity;
+import com.intellij.util.JavaCoroutines;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import java.io.File;
@@ -60,8 +61,15 @@ class CMakeWorkspaceOverride implements ProjectActivity {
 
   @Override
   public Object execute(@NonNull Project project, @NonNull Continuation<? super Unit> $completion) {
+    return JavaCoroutines.suspendJava(jc -> {
+      undoCMakeModifications(project);
+      jc.resume(Unit.INSTANCE);
+    }, $completion);
+  }
+
+  private static void undoCMakeModifications(Project project) {
     if (!Blaze.isBlazeProject(project)) {
-      return null;
+      return;
     }
     boolean notified = false;
     for (Module module : getCMakeModules(project)) {
@@ -72,7 +80,6 @@ class CMakeWorkspaceOverride implements ProjectActivity {
         notified = true;
       }
     }
-    return null;
   }
 
   /** Get any modules marked with the CMake classpath */
