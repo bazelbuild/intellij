@@ -18,7 +18,6 @@ package com.google.idea.blaze.cpp;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
-import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 
 /** Data for clustering {@link BlazeResolveConfiguration} by "equivalence". */
@@ -26,7 +25,6 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 public abstract class BlazeResolveConfigurationData {
 
   public abstract BlazeCompilerSettings compilerSettings();
-  public abstract CToolchainIdeInfo toolchainIdeInfo();
 
   // Everything from CIdeInfo except for sources, headers, etc.
   // That is parts that influence the flags, but not the actual input files.
@@ -44,7 +42,6 @@ public abstract class BlazeResolveConfigurationData {
 
   static BlazeResolveConfigurationData create(
       CIdeInfo cIdeInfo,
-      CToolchainIdeInfo toolchainIdeInfo,
       BlazeCompilerSettings compilerSettings
   ) {
     final var ruleCtx = cIdeInfo.ruleContext();
@@ -52,7 +49,6 @@ public abstract class BlazeResolveConfigurationData {
 
     return builder()
         .setCompilerSettings(compilerSettings)
-        .setToolchainIdeInfo(toolchainIdeInfo)
         .setLocalCopts(ruleCtx.copts())
         .setLocalConlyopts(ruleCtx.conlyopts())
         .setLocalCxxopts(ruleCtx.cxxopts())
@@ -71,8 +67,6 @@ public abstract class BlazeResolveConfigurationData {
   public abstract static class Builder {
 
     public abstract Builder setCompilerSettings(BlazeCompilerSettings value);
-
-    public abstract Builder setToolchainIdeInfo(CToolchainIdeInfo value);
 
     public abstract Builder setLocalCopts(ImmutableList<String> value);
 

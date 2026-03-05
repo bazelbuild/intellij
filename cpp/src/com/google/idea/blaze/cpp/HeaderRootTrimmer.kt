@@ -17,7 +17,6 @@ package com.google.idea.blaze.cpp
 
 import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
-import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.model.BlazeProjectData
@@ -39,7 +38,7 @@ interface HeaderRootTrimmer {
   fun getValidHeaderRoots(
     parentContext: BlazeContext,
     projectData: BlazeProjectData,
-    toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
+    compilerSettings: ImmutableMap<TargetKey, BlazeCompilerSettings>,
     targetFilter: Predicate<TargetIdeInfo>,
     executionRootPathResolver: ExecutionRootPathResolver,
   ): ImmutableSet<Path>

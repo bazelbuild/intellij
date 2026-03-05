@@ -60,6 +60,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -204,14 +205,18 @@ public final class BlazeConfigurationToolchainResolver {
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings
   ) {
-    return Scope.push(
-        context,
-        childContext -> {
-          childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
-          return doBuildCompilerSettingsMap(
-              context, project, toolchainLookupMap, executionRootPathResolver,
-              xcodeCompilerSettings, oldCompilerSettings);
-        });
+    return Scope.push(context, childContext -> {
+      childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
+
+      return doBuildCompilerSettingsMap(
+          context,
+          project,
+          toolchainLookupMap,
+          executionRootPathResolver,
+          xcodeCompilerSettings,
+          oldCompilerSettings
+      );
+    });
   }
 
   private static @Nullable File resolveCompilerExecutable(
@@ -260,7 +265,8 @@ public final class BlazeConfigurationToolchainResolver {
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings
+  ) {
     Set<CToolchainIdeInfo> toolchains = new HashSet<>(toolchainLookupMap.values());
     List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
         compilerSettingsFutures = new ArrayList<>();
@@ -294,38 +300,37 @@ public final class BlazeConfigurationToolchainResolver {
                 if (oldSettings != null && oldSettings.version().equals(compilerVersion)) {
                   return new SimpleImmutableEntry<>(toolchain, oldSettings);
                 }
-                BlazeCompilerSettings settings =
-                    createBlazeCompilerSettings(
-                        context,
-                        project,
-                        toolchain,
-                        xcodeCompilerSettings,
-                        executionRootPathResolver.getExecutionRoot(),
-                        cCompiler,
-                        cppCompiler,
-                        compilerVersion);
+
+                final var settings = createBlazeCompilerSettings(
+                    context,
+                    project,
+                    toolchain,
+                    xcodeCompilerSettings,
+                    executionRootPathResolver.getExecutionRoot(),
+                    cCompiler,
+                    cppCompiler,
+                    compilerVersion
+                );
+
                 if (settings == null) {
                   return null;
                 }
                 return new SimpleImmutableEntry<>(toolchain, settings);
               }));
     }
-    ImmutableMap.Builder<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettingsMap =
-        ImmutableMap.builder();
+
+    final var compilerSettingsMap = ImmutableMap.<CToolchainIdeInfo, BlazeCompilerSettings>builder();
     try {
-      List<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>> createdSettings =
-          Futures.allAsList(compilerSettingsFutures).get();
-      for (Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings> createdSetting : createdSettings) {
-        if (createdSetting != null) {
-          compilerSettingsMap.put(createdSetting);
-        }
-      }
+      Futures.allAsList(compilerSettingsFutures).get().stream()
+          .filter(Objects::nonNull)
+          .forEach(compilerSettingsMap::put);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       context.setCancelled();
     } catch (ExecutionException e) {
       IssueOutput.error("Could not build C compiler settings map: " + e).submit(context);
     }
+
     return compilerSettingsMap.build();
   }
 
@@ -439,5 +444,20 @@ public final class BlazeConfigurationToolchainResolver {
             return Optional.empty();
           }
         });
+  }
+
+  public static ImmutableMap<TargetKey, BlazeCompilerSettings> buildCompilerLookupMap(
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings
+  ) {
+    final var builder = ImmutableMap.<TargetKey, BlazeCompilerSettings>builder();
+    for (final var entry : toolchainLookupMap.entrySet()) {
+      final var settings = compilerSettings.get(entry.getValue());
+      if (settings != null) {
+        builder.put(entry.getKey(), settings);
+      }
+    }
+
+    return builder.build();
   }
 }

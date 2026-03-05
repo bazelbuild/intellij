@@ -30,8 +30,6 @@ import org.jetbrains.annotations.VisibleForTesting
 
 private val DEFAULT_LANGUAGE_KIND = CLanguageKind.CPP
 
-private val LOG = logger<BlazeResolveConfiguration>()
-
 /** A clustering of "equivalent" Blaze targets for creating [OCResolveConfiguration].  */
 data class BlazeResolveConfiguration(
   @VisibleForTesting val configurationData: BlazeResolveConfigurationData,
@@ -43,7 +41,6 @@ data class BlazeResolveConfiguration(
   companion object {
     @JvmStatic
     fun create(
-      project: Project,
       blazeProjectData: BlazeProjectData,
       configurationData: BlazeResolveConfigurationData,
       targets: Collection<TargetKey>
@@ -51,7 +48,7 @@ data class BlazeResolveConfiguration(
       configurationData,
       computeDisplayName(targets),
       ImmutableList.copyOf(targets),
-      computeTargetToSources(project, blazeProjectData, targets)
+      computeTargetToSources(blazeProjectData, targets)
     )
   }
 
@@ -101,21 +98,19 @@ private fun computeDisplayName(targets: Collection<TargetKey>): String {
 }
 
 private fun computeTargetToSources(
-  project: Project,
   blazeProjectData: BlazeProjectData,
   targets: Collection<TargetKey>,
 ): ImmutableMap<TargetKey, ImmutableList<VirtualFile>> {
   val builder = ImmutableMap.builder<TargetKey, ImmutableList<VirtualFile>>()
 
   for (targetKey in targets) {
-    builder.put(targetKey, computeSources(project, blazeProjectData, targetKey))
+    builder.put(targetKey, computeSources(blazeProjectData, targetKey))
   }
 
   return builder.build()
 }
 
 private fun computeSources(
-  project: Project,
   blazeProjectData: BlazeProjectData,
   targetKey: TargetKey,
 ): ImmutableList<VirtualFile> {
