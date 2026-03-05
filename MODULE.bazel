@@ -193,8 +193,8 @@ bazel_build_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "baze
 
 bazel_build_jars(
     name = "bazel_jars",
-    sha256 = "d57b2a9362147784b579fa5f418fa2f9322a476ef89ed4251e9061a2858c4a79",
-    tag = "9.0.0rc5",
+    sha256 = "614ea210625c9ef19c952c2a974e7cfb73e1ba025a4ee7d1062a90fa32bb4132",
+    tag = "9.0.0",
     jars = [
         "//src/tools/execlog:parser_deploy.jar",
         "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",

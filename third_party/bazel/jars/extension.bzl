@@ -1,6 +1,6 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
-_BAZEL_URL_TEMPLATE = "https://github.com/bazelbuild/bazel/archive/refs/tags/{tag}.tar.gz"
+_BAZEL_URL_TEMPLATE = "https://codeload.github.com/bazelbuild/bazel/tar.gz/refs/tags/{tag}"
 _BAZEL_SOURCE_DIR = "sources"
 
 def _resolve_target_artifact(rctx, target):
