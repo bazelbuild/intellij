@@ -41,6 +41,8 @@ import javax.swing.KeyStroke
 private const val CONSOLE_TITLE = "Starlark REPL"
 private const val FILE_EXTENSION = ".bzl"
 
+private val REPL_INPUT_TERMINATOR = Char(0)
+
 class SkylarkReplConsole(
   project: Project,
   val handler: OSProcessHandler,
@@ -83,7 +85,7 @@ class SkylarkReplConsole(
 
     /** Sends zero byte sentinel after each input chunk so the patched REPL knows when input ends. */
     override fun execute(text: String, console: LanguageConsoleView) {
-      super.execute(text + Char(0), console)
+      super.execute(text + REPL_INPUT_TERMINATOR, console)
     }
   }
 
