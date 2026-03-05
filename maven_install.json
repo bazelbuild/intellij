@@ -10,7 +10,7 @@
     "com.google.flogger:flogger-system-backend": -285378212,
     "com.google.guava:failureaccess": -2032498474,
     "com.google.guava:guava": -1756621521,
-    "com.google.j2objc:j2objc-annotations": 2003271689,
+    "com.google.j2objc:j2objc-annotations": -26400317,
     "com.google.truth:truth": 1696781452,
     "com.googlecode.java-diff-utils:diffutils": -433021253,
     "junit:junit": -744267592,
@@ -18,12 +18,12 @@
     "net.bytebuddy:byte-buddy-agent": 2102143973,
     "net.java.dev.jna:jna": 929040997,
     "org.hamcrest:hamcrest-core": 477294799,
-    "org.jetbrains.kotlin:kotlin-stdlib": -76234895,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1514315635,
+    "org.jetbrains.kotlin:kotlin-stdlib": 52847824,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1535405612,
     "org.jetbrains.pty4j:pty4j": 1622800979,
-    "org.jetbrains:annotations": -828182130,
-    "org.mockito:mockito-core": -816422487,
-    "org.objenesis:objenesis": -1739136178,
+    "org.jetbrains:annotations": 989775437,
+    "org.mockito:mockito-core": -1167852137,
+    "org.objenesis:objenesis": -1059077808,
     "org.opentest4j:opentest4j": 36565236,
     "repositories": 1485828590
   },
@@ -48,21 +48,21 @@
     "net.java.dev.jna:jna-platform": 7542462,
     "org.hamcrest:hamcrest": 1226587447,
     "org.hamcrest:hamcrest-core": 1117998846,
-    "org.jetbrains.kotlin:kotlin-stdlib": -1302785066,
-    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": -1838996780,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1401819924,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": -286774337,
-    "org.jetbrains.pty4j:pty4j": 2022300198,
-    "org.jetbrains:annotations": 771553386,
+    "org.jetbrains.kotlin:kotlin-stdlib": 2070469654,
+    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": -1928407068,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": 639624661,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1524391268,
+    "org.jetbrains.pty4j:pty4j": -1031427085,
+    "org.jetbrains:annotations": -1247094787,
     "org.jspecify:jspecify": 70212170,
-    "org.mockito:mockito-core": 1868230266,
-    "org.objenesis:objenesis": 609775070,
+    "org.mockito:mockito-core": 688448200,
+    "org.objenesis:objenesis": -814040267,
     "org.opentest4j:opentest4j": -1037660935,
     "org.ow2.asm:asm": 1007188183,
     "org.slf4j:slf4j-api": 1053919275
   },
   "conflict_resolution": {
-    "com.google.j2objc:j2objc-annotations:2.8": "com.google.j2objc:j2objc-annotations:3.1"
+    "org.jetbrains.kotlin:kotlin-stdlib:2.2.21": "org.jetbrains.kotlin:kotlin-stdlib:2.3.0"
   },
   "artifacts": {
     "com.google.auto.value:auto-value": {
@@ -187,27 +187,27 @@
     },
     "org.jetbrains.kotlin:kotlin-stdlib": {
       "shasums": {
-        "jar": "263bdc679e1f62012db7b091796279b6d71cf36f4797a98ff1ace05835f201c8"
+        "jar": "887587c91713250ad52fe14ad9166d042c33835049890e9437f355ffc5a195b1"
       },
-      "version": "2.1.21"
+      "version": "2.3.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": {
       "shasums": {
-        "jar": "d3c94e9d829bba6e0c4cd3ae478a40846dd49d5475d6707877be853976afe416"
+        "jar": "14d6f27ce28f61ebc4a516d562f911b7bc01cfbe5397fb884c45ea0db044c635"
       },
-      "version": "1.8.0"
+      "version": "1.10.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-json": {
       "shasums": {
-        "jar": "faabc73e856bc9eac97ba19d3df4fc4ae87e14e2add0765c7041bc72ea47a1bb"
+        "jar": "cb3f264c04f7ed056897f861f7a5959f9bdaa431e4614d9bb67e28326c0afc48"
       },
-      "version": "1.8.0"
+      "version": "1.10.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": {
       "shasums": {
-        "jar": "7b7c445880cef94dc464f4733da1b33b94bee78805041ea08ae06e8507e4620e"
+        "jar": "af1e3e1e8ee3176468e1ec729df853b2066071de94a84c412ad9fa135cb37f3a"
       },
-      "version": "1.8.0"
+      "version": "1.10.0"
     },
     "org.jetbrains.pty4j:pty4j": {
       "shasums": {
@@ -217,9 +217,9 @@
     },
     "org.jetbrains:annotations": {
       "shasums": {
-        "jar": "2037be378980d3ba9333e97955f3b2cde392aa124d04ca73ce2eee6657199297"
+        "jar": "ebc7aec252ed0c7d2d04c039d7f00e69f7b86b1f493c741d67b3ef31b986b054"
       },
-      "version": "26.0.2"
+      "version": "26.1.0"
     },
     "org.jspecify:jspecify": {
       "shasums": {
@@ -229,15 +229,15 @@
     },
     "org.mockito:mockito-core": {
       "shasums": {
-        "jar": "c320f662a03c2951edcc51a44b64d79a8e994373ff548453b5fdaf69debe4682"
+        "jar": "18a206368c2c8fd693e762f3743e365acc208c32b1a75f26eeaa9af3b09261c7"
       },
-      "version": "5.8.0"
+      "version": "5.22.0"
     },
     "org.objenesis:objenesis": {
       "shasums": {
-        "jar": "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb"
+        "jar": "6f5abd42cf3ebc0f2bdae73dbc57820fc4a1cb8930492841e29e9a9f9dcc86e0"
       },
-      "version": "3.3"
+      "version": "3.5"
     },
     "org.opentest4j:opentest4j": {
       "shasums": {
@@ -628,7 +628,6 @@
     ],
     "org.mockito:mockito-core": [
       "org.mockito",
-      "org.mockito.codegen",
       "org.mockito.configuration",
       "org.mockito.creation.instance",
       "org.mockito.exceptions.base",
@@ -646,6 +645,8 @@
       "org.mockito.internal.configuration.plugins",
       "org.mockito.internal.creation",
       "org.mockito.internal.creation.bytebuddy",
+      "org.mockito.internal.creation.bytebuddy.access",
+      "org.mockito.internal.creation.bytebuddy.codegen",
       "org.mockito.internal.creation.instance",
       "org.mockito.internal.creation.proxy",
       "org.mockito.internal.creation.settings",
