@@ -80,8 +80,7 @@ class HeaderCacheService(private val project: Project) {
   private val cacheTracker: MutableSet<String> = mutableSetOf()
 
   private fun TargetKey.cacheDirectory(): Path {
-    // TODO: use different cache directories depending on the configuration
-    return cacheDirectory.resolve("default")
+    return cacheDirectory.resolve(configurationId().ifBlank { "default" })
   }
 
   @Synchronized
@@ -126,7 +125,7 @@ class HeaderCacheService(private val project: Project) {
       if (!isInBazelBin(header)) continue
 
       // check if the header is already present in the cache
-      if (!cacheTracker.add(header.relativePath())) continue
+      if (!cacheTracker.add(key.configurationId() + "/" + header.relativePath())) continue
 
       val path = resolveCachePath(targetCacheDirectory, header)
 
@@ -157,7 +156,7 @@ class HeaderCacheService(private val project: Project) {
         }
       } catch (e: IOException) {
         cacheTracker.remove(header.relativePath())
-        LOG.warn("failed to cache header ${header.relativePath()} for ${key.label()}", e)
+        LOG.warn("failed to cache header ${header.relativePath()} for ${key.label()} (${key.configurationId()})", e)
       }
     }
   }
