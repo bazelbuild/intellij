@@ -1,7 +1,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 
 _BAZEL_URL_TEMPLATE = "https://github.com/bazelbuild/bazel/archive/refs/tags/{tag}.tar.gz"
-_BAZEL_SOURCE_DIR = "sources"
+_BAZEL_SOURCE_DIR = "bazel"
 
 def _resolve_target_artifact(rctx, target):
     """Finds the generated artifact in the local bazel-bin directory."""
@@ -28,6 +28,10 @@ def _bazel_build_jars_impl(rctx):
         output = _BAZEL_SOURCE_DIR,
     )
 
+    for patch in rctx.attr.patches:
+        rctx.report_progress("applying patch: %s" % patch)
+        rctx.patch(rctx.path(patch), strip = 1)
+
     # windows requires non-hermetic build to avoid long paths issues :(
     if "windows" in rctx.os.name.lower():
         build_cmd = [bazel, "build"]
@@ -53,5 +57,6 @@ bazel_build_jars = repository_rule(
         "sha256": attr.string(mandatory = True),
         "tag": attr.string(mandatory = True),
         "jars": attr.string_list(mandatory = True),
+        "patches": attr.label_list(default = []),
     },
 )

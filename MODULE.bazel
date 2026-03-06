@@ -199,4 +199,7 @@ bazel_build_jars(
         "//src/tools/execlog:parser_deploy.jar",
         "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",
     ],
+    patches = [
+        "//third_party/bazel/jars:starlark_repl.patch",
+    ],
 )
