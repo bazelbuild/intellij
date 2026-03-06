@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,6 +34,8 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.application.ApplicationManager;
@@ -183,7 +186,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
 
     // Callback is specific to query sync
     @Override
-    public void afterQuerySync(Project project, BlazeContext context) {
+    public void afterSync(Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult, ImmutableSet<Integer> buildIds) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return;
       }
