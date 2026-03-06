@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableMap
 import com.google.common.collect.ImmutableSet
 import com.google.idea.blaze.base.buildview.pushJob
 import com.google.idea.blaze.base.command.info.BlazeInfo
-import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo
 import com.google.idea.blaze.base.ideinfo.TargetKey
 import com.google.idea.blaze.base.model.BlazeProjectData
@@ -47,13 +46,13 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
   override fun getValidHeaderRoots(
     parentContext: BlazeContext,
     projectData: BlazeProjectData,
-    toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
+    compilerSettings: ImmutableMap<TargetKey, BlazeCompilerSettings>,
     targetFilter: Predicate<TargetIdeInfo>,
     executionRootPathResolver: ExecutionRootPathResolver,
   ): ImmutableSet<Path> = Scope.push<ImmutableSet<Path>>(parentContext) { ctx ->
     ctx.push(TimingScope("Resolve header include roots", TimingScope.EventType.Other))
 
-    val paths = collectExecutionRootPaths(projectData, targetFilter, toolchainLookupMap)
+    val paths = collectExecutionRootPaths(projectData, targetFilter, compilerSettings)
 
     val builder = ImmutableSet.builder<Path>()
     runBlocking {
@@ -77,7 +76,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
 private fun collectExecutionRootPaths(
   projectData: BlazeProjectData,
   targetFilter: Predicate<TargetIdeInfo>,
-  toolchainLookupMap: ImmutableMap<TargetKey, CToolchainIdeInfo>,
+  compilerSettings: ImmutableMap<TargetKey, BlazeCompilerSettings>,
 ): Set<ExecutionRootPath> {
   val paths = mutableSetOf<ExecutionRootPath>()
 
@@ -94,8 +93,8 @@ private fun collectExecutionRootPaths(
   // the compiler info collection, and therefore it would be safe to filter these header roots. But this would make
   // the filter stricter, and it is unclear if this would affect any users.
   // NOTE: if the toolchain uses an external sysroot, CLion might not be able to discover the all builtin include paths.
-  for (toolchain in toolchainLookupMap.values) {
-    paths.addAll(toolchain.builtInIncludeDirectories())
+  for (settings in compilerSettings.values) {
+    paths.addAll(settings.builtInIncludes())
   }
 
   return paths

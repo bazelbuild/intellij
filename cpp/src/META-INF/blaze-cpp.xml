@@ -16,12 +16,6 @@
 <idea-plugin>
   <depends>com.intellij.nativeDebug</depends>
 
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.cpp.BlazeCWorkspace</implementation-class>
-    </component>
-  </project-components>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.cpp.SourceFileFinder"
                     interface="com.google.idea.blaze.cpp.SourceFileFinder"/>
@@ -93,5 +87,6 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.cpp.HeaderRootTrimmer"
                     serviceImplementation="com.google.idea.blaze.cpp.HeaderRootTrimmerImpl"/>
+    <postStartupActivity implementation="com.google.idea.blaze.cpp.CMakeWorkspaceOverride"/>
   </extensions>
 </idea-plugin>

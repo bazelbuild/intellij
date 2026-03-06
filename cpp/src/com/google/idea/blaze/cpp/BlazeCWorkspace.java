@@ -19,7 +19,6 @@ package com.google.idea.blaze.cpp;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
@@ -28,8 +27,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
@@ -37,7 +34,7 @@ import com.google.idea.blaze.cpp.sync.HeaderCacheService;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -51,9 +48,7 @@ import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
@@ -77,7 +72,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Main entry point for C/CPP configuration data. */
-public final class BlazeCWorkspace implements ProjectComponent {
+@Service(Service.Level.PROJECT)
+public final class BlazeCWorkspace {
 
   // Required by OCWorkspaceImpl.ModifiableModel::commit
   // This component is never actually serialized, and this should not ever need to change
@@ -91,7 +87,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
 
   private final Project project;
 
-  @Keep // Instantiated as an IntelliJ project component.
   private BlazeCWorkspace(Project project) {
     this.configurationResolver = new BlazeConfigurationResolver(project);
     this.resolverResult = BlazeConfigurationResolverResult.empty();
@@ -99,15 +94,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
   }
 
   public static BlazeCWorkspace getInstance(Project project) {
-    return project.getComponent(BlazeCWorkspace.class);
+    return project.getService(BlazeCWorkspace.class);
   }
 
-  @Override
-  public void projectOpened() {
-    if (Blaze.getProjectType(project) == ProjectType.QUERY_SYNC) {
-      return;
-    }
-    CMakeWorkspaceOverride.undoCMakeModifications(project);
+  public ImmutableList<BlazeResolveConfiguration> getResolveConfigurations() {
+    return resolverResult.getAllConfigurations();
   }
 
   public void update(
