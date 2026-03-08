@@ -102,6 +102,10 @@ public class AndroidSdkPlatformSection {
                 .collect(toList());
         builder.add(TextBlockSection.of(new TextBlock(ImmutableList.copyOf(sdkOptions))));
       }
+      builder.add(
+          TextBlockSection.of(
+              TextBlock.of("# For non-Android projects, uncomment the following line:")));
+      builder.add(TextBlockSection.of(TextBlock.of("# workspace_type: java")));
       return builder.build();
     }
 
