@@ -99,7 +99,8 @@ private fun toBlazeConfiguration(json: ConfigurationJson): BlazeConfiguration {
     throw IllegalStateException("Missing field 'configHash' in config JSON")
   }
 
-  val coreOptions = json.fragmentOptions.first { it.name.contains("CoreOptions") }.options
+  val coreOptions = json.fragmentOptions.firstOrNull { it.name.contains("CoreOptions") }?.options
+    ?: throw IllegalStateException("Missing 'CoreOptions' fragment in config JSON")
   val cpu = coreOptions["cpu"] ?: throw IllegalStateException("Missing option 'cpu'")
   val mode = coreOptions["compilation_mode"] ?: throw IllegalStateException("Missing option 'compilation_mode'")
   val platformSuffix = coreOptions["platform_suffix"] ?: "null" // can be null
