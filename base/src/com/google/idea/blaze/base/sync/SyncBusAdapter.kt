@@ -38,7 +38,7 @@ class SyncBusAdapter : SyncListener {
       project,
       context,
       syncMode,
-    );
+    )
   }
 
   override fun buildStarted(
