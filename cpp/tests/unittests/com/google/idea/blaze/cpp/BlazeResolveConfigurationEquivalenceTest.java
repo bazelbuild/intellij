@@ -568,7 +568,7 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   @Test
-  public void testTargetsWithDifferentConfigurationIds_groupedByEquivalence() {
+  public void testTargetsWithDifferentConfigurationIds_separatedByEquivalence() {
     final var projectView = projectView(
         directories("foo/bar"),
         targets("//foo/bar:binary", "//foo/bar:test")
@@ -595,12 +595,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .build();
 
     final var configurations = resolve(projectView, targetMap);
-    assertThat(configurations).hasSize(1);
-    assertThat(get(configurations, "//foo/bar:binary (configA) and 1 other target(s)")).isNotNull();
+    assertThat(configurations).hasSize(2);
+    assertThat(get(configurations, "//foo/bar:binary (configA)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:test (configB)")).isNotNull();
   }
 
   @Test
-  public void testSameLabelDifferentConfigs_sameCompilerSettings_grouped() {
+  public void testSameLabelDifferentConfigs_sameCompilerSettings_separated() {
     final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
 
     final var targetMap = TargetMapBuilder.builder()
@@ -628,8 +629,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         .build();
 
     final var configurations = resolve(projectView, targetMap);
-    assertThat(configurations).hasSize(1);
-    assertThat(get(configurations, "//foo/bar:binary (configA) and 1 other target(s)")).isNotNull();
+    assertThat(configurations).hasSize(2);
+    assertThat(get(configurations, "//foo/bar:binary (configA)")).isNotNull();
+    assertThat(get(configurations, "//foo/bar:binary (configB)")).isNotNull();
   }
 
   @Test
