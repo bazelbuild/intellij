@@ -315,11 +315,10 @@ public final class BlazeCWorkspace {
         }
       }
 
-      final var id = resolveConfiguration.getDisplayName();
       final var modelConfig = addConfiguration(
           /* workspaceModifiable = */ workspaceModifiable,
-          /* id = */ id,
-          /* displayName = */ id,
+          /* id = */ resolveConfiguration.getUniqueId(),
+          /* displayName = */ resolveConfiguration.getDisplayName(),
           /* directory = */ blazeProjectData.blazeInfo().getExecutionRoot(),
           /* configLanguages = */ configLanguages,
           /* configSourceFiles = */ configSourceFiles
@@ -335,14 +334,14 @@ public final class BlazeCWorkspace {
 
   private static OCResolveConfiguration.ModifiableModel addConfiguration(
       OCWorkspaceImpl.ModifiableModel workspaceModifiable,
-      String id,
+      BlazeResolveConfigurationID id,
       String displayName,
       File directory,
       Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
       Map<VirtualFile, PerFileCompilerOpts> configSourceFiles
   ) {
     final var config = workspaceModifiable.addConfiguration(
-        /* id = */ id,
+        /* id = */ id.toString(),
         /* name = */ displayName,
         /* variant = */ null,
         /* fileSeparators = */ OCResolveConfiguration.DEFAULT_FILE_SEPARATORS
