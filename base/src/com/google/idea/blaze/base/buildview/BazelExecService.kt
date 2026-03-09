@@ -227,7 +227,11 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
     return executionScope(ctx) {
       val stdout = StringBuilder()
-      execute(ctx, cmdBuilder, stdout::append)
+
+      val exitCode = execute(ctx, cmdBuilder, stdout::append)
+      if (exitCode != 0) {
+        throw ExecutionException("Bazel command failed with exit code $exitCode")
+      }
 
       stdout.toString()
     }
