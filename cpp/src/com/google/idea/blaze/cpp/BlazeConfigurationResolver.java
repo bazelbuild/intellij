@@ -237,6 +237,6 @@ final class BlazeConfigurationResolver {
     if (compilerSettings == null) {
       return null;
     }
-    return BlazeResolveConfigurationData.create(cIdeInfo, compilerSettings);
+    return BlazeResolveConfigurationData.create(target.getKey(), cIdeInfo, compilerSettings);
   }
 }

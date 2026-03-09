@@ -18,11 +18,14 @@ package com.google.idea.blaze.cpp;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 
 /** Data for clustering {@link BlazeResolveConfiguration} by "equivalence". */
 @AutoValue
 public abstract class BlazeResolveConfigurationData {
+
+  public abstract String configurationId();
 
   public abstract BlazeCompilerSettings compilerSettings();
 
@@ -41,6 +44,7 @@ public abstract class BlazeResolveConfigurationData {
   public abstract ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories();
 
   static BlazeResolveConfigurationData create(
+      TargetKey targetKey,
       CIdeInfo cIdeInfo,
       BlazeCompilerSettings compilerSettings
   ) {
@@ -48,6 +52,7 @@ public abstract class BlazeResolveConfigurationData {
     final var compilationCtx = cIdeInfo.compilationContext();
 
     return builder()
+        .setConfigurationId(targetKey.configurationId())
         .setCompilerSettings(compilerSettings)
         .setLocalCopts(ruleCtx.copts())
         .setLocalConlyopts(ruleCtx.conlyopts())
@@ -65,6 +70,8 @@ public abstract class BlazeResolveConfigurationData {
 
   @AutoValue.Builder
   public abstract static class Builder {
+
+    public abstract Builder setConfigurationId(String value);
 
     public abstract Builder setCompilerSettings(BlazeCompilerSettings value);
 
