@@ -25,13 +25,23 @@ kt_jvm_library(
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/clion/**",  #api252
         "com/google/idea/sdkcompat/ide/**",  #api252
-        "com/google/idea/sdkcompat/testFramework/**",  #api252
     ]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
         "//third_party/javascript",
+    ],
+)
+
+kt_jvm_library(
+    name = "v261_testFramework",
+    testonly = 1,
+    srcs = glob(["com/google/idea/sdkcompat/testFramework/**"]),  #api252
+    visibility = ["//sdkcompat:__pkg__"],
+    deps = [
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 

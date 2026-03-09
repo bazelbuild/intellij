@@ -13,6 +13,6 @@ intellij_plugin_library(
     visibility = ["//clwb:__subpackages__"],
     deps = [
         "//clwb:clwb_lib",
-        "//sdkcompat:sdkcompat_radler",
+        "//sdkcompat:radler",
     ],
 )
