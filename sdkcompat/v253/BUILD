@@ -41,7 +41,7 @@ kt_jvm_library(
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:plugin_api",
+        "//intellij_platform_sdk:plugin_api_for_tests",
     ],
 )
 
