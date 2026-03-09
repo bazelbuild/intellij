@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
+import com.google.idea.blaze.base.model.BlazeConfigurationData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -76,6 +77,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
+import org.jetbrains.annotations.Nullable;
 
 /** Runs the 'blaze build' phase of sync. */
 public final class BuildPhaseSyncTask {
@@ -245,8 +247,7 @@ public final class BuildPhaseSyncTask {
                 .getCapabilities()
                 .contains(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS));
 
-    BlazeBuildOutputs blazeBuildResult =
-        getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
+    final var blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult())
@@ -270,13 +271,8 @@ public final class BuildPhaseSyncTask {
     }
     context.output(PrintOutput.log(invocationResultMsg));
 
-    try {
-      final var configData = BlazeConfigRunner.getInstance().runBlazeConfig(project, defaultInvoker, context);
-      resultBuilder.setConfigurationData(configData);
-    } catch (BlazeConfigException e) {
-      IssueOutput.warn("Failed to fetch configuration data").withThrowable(e).submit(context);
-      resultBuilder.setConfigurationData(null);
-    }
+    // fetch bazel configs, returns null if no build was issued
+    resultBuilder.setConfigurationData(getBlazeConfigData(context, defaultInvoker));
   }
 
   private void printShardingSummary(
@@ -394,34 +390,55 @@ public final class BuildPhaseSyncTask {
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,
       BuildInvoker invoker,
-      boolean invokeParallel) {
+      boolean invokeParallel
+  ) {
+    if (!syncParams.syncMode().involvesBlazeBuild()) {
+      return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
+    }
 
-    return Scope.push(
-        parentContext,
-        context -> {
-          context.push(new TimingScope("BlazeBuild", EventType.BlazeInvocation));
-          context.output(
-              new StatusOutput(
-                  String.format(
-                      "Building %s %s targets...",
-                      shardedTargets.getTotalTargets(),
-                      Blaze.getBuildSystemName(project).getName())));
-          // We don't want blaze build errors to fail the whole sync
-          context.setPropagatesErrors(false);
+    return Scope.push(parentContext, context -> {
+      context.push(new TimingScope("BlazeBuild", EventType.BlazeInvocation));
+      context.output(
+          new StatusOutput(
+              String.format(
+                  "Building %s %s targets...",
+                  shardedTargets.getTotalTargets(),
+                  Blaze.getBuildSystemName(project).getName())));
+      // We don't want blaze build errors to fail the whole sync
+      context.setPropagatesErrors(false);
 
-          BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.build(
-              project,
-              context,
-              workspaceRoot,
-              projectState.getBlazeVersionData(),
-              invoker,
-              projectViewSet,
-              shardedTargets,
-              projectState.getLanguageSettings(),
-              ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO),
-              BlazeInvocationContext.SYNC_CONTEXT,
-              invokeParallel);
-        });
+      BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
+      return blazeIdeInterface.build(
+          project,
+          context,
+          workspaceRoot,
+          projectState.getBlazeVersionData(),
+          invoker,
+          projectViewSet,
+          shardedTargets,
+          projectState.getLanguageSettings(),
+          ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO),
+          BlazeInvocationContext.SYNC_CONTEXT,
+          invokeParallel);
+    });
+  }
+
+  @Nullable
+  private BlazeConfigurationData getBlazeConfigData(BlazeContext parentContext, BuildInvoker invoker) {
+    if (!syncParams.syncMode().involvesBlazeBuild()) {
+      return null;
+    }
+
+    return Scope.push(parentContext, context -> {
+      context.push(new TimingScope("BlazeConfig", EventType.BlazeInvocation));
+      context.setPropagatesErrors(false);
+
+      try {
+        return BlazeConfigRunner.getInstance().runBlazeConfig(project, invoker, context);
+      } catch (BlazeConfigException e) {
+        IssueOutput.warn("Failed to fetch configuration data").withThrowable(e).submit(context);
+        return null;
+      }
+    });
   }
 }
