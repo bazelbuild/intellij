@@ -20,6 +20,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.google.idea.blaze.base.bazel.BuildSystem
 import com.google.idea.blaze.base.buildview.BazelExecService
+import com.google.idea.blaze.base.buildview.println
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
 import com.google.idea.blaze.base.model.BlazeConfiguration
@@ -42,7 +43,15 @@ class BlazeConfigRunnerImpl : BlazeConfigRunner {
     invoker: BuildSystem.BuildInvoker,
     context: BlazeContext
   ): BlazeConfigurationData {
-    return BlazeConfigurationData.create(parseJson(runBlazeConfigGetJson(project, context, invoker)))
+    val configs = parseJson(runBlazeConfigGetJson(project, context, invoker))
+    if (configs.isEmpty()) {
+      throw BlazeConfigException("No configurations found")
+    }
+
+    context.println("Loaded ${configs.size} configurations:")
+    configs.values.forEach { context.println("  ${it.mnemonic()} (${it.id()})") }
+
+    return BlazeConfigurationData.create(configs)
   }
 
   @Throws(BlazeConfigException::class)
@@ -64,7 +73,7 @@ class BlazeConfigRunnerImpl : BlazeConfigRunner {
 
   @Throws(BlazeConfigException::class)
   private fun parseJson(json: String): ImmutableMap<String, BlazeConfiguration> {
-    return runCatching { gson.fromJsonTyped<List<ConfigurationJson>>(json) }
+    return runCatching { gson.fromJsonTyped<List<ConfigurationJson>>(json) ?: emptyList() }
       .getOrElse { throw BlazeConfigException("could not process config JSON", it) }
       .mapNotNull { runCatching { toBlazeConfiguration(it) }.getOrLogException(LOG) }
       .fold(ImmutableMap.builder<String, BlazeConfiguration>()) { acc, it -> acc.put(it.id(), it) }
@@ -88,7 +97,7 @@ private data class FragmentOptionsJson(
 /**
  * Refined helper method for type GSON parsing.
  */
-private inline fun <reified T> Gson.fromJsonTyped(json: String): T {
+private inline fun <reified T : Any> Gson.fromJsonTyped(json: String): T? {
   return fromJson(json, object : TypeToken<T>() {}.type)
 }
 
