@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import com.intellij.openapi.util.SystemInfo;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,22 +47,21 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
   private final String relativePath;
 
   /**
-   * @param relativePath relative path that must use the Blaze specific separator char to separate
-   *     path components
+   * @param relativePath workspace relative path, also handle windows paths correctly
    * @throws IllegalArgumentException if the path is invalid
    */
   public WorkspacePath(String relativePath) {
-    String normalizedRelativePath = normalizePathSeparator(relativePath);
-    String error = validate(normalizedRelativePath);
+    final var normalizedRelativePath = FileUtilRt.toSystemIndependentName(relativePath);
+    final var error = validate(normalizedRelativePath);
     if (error != null) {
-      throw new IllegalArgumentException(
-          String.format("Invalid workspace path '%s': %s", relativePath, error));
+      throw new IllegalArgumentException(String.format("Invalid workspace path '%s': %s", relativePath, error));
     }
+
     this.relativePath = normalizedRelativePath;
   }
 
-  private static String normalizePathSeparator(String relativePath) {
-    return SystemInfo.isWindows ? relativePath.replace('\\', BLAZE_COMPONENT_SEPARATOR) : relativePath;
+  public WorkspacePath(Path path) {
+    this(path.toString());
   }
 
   public WorkspacePath(WorkspacePath parentPath, String childPath) {

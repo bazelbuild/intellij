@@ -138,7 +138,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
 
     val absolutePath = Path.of(settings.workspaceRoot).relativize(relativePath)
     return Optional.of(Label.create(
-      WorkspacePath(absolutePath.parent.toString()),
+      WorkspacePath(absolutePath.parent),
       TargetName.create(absolutePath.fileName.toString())
     ))
   }
