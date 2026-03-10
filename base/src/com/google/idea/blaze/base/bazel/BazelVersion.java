@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 
 /** Bazel version */
 public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
+
   public static final BazelVersion DEVELOPMENT = new BazelVersion(999, 999, 999);
   private static final Pattern PATTERN = Pattern.compile("([[0-9]\\.]+)");
 
@@ -132,10 +133,21 @@ public class BazelVersion implements ProtoWrapper<ProjectData.BazelVersion> {
 
   public boolean isAtLeast(int major, int minor, int bugfix) {
     return ComparisonChain.start()
-            .compare(this.major, major)
-            .compare(this.minor, minor)
-            .compare(this.bugfix, bugfix)
-            .result()
-        >= 0;
+        .compare(this.major, major)
+        .compare(this.minor, minor)
+        .compare(this.bugfix, bugfix)
+        .result() >= 0;
+  }
+
+  public boolean isAtMost(BazelVersion version) {
+    return isAtMost(version.major, version.minor, version.bugfix);
+  }
+
+  public boolean isAtMost(int major, int minor, int bugfix) {
+    return ComparisonChain.start()
+        .compare(this.major, major)
+        .compare(this.minor, minor)
+        .compare(this.bugfix, bugfix)
+        .result() < 0;
   }
 }

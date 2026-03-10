@@ -200,9 +200,16 @@ clwb_headless_test(
     project = "transition",
 )
 
+clwb_headless_test(
+    name = "arm_toolchain_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ArmToolchainTest.java"],
+    project = "arm_toolchain",
+)
+
 test_suite(
     name = "headless_tests",
     tests = [
+        ":arm_toolchain_headless_test",
         ":clang_cl_headless_test",
         ":example_headless_test",
         ":execution_headless_test",

@@ -37,7 +37,7 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
 
   // on windows clang-cl is required to compile protobuf and therefore also bazel 8+
   @Rule
-  public final BazelVersionRule bazelWindowsRule = new BazelVersionRule(OS.Windows, 8, 0);
+  public final BazelVersionRule bazelWindowsRule = BazelVersionRule.min(OS.Windows, 8, 0);
 
   @Test
   public void testClwb() {

@@ -1,0 +1,15 @@
+bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
+bazel_dep(name = "toolchains_arm_gnu", version = "1.1.0")
+bazel_dep(name = "platforms", version = "1.0.0")
+
+single_version_override(
+    module_name = "toolchains_arm_gnu",
+    patches = [":toolchains_arm_gnu.patch"],
+    patch_strip = 1,
+)
+
+arm_toolchain = use_extension("@toolchains_arm_gnu//:extensions.bzl", "arm_toolchain")
+arm_toolchain.arm_none_eabi(version = "13.2.1-1.1")
+use_repo(arm_toolchain, "arm_none_eabi")
+register_toolchains("//toolchain:all")
