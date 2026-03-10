@@ -25,10 +25,6 @@ public class LlvmToolchainTest extends ClwbHeadlessTestCase {
   @Rule
   public final OSRule osRule = new OSRule(OS.Linux, OS.macOS);
 
-  // llvm toolchain currently only supports bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     // required because this test targets wasm

@@ -28,10 +28,6 @@ public class LibCppTest extends ClwbHeadlessTestCase {
   @Rule
   public final OSRule osRule = new OSRule(OS.Linux, OS.macOS);
 
-  // catch requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Test
   public void testClwb() throws IOException {
     assertExists(new File("/usr/bin/clang"));

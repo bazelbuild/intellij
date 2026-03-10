@@ -27,10 +27,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class SimpleTest extends ClwbHeadlessTestCase {
 
-  // catch requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Test
   public void testClwb() throws IOException {
     final var errors = runSync(defaultSyncParams().build());

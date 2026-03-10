@@ -16,10 +16,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
 
-  // use_repo_rule requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Test
   public void testClwb() {
     setIncludesCacheEnabled(true);
