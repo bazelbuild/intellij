@@ -30,7 +30,9 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.google.idea.blaze.base.toolwindow.Task
-import com.google.idea.blaze.common.Label
+import com.google.idea.blaze.base.model.primitives.Label
+import com.google.idea.blaze.base.model.primitives.TargetName
+import com.google.idea.blaze.base.model.primitives.WorkspacePath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -135,7 +137,10 @@ class AspectStorageService(private val project: Project, private val scope: Coro
     if (!Files.exists(relativePath)) return Optional.empty()
 
     val absolutePath = Path.of(settings.workspaceRoot).relativize(relativePath)
-    return Optional.of(Label.fromWorkspacePackageAndName("", absolutePath.parent, absolutePath.fileName))
+    return Optional.of(Label.create(
+      WorkspacePath(absolutePath.parent.toString()),
+      TargetName.create(absolutePath.fileName.toString())
+    ))
   }
 
   private fun aspectDirectory(settings: BlazeImportSettings): Path? {
