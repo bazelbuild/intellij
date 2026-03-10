@@ -255,15 +255,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     builder.addRootDirectory();
     builder.setDeriveTargetsFromDirectories(true);
 
-    // required for Bazel 6 integration tests
-    builder.addBuildFlag("--enable_bzlmod");
-
-    if (version.isAtLeast(7, 0, 0)) {
-      // required for external modules
-      builder.addBuildFlag("--incompatible_use_plus_in_repo_names");
-      // required as build and sync flag to work for both async and qsync
-      builder.addSyncFlag("--incompatible_use_plus_in_repo_names");
-    }
+    // required for external modules
+    builder.addBuildFlag("--incompatible_use_plus_in_repo_names");
+    // required as build and sync flag to work for both async and qsync
+    builder.addSyncFlag("--incompatible_use_plus_in_repo_names");
 
     return builder;
   }

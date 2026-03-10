@@ -13,10 +13,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ExampleTest extends ClwbHeadlessTestCase {
 
-  // this test requires bazel 7+ because of googletest dependencies
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());

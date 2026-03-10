@@ -43,10 +43,6 @@ private const val ECHO_OUTPUT_MARKER = "ECHO_OUTPUT_FILE: "
 @RunWith(JUnit4::class)
 class ExecutionTest : ClwbHeadlessTestCase() {
 
-  @Rule
-  @JvmField
-  val bazelRule = BazelVersionRule(7, 0)
-
   @Test
   fun testClwb() {
     val errors = runSync(defaultSyncParams().build())
@@ -67,7 +63,6 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   override fun projectViewText(version: BazelVersion): ProjectViewBuilder {
     val builder = super.projectViewText(version)
 
-    // Required for building with bazel 6
     if (OS.CURRENT == OS.Windows) {
       builder.addBuildFlag("--cxxopt=/std:c++17")
     } else {
