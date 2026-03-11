@@ -17,14 +17,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ClangClTest extends ClwbHeadlessTestCase {
 
-  // clang-cl only runs on windows
-  @Rule
-  public final OSRule osRule = new OSRule(OS.Windows);
-
-  // clang-cl requires Bazel 8+; should work for 7 too, but I cannot get it working :c
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(8, 0);
-
   @Test
   public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());

@@ -11,6 +11,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//shared",
+        "//testing/bazel:fixture",
         "//third_party/java/junit",
     ],
 )

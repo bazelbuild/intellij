@@ -6,7 +6,6 @@ import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
@@ -19,10 +18,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TransitionTest extends ClwbHeadlessTestCase {
-
-  // configuration ids are only exposed for Bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {

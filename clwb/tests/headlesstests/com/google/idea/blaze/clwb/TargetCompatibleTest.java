@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.SystemInfo;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,10 +12,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class TargetCompatibleTest extends ClwbHeadlessTestCase {
-
-  // the --skip_incompatible_explicit_targets flag is only supported in bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Test
   public void testClwb() throws Exception {

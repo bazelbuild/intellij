@@ -7,7 +7,6 @@ import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.util.system.OS;
 import org.junit.Rule;
@@ -17,13 +16,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ProtobufCacheTest extends ClwbHeadlessTestCase {
-
-  // protobuf requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-  // on windows clang-cl is required to compile protobuf and therefore also bazel 8+
-  @Rule
-  public final BazelVersionRule bazelWindowsRule = new BazelVersionRule(OS.Windows, 8, 0);
 
   @Test
   public void testClwb() {

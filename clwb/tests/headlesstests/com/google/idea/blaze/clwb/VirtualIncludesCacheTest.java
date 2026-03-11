@@ -7,7 +7,6 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertWorkspaceHeader;
 import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,10 +14,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
-
-  // use_repo_rule requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Test
   public void testClwb() {
