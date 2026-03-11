@@ -1,12 +1,6 @@
 """Custom rule for creating IntelliJ plugin tests.
 """
 
-load("@bazel_binaries//:defs.bzl", "bazel_binaries")
-load(
-    "@rules_bazel_integration_test//bazel_integration_test:defs.bzl",
-    "bazel_integration_test",
-    "integration_test_utils",
-)
 load("@rules_java//java:defs.bzl", "java_test")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//build_defs:build_defs.bzl", "api_version_txt")
@@ -313,42 +307,3 @@ def _get_test_srcs(targets):
         files = depset(transitive = [files, target.files])
     return [f for f in files.to_list() if (f.basename.endswith("Test.java") or f.basename.endswith("Test.kt"))]
 
-def bazel_integration_tests(name, env = None, tags = None, last_green = True, **kwargs):
-    """
-    Generates a bazel integration test for every configured bazel and sets the
-    BIT_BAZEL_VERSION environment variable. Also generates a manual test suite
-    to run all tests, the integration tests itself are not marked as manual.
-
-    Integration tests are marked as exclusive since some less powerful CI
-    runners can run out of memory when executing too many of these tests in
-    parallel.
-    """
-    env = env or {}
-    tags = tags or ["exclusive"]
-
-    for version in bazel_binaries.versions.all:
-        if version == "last_green" and not last_green:
-            continue
-
-        env["BIT_BAZEL_VERSION"] = version
-
-        # used to run last_green test separately
-        version_tag = "bit_bazel_%s" % version.replace(".", "_")
-
-        bazel_integration_test(
-            name = integration_test_utils.bazel_integration_test_name(name, version),
-            bazel_version = version,
-            env = env,
-            tags = tags + [version_tag],
-            **kwargs
-        )
-
-    native.test_suite(
-        name = name,
-        tags = ["manual"],
-        tests = integration_test_utils.bazel_integration_test_names(
-            name,
-            # do not include last_green test into default test suite
-            [version for version in bazel_binaries.versions.all if version != "last_green"],
-        ),
-    )
