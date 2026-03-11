@@ -51,6 +51,14 @@ python.toolchain(
 )
 use_repo(python, "python_3_12", "python_versions")
 
+bazel_versions = use_extension("//testing/bazel:extension.bzl", "bazel_versions")
+bazel_versions.download(versions = [
+    "7.7.1",
+    "8.6.0",
+    "9.0.0",
+])
+use_repo(bazel_versions, "bazel_versions")
+
 # configure bazel binaries for rules_bazel_integration_test
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "6.6.0")
