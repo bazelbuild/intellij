@@ -30,15 +30,12 @@ def _compute_plugin_layout(prefix, targets):
 
     return mapping
 
-def _derive_test_class(class_name, test_directory, package = None):
+def _derive_test_class(class_name, test_directory):
     """Derives the fully qualified test class name.
 
     If the package name is not provided explicitly the package name is derived
     from the current Bazel package.
     """
-    if package:
-        return "%s.%s" % (package, class_name)
-
     parts = native.package_name().split("/")
 
     if test_directory not in parts:

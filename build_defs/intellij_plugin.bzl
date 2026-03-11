@@ -38,7 +38,7 @@ intellij_plugin(
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_binary", "java_common", "java_import")
-load(":intellij_plugin_library.bzl", "OptionalPluginXmlInfo", "IntellijPluginLibraryInfo")
+load(":intellij_plugin_library.bzl", "IntellijPluginLibraryInfo", "OptionalPluginXmlInfo")
 
 def _optional_plugin_xml_impl(ctx):
     attr = ctx.attr
@@ -342,4 +342,5 @@ def intellij_plugin(
         plugin_icons = plugin_icons,
         tags = tags,
         testonly = testonly,
+        **kwargs
     )
