@@ -37,16 +37,19 @@ def _format_version_label(version):
 
 def _bazel_versions_impl(rctx):
     content = _BUILD_FILE_HEADER
+    os = _os_name(rctx)
+    arch = _arch_name(rctx)
+    suffix = ".exe" if os == "windows" else ""
 
     for version in rctx.attr.versions:
         name = _format_version_label(version)
-        executable = "%s_bin" % name
+        executable = "%s_bin%s" % (name, suffix)
 
         url = _BAZEL_RELEASE_URL.format(
             version = version,
-            os = _os_name(rctx),
-            arch = _arch_name(rctx),
-        )
+            os = os,
+            arch = arch,
+        ) + suffix
 
         rctx.download(
             url = url,
@@ -71,16 +74,11 @@ def _bazel_versions_impl(rctx):
             '    %d: struct(version = "%s", label = "@bazel_versions//:%s")' % (major, version, label),
         )
 
-    versions_bzl = "VERSIONS = {\n%s\n}\n" % ",\n".join(versions_entries)
-    versions_bzl += """
-def resolve(major):
-    \"\"\"Resolves a major version integer to a struct(version, label).\"\"\"
-    if major not in VERSIONS:
-        fail("Unknown Bazel major version: %d. Available: %s" % (major, sorted(VERSIONS.keys())))
-    return VERSIONS[major]
-"""
-
-    rctx.file("versions.bzl", versions_bzl)
+    rctx.template(
+        "versions.bzl",
+        Label(":versions.bzl.tpl"),
+        substitutions = {"%{versions_entries}": ",\n".join(versions_entries)},
+    )
 
 bazel_versions = repository_rule(
     implementation = _bazel_versions_impl,
