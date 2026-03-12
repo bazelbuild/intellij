@@ -24,6 +24,7 @@ fun main(args: Array<String>) {
     cmd.add(Path.of(bazel.executable).toAbsolutePath().toString())
     cmd.add("--output_user_root=$outputRootDirectory")
     cmd.add("build")
+    cmd.add("--nobuild")
     cmd.add("--repository_cache=$cacheDirectory")
 
     cmd.addAll(input.flagsList)
