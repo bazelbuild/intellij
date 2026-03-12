@@ -23,10 +23,10 @@ class BazelProjectFixture : ExternalResource() {
   override fun apply(base: Statement, description: Description): Statement {
     val config = parseConfig()
 
-    projectDirectory = Files.createTempDirectory("bazel-fixture-project")
+    projectDirectory = tempDirectory("project")
     unzip(config.projectArchive.rlocation(), projectDirectory)
 
-    repositoryCache = Files.createTempDirectory("bazel-fixture-cache")
+    repositoryCache = tempDirectory("cache")
     unzip(config.repoCacheArchive.rlocation(), repositoryCache)
 
     bazelExecutable = config.bazelBinary.executable.rlocation()

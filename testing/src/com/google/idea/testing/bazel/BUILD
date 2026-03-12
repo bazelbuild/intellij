@@ -12,6 +12,12 @@ java_library(
 )
 
 kt_jvm_library(
+    name = "lib",
+    srcs = ["lib.kt"],
+    deps = [":kotlin_stdlib"],
+)
+
+kt_jvm_library(
     name = "zip",
     srcs = ["zip.kt"],
     deps = [":kotlin_stdlib"],
@@ -33,6 +39,7 @@ kt_jvm_library(
     deps = [
         ":cache_java_proto",
         ":kotlin_stdlib",
+        ":lib",
         ":zip",
         "@protobuf//:protobuf_java",
     ],
@@ -66,6 +73,7 @@ kt_jvm_library(
     deps = [
         ":fixture_java_proto",
         ":kotlin_stdlib",
+        ":lib",
         ":zip",
         "//third_party/java/junit",
         "@protobuf//:protobuf_java",

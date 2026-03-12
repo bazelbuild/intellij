@@ -44,20 +44,14 @@ private fun parseInput(args: Array<String>): BuilderInput {
 }
 
 @Throws(IOException::class)
-private fun tempDirectory(name: String): Path {
-  return Files.createDirectories(Path.of(name)).toAbsolutePath()
-}
-
-@Throws(IOException::class)
 private fun execute(cmd: List<String>, cwd: Path) {
   val process = ProcessBuilder(cmd)
     .directory(cwd.toFile())
     .redirectErrorStream(true)
     .start()
 
-  process.inputStream.transferTo(System.err)
-
   if (process.waitFor() != 0) {
+    process.inputStream.transferTo(System.err)
     throw IOException("Command failed: ${cmd.joinToString(" ")}")
   }
 }
