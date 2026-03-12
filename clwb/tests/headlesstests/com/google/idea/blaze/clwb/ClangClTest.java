@@ -5,8 +5,6 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
-import com.google.idea.testing.headless.OSRule;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind;
 import org.junit.Rule;
