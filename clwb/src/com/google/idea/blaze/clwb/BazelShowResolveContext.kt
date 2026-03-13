@@ -40,36 +40,10 @@ class BazelShowResolveContext : BazelDebugAction() {
       }
     }
 
-    return formatConfiguration(config)
+    return config.configurationData.toPrettyString() + "\n"
   }
 
   override fun shouldShowOutputInEditor(): Boolean = true
-
-  private fun formatConfiguration(config: BlazeResolveConfiguration): String {
-    val builder = StringBuilder()
-    builder.appendLine("display name: ${config.displayName}")
-
-    val configData = config.configurationData
-    builder.appendLine("configuration ID: ${configData.configurationId()}")
-
-    val compiler = configData.compilerSettings()
-    builder.appendLine("compiler: ${compiler.name()}")
-    builder.appendLine("  -> C compiler: ${compiler.cCompiler()}")
-    builder.appendLine("  -> C++ compiler: ${compiler.cppCompiler()}")
-    builder.appendLine("  -> sysroot: ${compiler.sysroot()}")
-
-    printStringList(builder, "targets", config.targets.map { it.label().toString() })
-    printStringList(builder, "sources", config.sources.values.flatten().map { it.path })
-    printStringList(builder, "local copts", configData.localCopts())
-    printStringList(builder, "local conlyopts", configData.localConlyopts())
-    printStringList(builder, "local cxxopts", configData.localCxxopts())
-    printStringList(builder, "defines", configData.transitiveDefines())
-    printStringList(builder, "includes", configData.transitiveIncludeDirectories().map { it.path().toString() })
-    printStringList(builder, "quote includes", configData.transitiveQuoteIncludeDirectories().map { it.path().toString() })
-    printStringList(builder, "system includes", configData.transitiveSystemIncludeDirectories().map { it.path().toString() })
-
-    return builder.toString()
-  }
 }
 
 private fun printStringList(builder: StringBuilder, name: String, values: List<String>) {
