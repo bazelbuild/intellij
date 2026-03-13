@@ -31,17 +31,13 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.common.BuildTarget;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * The top-level object serialized to cache.
@@ -149,7 +145,7 @@ public abstract class BlazeProjectData {
         .build();
   }
 
-  private TargetInfo getTargetInfo(Label label) {
+  public TargetInfo getTargetInfo(Label label) {
     final var map = targetMap();
 
     // look for a plain target first
@@ -164,16 +160,6 @@ public abstract class BlazeProjectData {
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
-  }
-
-  @Nullable
-  public BuildTarget buildTarget(Label label) {
-    final var targetInfo = getTargetInfo(label);
-    if (targetInfo == null) {
-      return null;
-    }
-
-    return BuildTarget.create(com.google.idea.blaze.common.Label.of(targetInfo.label.toString()), targetInfo.kindString);
   }
 
   public ImmutableList<Label> targets() {

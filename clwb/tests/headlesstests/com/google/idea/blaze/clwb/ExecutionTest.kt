@@ -7,7 +7,7 @@ import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationPr
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess
-import com.google.idea.blaze.common.Label
+import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.testing.headless.BazelVersionRule
 import com.google.idea.testing.headless.ProjectViewBuilder
 import com.intellij.execution.*
@@ -78,13 +78,13 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   }
 
   private fun checkRun(executorId: String) {
-    val echo = execute(Label.of("//main:echo0"), executorId)
+    val echo = execute(Label.create("//main:echo0"), executorId)
     echo.assertSuccess()
 
-    val gtest = execute(Label.of("//main:gtest"), executorId)
+    val gtest = execute(Label.create("//main:gtest"), executorId)
     gtest.assertSuccess()
 
-    val catch2 = execute(Label.of("//main:catch"), executorId)
+    val catch2 = execute(Label.create("//main:catch"), executorId)
     catch2.assertSuccess()
   }
 
@@ -112,7 +112,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   fun checkTest(executorId: String) {
     // filter gtest by suite name
     val gtestFiltered = execute(
-      Label.of("//main:gtest"), executorId,
+      Label.create("//main:gtest"), executorId,
       flags = listOf("--test_output=streamed", "--test_filter=FilterSuite.*")
     )
     gtestFiltered.assertSuccess()
@@ -123,7 +123,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
 
     // filter gtest by specific test
     val gtestSingleTest = execute(
-      Label.of("//main:gtest"), executorId,
+      Label.create("//main:gtest"), executorId,
       flags = listOf("--test_output=streamed", "--test_filter=FilterSuite.FilteredTest")
     )
     gtestSingleTest.assertSuccess()
@@ -132,7 +132,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
 
     // filter catch2 tests
     val catchFiltered = execute(
-      Label.of("//main:catch"), executorId,
+      Label.create("//main:catch"), executorId,
       flags = listOf("--test_output=streamed", "--test_filter=FilteredTest")
     )
     catchFiltered.assertSuccess()
@@ -142,7 +142,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   }
 
   private fun executeEcho(target: String, executorId: String, args: String): List<String> {
-    val result = execute(Label.of("//main:$target"), executorId, args = listOf(args))
+    val result = execute(Label.create("//main:$target"), executorId, args = listOf(args))
     result.assertSuccess()
 
     val line = result.output.lines().firstOrNull { it.startsWith(ECHO_OUTPUT_MARKER) }

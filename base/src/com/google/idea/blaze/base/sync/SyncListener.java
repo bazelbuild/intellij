@@ -26,11 +26,13 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.Topic;
 
 /** Extension interface for listening to syncs. */
 public interface SyncListener {
-  ExtensionPointName<SyncListener> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.SyncListener");
+  ExtensionPointName<SyncListener> EP_NAME = ExtensionPointName.create("com.google.idea.blaze.SyncListener");
+
+  Topic<SyncListener> TOPIC = Topic.create("Bazel sync events", SyncListener.class);
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */
   default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode)
@@ -40,8 +42,7 @@ public interface SyncListener {
    * Called just prior to starting a blaze build during sync.
    *
    * @param fullProjectSync true if all project targets are being synced.
-   * @param buildId a unique ID associated with each sync build. {@link #afterQuerySync} is
-   *     guaranteed to be called with this build ID at some point.
+   * @param buildId a unique ID associated with each sync build.
    */
   default void buildStarted(
       Project project,
@@ -68,10 +69,4 @@ public interface SyncListener {
       SyncMode syncMode,
       SyncResult syncResult,
       ImmutableSet<Integer> buildIds) {}
-
-  /** Called after sync. Only used in new query-sync * */
-  default void afterQuerySync(Project project, BlazeContext context) {}
-
-  /** Called before sync. Only used in new query-sync * */
-  default void onQuerySyncStart(Project project, BlazeContext context) {}
 }
