@@ -31,12 +31,13 @@ _JVM_INTELLIJ_CONFIG_FLAGS = [
     "-Didea.classpath.index.enabled=false",
     "-Didea.force.use.core.classloader=true",
     "-Djava.awt.headless=true",
+    # suppressed plugin sets for classic, radler is currently disabled for tests
     "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
     "-Didea.suppressed.plugins.set.selector=classic",
     "-DNO_FS_ROOTS_ACCESS_CHECK=true",
 ]
 
-def intellij_integration_test(test, deps = None, jvm_flags = None, test_package = None, **kwargs):
+def intellij_integration_test(test, name = None, deps = None, runtime_deps = None, jvm_flags = None, test_class = None, **kwargs):
     """
     Crates a JUnit4 integration test for a single Kotlin class with a dependency
     on the plugin API.
@@ -45,9 +46,10 @@ def intellij_integration_test(test, deps = None, jvm_flags = None, test_package 
     test classes and provides a more fine grained mapping.
     """
 
-    name = test.removesuffix(".kt")
+    name = name or test.removesuffix(".kt").removesuffix(".java")
 
     deps = deps or []
+    runtime_deps = runtime_deps or []
 
     kt_jvm_library(
         name = name + "_ktlib",
@@ -56,25 +58,28 @@ def intellij_integration_test(test, deps = None, jvm_flags = None, test_package 
             "//intellij_platform_sdk:plugin_api_for_tests",
             "//third_party/java/truth",
             "@maven//:org_opentest4j_opentest4j",
+            # usually, we'd get this from the JetBrains SDK, but the bundled one not aware of Bazel platforms
+            "@jna//jar",
+            "@ptylib//jar",
         ],
         testonly = 1,
         visibility = ["//visibility:private"],
     )
 
-    jvm_flags = jvm_flags or []
+    jvm_flags = list(jvm_flags or [])
     jvm_flags.extend(_JVM_ADD_OPENS_FLAGS)
     jvm_flags.extend(_JVM_INTELLIJ_CONFIG_FLAGS)
 
     java_test(
         name = name,
-        runtime_deps = [
+        runtime_deps = runtime_deps + [
             name + "_ktlib",
             "//intellij_platform_sdk:bundled_plugins",
             "//testing/src/com/google/idea/testing/integration:TestRunner",
             "@maven//:net_java_dev_jna_jna",
         ],
         main_class = "com.google.idea.testing.integration.IntegrationTestRunner",
-        test_class = intellij_common.derive_test_class(name, "integrationtests", test_package),
+        test_class = test_class or intellij_common.derive_test_class(name, "integrationtests"),
         jvm_flags = jvm_flags,
         **kwargs
     )

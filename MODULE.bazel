@@ -25,14 +25,6 @@ local_repository(
     path = "clwb/tests/projects/virtual_includes/lib/external",
 )
 
-# custom rules_bazel_integration_test version, patches are required until we write our own version of these rules :c
-bazel_dep(name = "rules_bazel_integration_test", version = "0.37.1")
-single_version_override(
-    module_name = "rules_bazel_integration_test",
-    patch_strip = 1,
-    patches = ["//third_party/bazel/patches:rules_bazel_integration_test.patch"],
-)
-
 # custom rules kotlin version, patches are required
 bazel_dep(name = "rules_kotlin", version = "2.3.10")
 single_version_override(
@@ -51,23 +43,13 @@ python.toolchain(
 )
 use_repo(python, "python_3_12", "python_versions")
 
-# configure bazel binaries for rules_bazel_integration_test
-bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
-bazel_binaries.download(version = "6.6.0")
-bazel_binaries.download(version = "7.7.1")
-bazel_binaries.download(version = "8.6.0")
-bazel_binaries.download(version = "9.0.0")
-bazel_binaries.download(version = "last_green")
-use_repo(
-    bazel_binaries,
-    "bazel_binaries",
-    "bazel_binaries_bazelisk",
-    "build_bazel_bazel_6_6_0",
-    "build_bazel_bazel_7_7_1",
-    "build_bazel_bazel_8_6_0",
-    "build_bazel_bazel_9_0_0",
-    "build_bazel_bazel_last_green",
-)
+bazel_versions = use_extension("//testing/bazel:extension.bzl", "bazel_versions")
+bazel_versions.download(versions = [
+    "7.7.1",
+    "8.6.0",
+    "9.0.0",
+])
+use_repo(bazel_versions, "bazel_versions")
 
 # configure maven for rules_java_external
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
@@ -193,8 +175,6 @@ bazel_build_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "baze
 
 bazel_build_jars(
     name = "bazel_jars",
-    sha256 = "614ea210625c9ef19c952c2a974e7cfb73e1ba025a4ee7d1062a90fa32bb4132",
-    tag = "9.0.0",
     jars = [
         "//src/tools/execlog:parser_deploy.jar",
         "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",
@@ -202,4 +182,6 @@ bazel_build_jars(
     patches = [
         "//third_party/bazel/jars:starlark_repl.patch",
     ],
+    sha256 = "614ea210625c9ef19c952c2a974e7cfb73e1ba025a4ee7d1062a90fa32bb4132",
+    tag = "9.0.0",
 )

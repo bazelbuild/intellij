@@ -8,7 +8,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess
 import com.google.idea.blaze.base.model.primitives.Label
-import com.google.idea.testing.headless.BazelVersionRule
 import com.google.idea.testing.headless.ProjectViewBuilder
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
@@ -42,10 +41,6 @@ private const val ECHO_OUTPUT_MARKER = "ECHO_OUTPUT_FILE: "
 
 @RunWith(JUnit4::class)
 class ExecutionTest : ClwbHeadlessTestCase() {
-
-  @Rule
-  @JvmField
-  val bazelRule = BazelVersionRule(7, 0)
 
   @Test
   fun testClwb() {

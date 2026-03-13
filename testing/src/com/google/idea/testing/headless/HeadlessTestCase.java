@@ -2,7 +2,6 @@ package com.google.idea.testing.headless;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.testing.headless.Assertions.abort;
-import static com.google.idea.testing.headless.Assertions.assertPathExists;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.bazel.BazelVersion;
@@ -31,12 +30,12 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.testing.bazel.BazelProjectFixture;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -54,8 +53,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import org.junit.Rule;
 
 public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
+
+  @Rule
+  public BazelProjectFixture fixture = new BazelProjectFixture();
 
   protected Path myProjectRoot;
   protected BazelInfo myBazelInfo;
@@ -83,44 +86,14 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   }
 
   /**
-   * Normalizes an absolut posix path for windows. Since tests have to be run with `MSYS_NO_PATHCONV`
-   * set to true. Paths are no longer converted by the bazel test setup.
-   */
-  private static String normalizePath(String path) {
-    if (!SystemInfo.isWindows || !path.startsWith("/")) {
-      return path;
-    }
-
-    final var parts = path.substring(1).split("/");
-    parts[0] = parts[0] + ":";
-
-    return String.join("\\", parts);
-  }
-
-  /**
-   * Gets the path to the test project and performs some basic checks. The path
-   * is provided by `bazel_integration_test` rule in the `BIT_WORKSPACE_DIR`
-   * environment variable.
-   */
-  private static Path getTestProjectRoot() {
-    final var bitWorkspaceDir = System.getenv("BIT_WORKSPACE_DIR");
-    assertThat(bitWorkspaceDir).isNotNull();
-
-    final var root = Path.of(normalizePath(bitWorkspaceDir));
-    assertPathExists(root);
-
-    return root;
-  }
-
-  /**
    * Runs a executable in the current execution root (the execroot might not
    * exist yet) and returns stdout or fails the test.
    */
-  private static String exec(String ... args) throws ExecutionException, InterruptedException {
+  private String exec(String ... args) throws ExecutionException, InterruptedException {
     final var outStream = new ByteArrayOutputStream();
     final var errStream = new ByteArrayOutputStream();
 
-    final var result = ExternalTask.builder(getTestProjectRoot())
+    final var result = ExternalTask.builder(fixture.getProjectDirectory())
         .args(args)
         .stderr(errStream)
         .stdout(outStream)
@@ -135,33 +108,11 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     return outStream.toString();
   }
 
-  /**
-   * Gets the path to the bazelisk binary and performs some basic checks.
-   * The path is provided by `bazel_integration_test` rule in the `BIT_BAZEL_BINARY`
-   * environment variable.
-   *
-   * To avoid argument passing issues on Windows caused by sh_binary a patch to
-   * rules_bazel_integration test is applied to resolve to the actual bazelisk
-   * binary (see https://github.com/bazelbuild/bazel/issues/17487).
-   */
-  private static Path getTestBazelPath() throws ExecutionException, InterruptedException {
-    final var bitBazelWrapper = System.getenv("BIT_BAZEL_BINARY");
-    assertThat(bitBazelWrapper).isNotNull();
-
-    final var bitBazeliskBinary = exec(normalizePath(bitBazelWrapper));
-    assertThat(bitBazeliskBinary).isNotEmpty();
-
-    final var bazel = Path.of(bitBazeliskBinary.trim());
-    assertPathExists(bazel);
-
-    return bazel.toAbsolutePath();
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    final var bazelBinary = getTestBazelPath();
+    final var bazelBinary = fixture.getBazelExecutable();
     BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
 
     myBazelInfo = BazelInfo.parse(exec(bazelBinary.toString(), "info"));
@@ -183,7 +134,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
    */
   @Override
   protected void setUpProject() throws Exception {
-    myProjectRoot = getTestProjectRoot();
+    myProjectRoot = fixture.getProjectDirectory();
     final var rootFile = myProjectRoot.toFile();
 
     final var projectFile = new File(rootFile, BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY);
@@ -209,10 +160,9 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var bazelVersion = BazelVersionRule.getBazelVersion();
-    assertThat(bazelVersion).isPresent();
+    final var bazelVersion = BazelVersion.parseVersion(fixture.getBazelVersion());
 
-    final var projectViewLines = projectViewText(bazelVersion.get()).toString().split("\n");
+    final var projectViewLines = projectViewText(bazelVersion).toString().split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -255,15 +205,13 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     builder.addRootDirectory();
     builder.setDeriveTargetsFromDirectories(true);
 
-    // required for Bazel 6 integration tests
-    builder.addBuildFlag("--enable_bzlmod");
+    // use the provided repository cache
+    builder.addBuildFlag("--repository_cache=" + fixture.getRepositoryCache());
+    builder.addSyncFlag("--repository_cache=" + fixture.getRepositoryCache());
 
-    if (version.isAtLeast(7, 0, 0)) {
-      // required for external modules
-      builder.addBuildFlag("--incompatible_use_plus_in_repo_names");
-      // required as build and sync flag to work for both async and qsync
-      builder.addSyncFlag("--incompatible_use_plus_in_repo_names");
-    }
+    // required for external modules
+    builder.addBuildFlag("--incompatible_use_plus_in_repo_names");
+    builder.addSyncFlag("--incompatible_use_plus_in_repo_names");
 
     return builder;
   }

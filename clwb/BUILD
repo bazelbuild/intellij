@@ -26,7 +26,7 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
-load(":test_defs.bzl", "clwb_headless_test", "clwb_integration_test")
+load(":test_defs.bzl", "clwb_integration_test")
 
 licenses(["notice"])
 
@@ -86,9 +86,7 @@ intellij_plugin(
     name = "clwb_bazel",
     plugin_icons = ["//common:pluginIcon.svg"],
     plugin_xml = ":stamped_plugin_xml",
-    tags = [
-        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
-    ],
+    visibility = ["//clwb:__subpackages__"],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -128,92 +126,22 @@ intellij_unit_test_suite(
     ],
 )
 
-clwb_headless_test(
-    name = "simple_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/SimpleTest.java"],
-    project = "simple",
-)
-
-clwb_headless_test(
-    name = "virtual_includes_headless_test",
-    srcs = [
-        "tests/headlesstests/com/google/idea/blaze/clwb/VirtualIncludesCacheTest.java",
-        "tests/headlesstests/com/google/idea/blaze/clwb/VirtualIncludesTest.java",
-    ],
-    project = "virtual_includes",
-)
-
-clwb_headless_test(
-    name = "llvm_toolchain_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LlvmToolchainTest.java"],
-    project = "llvm_toolchain",
-)
-
-clwb_headless_test(
-    name = "external_includes_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExternalIncludesTest.java"],
-    project = "external_includes",
-)
-
-clwb_headless_test(
-    name = "execution_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExecutionTest.kt"],
-    project = "execution",
-)
-
-clwb_headless_test(
-    name = "target_compatible_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/TargetCompatibleTest.java"],
-    project = "target_compatible",
-)
-
-clwb_headless_test(
-    name = "example_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ExampleTest.java"],
-    example = "simple_project",
-)
-
-clwb_headless_test(
-    name = "lib_cpp_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/LibCppTest.java"],
-    project = "simple",
-)
-
-clwb_headless_test(
-    name = "clang_cl_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/ClangClTest.java"],
-    project = "clang_cl",
-)
-
-clwb_headless_test(
-    name = "protobuf_headless_test",
-    srcs = [
-        "tests/headlesstests/com/google/idea/blaze/clwb/ProtobufCacheTest.java",
-        "tests/headlesstests/com/google/idea/blaze/clwb/ProtobufTest.java",
-    ],
-    project = "protobuf",
-)
-
-clwb_headless_test(
-    name = "transition_headless_test",
-    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/TransitionTest.java"],
-    project = "transition",
-)
-
 test_suite(
     name = "headless_tests",
     tests = [
-        ":clang_cl_headless_test",
-        ":example_headless_test",
-        ":execution_headless_test",
-        ":external_includes_headless_test",
-        ":lib_cpp_headless_test",
-        ":llvm_toolchain_headless_test",
-        ":protobuf_headless_test",
-        ":simple_headless_test",
-        ":target_compatible_headless_test",
-        ":transition_headless_test",
-        ":virtual_includes_headless_test",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ClangClTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ExampleTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ExecutionTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ExternalIncludesTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:LibCppTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:LlvmToolchainTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ProtobufCacheTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:ProtobufTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:SimpleTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:TargetCompatibleTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:TransitionTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:VirtualIncludesCacheTest",
+        "//clwb/tests/headlesstests/com/google/idea/blaze/clwb:VirtualIncludesTest",
     ],
 )
 
