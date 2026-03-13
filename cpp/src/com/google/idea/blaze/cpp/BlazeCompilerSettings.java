@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.toprettystring.ToPrettyString;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
@@ -56,6 +57,9 @@ public abstract class BlazeCompilerSettings {
   public abstract ImmutableList<ExecutionRootPath> builtInIncludes();
 
   public abstract @Nullable ExecutionRootPath sysroot();
+
+  @ToPrettyString
+  public abstract String toPrettyString();
 
   private <T> T when(Supplier<T> msvc, Supplier<T> clang, Supplier<T> clangCl, Supplier<T> gcc) {
     if (CompilerVersionUtil.isMSVC(version())) {

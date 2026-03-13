@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model.primitives;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.toprettystring.ToPrettyString;
 import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
@@ -142,6 +143,11 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
 
   @Override
   public String toProto() {
+    return path().toString();
+  }
+
+  @ToPrettyString
+  public String toPrettyString() {
     return path().toString();
   }
 }
