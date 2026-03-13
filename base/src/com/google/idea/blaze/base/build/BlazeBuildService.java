@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.base.build;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -89,11 +87,6 @@ public class BlazeBuildService {
   public BlazeBuildService(Project project) {
     this.project = project;
     this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
-  }
-
-  public void buildFileForLabels(
-      String fileName, ImmutableSet<com.google.idea.blaze.common.Label> labels) {
-    buildFile(fileName, labels.stream().map(Label::create).collect(toImmutableSet()));
   }
 
   public void buildFile(String fileName, ImmutableCollection<Label> targets) {
