@@ -559,6 +559,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncListener implementation="com.google.idea.blaze.base.sync.SyncBusAdapter"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.SyncCache$ClearSyncCache"/>
     <SyncListener implementation="com.google.idea.blaze.base.run.BlazeRunConfigurationSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener" order="first"/>
