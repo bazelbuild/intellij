@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
 import com.google.idea.blaze.base.wizard2.BlazeProjectImportBuilder;
 import com.google.idea.blaze.base.wizard2.CreateFromScratchProjectViewOption;
 import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
-import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -313,10 +313,10 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
   }
 
   protected FuncallExpression findRule(Label label) {
-    final var buildFile = findProjectPsiFile(String.format("%s/BUILD", label.buildPackage()));
+    final var buildFile = findProjectPsiFile(String.format("%s/BUILD", label.blazePackage()));
     assertThat(buildFile).isInstanceOf(BuildFile.class);
 
-    final var element = ((BuildFile) buildFile).findRule(label.name());
+    final var element = ((BuildFile) buildFile).findRule(label.targetName().toString());
     assertThat(element).isNotNull();
 
     return element;

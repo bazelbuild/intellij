@@ -217,10 +217,11 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     // this will not work with query sync, since at the moment aspects are only written as part of the async
-    final var queryFile = AspectStorageService.of(project)
+    final var queryLabel = AspectStorageService.of(project)
         .resolve(QUERY_STARLARK_FILE)
-        .orElseThrow(() -> new IllegalStateException("could not resolve query file"))
-        .toFilePath()
+        .orElseThrow(() -> new IllegalStateException("could not resolve query file"));
+    final var queryFile = queryLabel.blazePackage().asPath()
+        .resolve(queryLabel.targetName().toString())
         .toString();
 
     final String queryTarget;

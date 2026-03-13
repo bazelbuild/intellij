@@ -18,11 +18,10 @@ package com.google.idea.blaze.base.run.targetfinder;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.common.BuildTarget;
 import com.intellij.openapi.project.Project;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 /** Uses the project's {@link TargetMap} to locate targets matching a given label. */
@@ -30,13 +29,8 @@ class ProjectTargetFinder implements TargetFinder {
 
   @Override
   public Future<TargetInfo> findTarget(Project project, Label label) {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    TargetInfo ret = null;
-    if (projectData != null) {
-      BuildTarget buildTarget = projectData.buildTarget(label);
-      ret = buildTarget != null ? TargetInfo.builder(label, buildTarget.kind()).build() : null;
-    }
-    return Futures.immediateFuture(ret);
+    final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    final var targetInfo = projectData != null ? projectData.getTargetInfo(label) : null;
+    return Futures.immediateFuture(targetInfo);
   }
 }

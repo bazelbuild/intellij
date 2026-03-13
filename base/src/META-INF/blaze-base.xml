@@ -264,8 +264,6 @@
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.settings.BlazeImportSettingsManager"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusStateManager"/>
-    <projectService serviceInterface="com.google.idea.blaze.common.artifact.BuildArtifactCache"
-            serviceImplementation="com.google.idea.blaze.common.artifact.BuildArtifactCacheDirectory"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.settings.BlazeUserSettings" id="BlazeUserSettings"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings" order="after BlazeUserSettings"/>
     <projectService serviceInterface="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider"
@@ -480,8 +478,6 @@
                     interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
                     interface="com.google.idea.blaze.base.io.AbsolutePathPatcher"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.qsync.ArtifactFetcher"
-                    interface="com.google.idea.blaze.common.artifact.ArtifactFetcher"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"
                     interface="com.google.idea.blaze.base.sync.projectstructure.ExternalModuleProvider"/>
 
@@ -559,6 +555,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncListener implementation="com.google.idea.blaze.base.sync.SyncBusAdapter"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.SyncCache$ClearSyncCache"/>
     <SyncListener implementation="com.google.idea.blaze.base.run.BlazeRunConfigurationSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusListener" order="first"/>

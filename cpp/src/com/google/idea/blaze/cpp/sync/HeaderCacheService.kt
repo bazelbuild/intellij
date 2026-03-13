@@ -79,8 +79,12 @@ class HeaderCacheService(private val project: Project) {
   // tracks headers which are actually stored in the cache
   private val cacheTracker: MutableSet<String> = mutableSetOf()
 
-  private fun TargetKey.cacheDirectory(): Path {
-    return cacheDirectory.resolve(configurationId().ifBlank { "default" })
+  private fun cacheDirectory(configurationId: String): Path {
+    return cacheDirectory.resolve(configurationId.ifBlank { "default" })
+  }
+
+  private fun cacheDirectory(key: TargetKey): Path {
+    return cacheDirectory(key.configurationId())
   }
 
   @Synchronized
@@ -117,7 +121,7 @@ class HeaderCacheService(private val project: Project) {
   private fun refreshTarget(projectData: BlazeProjectData, key: TargetKey, target: TargetIdeInfo) {
     val info = target.getcIdeInfo() ?: return
 
-    val targetCacheDirectory = key.cacheDirectory()
+    val targetCacheDirectory = cacheDirectory(key)
     val decoder = projectData.artifactLocationDecoder()
 
     for (header in info.compilationContext().headers()) {
@@ -178,14 +182,19 @@ class HeaderCacheService(private val project: Project) {
 
   @Synchronized
   fun resolve(target: TargetKey, executionRootPath: ExecutionRootPath): Optional<Path> {
+    return resolve(target.configurationId(), executionRootPath);
+  }
+
+  @Synchronized
+  fun resolve(configurationId: String, executionRootPath: ExecutionRootPath): Optional<Path> {
     val path = executionRootPath.path()
     if (!isInBazelBin(path)) return Optional.empty()
 
     return Optional.of(
       if (path.nameCount <= 3) {
-        target.cacheDirectory()
+        cacheDirectory(configurationId)
       } else {
-        target.cacheDirectory().resolve(path.subpath(3, path.nameCount))
+        cacheDirectory(configurationId).resolve(path.subpath(3, path.nameCount))
       }
     )
   }
