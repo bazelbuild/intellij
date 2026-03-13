@@ -26,6 +26,8 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.command.config.BlazeConfigException;
+import com.google.idea.blaze.base.command.config.BlazeConfigRunner;
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
@@ -267,6 +269,14 @@ public final class BuildPhaseSyncTask {
       }
     }
     context.output(PrintOutput.log(invocationResultMsg));
+
+    try {
+      final var configData = BlazeConfigRunner.getInstance().runBlazeConfig(project, defaultInvoker, context);
+      resultBuilder.setConfigurationData(configData);
+    } catch (BlazeConfigException e) {
+      IssueOutput.warn("Failed to fetch configuration data").withThrowable(e).submit(context);
+      resultBuilder.setConfigurationData(null);
+    }
   }
 
   private void printShardingSummary(

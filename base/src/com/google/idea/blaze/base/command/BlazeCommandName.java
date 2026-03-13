@@ -42,6 +42,7 @@ public final class BlazeCommandName {
   public static final BlazeCommandName MOBILE_INSTALL = fromString("mobile-install");
   public static final BlazeCommandName COVERAGE = fromString("coverage");
   public static final BlazeCommandName MOD = fromString("mod");
+  public static final BlazeCommandName CONFIG = fromString("config");
 
   public static BlazeCommandName fromString(String name) {
     knownCommands.putIfAbsent(name, new BlazeCommandName(name));

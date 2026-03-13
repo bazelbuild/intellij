@@ -23,7 +23,6 @@ package blaze;
 import "third_party/bazel/src/main/protobuf/build.proto";
 import "proto/common.proto";
 import "proto/intellij_ide_info.proto";
-import "third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto/build_event_stream.proto";
 
 // option java_api_version = 2;
 option java_package = "com.google.devtools.intellij.model";
@@ -48,10 +47,17 @@ message BlazeVersionData {
   BazelVersion bazel_version = 3;
 }
 
+message BlazeConfiguration {
+  string id = 1;
+  string mnemonic = 2;
+  string platform_name = 3;
+  string cpu = 4;
+  bool is_tool = 6;
+}
+
 message BlazeConfigurationData {
-  // Map from configuration ID to configuration details
-  // Configuration message is imported from build_event_stream.proto
-  map<string, build_event_stream.Configuration> configurations = 1;
+  // Map from configuration ID (full hash) to configuration details
+  map<string, BlazeConfiguration> configurations = 1;
 }
 
 message WorkspacePathResolver {

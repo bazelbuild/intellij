@@ -29,13 +29,6 @@ class BazelDumpConfigurationData : BazelDebugAction() {
       builder.appendLine("-> platform: ${config.platformName()}")
       builder.appendLine("->      cpu: ${config.cpu()}")
       builder.appendLine("->  is tool: ${config.isToolConfiguration()}")
-
-      val vars = config.makeVariables()
-      builder.appendLine("Make Variables (${vars.size}):")
-      vars.entries.sortedBy { it.key }.forEach { (key, value) ->
-        builder.appendLine("-> $key = $value")
-      }
-
       builder.appendLine("")
     }
 

@@ -21,6 +21,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -38,6 +39,8 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
+import com.google.idea.blaze.base.model.BlazeConfiguration;
+import com.google.idea.blaze.base.model.BlazeConfigurationData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -382,7 +385,7 @@ public final class SyncPhaseCoordinator {
                     projectState,
                     targetData,
                     oldProjectData.blazeInfo(),
-                    /* buildOutputs= */ null,
+                    oldProjectData.configurationData(),
                     childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
@@ -584,13 +587,19 @@ public final class SyncPhaseCoordinator {
                   throw new SyncFailedException();
                 }
 
+                BlazeConfigurationData configData = extractConfigurations(
+                    updateTask.buildResult().getConfigurationData(),
+                    updateTask.buildResult().getBuildResult(),
+                    getOldProjectData(context, updateTask.syncParams().syncMode())
+                );
+
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
                     project,
                     updateTask.syncParams().syncMode(),
                     updateTask.projectState(),
                     targetData,
                     updateTask.buildResult().getBlazeInfo(),
-                    updateTask.buildResult().getBuildResult(),
+                    configData,
                     childContext);
               },
               new TimingScope("Project update phase", EventType.Other));
@@ -612,6 +621,30 @@ public final class SyncPhaseCoordinator {
           syncResult,
           stats);
     }
+  }
+
+  /**
+   * Extracts configuration data, preferring bazel config data over BEP data.
+   *
+   * <p>Priority: (1) bazel config --dump_all data (has ALL configs including transitions),
+   * (2) BEP configurations (fallback, only top-level), (3) old project data, (4) EMPTY.
+   */
+  private static BlazeConfigurationData extractConfigurations(
+      @Nullable BlazeConfigurationData bazelConfigData,
+      @Nullable BlazeBuildOutputs buildOutputs,
+      @Nullable BlazeProjectData oldProjectData
+  ) {
+    if (bazelConfigData != null) {
+      return bazelConfigData;
+    }
+
+    if (buildOutputs != null) {
+      var builder = ImmutableMap.<String, BlazeConfiguration>builder();
+      buildOutputs.configurations().forEach((k, v) -> builder.put(k, BlazeConfiguration.fromProto(v, k)));
+      return BlazeConfigurationData.create(builder.build());
+    }
+
+    return oldProjectData != null ? oldProjectData.configurationData() : BlazeConfigurationData.EMPTY;
   }
 
   @Nullable
