@@ -785,13 +785,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     aspectStrategy.addAspectAndOutputGroups(project, builder, outputGroups, activeLanguages, onlyDirectDeps);
     try {
       return BazelExecService.instance(project).build(context, builder);
+    } catch (com.intellij.execution.ExecutionException e) {
+      throw new BuildException("Failed to build targets", e);
     } finally {
       if (!Registry.is("bazel.sync.keep.target.files")) {
-          try {
-              Files.deleteIfExists(targetPatternFile);
-          } catch (IOException e) {
-              logger.error("Failed to delete target pattern file", e);
-          }
+        try {
+          Files.deleteIfExists(targetPatternFile);
+        } catch (IOException e) {
+          logger.error("Failed to delete target pattern file", e);
+        }
       }
     }
   }
