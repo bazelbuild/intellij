@@ -90,7 +90,7 @@ abstract class BazelDebugAction : DumbAwareAction() {
     val project = e.project ?: return
 
     withContext(Dispatchers.EDT) {
-      val file = LightVirtualFile("${javaClass.simpleName}.txt", PlainTextFileType.INSTANCE, text)
+      val file = LightVirtualFile("${this@BazelDebugAction.javaClass.simpleName}.txt", PlainTextFileType.INSTANCE, text)
       FileEditorManager.getInstance(project).openFile(file, false)
     }
   }
