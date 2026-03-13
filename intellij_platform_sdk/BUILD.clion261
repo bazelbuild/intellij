@@ -42,7 +42,7 @@ java_import(
 
 java_import(
     name = "guava",
-    jars = glob(["lib/module-intellij.libraries.guava.jar"]),
+    jars = glob(["lib/intellij.libraries.guava.jar"]),
 )
 
 java_import(

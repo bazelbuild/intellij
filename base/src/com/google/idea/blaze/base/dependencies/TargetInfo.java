@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.common.BuildTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import java.time.Instant;
 import java.util.Objects;
@@ -170,20 +169,4 @@ public class TargetInfo {
     }
   }
 
-  public static TargetInfo fromBuildTarget(BuildTarget buildTarget) {
-    return TargetInfo.builder(Label.create(buildTarget.label().toString()), buildTarget.kind())
-        .build();
-  }
-
-  public static @Nullable TargetInfo tryFromBuildTarget(BuildTarget buildTarget) {
-    final var label = buildTarget.label().toString();
-    final var error = Label.validate(label);
-
-    if (error != null) {
-      LOG.warn(String.format("invalid label '%s': %s'", label, error));
-      return null;
-    }
-
-    return TargetInfo.builder(Label.create(buildTarget.label().toString()), buildTarget.kind()).build();
-  }
 }

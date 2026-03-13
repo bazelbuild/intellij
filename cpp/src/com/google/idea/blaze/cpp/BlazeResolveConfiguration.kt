@@ -26,13 +26,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.cidr.lang.CLanguageKind
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
 import com.jetbrains.cidr.lang.OCLanguageKind
-import org.jetbrains.annotations.VisibleForTesting
 
 private val DEFAULT_LANGUAGE_KIND = CLanguageKind.CPP
 
 /** A clustering of "equivalent" Blaze targets for creating [OCResolveConfiguration].  */
 data class BlazeResolveConfiguration(
-  @VisibleForTesting val configurationData: BlazeResolveConfigurationData,
+  val configurationData: BlazeResolveConfigurationData,
   val displayName: String,
   val targets: ImmutableList<TargetKey>,
   val sources: ImmutableMap<TargetKey, ImmutableList<VirtualFile>>
