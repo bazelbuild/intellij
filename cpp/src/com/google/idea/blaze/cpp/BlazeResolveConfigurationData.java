@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.toprettystring.ToPrettyString;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -42,6 +43,9 @@ public abstract class BlazeResolveConfigurationData {
 
   public abstract ImmutableList<String> transitiveDefines();
   public abstract ImmutableList<ExecutionRootPath> transitiveSystemIncludeDirectories();
+
+  @ToPrettyString
+  public abstract String toPrettyString();
 
   static BlazeResolveConfigurationData create(
       TargetKey targetKey,

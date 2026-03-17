@@ -189,34 +189,9 @@ public final class BlazeCWorkspace {
   }
 
   private static void logResolveConfiguration(BlazeResolveConfiguration config) {
-    if (!LOG.isTraceEnabled()) {
-      return;
+    if (LOG.isTraceEnabled()) {
+      config.getConfigurationData().toPrettyString().lines().forEach(LOG::trace);
     }
-
-    final var builder = new StringBuilder();
-    builder.append(String.format("Configuring resolve configuration: %s\n", config.getDisplayName()));
-    builder.append(String.format("-> targets: %s\n", StringUtil.join(config.getTargets(), ", ")));
-
-    final var compiler = config.getCompilerSettings();
-    final var data = config.getConfigurationData();
-
-    final var includes = compiler.builtInIncludes().stream()
-        .map((it) -> it.getAbsoluteOrRelativeFile().toString())
-        .collect(Collectors.joining(", "));
-
-    builder.append(String.format("-> compiler: %s (%s)\n", compiler.name(), compiler.version()));
-    builder.append(String.format("-> c compiler: %s\n", compiler.cCompiler()));
-    builder.append(String.format("-> c switches: %s\n", StringUtil.join(compiler.cSwitches(), ", ")));
-    builder.append(String.format("-> cpp compiler: %s\n", compiler.cppCompiler()));
-    builder.append(String.format("-> cpp switches: %s\n", StringUtil.join(compiler.cppSwitches(), ", ")));
-    builder.append(String.format("-> builtin includes: %s\n", includes));
-    builder.append(String.format("-> sysroot: %s\n", compiler.sysroot()));
-    builder.append(String.format("-> configuration: %s\n", data.configurationId()));
-    builder.append(String.format("-> local copts: %s\n", data.localCopts()));
-    builder.append(String.format("-> local cxxopts: %s\n", data.localCxxopts()));
-    builder.append(String.format("-> local conlyopts: %s\n", data.localConlyopts()));
-
-    LOG.trace(builder.toString());
   }
 
   private WorkspaceModel calculateConfigurations(
