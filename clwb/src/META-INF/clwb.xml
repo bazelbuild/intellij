@@ -48,6 +48,12 @@
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.ClangClEnvironmentProvider" />
   </extensions>
 
+  <actions>
+    <action id="Bazel.ShowResolveContext"
+      class="com.google.idea.blaze.clwb.BazelShowResolveContext"
+      text="Bazel show resolve context"/>
+  </actions>
+
   <extensions defaultExtensionNs="cidr.project">
     <popup.projectFixesProvider implementation="com.google.idea.blaze.clwb.BazelProjectFixesProvider"/>
     <notifications.editorNotificationWarningProvider implementation="com.google.idea.blaze.clwb.BazelEditorNotificationProvider"/>
