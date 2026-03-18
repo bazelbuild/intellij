@@ -7,9 +7,7 @@ import static com.google.idea.blaze.clwb.base.Utils.lookupCompilerSwitch;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
-import com.google.idea.testing.headless.OSRule;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import java.io.File;
@@ -20,14 +18,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class LlvmToolchainTest extends ClwbHeadlessTestCase {
-
-  // llvm toolchain currently does not support windows, otherwise this test should be fine to run on windows
-  @Rule
-  public final OSRule osRule = new OSRule(OS.Linux, OS.macOS);
-
-  // llvm toolchain currently only supports bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {

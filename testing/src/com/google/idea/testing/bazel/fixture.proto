@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package com.google.idea.testing.bazel;
+
+option java_package = "com.google.idea.testing.bazel";
+option java_outer_classname = "BazelProjectFixtureProto";
+
+message BazelBinary {
+  string version = 1;
+  string executable = 2;
+}
+
+message ProjectFixtureConfig {
+  string project_archive = 1;
+  string repo_cache_archive = 2;
+  BazelBinary bazel_binary = 3;
+}

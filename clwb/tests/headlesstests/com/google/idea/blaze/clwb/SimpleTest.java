@@ -9,11 +9,9 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertNotContainsCompil
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.lang.CLanguageKind;
-import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
@@ -26,10 +24,6 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SimpleTest extends ClwbHeadlessTestCase {
-
-  // catch requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
 
   @Test
   public void testClwb() throws IOException {

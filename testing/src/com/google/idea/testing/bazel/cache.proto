@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package com.google.idea.testing.bazel;
+
+option java_package = "com.google.idea.testing.bazel";
+option java_outer_classname = "BazelCacheBuilderProto";
+
+message BazelBinary {
+  string version = 1;
+  string executable = 2;
+}
+
+message BuilderInput {
+  string output = 1;
+  string project = 2;
+  repeated BazelBinary bazel_binaries = 3;
+  repeated string targets = 4;
+  repeated string flags = 5;
+}
