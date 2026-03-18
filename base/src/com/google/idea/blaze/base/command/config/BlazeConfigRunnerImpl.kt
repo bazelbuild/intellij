@@ -62,8 +62,10 @@ class BlazeConfigRunnerImpl : BlazeConfigRunner {
     }
   }
 
+  @Throws(BlazeConfigException::class)
   private fun parseJson(json: String): ImmutableMap<String, BlazeConfiguration> {
-    return gson.fromJsonTyped<List<ConfigurationJson>>(json)
+    return runCatching { gson.fromJsonTyped<List<ConfigurationJson>>(json) }
+      .getOrElse { throw BlazeConfigException("could not process config JSON", it) }
       .mapNotNull { runCatching { toBlazeConfiguration(it) }.getOrLogException(LOG) }
       .fold(ImmutableMap.builder<String, BlazeConfiguration>()) { acc, it -> acc.put(it.id(), it) }
       .build()
