@@ -42,7 +42,7 @@ public class TransitionTest extends BazelIntellijAspectTest {
     assertThat(ideInfos).hasSize(2);
 
     for (final var ideInfo : ideInfos) {
-      assertThat(ideInfo.getKindString()).isEqualTo("cc_binary");
+      assertThat(ideInfo.getKind()).isEqualTo("cc_binary");
       assertThat(ideInfo.getKey().getLabel()).isEqualTo("//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/transition:simple");
       assertThat(ideInfo.getKey().getConfigurationId()).isNotEmpty();
     }

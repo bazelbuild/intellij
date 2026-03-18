@@ -31,7 +31,7 @@ public class PyTestTest extends BazelIntellijAspectTest {
   public void testPyTest() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple");
-    assertThat(target.getKindString()).isEqualTo("py_test");
+    assertThat(target.getKind()).isEqualTo("py_test");
     assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
         .containsExactly(testRelative("simple.py"));
 

@@ -203,7 +203,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     IntellijIdeInfo.TargetIdeInfo.Builder builder =
         IntellijIdeInfo.TargetIdeInfo.newBuilder()
             .setKey(key.toProto())
-            .setKindString(kind.getKindString())
+            .setKind(kind.getKindString())
             .addAllDeps(ProtoWrapper.mapToProtos(dependencies))
             .addAllTags(tags);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setBuildFileArtifactLocation, buildFile);

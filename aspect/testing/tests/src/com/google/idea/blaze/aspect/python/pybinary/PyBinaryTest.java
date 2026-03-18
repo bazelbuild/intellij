@@ -33,7 +33,7 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
   public void testPy3Binary() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple3_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple3");
-    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(target.getKind()).isEqualTo("py_binary");
     assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
         .containsExactly(testRelative("simple.py"));
     assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY3);
@@ -51,7 +51,7 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
 
     assertThat(compilationMode).isNotNull();
 
-    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(target.getKind()).isEqualTo("py_binary");
     assertThat(target.getPyIdeInfo().getArgsList())
         .containsExactly("--ARG1", "--ARG2=" + compilationMode, "--ARG3='with spaces'");
   }
@@ -61,7 +61,7 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":expand_datadeps_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":expand_datadeps");
 
-    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(target.getKind()).isEqualTo("py_binary");
     List<String> args = target.getPyIdeInfo().getArgsList();
     assertThat(args).hasSize(1);
     assertThat(args.get(0))

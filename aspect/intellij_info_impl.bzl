@@ -473,8 +473,7 @@ def build_test_info(ctx):
     )
 
 def is_test_rule(ctx):
-    kind_string = ctx.rule.kind
-    return kind_string.endswith("_test")
+    return ctx.rule.kind.endswith("_test")
 
 def _is_proto_library_wrapper(target, ctx):
     """Returns True if the target is an empty shim around a proto library."""
@@ -596,7 +595,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         build_file_artifact_location = build_file_artifact_location(ctx),
         features = ctx.features,
         key = target_key,
-        kind_string = ctx.rule.kind,
+        kind = ctx.rule.kind,
         tags = tags,
         deps = list(all_deps),
     )
