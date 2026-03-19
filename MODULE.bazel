@@ -201,5 +201,6 @@ bazel_build_jars(
     ],
     patches = [
         "//third_party/bazel/jars:starlark_repl.patch",
+        "//third_party/bazel/jars:execlog_parser.patch",
     ],
 )

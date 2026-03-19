@@ -1,0 +1,47 @@
+Patches the execloc parser build to include the fat zstd jar that works on all platforms. Because for some reason the one
+hosted on the BCR only works on linux.
+See https://github.com/bazelbuild/bazel-central-registry/blame/main/modules/zstd-jni/1.5.6-9/patches/Native.java.patch
+---
+diff --git a/bazel/MODULE.bazel b/bazel/MODULE.bazel
+--- a/bazel/MODULE.bazel
++++ b/bazel/MODULE.bazel
+@@ -362,6 +362,15 @@ cc_configure = use_extension("@rules_cc//cc:extensions.bzl", "cc_configure_exten
+ use_repo(cc_configure, "local_config_cc")
+
+ http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
++http_jar = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_jar")
++
++# Maven Central fat jar with native libs for all platforms (linux, macOS, windows).
++# Used by the execlog parser/converter tools to produce cross-platform deploy jars.
++http_jar(
++    name = "zstd_jni_maven",
++    sha256 = "e122143e2abb041b6384e43c9a79980fe3d2ff3d9610ea20b29231ea518772b2",
++    urls = ["https://repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9.jar"],
++)
+
+ # DO NOT UPDATE the jq versions, they are used to verify compatibility with old and new versions.
+ http_file(
+diff --git a/bazel/src/main/java/com/google/devtools/build/lib/exec/BUILD b/bazel/src/main/java/com/google/devtools/build/lib/exec/BUILD
+--- a/bazel/src/main/java/com/google/devtools/build/lib/exec/BUILD
++++ b/bazel/src/main/java/com/google/devtools/build/lib/exec/BUILD
+@@ -312,7 +312,7 @@ java_library(
+         "//src/main/protobuf:spawn_java_proto",
+         "//third_party:guava",
+         "//third_party:jsr305",
+-        "@zstd-jni",
++        "@zstd_jni_maven//jar",
+     ],
+ )
+
+diff --git a/bazel/src/main/java/com/google/devtools/build/lib/skyframe/serialization/BUILD b/bazel/src/main/java/com/google/devtools/build/lib/skyframe/serialization/BUILD
+--- a/bazel/src/main/java/com/google/devtools/build/lib/skyframe/serialization/BUILD
++++ b/bazel/src/main/java/com/google/devtools/build/lib/skyframe/serialization/BUILD
+@@ -133,7 +133,7 @@ java_library(
+         "//third_party:jsr305",
+         "//third_party/pprof:profile_java_proto",
+         "@com_google_protobuf//:protobuf_java",
+-        "@zstd-jni",
++        "@zstd_jni_maven//jar",
+     ],
+ )
+
