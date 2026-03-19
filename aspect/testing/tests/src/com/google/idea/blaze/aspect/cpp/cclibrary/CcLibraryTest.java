@@ -36,7 +36,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
   public void testCcLibrary() throws Exception {
     final var testFixture = loadTestFixture(":simple_fixture");
     final var target = findTarget(testFixture, ":simple");
-    assertThat(target.getKindString()).isEqualTo("cc_library");
+    assertThat(target.getKind()).isEqualTo("cc_library");
 
     final var ideInfo = target.getCIdeInfo();
     assertThat(ideInfo.hasCompilationContext()).isTrue();
@@ -70,7 +70,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
   public void testCcLibraryHasToolchain() throws Exception {
     final var testFixture = loadTestFixture(":simple_fixture");
     final var toolchains = testFixture.getTargetsList().stream()
-        .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain"))
+        .filter(x -> x.hasCToolchainIdeInfo() && x.getKind().equals("cc_toolchain"))
         .collect(Collectors.toList());
 
     assertThat(toolchains).hasSize(1);

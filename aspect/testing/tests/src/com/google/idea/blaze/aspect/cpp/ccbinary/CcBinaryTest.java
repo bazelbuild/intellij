@@ -29,7 +29,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
   public void testCcBinary() throws Exception {
     final var testFixture = loadTestFixture(":aspect_fixture");
     final var target = findTarget(testFixture, ":simple");
-    assertThat(target.getKindString()).isEqualTo("cc_binary");
+    assertThat(target.getKind()).isEqualTo("cc_binary");
 
     final var ideInfo = target.getCIdeInfo();
     assertThat(ideInfo.hasCompilationContext()).isTrue();
@@ -51,7 +51,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
   public void testExpandDataDeps() throws Exception {
     final var testFixture = loadTestFixture(":aspect_fixture");
     final var target = findTarget(testFixture, ":expand_datadeps");
-    assertThat(target.getKindString()).isEqualTo("cc_binary");
+    assertThat(target.getKind()).isEqualTo("cc_binary");
 
     final var args = target.getCIdeInfo().getRuleContext().getArgsList();
     assertThat(args).hasSize(1);

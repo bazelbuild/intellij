@@ -122,7 +122,7 @@ public abstract class Kind {
 
   @Nullable
   public static Kind fromProto(IntellijIdeInfo.TargetIdeInfo proto) {
-    Kind existing = fromRuleName(proto.getKindString());
+    Kind existing = fromRuleName(proto.getKind());
     if (existing != null) {
       return existing;
     }

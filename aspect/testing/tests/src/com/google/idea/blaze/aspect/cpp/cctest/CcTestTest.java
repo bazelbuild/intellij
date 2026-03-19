@@ -32,7 +32,7 @@ public class CcTestTest extends BazelIntellijAspectTest {
   public void testCcTest() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple");
-    assertThat(target.getKindString()).isEqualTo("cc_test");
+    assertThat(target.getKind()).isEqualTo("cc_test");
 
     assertThat(target.hasCIdeInfo()).isTrue();
     assertThat(target.hasJavaIdeInfo()).isFalse();
