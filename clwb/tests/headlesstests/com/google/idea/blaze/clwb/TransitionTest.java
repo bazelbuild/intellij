@@ -20,10 +20,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class TransitionTest extends ClwbHeadlessTestCase {
 
-  // configuration ids are only exposed for Bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     final var builder = super.projectViewText(version);

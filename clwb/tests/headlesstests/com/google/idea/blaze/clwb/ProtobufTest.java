@@ -19,10 +19,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ProtobufTest extends ClwbHeadlessTestCase {
 
-  // protobuf requires bazel 7+
-  @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(7, 0);
-
   // on windows clang-cl is required to compile protobuf and therefore also bazel 8+
   @Rule
   public final BazelVersionRule bazelWindowsRule = new BazelVersionRule(OS.Windows, 8, 0);
