@@ -56,7 +56,7 @@ bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl",
 bazel_binaries.download(version = "6.6.0")
 bazel_binaries.download(version = "7.7.1")
 bazel_binaries.download(version = "8.6.0")
-bazel_binaries.download(version = "9.0.0")
+bazel_binaries.download(version = "9.0.1")
 bazel_binaries.download(version = "last_green")
 use_repo(
     bazel_binaries,
@@ -65,7 +65,7 @@ use_repo(
     "build_bazel_bazel_6_6_0",
     "build_bazel_bazel_7_7_1",
     "build_bazel_bazel_8_6_0",
-    "build_bazel_bazel_9_0_0",
+    "build_bazel_bazel_9_0_1",
     "build_bazel_bazel_last_green",
 )
 
@@ -193,8 +193,6 @@ bazel_build_jars = use_repo_rule("//third_party/bazel/jars:extension.bzl", "baze
 
 bazel_build_jars(
     name = "bazel_jars",
-    sha256 = "614ea210625c9ef19c952c2a974e7cfb73e1ba025a4ee7d1062a90fa32bb4132",
-    tag = "9.0.0",
     jars = [
         "//src/tools/execlog:parser_deploy.jar",
         "//src/main/java/net/starlark/java/cmd:starlark_deploy.jar",
@@ -202,4 +200,6 @@ bazel_build_jars(
     patches = [
         "//third_party/bazel/jars:starlark_repl.patch",
     ],
+    sha256 = "728eb778d882e247097f78f0626835ea984d54523053753a56b9bc18e46e23cb",
+    tag = "9.0.1",
 )
