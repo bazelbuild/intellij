@@ -32,7 +32,7 @@ public class CoptsMakeVarsTest extends BazelIntellijAspectTest {
   private CIdeInfo getCIdeInfo(String targetName) throws IOException {
     final var testFixture = loadTestFixture(":aspect_fixture");
     final var target = findTarget(testFixture, targetName);
-    assertThat(target.getKindString()).isEqualTo("cc_binary");
+    assertThat(target.getKind()).isEqualTo("cc_binary");
     assertThat(target.hasCIdeInfo()).isTrue();
 
     return target.getCIdeInfo();

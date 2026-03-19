@@ -234,7 +234,7 @@ message Dependency {
 }
 
 message TargetIdeInfo {
-  string kind_string = 1;
+  string kind = 1;
   TargetKey key = 2;
   ArtifactLocation build_file_artifact_location = 3;
   repeated Dependency deps = 4;
