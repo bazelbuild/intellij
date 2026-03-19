@@ -38,6 +38,8 @@ import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.FakeBlazeCommandRunner;
 import com.google.idea.blaze.base.bazel.FakeBuildInvoker;
+import com.google.idea.blaze.base.buildview.BazelExecService;
+import com.google.idea.blaze.base.buildview.FakeBazelExecService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
@@ -99,6 +101,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
           new FakeWildCardTargetExpanderExternalTaskProvider();
   private final FakeWildCardTargetExpanderBlazeInvoker fakeWildCardTargetExpanderBlazeInvoker =
       new FakeWildCardTargetExpanderBlazeInvoker();
+  private final FakeBazelExecService fakeBazelExecService = new FakeBazelExecService();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -124,6 +127,20 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
+    projectServices.register(BazelExecService.class, fakeBazelExecService);
+    // Wire up fakeBazelExecService to delegate to the fakeWildCardTargetExpanderBlazeInvoker
+    fakeBazelExecService.setExecHandler((ctx, cmd) -> {
+      try {
+        String output = String.join(System.lineSeparator(),
+            fakeWildCardTargetExpanderBlazeInvoker.outputMessages);
+        if (fakeWildCardTargetExpanderBlazeInvoker.failure) {
+          return FakeBazelExecService.createExecResult("", 1);
+        }
+        return FakeBazelExecService.createExecResult(output, 0);
+      } catch (Exception e) {
+        return FakeBazelExecService.createExecResult("", 1);
+      }
+    });
   }
 
   @Override
@@ -395,8 +412,8 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    commandInvoker.setOutputMessages(
-            ImmutableList.of("sh_library rule " + expectedLabel1));
+    fakeBazelExecService.setExecHandler((ctx, cmd) ->
+            FakeBazelExecService.createExecResult("sh_library rule " + expectedLabel1, 0));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
             .setFailToBatchTarget(false);
@@ -426,8 +443,8 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    blazeInvoker.setOutputMessages(
-            ImmutableList.of("sh_library rule " + expectedLabel1));
+    fakeBazelExecService.setExecHandler((ctx, cmd) ->
+            FakeBazelExecService.createExecResult("sh_library rule " + expectedLabel1, 0));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
             .setFailToBatchTarget(false);

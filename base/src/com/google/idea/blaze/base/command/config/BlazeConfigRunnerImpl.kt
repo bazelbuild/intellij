@@ -65,7 +65,10 @@ class BlazeConfigRunnerImpl : BlazeConfigRunner {
         .builder(invoker, BlazeCommandName.CONFIG)
         .addBlazeFlags("--dump_all", "--output=json")
 
-      return BazelExecService.instance(project).exec(context, cmdBuilder)
+      return BazelExecService.of(project).exec(context, cmdBuilder).use {
+        it.throwOnFailure()
+        it.readAsString()
+      }
     } catch (e: ExecutionException) {
       throw BlazeConfigException("Failed to execute Bazel config command", e)
     }

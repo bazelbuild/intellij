@@ -1,14 +1,20 @@
 package com.google.idea.blaze.base.buildview
 
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
+import com.google.errorprone.annotations.MustBeClosed
 import com.google.idea.blaze.base.buildview.events.BuildEventParser
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
 import com.google.idea.blaze.base.command.buildresult.BuildResult
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep
 import com.google.idea.blaze.base.command.buildresult.BuildResultParser
+import com.google.idea.blaze.base.execution.BazelGuard
+import com.google.idea.blaze.base.execution.ExecutionDeniedException
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
+import com.google.idea.blaze.base.projectview.ProjectViewManager
+import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection
 import com.google.idea.blaze.base.scope.BlazeContext
+import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
@@ -21,8 +27,6 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -32,18 +36,30 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.BufferedInputStream
 import java.io.FileInputStream
+import java.nio.file.Files
 import java.util.Optional
 import kotlin.io.path.pathString
 import kotlin.jvm.Throws
 import kotlin.time.Duration.Companion.milliseconds
 
-private val LOG: Logger = Logger.getInstance(BazelExecService::class.java)
+private val LOG: Logger = Logger.getInstance(BazelExecServiceImpl::class.java)
 
-@Service(Service.Level.PROJECT)
-class BazelExecService(private val project: Project, private val scope: CoroutineScope) {
-  companion object {
-    @JvmStatic
-    fun instance(project: Project): BazelExecService = project.service()
+class BazelExecServiceImpl(private val project: Project, private val scope: CoroutineScope) : BazelExecService {
+
+  @Throws(ExecutionException::class)
+  private fun performGuardCheck() {
+    try {
+      BazelGuard.checkExtensionsIsExecutionAllowed(project)
+    } catch (e: ExecutionDeniedException) {
+      throw ExecutionException("Bazel execution denied: project is not trusted", e)
+    }
+  }
+
+  private fun resolveBinaryPath(): String {
+    return Optional.ofNullable(ProjectViewManager.getInstance(project).projectViewSet)
+      .flatMap { it.getScalarValue(BazelBinarySection.KEY) }
+      .map { it.path }
+      .orElseGet { BlazeUserSettings.getInstance().bazelBinaryPath }
   }
 
   private fun assertNonBlocking() {
@@ -74,9 +90,11 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
   private suspend fun execute(
     ctx: BlazeContext,
     cmdBuilder: BlazeCommand.Builder,
-    textAvailable: (String) -> Unit,
     usePty: Boolean,
+    textAvailable: (String) -> Unit,
   ): Int {
+    performGuardCheck()
+
     configureProxy(cmdBuilder)
 
     // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
@@ -97,7 +115,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
 
     cmdLine
-      .withExePath(cmd.binary().pathString)
+      .withExePath(resolveBinaryPath())
       .withParameters(cmd.toArgumentList())
       .withEnvironment(cmd.environment())
       .withWorkDirectory(root.pathString)
@@ -192,12 +210,8 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
   }
 
-  /**
-   * Runs a Bazel build and returns its result. Stderr and stdout are piped to the context for visibility as well as
-   * BEP events are reported as context events.
-   */
   @Throws(ExecutionException::class)
-  fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs {
+  override fun build(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): BlazeBuildOutputs {
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
 
@@ -206,7 +220,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder, ctx::println, usePty = true)
+      val exitCode = execute(ctx, cmdBuilder, usePty = true, ctx::println)
       val result = BuildResult.fromExitCode(exitCode)
 
       parseJob.cancelAndJoin()
@@ -223,24 +237,22 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     }
   }
 
-  /**
-   * Runs a Bazel command and returns its stdout as a string. Stderr is piped to the context for visibility.
-   */
+  @MustBeClosed
   @Throws(ExecutionException::class)
-  fun exec(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): String {
+  override fun exec(ctx: BlazeContext, cmdBuilder: BlazeCommand.Builder): ExecResult {
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name != BlazeCommandName.BUILD)
 
-    return executionScope(ctx) {
-      val stdout = StringBuilder()
+    val tempFile = Files.createTempFile("intellij-bazel-${cmdBuilder.name}-", ".stdout")
 
-      val exitCode = execute(ctx, cmdBuilder, stdout::append, usePty = false)
-      if (exitCode != 0) {
-        throw ExecutionException("Bazel command failed with exit code $exitCode")
+    val exitCode = executionScope(ctx) {
+      Files.newOutputStream(tempFile).use { out ->
+        execute(ctx, cmdBuilder, usePty = false) { text ->
+          out.write(text.toByteArray())
+        }
       }
-
-      stdout.toString()
     }
-  }
 
+    return ExecResult(exitCode, tempFile)
+  }
 }
