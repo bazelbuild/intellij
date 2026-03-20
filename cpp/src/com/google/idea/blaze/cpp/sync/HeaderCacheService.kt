@@ -84,7 +84,7 @@ class HeaderCacheService(private val project: Project) {
   }
 
   private fun cacheDirectory(key: TargetKey): Path {
-    return cacheDirectory(key.configurationId())
+    return cacheDirectory(key.configuration())
   }
 
   @Synchronized
@@ -129,7 +129,7 @@ class HeaderCacheService(private val project: Project) {
       if (!isInBazelBin(header)) continue
 
       // check if the header is already present in the cache
-      if (!cacheTracker.add(key.configurationId() + "/" + header.relativePath())) continue
+      if (!cacheTracker.add(key.configuration() + "/" + header.relativePath())) continue
 
       val path = resolveCachePath(targetCacheDirectory, header)
 
@@ -160,7 +160,7 @@ class HeaderCacheService(private val project: Project) {
         }
       } catch (e: IOException) {
         cacheTracker.remove(header.relativePath())
-        LOG.warn("failed to cache header ${header.relativePath()} for ${key.label()} (${key.configurationId()})", e)
+        LOG.warn("failed to cache header ${header.relativePath()} for ${key.label()} (${key.configuration()})", e)
       }
     }
   }
@@ -182,7 +182,7 @@ class HeaderCacheService(private val project: Project) {
 
   @Synchronized
   fun resolve(target: TargetKey, executionRootPath: ExecutionRootPath): Optional<Path> {
-    return resolve(target.configurationId(), executionRootPath);
+    return resolve(target.configuration(), executionRootPath);
   }
 
   @Synchronized

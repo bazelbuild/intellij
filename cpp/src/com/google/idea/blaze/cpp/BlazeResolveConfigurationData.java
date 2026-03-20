@@ -56,7 +56,7 @@ public abstract class BlazeResolveConfigurationData {
     final var compilationCtx = cIdeInfo.compilationContext();
 
     return builder()
-        .setConfigurationId(targetKey.configurationId())
+        .setConfigurationId(targetKey.configuration())
         .setCompilerSettings(compilerSettings)
         .setLocalCopts(ruleCtx.copts())
         .setLocalConlyopts(ruleCtx.conlyopts())
