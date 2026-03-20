@@ -197,6 +197,7 @@ bazel_build_jars(
     ],
     patches = [
         "//third_party/bazel/jars:starlark_repl.patch",
+        "//third_party/bazel/jars:execlog_parser.patch",
     ],
     sha256 = "728eb778d882e247097f78f0626835ea984d54523053753a56b9bc18e46e23cb",
     tag = "9.0.1",
