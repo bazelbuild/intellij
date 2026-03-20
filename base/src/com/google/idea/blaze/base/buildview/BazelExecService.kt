@@ -14,6 +14,7 @@ import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessEvent
@@ -74,11 +75,12 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     ctx: BlazeContext,
     cmdBuilder: BlazeCommand.Builder,
     textAvailable: (String) -> Unit,
+    usePty: Boolean,
   ): Int {
     configureProxy(cmdBuilder)
 
     // the old sync view does not use a PTY based terminal, and idk why it does not work on windows :c
-    if (BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows) {
+    if (usePty && BuildViewMigration.present(ctx) && OS.CURRENT != OS.Windows) {
       cmdBuilder.addBlazeFlags("--curses=yes")
     } else {
       cmdBuilder.addBlazeFlags("--curses=no")
@@ -86,11 +88,15 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
     val cmd = cmdBuilder.build()
     val root = cmd.workspaceRoot().orElseGet { WorkspaceRoot.fromProject(project).path() }
-    val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
 
-    val cmdLine = PtyCommandLine()
-      .withInitialColumns(size.columns)
-      .withInitialRows(size.rows)
+    val cmdLine = if (usePty) {
+      val size = BuildViewScope.of(ctx)?.consoleSize ?: PtyConsoleView.DEFAULT_SIZE
+      PtyCommandLine().withInitialColumns(size.columns).withInitialRows(size.rows)
+    } else {
+      GeneralCommandLine()
+    }
+
+    cmdLine
       .withExePath(cmd.binary().pathString)
       .withParameters(cmd.toArgumentList())
       .withEnvironment(cmd.environment())
@@ -200,7 +206,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
 
       val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder, ctx::println)
+      val exitCode = execute(ctx, cmdBuilder, ctx::println, usePty = true)
       val result = BuildResult.fromExitCode(exitCode)
 
       parseJob.cancelAndJoin()
@@ -228,7 +234,7 @@ class BazelExecService(private val project: Project, private val scope: Coroutin
     return executionScope(ctx) {
       val stdout = StringBuilder()
 
-      val exitCode = execute(ctx, cmdBuilder, stdout::append)
+      val exitCode = execute(ctx, cmdBuilder, stdout::append, usePty = false)
       if (exitCode != 0) {
         throw ExecutionException("Bazel command failed with exit code $exitCode")
       }

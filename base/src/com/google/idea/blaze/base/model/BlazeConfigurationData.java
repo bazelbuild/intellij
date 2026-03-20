@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import javax.annotation.Nullable;
 
 /**
- * Container for Bazel build configuration data extracted from the Build Event Protocol (BEP).
+ * Container for Bazel build configuration data.
  *
  * <p>Stores a map of configuration IDs to their corresponding configuration details.
  */

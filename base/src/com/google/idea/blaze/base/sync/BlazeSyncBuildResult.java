@@ -19,7 +19,9 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
+import com.google.idea.blaze.base.model.BlazeConfigurationData;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.intellij.util.ObjectUtils;
 import javax.annotation.Nullable;
 
 /**
@@ -41,6 +43,7 @@ public abstract class BlazeSyncBuildResult {
                 .addAll(getBuildPhaseStats())
                 .addAll(nextResult.getBuildPhaseStats())
                 .build())
+        .setConfigurationData(ObjectUtils.coalesce(nextResult.getConfigurationData(), getConfigurationData()))
         .build();
   }
 
@@ -53,6 +56,9 @@ public abstract class BlazeSyncBuildResult {
 
   @Nullable
   public abstract BlazeBuildOutputs getBuildResult();
+
+  @Nullable
+  public abstract BlazeConfigurationData getConfigurationData();
 
   public abstract ImmutableList<BuildPhaseSyncStats> getBuildPhaseStats();
 
@@ -68,6 +74,8 @@ public abstract class BlazeSyncBuildResult {
     public abstract Builder setBlazeInfo(BlazeInfo info);
 
     public abstract Builder setBuildResult(BlazeBuildOutputs buildResult);
+
+    public abstract Builder setConfigurationData(@Nullable BlazeConfigurationData value);
 
     public abstract Builder setBuildPhaseStats(Iterable<BuildPhaseSyncStats> stats);
 

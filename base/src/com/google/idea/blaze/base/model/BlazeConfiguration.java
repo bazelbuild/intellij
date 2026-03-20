@@ -16,18 +16,20 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.ImmutableMap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 
 /**
- * Represents a Bazel build configuration from the Build Event Protocol (BEP).
+ * Represents a Bazel build configuration.
  *
  * <p>Configurations contain platform-specific build information including CPU architecture,
  * platform name, make variables, and whether the configuration is used for building tools vs targets.
  */
 @AutoValue
-public abstract class BlazeConfiguration implements ProtoWrapper<BuildEventStreamProtos.Configuration> {
+public abstract class BlazeConfiguration implements ProtoWrapper<ProjectData.BlazeConfiguration> {
+
+  public abstract String id();
 
   public abstract String mnemonic();
 
@@ -35,27 +37,37 @@ public abstract class BlazeConfiguration implements ProtoWrapper<BuildEventStrea
 
   public abstract String cpu();
 
-  public abstract ImmutableMap<String, String> makeVariables();
-
   public abstract boolean isToolConfiguration();
 
-  public static BlazeConfiguration fromProto(BuildEventStreamProtos.Configuration proto) {
+  /** Creates a BlazeConfiguration from project Configuration proto. */
+  public static BlazeConfiguration fromProto(ProjectData.BlazeConfiguration proto) {
     return builder()
+        .setId(proto.getId())
         .setMnemonic(proto.getMnemonic())
         .setPlatformName(proto.getPlatformName())
         .setCpu(proto.getCpu())
-        .setMakeVariables(ImmutableMap.copyOf(proto.getMakeVariableMap()))
+        .setIsToolConfiguration(proto.getIsTool())
+        .build();
+  }
+
+  /** Creates a BlazeConfiguration from BEP Configuration proto. */
+  public static BlazeConfiguration fromProto(BuildEventStreamProtos.Configuration proto, String id) {
+    return builder()
+        .setId(id)
+        .setMnemonic(proto.getMnemonic())
+        .setPlatformName(proto.getPlatformName())
+        .setCpu(proto.getCpu())
         .setIsToolConfiguration(proto.getIsTool())
         .build();
   }
 
   @Override
-  public BuildEventStreamProtos.Configuration toProto() {
-    return BuildEventStreamProtos.Configuration.newBuilder()
+  public ProjectData.BlazeConfiguration toProto() {
+    return ProjectData.BlazeConfiguration.newBuilder()
+        .setId(id())
         .setMnemonic(mnemonic())
         .setPlatformName(platformName())
         .setCpu(cpu())
-        .putAllMakeVariable(makeVariables())
         .setIsTool(isToolConfiguration())
         .build();
   }
@@ -67,13 +79,13 @@ public abstract class BlazeConfiguration implements ProtoWrapper<BuildEventStrea
   @AutoValue.Builder
   public abstract static class Builder {
 
+    public abstract Builder setId(String id);
+
     public abstract Builder setMnemonic(String mnemonic);
 
     public abstract Builder setPlatformName(String platformName);
 
     public abstract Builder setCpu(String cpu);
-
-    public abstract Builder setMakeVariables(ImmutableMap<String, String> makeVariables);
 
     public abstract Builder setIsToolConfiguration(boolean isToolConfiguration);
 
