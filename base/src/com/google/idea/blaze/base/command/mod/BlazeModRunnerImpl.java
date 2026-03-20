@@ -22,17 +22,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.buildview.BazelExecService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.ExternalWorkspaceData;
 import com.google.idea.blaze.base.model.primitives.ExternalWorkspace;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -97,7 +95,7 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
                 BlazeExecutor.getInstance().getExecutor()
         );
 
-    }
+  }
 
   @Override
   protected ListenableFuture<byte[]> runBlazeModGetBytes(
@@ -106,23 +104,17 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
       BlazeContext context,
       List<String> args,
       List<String> flags) {
-    return BlazeExecutor.getInstance()
-        .submit(
-            () -> {
-              BlazeCommand.Builder builder =
-                  BlazeCommand.builder(invoker, BlazeCommandName.MOD).addBlazeFlags(flags);
+    return BlazeExecutor.getInstance().submit(() -> {
+      final var builder = BlazeCommand.builder(BlazeCommandName.MOD).addBlazeFlags(flags);
 
-              if (args != null) {
-                builder.addBlazeFlags(args);
-              }
+      if (args != null) {
+        builder.addBlazeFlags(args);
+      }
 
-              try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-                BlazeCommandRunner runner = invoker.getCommandRunner();
-                try (InputStream stream =
-                    runner.runBlazeMod(project, builder, buildResultHelper, context)) {
-                  return stream.readAllBytes();
-                }
-              }
-            });
+      try (final var result = BazelExecService.of(project).exec(context, builder)) {
+        result.throwOnFailure();
+        return result.getStdout().readAllBytes();
+      }
+    });
   }
 }
