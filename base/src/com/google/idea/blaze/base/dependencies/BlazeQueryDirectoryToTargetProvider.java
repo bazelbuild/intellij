@@ -20,28 +20,22 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.bazel.BuildSystem;
-import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.buildview.BazelExecService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.exception.BuildException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
@@ -86,23 +80,22 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
    * the query failed.
    */
   @Nullable
-  private static ImmutableList<TargetInfo> runQuery(
-      Project project, String query, BlazeContext context) {
-    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
-    BlazeCommand.Builder command =
-        BlazeCommand.builder(
-                buildSystem.getDefaultInvoker(project), BlazeCommandName.QUERY)
-            .addBlazeFlags("--output=label_kind")
-            .addBlazeFlags("--keep_going")
-            .addBlazeFlags(query);
-    BuildInvoker invoker = buildSystem.getDefaultInvoker(project);
-    BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
-    try (InputStream queryResultStream = invoker.invokeQuery(command, context)) {
-      new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
-          .lines()
-          .forEach(outputProcessor::processLine);
+  private static ImmutableList<TargetInfo> runQuery(Project project, String query, BlazeContext context) {
+    final var command = BlazeCommand.builder(BlazeCommandName.QUERY)
+        .addBlazeFlags("--output=label_kind")
+        .addBlazeFlags("--keep_going")
+        .addBlazeFlags(query);
+
+    final var outputProcessor = new BlazeQueryLabelKindParser(t -> true);
+    try (final var result = BazelExecService.of(project).exec(context, command)) {
+      try (final var queryResultStream = result.getStdout()) {
+        new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+            .lines()
+            .forEach(outputProcessor::processLine);
+      }
+
       return outputProcessor.getTargets();
-    } catch (IOException | BuildException e) {
+    } catch (IOException | ExecutionException e) {
       logger.error(e.getMessage(), e);
       return null;
     }
