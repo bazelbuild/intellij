@@ -17,14 +17,15 @@ package com.google.idea.blaze.base.sync.actions;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.nio.charset.StandardCharsets.*;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
+import com.google.idea.blaze.base.buildview.BazelExecService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -32,22 +33,24 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -129,41 +132,26 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
    * the query failed.
    */
   @Nullable
-  private static ImmutableList<TargetInfo> runBlazeQuery(
-      Project project, String query, BlazeContext context) {
-    BlazeCommand command =
-        BlazeCommand.builder(getBlazeBinaryPath(project), BlazeCommandName.QUERY)
-            .addBlazeFlags("--output=label_kind")
-            .addBlazeFlags("--keep_going")
-            .addBlazeFlags(query)
-            .build();
+  private static ImmutableList<TargetInfo> runBlazeQuery(Project project, String query, BlazeContext context) {
+    final var command = BlazeCommand.builder(BlazeCommandName.QUERY)
+        .addBlazeFlags("--output=label_kind")
+        .addBlazeFlags("--keep_going")
+        .addBlazeFlags(query);
 
-    BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
-    int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .addBlazeCommand(command)
-            .context(context)
-            .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(
-                LineProcessingOutputStream.of(
-                    line -> {
-                      context.output(PrintOutput.error(line));
-                      return true;
-                    }))
-            .build()
-            .run();
-    if (retVal != 0 && retVal != 3) {
-      // A return value of 3 indicates that the query completed, but there were some
-      // errors in the query, like querying a directory with no build files / no targets.
-      // Instead of returning null, we allow returning the parsed targets, if any.
+    final var outputProcessor = new BlazeQueryLabelKindParser(t -> true);
+    try (final var result = BazelExecService.of(project).exec(context, command)) {
+      result.throwOnFailure(ThrowOption.ALLOW_PARTIAL_SUCCESS);
+
+      try (final var queryResultStream = result.getStdout()) {
+        new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+            .lines()
+            .forEach(outputProcessor::processLine);
+      }
+
+      return outputProcessor.getTargets();
+    } catch (ExecutionException | BuildException | IOException e) {
       return null;
     }
-    return outputProcessor.getTargets();
-  }
-
-  private static String getBlazeBinaryPath(Project project) {
-    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
   }
 
   private static void removeInvalidRunConfigurations(Project project, ImmutableSet<Label> deleted) {
