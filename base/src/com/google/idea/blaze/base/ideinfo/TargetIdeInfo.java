@@ -43,7 +43,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final CToolchainIdeInfo cToolchainIdeInfo;
   @Nullable private final JavaIdeInfo javaIdeInfo;
   @Nullable private final AndroidIdeInfo androidIdeInfo;
-  @Nullable private final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable private final AndroidAarIdeInfo androidAarIdeInfo;
   @Nullable private final AndroidInstrumentationInfo androidInstrumentationInfo;
   @Nullable private final PyIdeInfo pyIdeInfo;
@@ -67,7 +66,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
       @Nullable JavaIdeInfo javaIdeInfo,
       @Nullable AndroidIdeInfo androidIdeInfo,
-      @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable AndroidAarIdeInfo androidAarIdeInfo,
       @Nullable AndroidInstrumentationInfo androidInstrumentationInfo,
       @Nullable PyIdeInfo pyIdeInfo,
@@ -89,7 +87,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.cToolchainIdeInfo = cToolchainIdeInfo;
     this.javaIdeInfo = javaIdeInfo;
     this.androidIdeInfo = androidIdeInfo;
-    this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.androidAarIdeInfo = androidAarIdeInfo;
     this.androidInstrumentationInfo = androidInstrumentationInfo;
     this.pyIdeInfo = pyIdeInfo;
@@ -144,9 +141,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasAndroidIdeInfo()
             ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo())
             : null,
-        proto.hasAndroidSdkIdeInfo()
-            ? AndroidSdkIdeInfo.fromProto(proto.getAndroidSdkIdeInfo())
-            : null,
         proto.hasAndroidAarIdeInfo()
             ? AndroidAarIdeInfo.fromProto(proto.getAndroidAarIdeInfo())
             : null,
@@ -197,7 +191,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCToolchainIdeInfo, cToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaIdeInfo, javaIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidIdeInfo, androidIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidSdkIdeInfo, androidSdkIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidAarIdeInfo, androidAarIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(
         builder::setAndroidInstrumentationInfo, androidInstrumentationInfo);
@@ -233,7 +226,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cToolchainIdeInfo,
         javaIdeInfo,
         androidIdeInfo,
-        androidSdkIdeInfo,
         androidAarIdeInfo,
         androidInstrumentationInfo,
         pyIdeInfo,
@@ -290,11 +282,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable
   public AndroidIdeInfo getAndroidIdeInfo() {
     return androidIdeInfo;
-  }
-
-  @Nullable
-  public AndroidSdkIdeInfo getAndroidSdkIdeInfo() {
-    return androidSdkIdeInfo;
   }
 
   @Nullable
@@ -592,7 +579,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           cToolchainIdeInfo,
           javaIdeInfo,
           androidIdeInfo,
-          null,
           androidAarIdeInfo,
           androidInstrumentationInfo,
           pyIdeInfo,
@@ -626,7 +612,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(cToolchainIdeInfo, that.cToolchainIdeInfo)
         && Objects.equals(javaIdeInfo, that.javaIdeInfo)
         && Objects.equals(androidIdeInfo, that.androidIdeInfo)
-        && Objects.equals(androidSdkIdeInfo, that.androidSdkIdeInfo)
         && Objects.equals(androidAarIdeInfo, that.androidAarIdeInfo)
         && Objects.equals(androidInstrumentationInfo, that.androidInstrumentationInfo)
         && Objects.equals(pyIdeInfo, that.pyIdeInfo)
@@ -653,7 +638,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cToolchainIdeInfo,
         javaIdeInfo,
         androidIdeInfo,
-        androidSdkIdeInfo,
         androidAarIdeInfo,
         androidInstrumentationInfo,
         pyIdeInfo,

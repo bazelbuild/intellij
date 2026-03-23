@@ -125,10 +125,6 @@ message ResFolderLocation {
   ArtifactLocation aar = 3;
 }
 
-message AndroidSdkIdeInfo {
-  ArtifactLocation android_jar = 1;
-}
-
 message AndroidAarIdeInfo {
   ArtifactLocation aar = 1;
   string java_package = 2;
@@ -246,7 +242,6 @@ message TargetIdeInfo {
 
   AndroidIdeInfo android_ide_info = 110;
   AndroidAarIdeInfo android_aar_ide_info = 111;
-  AndroidSdkIdeInfo android_sdk_ide_info = 112;
   AndroidInstrumentationInfo android_instrumentation_info = 113;
 
   CIdeInfo c_ide_info = 120;
