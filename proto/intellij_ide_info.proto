@@ -134,14 +134,6 @@ message AndroidAarIdeInfo {
   string java_package = 2;
 }
 
-// Details about an android instrumentation test.
-message AndroidInstrumentationInfo {
-  // Label for the android_binary to use as instrumentor.
-  string test_app = 1;
-  // Label for device target image to use during this test.
-  string target_device = 2;
-}
-
 message PyIdeInfo {
   enum PythonVersion {
     UNKNOWN = 0;
@@ -247,8 +239,6 @@ message TargetIdeInfo {
   AndroidIdeInfo android_ide_info = 110;
   AndroidAarIdeInfo android_aar_ide_info = 111;
   AndroidSdkIdeInfo android_sdk_ide_info = 112;
-  AndroidInstrumentationInfo android_instrumentation_info = 113;
-
   CIdeInfo c_ide_info = 120;
   CToolchainIdeInfo c_toolchain_ide_info = 121;
 
