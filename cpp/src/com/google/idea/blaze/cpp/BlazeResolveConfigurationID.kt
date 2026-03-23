@@ -20,7 +20,7 @@ import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 private const val MARKER = "BAZEL_ID"
 
 /**
- * Wrapper class for the unique identifier derived from a
+ * Wrapper class for the unique identifier of an [OCResolveConfiguration].
  */
 data class BlazeResolveConfigurationID(
   val identifier: String,
