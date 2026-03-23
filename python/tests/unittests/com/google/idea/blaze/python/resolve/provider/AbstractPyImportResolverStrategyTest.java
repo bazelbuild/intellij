@@ -236,7 +236,6 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     AbstractPyImportResolverStrategy strategy = new TestPyImportResolverStrategy();
 
     PyIdeInfo.Builder pyIdeInfoBuilder = PyIdeInfo.builder()
-        .addSources(ImmutableSet.of(source("top_level/lib/tea.py")))
         .addImports(ImmutableSet.copyOf(Set.of("top_level")));
 
     TargetMap targetMap = TargetMapBuilder.builder()
@@ -244,6 +243,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
             TargetIdeInfo.builder()
                 .setLabel("//:tea")
                 .setBuildFile(source("/BUILD.bazel")) // <- note
+                .addSource(source("top_level/lib/tea.py"))
                 .setPyInfo(pyIdeInfoBuilder)
         )
         .build();
@@ -301,15 +301,6 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
     AbstractPyImportResolverStrategy strategy = new TestPyImportResolverStrategy();
 
     PyIdeInfo.Builder pyIdeInfoBuilder = PyIdeInfo.builder()
-        .addSources(ImmutableSet.of(
-            ArtifactLocation.builder()
-                .setRootPath("bazel-out/anyos_arm64-fastbuild/bin")
-                .setRelativePath("example/materials")
-                //^ This would be a typical source path for a code generation scenario.
-                .setIsSource(false)
-                // ^ When working with code-gen, the source is marked as false.
-                .build()
-            ))
         .addImports(ImmutableSet.of());
 
     TargetMap targetMap = TargetMapBuilder.builder()
@@ -317,6 +308,13 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
             TargetIdeInfo.builder()
                 .setLabel("//example:generated_directory_lib")
                 .setBuildFile(source("example/BUILD"))
+                .addSource(ArtifactLocation.builder()
+                    .setRootPath("bazel-out/anyos_arm64-fastbuild/bin")
+                    .setRelativePath("example/materials")
+                    //^ This would be a typical source path for a code generation scenario.
+                    .setIsSource(false)
+                    // ^ When working with code-gen, the source is marked as false.
+                    .build())
                 .setPyInfo(pyIdeInfoBuilder)
         )
         .build();
@@ -399,7 +397,6 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
 
   private TargetMap assembleTestTargetMap(Set<String> importPaths) {
     PyIdeInfo.Builder pyIdeInfoBuilder = PyIdeInfo.builder()
-        .addSources(ImmutableSet.of(source("whistle/foo/river/lib/bar.py")))
         .addImports(ImmutableSet.copyOf(importPaths));
 
     return TargetMapBuilder.builder()
@@ -407,6 +404,7 @@ public class AbstractPyImportResolverStrategyTest extends BlazeTestCase {
             TargetIdeInfo.builder()
                 .setLabel("//whistle/foo:foo")
                 .setBuildFile(source("whistle/foo/BUILD.bazel"))
+                .addSource(source("whistle/foo/river/lib/bar.py"))
                 .setPyInfo(pyIdeInfoBuilder)
         )
         .build();

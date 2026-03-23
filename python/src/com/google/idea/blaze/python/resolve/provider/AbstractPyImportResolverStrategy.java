@@ -173,10 +173,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     Preconditions.checkArgument(null != workspacePathResolver);
     Preconditions.checkArgument(null != target);
 
-    if (target.getPyIdeInfo() != null) {
-      return getPySources(workspacePathResolver, target.getPyIdeInfo().getSources());
-    }
-    if (target.getKind().hasLanguage(LanguageClass.PYTHON)) {
+    if (target.getPyIdeInfo() != null || target.getKind().hasLanguage(LanguageClass.PYTHON)) {
       return getPySources(workspacePathResolver, target.getSources());
     }
     return ImmutableList.of();

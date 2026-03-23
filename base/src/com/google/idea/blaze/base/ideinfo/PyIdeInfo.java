@@ -30,7 +30,6 @@ import javax.annotation.Nullable;
 
 /** Ide info specific to python rules. */
 public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> {
-  private final ImmutableList<ArtifactLocation> sources;
   @Nullable private final Label launcher;
   private final PythonVersion version;
   private final PythonSrcsVersion srcsVersion;
@@ -39,14 +38,12 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
   private final boolean isCodeGenerator;
 
   private PyIdeInfo(
-      ImmutableList<ArtifactLocation> sources,
       @Nullable Label launcher,
       PythonVersion version,
       PythonSrcsVersion srcsVersion,
       ImmutableList<String> args,
       ImmutableList<String> imports,
       boolean isCodeGenerator) {
-    this.sources = sources;
     this.launcher = launcher;
     this.version = version;
     this.srcsVersion = srcsVersion;
@@ -62,7 +59,6 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
       launcher = Label.createIfValid(launcherString);
     }
     return new PyIdeInfo(
-        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         launcher,
         proto.getPythonVersion(),
         proto.getSrcsVersion(),
@@ -87,8 +83,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
 
   @Override
   public IntellijIdeInfo.PyIdeInfo toProto() {
-    IntellijIdeInfo.PyIdeInfo.Builder builder =
-        IntellijIdeInfo.PyIdeInfo.newBuilder().addAllSources(ProtoWrapper.mapToProtos(sources));
+    IntellijIdeInfo.PyIdeInfo.Builder builder = IntellijIdeInfo.PyIdeInfo.newBuilder();
     if (launcher != null) {
       builder.setLauncher(launcher.toString());
     }
@@ -97,10 +92,6 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     builder.addAllArgs(encodeArgs(args));
     builder.addAllImports(imports);
     return builder.build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
   }
 
   @Nullable
@@ -134,19 +125,12 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
 
   /** Builder for python rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
     @Nullable Label launcher;
     private PythonVersion version;
     private PythonSrcsVersion srcsVersion;
     private final ImmutableList.Builder<String> args = ImmutableList.builder();
     private final ImmutableList.Builder<String> imports = ImmutableList.builder();
     private boolean isCodeGenerator = false;
-
-    @CanIgnoreReturnValue
-    public Builder addSources(Iterable<ArtifactLocation> sources) {
-      this.sources.addAll(sources);
-      return this;
-    }
 
     @CanIgnoreReturnValue
     public Builder setLauncher(@Nullable String launcher) {
@@ -185,7 +169,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     }
 
     public PyIdeInfo build() {
-      return new PyIdeInfo(sources.build(), launcher, version, srcsVersion, args.build(), imports.build(), isCodeGenerator);
+      return new PyIdeInfo(launcher, version, srcsVersion, args.build(), imports.build(), isCodeGenerator);
     }
   }
 
@@ -193,7 +177,6 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
   public String toString() {
     StringBuilder s = new StringBuilder();
     s.append("PyIdeInfo{\n");
-    s.append("  sources=").append(getSources()).append("\n");
     Label l = getLauncher();
     if (l != null) {
       s.append("  launcher=").append(l).append("\n");
@@ -215,8 +198,7 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
       return false;
     }
     PyIdeInfo pyIdeInfo = (PyIdeInfo) o;
-    return Objects.equals(sources, pyIdeInfo.sources)
-        && Objects.equals(launcher, pyIdeInfo.launcher)
+    return Objects.equals(launcher, pyIdeInfo.launcher)
         && Objects.equals(version, pyIdeInfo.version)
         && Objects.equals(srcsVersion, pyIdeInfo.srcsVersion)
         && Objects.equals(args, pyIdeInfo.args)
@@ -225,6 +207,6 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, launcher, version, srcsVersion, args, imports);
+    return Objects.hash(launcher, version, srcsVersion, args, imports);
   }
 }
