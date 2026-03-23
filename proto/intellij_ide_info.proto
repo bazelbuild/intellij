@@ -166,14 +166,6 @@ message PyIdeInfo {
   bool is_code_generator = 7;
 }
 
-message GoIdeInfo {
-  string import_path = 2;
-  string library_label = 3 [deprecated = true];
-  string library_kind = 4 [deprecated = true];
-  repeated string library_labels = 5;
-  bool cgo = 6;
-}
-
 message JsIdeInfo {
 }
 
@@ -253,7 +245,6 @@ message TargetIdeInfo {
   CToolchainIdeInfo c_toolchain_ide_info = 121;
 
   PyIdeInfo py_ide_info = 130;
-  GoIdeInfo go_ide_info = 140;
   JsIdeInfo js_ide_info = 150;
   TsIdeInfo ts_ide_info = 160;
   DartIdeInfo dart_ide_info = 170;

@@ -536,7 +536,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFinder" interface="com.google.idea.blaze.base.run.SourceToTargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestComparisonFailureParser" interface="com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AutoSyncProvider" interface="com.google.idea.blaze.base.sync.autosync.AutoSyncProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.GoImportPathReplacer" interface="com.google.idea.blaze.base.ideinfo.ImportPathReplacer"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.WorkspacePathResolverExtractor" interface="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncDataExtractor" interface="com.google.idea.blaze.base.model.SyncData$Extractor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetKindProvider" interface="com.google.idea.blaze.base.model.primitives.Kind$Provider"/>
