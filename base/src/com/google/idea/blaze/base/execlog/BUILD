@@ -11,6 +11,7 @@ intellij_plugin_library(
     visibility = ["//base:__subpackages__"],
     deps = [
         "//common/util:datafiles",
+        "//common/util:file_util",
         "//common/util:runjar",
         "//intellij_platform_sdk:textmate",
         "//third_party/bazel/jars:execlog_parser",
