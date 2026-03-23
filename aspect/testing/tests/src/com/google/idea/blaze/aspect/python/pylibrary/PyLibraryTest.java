@@ -33,7 +33,6 @@ public class PyLibraryTest extends BazelIntellijAspectTest {
     TargetIdeInfo target = findTarget(testFixture, ":simple");
     assertThat(target.getKind()).isEqualTo("py_library");
     assertThat(target.hasPyIdeInfo()).isTrue();
-    assertThat(target.hasJavaIdeInfo()).isFalse();
     assertThat(target.hasCIdeInfo()).isFalse();
     assertThat(relativePathsForArtifacts(target.getSourcesList()))
         .containsExactly(testRelative("simple.py"));

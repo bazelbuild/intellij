@@ -37,20 +37,6 @@ message LibraryArtifact {
   repeated ArtifactLocation source_jars = 4;
 }
 
-message JavaIdeInfo {
-  repeated LibraryArtifact jars = 1;
-  repeated LibraryArtifact generated_jars = 2;
-  ArtifactLocation package_manifest = 3;
-  ArtifactLocation jdeps = 5;
-  LibraryArtifact filtered_gen_jar = 6;
-  string main_class = 7;
-  string test_class = 8;
-  repeated LibraryArtifact plugin_processor_jars = 9;
-  // Pass transitive jar artifact location without parsing jdeps
-  repeated ArtifactLocation transitive_compile_time_jars = 10
-      [deprecated = true];
-}
-
 message CIdeInfo {
   // Information collected from rules_cc rule attributes.
   message RuleContext {
@@ -159,7 +145,6 @@ message TargetIdeInfo {
   // sync.
   int64 sync_time_millis = 20;
 
-  JavaIdeInfo java_ide_info = 100;
   CIdeInfo c_ide_info = 120;
   CToolchainIdeInfo c_toolchain_ide_info = 121;
 
