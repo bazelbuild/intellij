@@ -15,32 +15,22 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import java.util.Objects;
 
 /** Ide info specific to dart rules. */
 public final class DartIdeInfo implements ProtoWrapper<IntellijIdeInfo.DartIdeInfo> {
-  private final ImmutableList<ArtifactLocation> sources;
 
-  private DartIdeInfo(ImmutableList<ArtifactLocation> sources) {
-    this.sources = sources;
-  }
+  private static final DartIdeInfo INSTANCE = new DartIdeInfo();
+
+  private DartIdeInfo() {}
 
   static DartIdeInfo fromProto(IntellijIdeInfo.DartIdeInfo proto) {
-    return new DartIdeInfo(ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto));
+    return INSTANCE;
   }
 
   @Override
   public IntellijIdeInfo.DartIdeInfo toProto() {
-    return IntellijIdeInfo.DartIdeInfo.newBuilder()
-        .addAllSources(ProtoWrapper.mapToProtos(sources))
-        .build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
+    return IntellijIdeInfo.DartIdeInfo.newBuilder().build();
   }
 
   public static Builder builder() {
@@ -49,22 +39,14 @@ public final class DartIdeInfo implements ProtoWrapper<IntellijIdeInfo.DartIdeIn
 
   /** Builder for dart rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
-
-    @CanIgnoreReturnValue
-    public Builder addSources(Iterable<ArtifactLocation> sources) {
-      this.sources.addAll(sources);
-      return this;
-    }
-
     public DartIdeInfo build() {
-      return new DartIdeInfo(sources.build());
+      return INSTANCE;
     }
   }
 
   @Override
   public String toString() {
-    return "DartIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+    return "DartIdeInfo{}";
   }
 
   @Override
@@ -72,15 +54,11 @@ public final class DartIdeInfo implements ProtoWrapper<IntellijIdeInfo.DartIdeIn
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    DartIdeInfo that = (DartIdeInfo) o;
-    return Objects.equals(sources, that.sources);
+    return o != null && getClass() == o.getClass();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources);
+    return 0;
   }
 }

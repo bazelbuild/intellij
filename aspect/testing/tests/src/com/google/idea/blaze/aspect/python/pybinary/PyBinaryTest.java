@@ -34,7 +34,7 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple3_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple3");
     assertThat(target.getKind()).isEqualTo("py_binary");
-    assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
+    assertThat(relativePathsForArtifacts(target.getSourcesList()))
         .containsExactly(testRelative("simple.py"));
     assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY3);
 

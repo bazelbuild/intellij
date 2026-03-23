@@ -29,17 +29,14 @@ import javax.annotation.Nullable;
 
 /** Ide info specific to go rules. */
 public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> {
-  private final ImmutableList<ArtifactLocation> sources;
   @Nullable private final String importPath;
   private final ImmutableList<Label> libraryLabels; // only valid for tests
   private final boolean cgo;
 
   private GoIdeInfo(
-      ImmutableList<ArtifactLocation> sources,
       @Nullable String importPath,
       ImmutableList<Label> libraryLabels,
       boolean cgo) {
-    this.sources = sources;
     this.importPath = importPath;
     this.libraryLabels = libraryLabels;
     this.cgo = cgo;
@@ -48,7 +45,6 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
   public static GoIdeInfo fromProto(
       IntellijIdeInfo.GoIdeInfo proto, Label targetLabel, Kind targetKind) {
     return new GoIdeInfo(
-        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         ImportPathReplacer.fixImportPath(
             Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
         extractLibraryLabels(targetKind, proto.getLibraryLabelsList()),
@@ -66,16 +62,11 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
 
   @Override
   public IntellijIdeInfo.GoIdeInfo toProto() {
-    IntellijIdeInfo.GoIdeInfo.Builder builder =
-        IntellijIdeInfo.GoIdeInfo.newBuilder().addAllSources(ProtoWrapper.mapToProtos(sources));
+    IntellijIdeInfo.GoIdeInfo.Builder builder = IntellijIdeInfo.GoIdeInfo.newBuilder();
     ProtoWrapper.setIfNotNull(builder::setImportPath, importPath);
     builder.addAllLibraryLabels(ProtoWrapper.map(libraryLabels, Label::toProto));
     builder.setCgo(cgo);
     return builder.build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
   }
 
   @Nullable
@@ -97,16 +88,9 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
 
   /** Builder for go rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
     @Nullable private String importPath = null;
     private final ImmutableList.Builder<Label> libraryLabels = ImmutableList.builder();
     private boolean cgo = false;
-
-    @CanIgnoreReturnValue
-    public Builder addSource(ArtifactLocation source) {
-      this.sources.add(source);
-      return this;
-    }
 
     @CanIgnoreReturnValue
     public Builder setImportPath(String importPath) {
@@ -127,16 +111,13 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     }
 
     public GoIdeInfo build() {
-      return new GoIdeInfo(sources.build(), importPath, libraryLabels.build(), cgo);
+      return new GoIdeInfo(importPath, libraryLabels.build(), cgo);
     }
   }
 
   @Override
   public String toString() {
     return "GoIdeInfo{"
-        + "\n"
-        + "  sources="
-        + getSources()
         + "\n"
         + "  importPath="
         + getImportPath()
@@ -158,14 +139,13 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
       return false;
     }
     GoIdeInfo goIdeInfo = (GoIdeInfo) o;
-    return Objects.equals(sources, goIdeInfo.sources)
-        && Objects.equals(importPath, goIdeInfo.importPath)
+    return Objects.equals(importPath, goIdeInfo.importPath)
         && Objects.equals(libraryLabels, goIdeInfo.libraryLabels)
         && cgo == goIdeInfo.cgo;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, importPath, libraryLabels, cgo);
+    return Objects.hash(importPath, libraryLabels, cgo);
   }
 }

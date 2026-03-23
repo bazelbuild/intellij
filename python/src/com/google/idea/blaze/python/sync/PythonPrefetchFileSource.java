@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
+
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.OutputsProvider;
@@ -54,7 +54,7 @@ public class PythonPrefetchFileSource implements PrefetchFileSource, OutputsProv
 
   @Override
   public Collection<ArtifactLocation> selectAllRelevantOutputs(TargetIdeInfo target) {
-    return target.getPyIdeInfo() != null ? target.getPyIdeInfo().getSources() : ImmutableList.of();
+    return target.getPyIdeInfo() != null ? ImmutableList.copyOf(target.getSources()) : ImmutableList.of();
   }
 
   @Override
@@ -81,8 +81,7 @@ public class PythonPrefetchFileSource implements PrefetchFileSource, OutputsProv
     List<File> sourceFiles =
         blazeProjectData.targetMap().targets().stream()
             .filter(t -> t.getPyIdeInfo() != null)
-            .map(TargetIdeInfo::getPyIdeInfo)
-            .map(PyIdeInfo::getSources)
+            .map(TargetIdeInfo::getSources)
             .flatMap(Collection::stream)
             .filter(shouldPrefetch)
             .map(a -> OutputArtifactResolver.resolve(project, decoder, a))

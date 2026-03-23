@@ -233,7 +233,6 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     else:
         py_launcher = None
 
-    sources = sources_from_target(ctx)
     to_build = get_py_info(target).transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
     data_deps = getattr(ctx.rule.attr, "data", [])
@@ -245,7 +244,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     # one of the ones pre-specified to the aspect as being a code-generator for Python then
     # interpret the outputs of the target specified in the PyInfo as being sources.
 
-    if 0 == len(sources) and ctx.rule.kind in get_code_generator_rule_names(ctx, "python"):
+    if 0 == len(ide_info["srcs"]) and ctx.rule.kind in get_code_generator_rule_names(ctx, "python"):
         def provider_import_to_attr_import(provider_import):
             """\
             Remaps the imports from PyInfo
@@ -293,14 +292,13 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         runfiles = target[DefaultInfo].default_runfiles
 
         if runfiles and runfiles.files:
-            sources.extend([artifact_location(f) for f in runfiles.files.to_list()])
+            ide_info["srcs"].extend([artifact_location(f) for f in runfiles.files.to_list()])
 
         is_code_generator = True
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
-        sources = sources,
         srcs_version = _get_python_srcs_version(ctx),
         args = args,
         imports = imports,
@@ -319,7 +317,6 @@ def collect_cc_rule_context(ctx):
         return struct()
 
     return struct(
-        sources = artifacts_from_target_list_attr(ctx, "srcs"),
         headers = artifacts_from_target_list_attr(ctx, "hdrs"),
         textual_headers = artifacts_from_target_list_attr(ctx, "textual_hdrs"),
         copts = expand_make_variables(ctx, True, getattr(ctx.rule.attr, "copts", [])),
@@ -599,6 +596,9 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         tags = tags,
         deps = list(all_deps),
     )
+
+    # Collect sources from srcs attribute
+    ide_info["srcs"] = sources_from_target(ctx)
 
     # Collect test info
     ide_info["test_info"] = build_test_info(ctx)
