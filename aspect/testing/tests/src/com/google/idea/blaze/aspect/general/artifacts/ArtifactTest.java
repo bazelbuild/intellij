@@ -51,8 +51,8 @@ public class ArtifactTest extends BazelIntellijAspectTest {
 
   @Test
   public void testExternalFilePath() throws Exception {
-    final var ideInfo = getCIdeInfo("//main:main");
-    final var sourceFile = ideInfo.getRuleContext().getSources(0);
+    final var target = getIdeInfo("//main:main");
+    final var sourceFile = target.getSrcs(0);
 
     assertThat(sourceFile.getRootPath()).isEqualTo("external/+local_repository+clwb_virtual_includes_project");
     assertThat(sourceFile.getRelativePath()).isEqualTo("main/main.cc");
@@ -66,9 +66,9 @@ public class ArtifactTest extends BazelIntellijAspectTest {
     final var genIdeInfo = getCIdeInfo("//lib/strip_absolut:gen");
     assertThat(genIdeInfo.getRuleContext().getHeadersList().get(0).getIsSource()).isFalse();
 
-    final var srcIdeInfo = getCIdeInfo("//lib/strip_absolut:lib");
-    assertThat(srcIdeInfo.getRuleContext().getSourcesList().get(0).getIsSource()).isTrue();
-    assertThat(srcIdeInfo.getRuleContext().getHeadersList().get(0).getIsSource()).isTrue();
+    final var srcTarget = getIdeInfo("//lib/strip_absolut:lib");
+    assertThat(srcTarget.getSrcsList().get(0).getIsSource()).isTrue();
+    assertThat(srcTarget.getCIdeInfo().getRuleContext().getHeadersList().get(0).getIsSource()).isTrue();
   }
 
   @Test
