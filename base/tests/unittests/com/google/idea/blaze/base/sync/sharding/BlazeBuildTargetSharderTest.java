@@ -407,13 +407,12 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsNoExcludeManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeInvoker commandInvoker = new FakeWildCardTargetExpanderBlazeInvoker();
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    fakeBazelExecService.setExecHandler((ctx, cmd) ->
-            FakeBazelExecService.createExecResult("sh_library rule " + expectedLabel1, 0));
+    fakeWildCardTargetExpanderBlazeInvoker.setOutputMessages(
+            ImmutableList.of("sh_library rule " + expectedLabel1));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
             .setFailToBatchTarget(false);
@@ -429,7 +428,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             expandAndShardTargets(
                     SyncStrategy.PARALLEL,
                     projectView,
-                    targets, commandInvoker);
+                    targets);
 
     assertThat(result.shardedTargets.shardedTargets)
             .containsExactly(ImmutableList.of(target(expectedLabel1)));
@@ -438,13 +437,12 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_expandWildcardTargetsIncludesManualTag() {
     String expectedLabel1 = "//java/com/google:one";
-    FakeWildCardTargetExpanderBlazeInvoker blazeInvoker = new FakeWildCardTargetExpanderBlazeInvoker();
 
     fakeWildCardTargetExpanderExternalTaskProvider
             .setReturnVal(0)
             .setOutputMessage("sh_library rule " + expectedLabel1);
-    fakeBazelExecService.setExecHandler((ctx, cmd) ->
-            FakeBazelExecService.createExecResult("sh_library rule " + expectedLabel1, 0));
+    fakeWildCardTargetExpanderBlazeInvoker.setOutputMessages(
+            ImmutableList.of("sh_library rule " + expectedLabel1));
     fakeBuildBatchingService
             .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
             .setFailToBatchTarget(false);
@@ -460,8 +458,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             expandAndShardTargets(
                     SyncStrategy.PARALLEL,
                     projectView,
-                    targets,
-                    blazeInvoker);
+                    targets);
 
     assertThat(result.shardedTargets.shardedTargets)
             .containsExactly(ImmutableList.of(target(expectedLabel1)));
