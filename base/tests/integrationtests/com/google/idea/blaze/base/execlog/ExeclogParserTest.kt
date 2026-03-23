@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.execlog
 
 import com.google.common.truth.Truth.assertThat
+import com.google.devtools.build.runfiles.Runfiles
 import com.google.idea.common.util.RunJarService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
@@ -36,5 +37,19 @@ class ExeclogParserTest : BasePlatformTestCase() {
   fun testRunParser() {
     val output = runBlocking { RunJarService.capture(PARSER_JAR_PATH, "--help") }
     assertThat(output.exitCode).isEqualTo(0)
+  }
+
+  @Test
+  fun testParseFixture() {
+    val rlocationPath = System.getenv("FIXTURE_LOG")
+    assertThat(rlocationPath).isNotNull()
+
+    val runfiles = Runfiles.preload().unmapped()
+    val fixturePath = runfiles.rlocation(rlocationPath)
+    assertThat(Files.exists(java.nio.file.Path.of(fixturePath))).isTrue()
+
+    val output = runBlocking { RunJarService.capture(PARSER_JAR_PATH, "--log_path", fixturePath) }
+    assertThat(output.exitCode).isEqualTo(0)
+    assertThat(output.stdout).isNotEmpty()
   }
 }

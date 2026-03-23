@@ -395,7 +395,7 @@
     "@@rules_bazel_integration_test+//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "XC9nqZ31LIbq8N7cEK+rYa2iXNQLcJ3cyGWw+zPZlc0=",
-        "usagesDigest": "DHDHVTfw9CG6S7n+Sa70m5qAPmZDAZxmeqUCkq6hNFk=",
+        "usagesDigest": "jZB0hTnl/5UlgmDt8mTAJbYUSmYyk6hu+CPsiiW2ayM=",
         "recordedInputs": [
           "REPO_MAPPING:rules_bazel_integration_test+,bazel_skylib bazel_skylib+",
           "REPO_MAPPING:rules_bazel_integration_test+,cgrindel_bazel_starlib cgrindel_bazel_starlib+"
@@ -421,10 +421,10 @@
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
-          "build_bazel_bazel_9_0_0": {
+          "build_bazel_bazel_9_0_1": {
             "repoRuleId": "@@rules_bazel_integration_test+//bazel_integration_test/private:bazel_binaries.bzl%bazel_binary",
             "attributes": {
-              "version": "9.0.0",
+              "version": "9.0.1",
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
@@ -441,7 +441,7 @@
               "version_to_repo": {
                 "7.7.1": "build_bazel_bazel_7_7_1",
                 "8.6.0": "build_bazel_bazel_8_6_0",
-                "9.0.0": "build_bazel_bazel_9_0_0",
+                "9.0.1": "build_bazel_bazel_9_0_1",
                 "last_green": "build_bazel_bazel_last_green"
               },
               "current_version": "7.7.1"
@@ -453,7 +453,7 @@
             "bazel_binaries_bazelisk",
             "build_bazel_bazel_7_7_1",
             "build_bazel_bazel_8_6_0",
-            "build_bazel_bazel_9_0_0",
+            "build_bazel_bazel_9_0_1",
             "build_bazel_bazel_last_green",
             "bazel_binaries"
           ],

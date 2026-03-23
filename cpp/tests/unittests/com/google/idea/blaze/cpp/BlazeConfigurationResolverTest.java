@@ -1077,7 +1077,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   private void assertCompilerSettingsForTarget(String target, CToolchainIdeInfo expected) {
     final var settings = resolverResult.getConfigurationMap().values().stream()
         .filter(it -> it.getDisplayName().equals(target))
-        .map(BlazeResolveConfiguration::getCompilerSettings)
+        .map(it -> it.getConfigurationData().compilerSettings())
         .collect(toImmutableList());
 
     assertThat(settings).hasSize(1);

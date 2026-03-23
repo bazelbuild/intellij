@@ -103,7 +103,7 @@ private fun getLatestSdkVersion(major: String, eap: Boolean): String {
 }
 
 fun getLatestPluginVersion(pluginId: Int, major: String): String {
-  val text = URL("https://plugins.jetbrains.com/api/plugins/$pluginId/updates").readText()
+  val text = URL("https://plugins.jetbrains.com/api/plugins/$pluginId/updates?size=200").readText()
 
   return Json.parseToJsonElement(text).jsonArray
     .mapNotNull { it.jsonObject["version"]?.jsonPrimitive?.content }

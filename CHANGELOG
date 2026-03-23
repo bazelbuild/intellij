@@ -1,3 +1,9 @@
+v2026.03.20
+===========
+* Further improvements to transition support
+* Fix unreliable end of input detection for Starlark REPL #8221
+* Fix execlog parser not executable on macOS and Windows #8253
+
 v2026.03.05
 ===========
 * Support for parsing execution logs #8175

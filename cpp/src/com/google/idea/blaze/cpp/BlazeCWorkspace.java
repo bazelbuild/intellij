@@ -214,13 +214,13 @@ public final class BlazeCWorkspace {
       indicator.setText2(resolveConfiguration.getDisplayName());
       indicator.setFraction(((double) progress) / configurations.size());
 
-      final var compilerSettings = resolveConfiguration.getCompilerSettings();
+      final var configData = resolveConfiguration.getConfigurationData();
+      final var compilerSettings = configData.compilerSettings();
       final var configLanguages = new HashMap<OCLanguageKind, PerLanguageCompilerOpts>();
       final var configSourceFiles = new HashMap<VirtualFile, PerFileCompilerOpts>();
 
       // All targets in a resolve configuration share the same flags, defines, and includes
       // (they are grouped by equivalence class). Compute switches once per configuration.
-      final var configData = resolveConfiguration.getConfigurationData();
       final var compilerSwitchesBuilder = compilerSettings.createSwitchBuilder();
 
       CoptsProcessor.apply(

@@ -51,8 +51,6 @@ data class BlazeResolveConfiguration(
     )
   }
 
-  val compilerSettings: BlazeCompilerSettings get() = configurationData.compilerSettings()
-
   fun getSources(targetKey: TargetKey): ImmutableList<VirtualFile> {
     return sources[targetKey] ?: ImmutableList.of()
   }
