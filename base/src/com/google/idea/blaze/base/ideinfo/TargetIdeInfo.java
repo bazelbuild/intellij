@@ -42,7 +42,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final CIdeInfo cIdeInfo;
   @Nullable private final CToolchainIdeInfo cToolchainIdeInfo;
   @Nullable private final JavaIdeInfo javaIdeInfo;
-  @Nullable private final AndroidIdeInfo androidIdeInfo;
   @Nullable private final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable private final AndroidAarIdeInfo androidAarIdeInfo;
   @Nullable private final AndroidInstrumentationInfo androidInstrumentationInfo;
@@ -66,7 +65,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable CIdeInfo cIdeInfo,
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
       @Nullable JavaIdeInfo javaIdeInfo,
-      @Nullable AndroidIdeInfo androidIdeInfo,
       @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable AndroidAarIdeInfo androidAarIdeInfo,
       @Nullable AndroidInstrumentationInfo androidInstrumentationInfo,
@@ -88,7 +86,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.cIdeInfo = cIdeInfo;
     this.cToolchainIdeInfo = cToolchainIdeInfo;
     this.javaIdeInfo = javaIdeInfo;
-    this.androidIdeInfo = androidIdeInfo;
     this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.androidAarIdeInfo = androidAarIdeInfo;
     this.androidInstrumentationInfo = androidInstrumentationInfo;
@@ -140,9 +137,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
             : null,
         proto.hasJavaIdeInfo()
             ? JavaIdeInfo.fromProto(proto.getJavaIdeInfo())
-            : null,
-        proto.hasAndroidIdeInfo()
-            ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo())
             : null,
         proto.hasAndroidSdkIdeInfo()
             ? AndroidSdkIdeInfo.fromProto(proto.getAndroidSdkIdeInfo())
@@ -196,7 +190,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCIdeInfo, cIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCToolchainIdeInfo, cToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaIdeInfo, javaIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidIdeInfo, androidIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidSdkIdeInfo, androidSdkIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidAarIdeInfo, androidAarIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(
@@ -232,7 +225,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cIdeInfo,
         cToolchainIdeInfo,
         javaIdeInfo,
-        androidIdeInfo,
         androidSdkIdeInfo,
         androidAarIdeInfo,
         androidInstrumentationInfo,
@@ -285,11 +277,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable
   public JavaIdeInfo getJavaIdeInfo() {
     return javaIdeInfo;
-  }
-
-  @Nullable
-  public AndroidIdeInfo getAndroidIdeInfo() {
-    return androidIdeInfo;
   }
 
   @Nullable
@@ -394,7 +381,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private CIdeInfo cIdeInfo;
     private CToolchainIdeInfo cToolchainIdeInfo;
     private JavaIdeInfo javaIdeInfo;
-    private AndroidIdeInfo androidIdeInfo;
     private AndroidAarIdeInfo androidAarIdeInfo;
     private AndroidInstrumentationInfo androidInstrumentationInfo;
     private PyIdeInfo pyIdeInfo;
@@ -475,12 +461,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     @CanIgnoreReturnValue
     public Builder setCToolchainInfo(CToolchainIdeInfo.Builder info) {
       this.cToolchainIdeInfo = info.build();
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder setAndroidInfo(AndroidIdeInfo.Builder androidInfo) {
-      this.androidIdeInfo = androidInfo.build();
       return this;
     }
 
@@ -591,7 +571,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           cIdeInfo,
           cToolchainIdeInfo,
           javaIdeInfo,
-          androidIdeInfo,
           null,
           androidAarIdeInfo,
           androidInstrumentationInfo,
@@ -625,7 +604,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(cIdeInfo, that.cIdeInfo)
         && Objects.equals(cToolchainIdeInfo, that.cToolchainIdeInfo)
         && Objects.equals(javaIdeInfo, that.javaIdeInfo)
-        && Objects.equals(androidIdeInfo, that.androidIdeInfo)
         && Objects.equals(androidSdkIdeInfo, that.androidSdkIdeInfo)
         && Objects.equals(androidAarIdeInfo, that.androidAarIdeInfo)
         && Objects.equals(androidInstrumentationInfo, that.androidInstrumentationInfo)
@@ -652,7 +630,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cIdeInfo,
         cToolchainIdeInfo,
         javaIdeInfo,
-        androidIdeInfo,
         androidSdkIdeInfo,
         androidAarIdeInfo,
         androidInstrumentationInfo,
