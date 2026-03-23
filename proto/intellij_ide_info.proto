@@ -198,12 +198,6 @@ message TestInfo {
   string size = 1;
 }
 
-message JavaToolchainIdeInfo {
-  string source_version = 1;
-  string target_version = 2;
-  repeated ArtifactLocation javac_jars = 4;
-}
-
 message KotlinToolchainIdeInfo {
   string language_version = 1;
   repeated string sdk_library_targets = 2;
@@ -242,7 +236,6 @@ message TargetIdeInfo {
   int64 sync_time_millis = 20;
 
   JavaIdeInfo java_ide_info = 100;
-  JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
   AndroidIdeInfo android_ide_info = 110;
   AndroidAarIdeInfo android_aar_ide_info = 111;

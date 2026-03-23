@@ -52,7 +52,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final TsIdeInfo tsIdeInfo;
   @Nullable private final DartIdeInfo dartIdeInfo;
   @Nullable private final TestIdeInfo testIdeInfo;
-  @Nullable private final JavaToolchainIdeInfo javaToolchainIdeInfo;
   @Nullable private final KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
   @Nullable private final Long syncTimeMillis;
 
@@ -76,7 +75,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable TsIdeInfo tsIdeInfo,
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
-      @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
       @Nullable KotlinToolchainIdeInfo kotlinToolchainIdeInfo,
       @Nullable Long syncTimeMillis) {
     this.key = key;
@@ -98,7 +96,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.tsIdeInfo = tsIdeInfo;
     this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
-    this.javaToolchainIdeInfo = javaToolchainIdeInfo;
     this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
     this.syncTimeMillis = syncTimeMillis;
   }
@@ -171,9 +168,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasTestInfo()
             ? TestIdeInfo.fromProto(proto.getTestInfo())
             : null,
-        proto.hasJavaToolchainIdeInfo()
-            ? JavaToolchainIdeInfo.fromProto(proto.getJavaToolchainIdeInfo())
-            : null,
         proto.hasKtToolchainIdeInfo()
             ? KotlinToolchainIdeInfo.fromProto(proto.getKtToolchainIdeInfo())
             : null,
@@ -207,7 +201,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTsIdeInfo, tsIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setDartIdeInfo, dartIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTestInfo, testIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaToolchainIdeInfo, javaToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setKtToolchainIdeInfo, kotlinToolchainIdeInfo);
     ProtoWrapper.setIfNotNull(builder::setSyncTimeMillis, syncTimeMillis);
     return builder.build();
@@ -242,7 +235,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         tsIdeInfo,
         dartIdeInfo,
         testIdeInfo,
-        javaToolchainIdeInfo,
         kotlinToolchainIdeInfo,
         syncTimeMillis);
   }
@@ -338,11 +330,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
-  public JavaToolchainIdeInfo getJavaToolchainIdeInfo() {
-    return javaToolchainIdeInfo;
-  }
-
-  @Nullable
   public KotlinToolchainIdeInfo getKotlinToolchainIdeInfo() {
     return kotlinToolchainIdeInfo;
   }
@@ -403,7 +390,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private TsIdeInfo tsIdeInfo;
     private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
-    private JavaToolchainIdeInfo javaToolchainIdeInfo;
     private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
     private Long syncTime;
 
@@ -533,12 +519,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     }
 
     @CanIgnoreReturnValue
-    public Builder setJavaToolchainIdeInfo(JavaToolchainIdeInfo.Builder javaToolchainIdeInfo) {
-      this.javaToolchainIdeInfo = javaToolchainIdeInfo.build();
-      return this;
-    }
-
-    @CanIgnoreReturnValue
     public Builder setKotlinToolchainIdeInfo(KotlinToolchainIdeInfo.Builder toolchain) {
       this.kotlinToolchainIdeInfo = toolchain.build();
       return this;
@@ -601,7 +581,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           tsIdeInfo,
           dartIdeInfo,
           testIdeInfo,
-          javaToolchainIdeInfo,
           kotlinToolchainIdeInfo,
           syncTime);
     }
@@ -635,7 +614,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(tsIdeInfo, that.tsIdeInfo)
         && Objects.equals(dartIdeInfo, that.dartIdeInfo)
         && Objects.equals(testIdeInfo, that.testIdeInfo)
-        && Objects.equals(javaToolchainIdeInfo, that.javaToolchainIdeInfo)
         && Objects.equals(kotlinToolchainIdeInfo, that.kotlinToolchainIdeInfo)
         && Objects.equals(syncTimeMillis, that.syncTimeMillis);
   }
@@ -662,7 +640,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         tsIdeInfo,
         dartIdeInfo,
         testIdeInfo,
-        javaToolchainIdeInfo,
         kotlinToolchainIdeInfo,
         syncTimeMillis);
   }
