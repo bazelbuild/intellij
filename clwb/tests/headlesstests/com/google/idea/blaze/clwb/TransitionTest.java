@@ -6,13 +6,11 @@ import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches.Format;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -75,7 +73,7 @@ public class TransitionTest extends ClwbHeadlessTestCase {
     assertThat(targets).hasSize(2);
 
     final var configurationIds = targets.stream()
-        .map(t -> t.getKey().configurationId())
+        .map(t -> t.getKey().configuration())
         .collect(Collectors.toSet());
 
     // the two targets must have distinct, non-empty configuration IDs

@@ -33,14 +33,14 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
 
   public abstract ImmutableList<String> aspectIds();
 
-  public abstract String configurationId();
+  public abstract String configuration();
 
   public static TargetKey fromProto(IntellijIdeInfo.TargetKey proto) {
     return ProjectDataInterner.intern(
         new AutoValue_TargetKey(
             Label.fromProto(proto.getLabel()),
             ProtoWrapper.internStrings(proto.getAspectIdsList()),
-            ProtoWrapper.internString(proto.getConfigurationId())
+            ProtoWrapper.internString(proto.getConfiguration())
         )
     );
   }
@@ -50,7 +50,7 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
     return IntellijIdeInfo.TargetKey.newBuilder()
         .setLabel(label().toProto())
         .addAllAspectIds(aspectIds())
-        .setConfigurationId(configurationId())
+        .setConfiguration(configuration())
         .build();
   }
 
@@ -64,11 +64,11 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
   /**
    * Returns a key identifying a general target
    */
-  public static TargetKey forGeneralTarget(Label label, List<String> aspectIds, String configurationId) {
+  public static TargetKey forGeneralTarget(Label label, List<String> aspectIds, String configuration) {
     return ProjectDataInterner.intern(new AutoValue_TargetKey(
         label,
         ProtoWrapper.internStrings(aspectIds),
-        ProtoWrapper.internString(configurationId)
+        ProtoWrapper.internString(configuration)
     ));
   }
 
@@ -81,7 +81,7 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
     return ComparisonChain.start()
         .compare(label(), o.label())
         .compare(aspectIds(), o.aspectIds(), Ordering.natural().lexicographical())
-        .compare(configurationId(), o.configurationId())
+        .compare(configuration(), o.configuration())
         .result();
   }
 }

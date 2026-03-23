@@ -58,13 +58,13 @@ public final class BlazeConfigurationData implements ProtoWrapper<ProjectData.Bl
   @Nullable
   public BlazeConfiguration get(TargetKey key) {
     // if no configuration id is provided, return null
-    if (key.configurationId().isBlank()) {
+    if (key.configuration().isBlank()) {
       return null;
     }
 
     for (final var entry : configurations.entrySet()) {
       // the short_id provided by the aspect is the prefix of the actual configuration hash
-      if (entry.getKey().startsWith(key.configurationId())) {
+      if (entry.getKey().startsWith(key.configuration())) {
         return entry.getValue();
       }
     }

@@ -168,7 +168,7 @@ def make_target_key(ctx, label, aspect_ids):
     return struct_omit_none(
         aspect_ids = tuple(aspect_ids) if aspect_ids else None,
         label = stringify_label(label),
-        configuration_id = getattr(ctx.configuration, "short_id", ""),  # looks like, will be picked to 8.5 and 7.7
+        configuration = getattr(ctx.configuration, "short_id", ""),  # looks like, will be picked to 8.5 and 7.7
     )
 
 def make_dep(dep, dependency_type):
