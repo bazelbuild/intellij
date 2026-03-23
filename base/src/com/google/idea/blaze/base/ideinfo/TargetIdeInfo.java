@@ -53,7 +53,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final DartIdeInfo dartIdeInfo;
   @Nullable private final TestIdeInfo testIdeInfo;
   @Nullable private final JavaToolchainIdeInfo javaToolchainIdeInfo;
-  @Nullable private final KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
   @Nullable private final Long syncTimeMillis;
 
   private TargetIdeInfo(
@@ -77,7 +76,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable DartIdeInfo dartIdeInfo,
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
-      @Nullable KotlinToolchainIdeInfo kotlinToolchainIdeInfo,
       @Nullable Long syncTimeMillis) {
     this.key = key;
     this.kind = kind;
@@ -99,7 +97,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.dartIdeInfo = dartIdeInfo;
     this.testIdeInfo = testIdeInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
-    this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
     this.syncTimeMillis = syncTimeMillis;
   }
 
@@ -174,9 +171,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasJavaToolchainIdeInfo()
             ? JavaToolchainIdeInfo.fromProto(proto.getJavaToolchainIdeInfo())
             : null,
-        proto.hasKtToolchainIdeInfo()
-            ? KotlinToolchainIdeInfo.fromProto(proto.getKtToolchainIdeInfo())
-            : null,
         syncTimeOverride != null
             ? Long.valueOf(syncTimeOverride.toEpochMilli())
             : proto.getSyncTimeMillis() == 0 ? null : proto.getSyncTimeMillis()
@@ -208,7 +202,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setDartIdeInfo, dartIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTestInfo, testIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaToolchainIdeInfo, javaToolchainIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setKtToolchainIdeInfo, kotlinToolchainIdeInfo);
     ProtoWrapper.setIfNotNull(builder::setSyncTimeMillis, syncTimeMillis);
     return builder.build();
   }
@@ -243,7 +236,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         dartIdeInfo,
         testIdeInfo,
         javaToolchainIdeInfo,
-        kotlinToolchainIdeInfo,
         syncTimeMillis);
   }
 
@@ -343,11 +335,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
-  public KotlinToolchainIdeInfo getKotlinToolchainIdeInfo() {
-    return kotlinToolchainIdeInfo;
-  }
-
-  @Nullable
   public Instant getSyncTime() {
     return syncTimeMillis != null ? Instant.ofEpochMilli(syncTimeMillis) : null;
   }
@@ -404,7 +391,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private DartIdeInfo dartIdeInfo;
     private TestIdeInfo testIdeInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
-    private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
     private Long syncTime;
 
     @CanIgnoreReturnValue
@@ -539,12 +525,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     }
 
     @CanIgnoreReturnValue
-    public Builder setKotlinToolchainIdeInfo(KotlinToolchainIdeInfo.Builder toolchain) {
-      this.kotlinToolchainIdeInfo = toolchain.build();
-      return this;
-    }
-
-    @CanIgnoreReturnValue
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
@@ -602,7 +582,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           dartIdeInfo,
           testIdeInfo,
           javaToolchainIdeInfo,
-          kotlinToolchainIdeInfo,
           syncTime);
     }
   }
@@ -636,7 +615,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(dartIdeInfo, that.dartIdeInfo)
         && Objects.equals(testIdeInfo, that.testIdeInfo)
         && Objects.equals(javaToolchainIdeInfo, that.javaToolchainIdeInfo)
-        && Objects.equals(kotlinToolchainIdeInfo, that.kotlinToolchainIdeInfo)
         && Objects.equals(syncTimeMillis, that.syncTimeMillis);
   }
 
@@ -663,7 +641,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         dartIdeInfo,
         testIdeInfo,
         javaToolchainIdeInfo,
-        kotlinToolchainIdeInfo,
         syncTimeMillis);
   }
 }
