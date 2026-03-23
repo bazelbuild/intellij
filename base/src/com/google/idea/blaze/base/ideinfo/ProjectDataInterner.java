@@ -32,8 +32,6 @@ public final class ProjectDataInterner {
   private static final Interner<Dependency> dependencyInterner = Interners.newWeakInterner();
   private static final Interner<ArtifactLocation> artifactLocationInterner =
       Interners.newWeakInterner();
-  private static final Interner<AndroidResFolder> androidResFolderInterner =
-      Interners.newWeakInterner();
   private static final Interner<ExecutionRootPath> executionRootPathInterner =
       Interners.newWeakInterner();
   private static final Interner<LibraryArtifact> libraryArtifactInterner =
@@ -57,10 +55,6 @@ public final class ProjectDataInterner {
 
   static ArtifactLocation intern(ArtifactLocation artifactLocation) {
     return artifactLocationInterner.intern(artifactLocation);
-  }
-
-  static AndroidResFolder intern(AndroidResFolder androidResFolder) {
-    return androidResFolderInterner.intern(androidResFolder);
   }
 
   public static ExecutionRootPath intern(ExecutionRootPath executionRootPath) {
