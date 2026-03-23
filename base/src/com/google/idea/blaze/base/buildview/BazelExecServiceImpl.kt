@@ -91,12 +91,12 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
 
   private fun <T> executionScope(
     ctx: BlazeContext,
-    block: suspend CoroutineScope.(BuildResultHelperBep) -> T
+    block: suspend CoroutineScope.() -> T
   ): T {
     return runBlocking {
       scope.async {
         ctx.pushJob {
-          BuildResultHelperBep().use { block(it) }
+          block()
         }
       }.await()
     }
@@ -231,24 +231,26 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     assertNonBlocking()
     LOG.assertTrue(cmdBuilder.name == BlazeCommandName.BUILD)
 
-    return executionScope(ctx) { provider ->
-      cmdBuilder.addBlazeFlags(provider.buildFlags)
+    return executionScope(ctx) {
+      BuildResultHelperBep().use { provider ->
+        cmdBuilder.addBlazeFlags(provider.buildFlags)
 
-      val parseJob = parseEvents(ctx, provider)
+        val parseJob = parseEvents(ctx, provider)
 
-      val exitCode = execute(ctx, cmdBuilder, usePty = true, ctx::println)
-      val result = BuildResult.fromExitCode(exitCode)
+        val exitCode = execute(ctx, cmdBuilder, usePty = true, ctx::println)
+        val result = BuildResult.fromExitCode(exitCode)
 
-      parseJob.cancelAndJoin()
+        parseJob.cancelAndJoin()
 
-      if (result.status == BuildResult.Status.FATAL_ERROR) {
-        return@executionScope BlazeBuildOutputs.noOutputs(result)
-      }
+        if (result.status == BuildResult.Status.FATAL_ERROR) {
+          return@executionScope BlazeBuildOutputs.noOutputs(result)
+        }
 
-      provider.getBepStream(Optional.empty()).use { bepStream ->
-        BlazeBuildOutputs.fromParsedBepOutput(
-          BuildResultParser.getBuildOutput(bepStream, Interners.STRING),
-        )
+        provider.getBepStream(Optional.empty()).use { bepStream ->
+          BlazeBuildOutputs.fromParsedBepOutput(
+            BuildResultParser.getBuildOutput(bepStream, Interners.STRING),
+          )
+        }
       }
     }
   }
@@ -261,12 +263,17 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
 
     val tempFile = Files.createTempFile("intellij-bazel-${cmdBuilder.name}-", ".stdout")
 
-    val exitCode = executionScope(ctx) {
-      Files.newOutputStream(tempFile).use { out ->
-        execute(ctx, cmdBuilder, usePty = false) { text ->
-          out.write(text.toByteArray())
+    val exitCode = try {
+      executionScope(ctx) {
+        Files.newOutputStream(tempFile).use { out ->
+          execute(ctx, cmdBuilder, usePty = false) { text ->
+            out.write(text.toByteArray())
+          }
         }
       }
+    } catch (e: ExecutionException) {
+      Files.deleteIfExists(tempFile)
+      throw e
     }
 
     return ExecResult(exitCode, tempFile)
