@@ -44,10 +44,10 @@ public class TransitionTest extends BazelIntellijAspectTest {
     for (final var ideInfo : ideInfos) {
       assertThat(ideInfo.getKind()).isEqualTo("cc_binary");
       assertThat(ideInfo.getKey().getLabel()).isEqualTo("//aspect/testing/tests/src/com/google/idea/blaze/aspect/cpp/transition:simple");
-      assertThat(ideInfo.getKey().getConfigurationId()).isNotEmpty();
+      assertThat(ideInfo.getKey().getConfiguration()).isNotEmpty();
     }
 
-    assertThat(ideInfos.get(0).getKey().getConfigurationId())
-        .isNotEqualTo(ideInfos.get(1).getKey().getConfigurationId());
+    assertThat(ideInfos.get(0).getKey().getConfiguration())
+        .isNotEqualTo(ideInfos.get(1).getKey().getConfiguration());
   }
 }
