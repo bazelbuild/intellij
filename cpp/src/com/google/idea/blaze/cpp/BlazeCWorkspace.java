@@ -151,7 +151,7 @@ public final class BlazeCWorkspace {
     resolverResult.getConfigurationMap().forEach((data, config) -> {
       final var info = new BlazeCTargetInfoService.TargetInfo(
           data.compilerSettings().version(),
-          config.getDisplayName()
+          config.getUniqueId().toString()
       );
 
       for (final var target : config.getTargets()) {
