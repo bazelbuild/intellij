@@ -43,7 +43,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final CToolchainIdeInfo cToolchainIdeInfo;
   @Nullable private final JavaIdeInfo javaIdeInfo;
   @Nullable private final AndroidIdeInfo androidIdeInfo;
-  @Nullable private final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable private final AndroidAarIdeInfo androidAarIdeInfo;
   @Nullable private final PyIdeInfo pyIdeInfo;
   @Nullable private final JsIdeInfo jsIdeInfo;
@@ -65,7 +64,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
       @Nullable JavaIdeInfo javaIdeInfo,
       @Nullable AndroidIdeInfo androidIdeInfo,
-      @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable AndroidAarIdeInfo androidAarIdeInfo,
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable JsIdeInfo jsIdeInfo,
@@ -85,7 +83,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.cToolchainIdeInfo = cToolchainIdeInfo;
     this.javaIdeInfo = javaIdeInfo;
     this.androidIdeInfo = androidIdeInfo;
-    this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.androidAarIdeInfo = androidAarIdeInfo;
     this.pyIdeInfo = pyIdeInfo;
     this.jsIdeInfo = jsIdeInfo;
@@ -138,9 +135,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasAndroidIdeInfo()
             ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo())
             : null,
-        proto.hasAndroidSdkIdeInfo()
-            ? AndroidSdkIdeInfo.fromProto(proto.getAndroidSdkIdeInfo())
-            : null,
         proto.hasAndroidAarIdeInfo()
             ? AndroidAarIdeInfo.fromProto(proto.getAndroidAarIdeInfo())
             : null,
@@ -185,7 +179,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCToolchainIdeInfo, cToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaIdeInfo, javaIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidIdeInfo, androidIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidSdkIdeInfo, androidSdkIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidAarIdeInfo, androidAarIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPyIdeInfo, pyIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJsIdeInfo, jsIdeInfo);
@@ -218,7 +211,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cToolchainIdeInfo,
         javaIdeInfo,
         androidIdeInfo,
-        androidSdkIdeInfo,
         androidAarIdeInfo,
         pyIdeInfo,
         jsIdeInfo,
@@ -273,11 +265,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable
   public AndroidIdeInfo getAndroidIdeInfo() {
     return androidIdeInfo;
-  }
-
-  @Nullable
-  public AndroidSdkIdeInfo getAndroidSdkIdeInfo() {
-    return androidSdkIdeInfo;
   }
 
   @Nullable
@@ -551,7 +538,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           cToolchainIdeInfo,
           javaIdeInfo,
           androidIdeInfo,
-          null,
           androidAarIdeInfo,
           pyIdeInfo,
           jsIdeInfo,
@@ -583,7 +569,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(cToolchainIdeInfo, that.cToolchainIdeInfo)
         && Objects.equals(javaIdeInfo, that.javaIdeInfo)
         && Objects.equals(androidIdeInfo, that.androidIdeInfo)
-        && Objects.equals(androidSdkIdeInfo, that.androidSdkIdeInfo)
         && Objects.equals(androidAarIdeInfo, that.androidAarIdeInfo)
         && Objects.equals(pyIdeInfo, that.pyIdeInfo)
         && Objects.equals(jsIdeInfo, that.jsIdeInfo)
@@ -608,7 +593,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         cToolchainIdeInfo,
         javaIdeInfo,
         androidIdeInfo,
-        androidSdkIdeInfo,
         androidAarIdeInfo,
         pyIdeInfo,
         jsIdeInfo,
