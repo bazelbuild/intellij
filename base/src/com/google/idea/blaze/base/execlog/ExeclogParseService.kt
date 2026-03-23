@@ -22,7 +22,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.nameWithoutExtension
 
 val PARSER_JAR_PATH: Path by Datafiles.resolveLazy("bazel/execlog_parser.jar")
 
@@ -31,18 +36,33 @@ class ExeclogParseService(private val project: Project) {
 
   companion object {
     @Throws(ExecutionException::class)
-    suspend fun run(project: Project, logPath: String): String = project.service<ExeclogParseService>().parse(logPath)
+    suspend fun run(project: Project, logPath: String): Path = project.service<ExeclogParseService>().parse(logPath)
   }
 
   @Throws(ExecutionException::class)
-  private suspend fun parse(logPath: String): String {
+  private suspend fun parse(logPath: String): Path {
     return withBackgroundProgress(project, "Parsing Execution Log: $logPath") {
-      val output = RunJarService.capture(PARSER_JAR_PATH, "--log_path", logPath)
-      if (output.exitCode != 0) {
-        throw ExecutionException("Execlog parser failed with exit code ${output.exitCode}: ${output.stderr}")
+      val outputFile = createOutputFile(logPath)
+
+      val result = RunJarService.capture(PARSER_JAR_PATH, "--log_path", logPath, "--output_path", outputFile.toString())
+      if (result.exitCode != 0) {
+        throw ExecutionException("Execlog parser failed with exit code ${result.exitCode}: ${result.stderr}")
       }
 
-      output.stdout
+      outputFile
+    }
+  }
+
+  @Throws(ExecutionException::class)
+  private suspend fun createOutputFile(logPath: String): Path {
+    val name = Path.of(logPath).nameWithoutExtension
+
+    return try {
+      withContext(Dispatchers.IO) {
+        Files.createTempFile(name, "." + ExeclogBundleProvider.EXECLOG_FILE_EXTENSION)
+      }
+    } catch (e: IOException) {
+      throw ExecutionException("Could not create temporary file", e)
     }
   }
 }
