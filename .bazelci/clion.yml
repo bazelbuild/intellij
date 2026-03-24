@@ -4,6 +4,7 @@ tasks:
     name: CLion Linux OSS Oldest Stable
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -17,6 +18,7 @@ tasks:
     name: CLion Linux OSS Latest Stable
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -30,6 +32,7 @@ tasks:
     name: CLion Windows OSS Oldest Stable
     platform: windows
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -43,6 +46,7 @@ tasks:
     name: CLion Windows OSS Latest Stable
     platform: windows
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -56,6 +60,7 @@ tasks:
     name: CLion MacOS OSS Oldest Stable
     platform: macos_arm64
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -69,6 +74,7 @@ tasks:
     name: CLion MacOS OSS Latest Stable
     platform: macos_arm64
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -82,6 +88,7 @@ tasks:
     name: CLion Linux OSS Under Development
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -96,6 +103,7 @@ tasks:
     name: CLion Windows OSS Under Development
     platform: windows
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -110,6 +118,7 @@ tasks:
     name: CLion MacOS OSS Under Development
     platform: macos_arm64
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb:clwb_bazel_zip
@@ -124,6 +133,7 @@ tasks:
     name: CLion Headless Tests Last Green
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb:clwb_bazel_zip
