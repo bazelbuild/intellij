@@ -88,7 +88,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     state.getCommandState().setCommand(COMMAND);
     state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
-    state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
     state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
     Element element = new Element("test");
@@ -108,7 +107,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         .containsExactly("--flag1", "--flag2")
         .inOrder();
     assertThat(readState.getExeFlagsState().getRawFlags()).containsExactly("--exeFlag1");
-    assertThat(readState.getBlazeBinaryState().getBlazeBinary()).isEqualTo("/usr/bin/blaze");
     assertThat(readState.getUserEnvVarsState().getData().getEnvs()).isEqualTo(ImmutableMap.of("HELLO", "world"));
   }
 
@@ -137,7 +135,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     state.getCommandState().setCommand(COMMAND);
     state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
-    state.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
     state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
     editor.resetFrom(configuration);
@@ -157,8 +154,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         .isEqualTo(state.getBlazeFlagsState().getRawFlags());
     assertThat(readState.getExeFlagsState().getRawFlags())
         .isEqualTo(state.getExeFlagsState().getRawFlags());
-    assertThat(readState.getBlazeBinaryState().getBlazeBinary())
-        .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
     assertThat(readState.getUserEnvVarsState().getData().getEnvs())
             .isEqualTo(state.getUserEnvVarsState().getData().getEnvs());
 
@@ -190,7 +185,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     readState.getCommandState().setCommand(COMMAND);
     readState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     readState.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
-    readState.getBlazeBinaryState().setBlazeBinary("/usr/bin/blaze");
     readState.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
     editor.applyEditorTo(readConfiguration);
@@ -206,8 +200,6 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         .isEqualTo(state.getBlazeFlagsState().getRawFlags());
     assertThat(readState.getExeFlagsState().getRawFlags())
         .isEqualTo(state.getExeFlagsState().getRawFlags());
-    assertThat(readState.getBlazeBinaryState().getBlazeBinary())
-        .isEqualTo(state.getBlazeBinaryState().getBlazeBinary());
     assertThat(readState.getUserEnvVarsState().getData().getEnvs())
             .isEqualTo(state.getUserEnvVarsState().getData().getEnvs());
 

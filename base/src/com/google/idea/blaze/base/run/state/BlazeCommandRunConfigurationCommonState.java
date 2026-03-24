@@ -42,19 +42,17 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   protected final RunConfigurationFlagsState blazeFlags;
   protected final RunConfigurationFlagsState exeFlags;
   protected final EnvironmentVariablesState envVars;
-  protected final BlazeBinaryState blazeBinary;
 
   public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG, buildSystemName + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG, "Executable flags:");
     envVars = new EnvironmentVariablesState();
-    blazeBinary = new BlazeBinaryState();
   }
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, envVars);
   }
 
   /** @return The list of blaze flags that the user specified manually. */
@@ -70,10 +68,6 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   /** @return The environment variables the user specified manually. */
   public EnvironmentVariablesState getUserEnvVarsState() {
     return envVars;
-  }
-
-  public BlazeBinaryState getBlazeBinaryState() {
-    return blazeBinary;
   }
 
   public BlazeCommandState getCommandState() {
@@ -123,10 +117,6 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   public void validate(BuildSystemName buildSystemName) throws RuntimeConfigurationException {
     if (getCommandState().getCommand() == null) {
       throw new RuntimeConfigurationError("You must specify a command.");
-    }
-    String blazeBinaryString = getBlazeBinaryState().getBlazeBinary();
-    if (blazeBinaryString != null && !(new File(blazeBinaryString).exists())) {
-      throw new RuntimeConfigurationError(buildSystemName.getName() + " binary does not exist");
     }
   }
 
