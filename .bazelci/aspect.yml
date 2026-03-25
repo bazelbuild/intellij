@@ -4,6 +4,7 @@ tasks:
     name: Aspect Tests for CLion OSS Oldest Stable
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-oldest-stable
     build_targets:
       - //aspect:aspect_lib
@@ -18,6 +19,7 @@ tasks:
     name: Aspect Tests for CLion OSS Latest Stable
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-latest-stable
     build_targets:
       - //aspect:aspect_lib
@@ -32,6 +34,7 @@ tasks:
     name: Aspect Tests for CLion OSS Under Development
     platform: ubuntu2204
     build_flags:
+      - --lockfile_mode=error
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //aspect:aspect_lib
