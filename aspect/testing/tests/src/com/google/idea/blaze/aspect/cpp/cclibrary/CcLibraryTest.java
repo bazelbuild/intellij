@@ -44,7 +44,7 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
 
     // rule context
     final var ruleCtx = target.getCIdeInfo().getRuleContext();
-    assertThat(relativePathsForArtifacts(ruleCtx.getSourcesList()))
+    assertThat(relativePathsForArtifacts(target.getSrcsList()))
         .containsExactly(testRelative("simple/simple.cc"));
     assertThat(relativePathsForArtifacts(ruleCtx.getHeadersList()))
         .containsExactly(testRelative("simple/simple.h"));

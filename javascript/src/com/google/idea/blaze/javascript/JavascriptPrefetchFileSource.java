@@ -67,10 +67,7 @@ public class JavascriptPrefetchFileSource implements PrefetchFileSource, Outputs
   }
 
   private static Collection<ArtifactLocation> getJsSources(TargetIdeInfo target) {
-    if (target.getJsIdeInfo() != null) {
-      return target.getJsIdeInfo().getSources();
-    }
-    if (target.getKind().hasLanguage(LanguageClass.JAVASCRIPT)) {
+    if (target.getJsIdeInfo() != null || target.getKind().hasLanguage(LanguageClass.JAVASCRIPT)) {
       return target.getSources();
     }
     return ImmutableList.of();

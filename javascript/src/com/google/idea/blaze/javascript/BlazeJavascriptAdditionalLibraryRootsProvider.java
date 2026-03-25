@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -78,8 +77,7 @@ final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalL
     ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
     return projectData.targetMap().targets().stream()
         .filter(t -> t.getJsIdeInfo() != null)
-        .map(TargetIdeInfo::getJsIdeInfo)
-        .map(JsIdeInfo::getSources)
+        .map(TargetIdeInfo::getSources)
         .flatMap(Collection::stream)
         .filter(isJs)
         .filter(isExternal)
