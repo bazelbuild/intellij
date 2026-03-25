@@ -773,7 +773,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .setLabel("//foo:native_lib")
             .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
             .setCInfo(CIdeInfo.builder().setRuleContext(
-                CIdeInfo.RuleContext.builder().setSources(ImmutableList.of(src("foo/native.cc"))).build())
+                CIdeInfo.RuleContext.builder().build())
             )
             .addSource(src("foo/native.cc"))
             .addDependency("//foo:native_lib2")
@@ -783,7 +783,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .setLabel("//foo:native_lib2")
             .setKind(CppBlazeRules.RuleTypes.CC_LIBRARY.getKind())
             .setCInfo(CIdeInfo.builder().setRuleContext(
-                CIdeInfo.RuleContext.builder().setSources(ImmutableList.of(src("foo/native2.cc"))).build())
+                CIdeInfo.RuleContext.builder().build())
             )
             .addSource(src("foo/native2.cc"))
             .addDependency("//toolchains:aarch64");
@@ -940,7 +940,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     sources.forEach(targetInfo::addSource);
 
     final var ruleContext = CIdeInfo.RuleContext.builder()
-        .setSources(sources)
         .setCopts(copts)
         .build();
 
