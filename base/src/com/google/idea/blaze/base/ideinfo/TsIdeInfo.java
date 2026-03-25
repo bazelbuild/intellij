@@ -15,32 +15,22 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import java.util.Objects;
 
 /** Ide info specific to typescript rules. */
 public final class TsIdeInfo implements ProtoWrapper<IntellijIdeInfo.TsIdeInfo> {
-  private final ImmutableList<ArtifactLocation> sources;
 
-  private TsIdeInfo(ImmutableList<ArtifactLocation> sources) {
-    this.sources = sources;
-  }
+  private static final TsIdeInfo INSTANCE = new TsIdeInfo();
+
+  private TsIdeInfo() {}
 
   static TsIdeInfo fromProto(IntellijIdeInfo.TsIdeInfo proto) {
-    return new TsIdeInfo(ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto));
+    return INSTANCE;
   }
 
   @Override
   public IntellijIdeInfo.TsIdeInfo toProto() {
-    return IntellijIdeInfo.TsIdeInfo.newBuilder()
-        .addAllSources(ProtoWrapper.mapToProtos(sources))
-        .build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
+    return IntellijIdeInfo.TsIdeInfo.newBuilder().build();
   }
 
   public static Builder builder() {
@@ -49,22 +39,14 @@ public final class TsIdeInfo implements ProtoWrapper<IntellijIdeInfo.TsIdeInfo> 
 
   /** Builder for ts rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
-
-    @CanIgnoreReturnValue
-    public Builder addSources(Iterable<ArtifactLocation> sources) {
-      this.sources.addAll(sources);
-      return this;
-    }
-
     public TsIdeInfo build() {
-      return new TsIdeInfo(sources.build());
+      return INSTANCE;
     }
   }
 
   @Override
   public String toString() {
-    return "TsIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+    return "TsIdeInfo{}";
   }
 
   @Override
@@ -72,15 +54,11 @@ public final class TsIdeInfo implements ProtoWrapper<IntellijIdeInfo.TsIdeInfo> 
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    TsIdeInfo tsIdeInfo = (TsIdeInfo) o;
-    return Objects.equals(sources, tsIdeInfo.sources);
+    return o != null && getClass() == o.getClass();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources);
+    return 0;
   }
 }

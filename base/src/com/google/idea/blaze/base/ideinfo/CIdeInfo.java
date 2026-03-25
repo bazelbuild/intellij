@@ -31,8 +31,6 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     private static final RuleContext EMPTY = builder().build();
 
-    public abstract ImmutableList<ArtifactLocation> sources();
-
     public abstract ImmutableList<ArtifactLocation> headers();
 
     public abstract ImmutableList<ArtifactLocation> textualHeaders();
@@ -51,7 +49,6 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     public static CIdeInfo.RuleContext fromProto(IntellijIdeInfo.CIdeInfo.RuleContext proto) {
       return builder()
-          .setSources(ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto))
           .setHeaders(ProtoWrapper.map(proto.getHeadersList(), ArtifactLocation::fromProto))
           .setTextualHeaders(ProtoWrapper.map(proto.getTextualHeadersList(), ArtifactLocation::fromProto))
           .setCopts(ProtoWrapper.internStrings(proto.getCoptsList()))
@@ -66,7 +63,6 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
     @Override
     public IntellijIdeInfo.CIdeInfo.RuleContext toProto() {
       return IntellijIdeInfo.CIdeInfo.RuleContext.newBuilder()
-          .addAllSources(ProtoWrapper.mapToProtos(sources()))
           .addAllHeaders(ProtoWrapper.mapToProtos(headers()))
           .addAllTextualHeaders(ProtoWrapper.mapToProtos(textualHeaders()))
           .addAllCopts(copts())
@@ -80,7 +76,6 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     public static Builder builder() {
       return new AutoValue_CIdeInfo_RuleContext.Builder()
-          .setSources(ImmutableList.of())
           .setHeaders(ImmutableList.of())
           .setTextualHeaders(ImmutableList.of())
           .setCopts(ImmutableList.of())
@@ -93,8 +88,6 @@ public abstract class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo>
 
     @AutoValue.Builder
     public abstract static class Builder {
-
-      public abstract Builder setSources(ImmutableList<ArtifactLocation> value);
 
       public abstract Builder setHeaders(ImmutableList<ArtifactLocation> value);
 
