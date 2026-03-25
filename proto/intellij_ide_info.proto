@@ -41,7 +41,6 @@ message JavaIdeInfo {
   repeated LibraryArtifact jars = 1;
   repeated LibraryArtifact generated_jars = 2;
   ArtifactLocation package_manifest = 3;
-  repeated ArtifactLocation sources = 4;
   ArtifactLocation jdeps = 5;
   LibraryArtifact filtered_gen_jar = 6;
   string main_class = 7;
@@ -55,7 +54,6 @@ message JavaIdeInfo {
 message CIdeInfo {
   // Information collected from rules_cc rule attributes.
   message RuleContext {
-    repeated ArtifactLocation sources = 1;
     repeated ArtifactLocation headers = 2;
     repeated ArtifactLocation textual_headers = 3;
 
@@ -80,51 +78,6 @@ message CIdeInfo {
 
   RuleContext rule_context = 1;
   CompilationContext compilation_context = 2;
-}
-
-message AndroidIdeInfo {
-  // resources contains the unique res folders. This field is deprecated in
-  // favor of res_folders which includes more information.
-  repeated ArtifactLocation resources = 1;
-  ArtifactLocation apk = 2;
-  repeated ArtifactLocation dependency_apk = 3;
-  ArtifactLocation manifest = 4;
-  string java_package = 5;
-  bool has_idl_sources = 6;
-  LibraryArtifact idl_jar = 7;
-  bool generate_resource_class = 8;
-  string legacy_resources = 9;
-  LibraryArtifact resource_jar = 10;
-  string idl_import_root = 11;
-  map<string, string> manifest_values = 12;
-
-  // Details about Android res folders: An android_library's resource_files attr
-  // takes in a list of labels. The resource merger expects that all the
-  // resources share the same basename (which is typically `res`), but these
-  // folders can reside outside the current package. We generate one
-  // `ResFolderLocation` message for each such folder.
-  repeated ResFolderLocation res_folders = 13;
-
-  // Label for the target android_binary to instrument.
-  string instruments = 14;
-  // Jar used for resolving render time dependencies. Contains all runtime
-  // dependencies of a binary without the desugared APIs. This field is not set
-  // for non-binary targets
-  ArtifactLocation render_resolve_jar = 15;
-}
-
-// Details about an Android res folder
-message ResFolderLocation {
-  // The res folder itself
-  ArtifactLocation root = 1;
-
-  // Relative paths to the specific res files underneath the root.
-  // Deprecated: we no longer return path to resources. Instead, resource files
-  // will be packed as an aar and stored in aar field
-  repeated string resources = 2 [deprecated = true];
-
-  // An aar containing all the resources included from within this folder.
-  ArtifactLocation aar = 3;
 }
 
 message AndroidSdkIdeInfo {
@@ -158,7 +111,6 @@ message PyIdeInfo {
     SRC_PY2ONLY = 4;
     SRC_PY3ONLY = 5;
   }
-  repeated ArtifactLocation sources = 1;
   string launcher = 2;
   // the python version this target has been configured for
   PythonVersion python_version = 3;
@@ -170,7 +122,6 @@ message PyIdeInfo {
 }
 
 message GoIdeInfo {
-  repeated ArtifactLocation sources = 1;
   string import_path = 2;
   string library_label = 3 [deprecated = true];
   string library_kind = 4 [deprecated = true];
@@ -179,15 +130,12 @@ message GoIdeInfo {
 }
 
 message JsIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message TsIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message DartIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message CToolchainIdeInfo {
@@ -241,6 +189,7 @@ message TargetIdeInfo {
   repeated string tags = 5;
   repeated string features = 6;
   TestInfo test_info = 7;
+  repeated ArtifactLocation srcs = 8;
 
   // The time this target was most recently synced, in milliseconds since epoch.
   // Not provided by the aspect directly; instead filled in by the plugin during
@@ -250,7 +199,6 @@ message TargetIdeInfo {
   JavaIdeInfo java_ide_info = 100;
   JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
-  AndroidIdeInfo android_ide_info = 110;
   AndroidAarIdeInfo android_aar_ide_info = 111;
   AndroidSdkIdeInfo android_sdk_ide_info = 112;
   AndroidInstrumentationInfo android_instrumentation_info = 113;
