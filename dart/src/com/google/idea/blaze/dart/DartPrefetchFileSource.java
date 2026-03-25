@@ -97,7 +97,7 @@ public class DartPrefetchFileSource implements PrefetchFileSource, OutputsProvid
 
   private static Collection<ArtifactLocation> getDartSources(TargetIdeInfo target) {
     return target.getDartIdeInfo() != null
-        ? target.getDartIdeInfo().getSources()
+        ? ImmutableList.copyOf(target.getSources())
         : ImmutableList.of();
   }
 }

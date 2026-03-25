@@ -15,32 +15,22 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import java.util.Objects;
 
 /** Ide info specific to js rules. */
 public final class JsIdeInfo implements ProtoWrapper<IntellijIdeInfo.JsIdeInfo> {
-  private final ImmutableList<ArtifactLocation> sources;
 
-  private JsIdeInfo(ImmutableList<ArtifactLocation> sources) {
-    this.sources = sources;
-  }
+  private static final JsIdeInfo INSTANCE = new JsIdeInfo();
+
+  private JsIdeInfo() {}
 
   static JsIdeInfo fromProto(IntellijIdeInfo.JsIdeInfo proto) {
-    return new JsIdeInfo(ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto));
+    return INSTANCE;
   }
 
   @Override
   public IntellijIdeInfo.JsIdeInfo toProto() {
-    return IntellijIdeInfo.JsIdeInfo.newBuilder()
-        .addAllSources(ProtoWrapper.mapToProtos(sources))
-        .build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
+    return IntellijIdeInfo.JsIdeInfo.newBuilder().build();
   }
 
   public static Builder builder() {
@@ -49,22 +39,14 @@ public final class JsIdeInfo implements ProtoWrapper<IntellijIdeInfo.JsIdeInfo> 
 
   /** Builder for js rule info */
   public static class Builder {
-    private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
-
-    @CanIgnoreReturnValue
-    public Builder addSource(ArtifactLocation source) {
-      this.sources.add(source);
-      return this;
-    }
-
     public JsIdeInfo build() {
-      return new JsIdeInfo(sources.build());
+      return INSTANCE;
     }
   }
 
   @Override
   public String toString() {
-    return "JsIdeInfo{" + "\n" + "  sources=" + getSources() + "\n" + '}';
+    return "JsIdeInfo{}";
   }
 
   @Override
@@ -72,15 +54,11 @@ public final class JsIdeInfo implements ProtoWrapper<IntellijIdeInfo.JsIdeInfo> 
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    JsIdeInfo jsIdeInfo = (JsIdeInfo) o;
-    return Objects.equals(sources, jsIdeInfo.sources);
+    return o != null && getClass() == o.getClass();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources);
+    return 0;
   }
 }

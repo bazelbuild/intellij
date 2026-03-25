@@ -737,7 +737,6 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
             .setCopts(ImmutableList.copyOf(copts))
             .setConlyopts(ImmutableList.copyOf(conlyopts))
             .setCxxopts(ImmutableList.copyOf(cxxopts))
-            .setSources(ImmutableList.copyOf(sources))
             .build()
         )
         .setCompilationContext(CIdeInfo.CompilationContext.builder()
