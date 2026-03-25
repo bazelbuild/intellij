@@ -41,7 +41,6 @@ message JavaIdeInfo {
   repeated LibraryArtifact jars = 1;
   repeated LibraryArtifact generated_jars = 2;
   ArtifactLocation package_manifest = 3;
-  repeated ArtifactLocation sources = 4;
   ArtifactLocation jdeps = 5;
   LibraryArtifact filtered_gen_jar = 6;
   string main_class = 7;
@@ -55,7 +54,6 @@ message JavaIdeInfo {
 message CIdeInfo {
   // Information collected from rules_cc rule attributes.
   message RuleContext {
-    repeated ArtifactLocation sources = 1;
     repeated ArtifactLocation headers = 2;
     repeated ArtifactLocation textual_headers = 3;
 
@@ -158,7 +156,6 @@ message PyIdeInfo {
     SRC_PY2ONLY = 4;
     SRC_PY3ONLY = 5;
   }
-  repeated ArtifactLocation sources = 1;
   string launcher = 2;
   // the python version this target has been configured for
   PythonVersion python_version = 3;
@@ -170,7 +167,6 @@ message PyIdeInfo {
 }
 
 message GoIdeInfo {
-  repeated ArtifactLocation sources = 1;
   string import_path = 2;
   string library_label = 3 [deprecated = true];
   string library_kind = 4 [deprecated = true];
@@ -179,15 +175,12 @@ message GoIdeInfo {
 }
 
 message JsIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message TsIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message DartIdeInfo {
-  repeated ArtifactLocation sources = 1;
 }
 
 message CToolchainIdeInfo {
@@ -209,12 +202,6 @@ message JavaToolchainIdeInfo {
   string source_version = 1;
   string target_version = 2;
   repeated ArtifactLocation javac_jars = 4;
-}
-
-message KotlinToolchainIdeInfo {
-  string language_version = 1;
-  repeated string sdk_library_targets = 2;
-  repeated string kotlin_compiler_common_flags = 3;
 }
 
 message TargetKey {
@@ -241,6 +228,7 @@ message TargetIdeInfo {
   repeated string tags = 5;
   repeated string features = 6;
   TestInfo test_info = 7;
+  repeated ArtifactLocation srcs = 8;
 
   // The time this target was most recently synced, in milliseconds since epoch.
   // Not provided by the aspect directly; instead filled in by the plugin during
@@ -263,5 +251,4 @@ message TargetIdeInfo {
   JsIdeInfo js_ide_info = 150;
   TsIdeInfo ts_ide_info = 160;
   DartIdeInfo dart_ide_info = 170;
-  KotlinToolchainIdeInfo kt_toolchain_ide_info = 180;
 }

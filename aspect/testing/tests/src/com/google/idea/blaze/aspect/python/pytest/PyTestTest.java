@@ -32,7 +32,7 @@ public class PyTestTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple");
     assertThat(target.getKind()).isEqualTo("py_test");
-    assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
+    assertThat(relativePathsForArtifacts(target.getSrcsList()))
         .containsExactly(testRelative("simple.py"));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
