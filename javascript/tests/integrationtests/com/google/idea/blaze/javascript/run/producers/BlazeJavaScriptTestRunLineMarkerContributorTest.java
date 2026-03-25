@@ -65,7 +65,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
                     .setLabel("//foo/bar:foo_test_debug")
                     .setBuildFile(sourceRoot("foo/bar/BUILD"))
                     .addSource(sourceRoot("foo/bar/foo_test.js"))
-                    .setJsInfo(JsIdeInfo.builder().addSource(sourceRoot("foo/bar/foo_test.js"))))
+                    .setJsInfo(JsIdeInfo.builder()))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setKind("web_test")
@@ -110,7 +110,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
                     .setLabel("//foo/bar:foo_test_debug")
                     .setBuildFile(sourceRoot("foo/bar/BUILD"))
                     .addSource(sourceRoot("foo/bar/foo_test.js"))
-                    .setJsInfo(JsIdeInfo.builder().addSource(sourceRoot("foo/bar/foo_test.js"))))
+                    .setJsInfo(JsIdeInfo.builder()))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setKind("web_test")
@@ -175,10 +175,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
                     .addDependency("//foo/bar:foo_test_wrapped_test_srcs")
                     .addSource(sourceRoot("foo/bar/foo_test.js"))
                     .addSource(sourceRoot("foo/bar/bar_test.js"))
-                    .setJsInfo(
-                        JsIdeInfo.builder()
-                            .addSource(sourceRoot("foo/bar/foo_test.js"))
-                            .addSource(sourceRoot("foo/bar/bar_test.js"))));
+                    .setJsInfo(JsIdeInfo.builder()));
     MockBlazeProjectDataBuilder builder =
         MockBlazeProjectDataBuilder.builder(workspaceRoot).setTargetMap(targetMapBuilder.build());
     registerProjectService(

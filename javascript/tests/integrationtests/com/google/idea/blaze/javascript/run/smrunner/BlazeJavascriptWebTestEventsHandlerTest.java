@@ -69,10 +69,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addSource(src("foo/bar/foo_test.js"))
                     .addSource(src("foo/bar/bar_test.js"))
-                    .setJsInfo(
-                        JsIdeInfo.builder()
-                            .addSource(src("foo/bar/foo_test.js"))
-                            .addSource(src("foo/bar/bar_test.js"))))
+                    .setJsInfo(JsIdeInfo.builder()))
             .build();
 
     registerProjectService(
@@ -170,10 +167,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
                     .addDependency("//foo/bar:foo_test_wrapped_test_srcs")
                     .addSource(src("foo/bar/foo_test.js"))
                     .addSource(src("foo/bar/bar_test.js"))
-                    .setJsInfo(
-                        JsIdeInfo.builder()
-                            .addSource(src("foo/bar/foo_test.js"))
-                            .addSource(src("foo/bar/bar_test.js"))))
+                    .setJsInfo(JsIdeInfo.builder()))
             .build();
 
     registerProjectService(

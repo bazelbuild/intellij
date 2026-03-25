@@ -45,7 +45,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final AndroidIdeInfo androidIdeInfo;
   @Nullable private final AndroidSdkIdeInfo androidSdkIdeInfo;
   @Nullable private final AndroidAarIdeInfo androidAarIdeInfo;
-  @Nullable private final AndroidInstrumentationInfo androidInstrumentationInfo;
   @Nullable private final PyIdeInfo pyIdeInfo;
   @Nullable private final GoIdeInfo goIdeInfo;
   @Nullable private final JsIdeInfo jsIdeInfo;
@@ -69,7 +68,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable AndroidIdeInfo androidIdeInfo,
       @Nullable AndroidSdkIdeInfo androidSdkIdeInfo,
       @Nullable AndroidAarIdeInfo androidAarIdeInfo,
-      @Nullable AndroidInstrumentationInfo androidInstrumentationInfo,
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable GoIdeInfo goIdeInfo,
       @Nullable JsIdeInfo jsIdeInfo,
@@ -91,7 +89,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.androidIdeInfo = androidIdeInfo;
     this.androidSdkIdeInfo = androidSdkIdeInfo;
     this.androidAarIdeInfo = androidAarIdeInfo;
-    this.androidInstrumentationInfo = androidInstrumentationInfo;
     this.pyIdeInfo = pyIdeInfo;
     this.goIdeInfo = goIdeInfo;
     this.jsIdeInfo = jsIdeInfo;
@@ -109,62 +106,28 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
-  public static TargetIdeInfo fromProto(
-      IntellijIdeInfo.TargetIdeInfo proto, @Nullable Instant syncTimeOverride) {
-    TargetKey key = proto.hasKey() ? TargetKey.fromProto(proto.getKey()) : null;
-    Kind kind = Kind.fromProto(proto);
+  public static TargetIdeInfo fromProto(IntellijIdeInfo.TargetIdeInfo proto, @Nullable Instant syncTimeOverride) {
+    final var key = proto.hasKey() ? TargetKey.fromProto(proto.getKey()) : null;
+    final var kind = Kind.fromProto(proto);
+
     if (key == null || kind == null) {
       return null;
     }
-    ImmutableSet.Builder<ArtifactLocation> sourcesBuilder = ImmutableSet.builder();
+
+    final var sourcesBuilder = ImmutableSet.<ArtifactLocation>builder();
+    sourcesBuilder.addAll(ProtoWrapper.map(proto.getSrcsList(), ArtifactLocation::fromProto));
+
     CIdeInfo cIdeInfo = null;
     if (proto.hasCIdeInfo()) {
       cIdeInfo = CIdeInfo.fromProto(proto.getCIdeInfo());
-      sourcesBuilder.addAll(cIdeInfo.ruleContext().sources());
       sourcesBuilder.addAll(cIdeInfo.ruleContext().headers());
       sourcesBuilder.addAll(cIdeInfo.ruleContext().textualHeaders());
     }
-    JavaIdeInfo javaIdeInfo = null;
-    if (proto.hasJavaIdeInfo()) {
-      javaIdeInfo = JavaIdeInfo.fromProto(proto.getJavaIdeInfo());
-      sourcesBuilder.addAll(
-          ProtoWrapper.map(proto.getJavaIdeInfo().getSourcesList(), ArtifactLocation::fromProto));
-    }
-    PyIdeInfo pyIdeInfo = null;
-    if (proto.hasPyIdeInfo()) {
-      pyIdeInfo = PyIdeInfo.fromProto(proto.getPyIdeInfo());
-      sourcesBuilder.addAll(pyIdeInfo.getSources());
-    }
-    GoIdeInfo goIdeInfo = null;
-    if (proto.hasGoIdeInfo()) {
-      goIdeInfo = GoIdeInfo.fromProto(proto.getGoIdeInfo(), key.label(), kind);
-      sourcesBuilder.addAll(goIdeInfo.getSources());
-    }
-    JsIdeInfo jsIdeInfo = null;
-    if (proto.hasJsIdeInfo()) {
-      jsIdeInfo = JsIdeInfo.fromProto(proto.getJsIdeInfo());
-      sourcesBuilder.addAll(jsIdeInfo.getSources());
-    }
-    TsIdeInfo tsIdeInfo = null;
-    if (proto.hasTsIdeInfo()) {
-      tsIdeInfo = TsIdeInfo.fromProto(proto.getTsIdeInfo());
-      sourcesBuilder.addAll(tsIdeInfo.getSources());
-    }
-    DartIdeInfo dartIdeInfo = null;
-    if (proto.hasDartIdeInfo()) {
-      dartIdeInfo = DartIdeInfo.fromProto(proto.getDartIdeInfo());
-      sourcesBuilder.addAll(dartIdeInfo.getSources());
-    }
-    Long syncTime =
-        syncTimeOverride != null
-            ? Long.valueOf(syncTimeOverride.toEpochMilli())
-            : proto.getSyncTimeMillis() == 0 ? null : proto.getSyncTimeMillis();
+
     return new TargetIdeInfo(
         key,
         kind,
-        proto.hasBuildFileArtifactLocation()
-            ? ArtifactLocation.fromProto(proto.getBuildFileArtifactLocation())
-            : null,
+        proto.hasBuildFileArtifactLocation() ? ArtifactLocation.fromProto(proto.getBuildFileArtifactLocation()) : null,
         ProtoWrapper.map(proto.getDepsList(), Dependency::fromProto),
         ProtoWrapper.internStrings(proto.getTagsList()),
         sourcesBuilder.build(),
@@ -172,30 +135,46 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasCToolchainIdeInfo()
             ? CToolchainIdeInfo.fromProto(proto.getCToolchainIdeInfo())
             : null,
-        javaIdeInfo,
-        proto.hasAndroidIdeInfo() ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo()) : null,
+        proto.hasJavaIdeInfo()
+            ? JavaIdeInfo.fromProto(proto.getJavaIdeInfo())
+            : null,
+        proto.hasAndroidIdeInfo()
+            ? AndroidIdeInfo.fromProto(proto.getAndroidIdeInfo())
+            : null,
         proto.hasAndroidSdkIdeInfo()
             ? AndroidSdkIdeInfo.fromProto(proto.getAndroidSdkIdeInfo())
             : null,
         proto.hasAndroidAarIdeInfo()
             ? AndroidAarIdeInfo.fromProto(proto.getAndroidAarIdeInfo())
             : null,
-        proto.hasAndroidInstrumentationInfo()
-            ? AndroidInstrumentationInfo.fromProto(proto.getAndroidInstrumentationInfo())
+        proto.hasPyIdeInfo()
+            ? PyIdeInfo.fromProto(proto.getPyIdeInfo())
             : null,
-        pyIdeInfo,
-        goIdeInfo,
-        jsIdeInfo,
-        tsIdeInfo,
-        dartIdeInfo,
-        proto.hasTestInfo() ? TestIdeInfo.fromProto(proto.getTestInfo()) : null,
+        proto.hasGoIdeInfo()
+            ? GoIdeInfo.fromProto(proto.getGoIdeInfo(), key.label(), kind)
+            : null,
+        proto.hasJsIdeInfo()
+            ? JsIdeInfo.fromProto(proto.getJsIdeInfo())
+            : null,
+        proto.hasTsIdeInfo()
+            ? TsIdeInfo.fromProto(proto.getTsIdeInfo())
+            : null,
+        proto.hasDartIdeInfo()
+            ? DartIdeInfo.fromProto(proto.getDartIdeInfo())
+            : null,
+        proto.hasTestInfo()
+            ? TestIdeInfo.fromProto(proto.getTestInfo())
+            : null,
         proto.hasJavaToolchainIdeInfo()
             ? JavaToolchainIdeInfo.fromProto(proto.getJavaToolchainIdeInfo())
             : null,
         proto.hasKtToolchainIdeInfo()
             ? KotlinToolchainIdeInfo.fromProto(proto.getKtToolchainIdeInfo())
             : null,
-        syncTime);
+        syncTimeOverride != null
+            ? Long.valueOf(syncTimeOverride.toEpochMilli())
+            : proto.getSyncTimeMillis() == 0 ? null : proto.getSyncTimeMillis()
+    );
   }
 
   @Override
@@ -205,7 +184,8 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
             .setKey(key.toProto())
             .setKind(kind.getKindString())
             .addAllDeps(ProtoWrapper.mapToProtos(dependencies))
-            .addAllTags(tags);
+            .addAllTags(tags)
+            .addAllSrcs(ProtoWrapper.mapToProtos(sources));
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setBuildFileArtifactLocation, buildFile);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCIdeInfo, cIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCToolchainIdeInfo, cToolchainIdeInfo);
@@ -213,8 +193,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidIdeInfo, androidIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidSdkIdeInfo, androidSdkIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setAndroidAarIdeInfo, androidAarIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(
-        builder::setAndroidInstrumentationInfo, androidInstrumentationInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPyIdeInfo, pyIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setGoIdeInfo, goIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJsIdeInfo, jsIdeInfo);
@@ -249,7 +227,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         androidIdeInfo,
         androidSdkIdeInfo,
         androidAarIdeInfo,
-        androidInstrumentationInfo,
         pyIdeInfo,
         goIdeInfo,
         jsIdeInfo,
@@ -314,11 +291,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable
   public AndroidAarIdeInfo getAndroidAarIdeInfo() {
     return androidAarIdeInfo;
-  }
-
-  @Nullable
-  public AndroidInstrumentationInfo getAndroidInstrumentationInfo() {
-    return androidInstrumentationInfo;
   }
 
   @Nullable
@@ -410,7 +382,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private JavaIdeInfo javaIdeInfo;
     private AndroidIdeInfo androidIdeInfo;
     private AndroidAarIdeInfo androidAarIdeInfo;
-    private AndroidInstrumentationInfo androidInstrumentationInfo;
     private PyIdeInfo pyIdeInfo;
     private GoIdeInfo goIdeInfo;
     private JsIdeInfo jsIdeInfo;
@@ -480,7 +451,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       this.cIdeInfo = cInfoBuilder.build();
 
       // used only for testing, no need to extract additional source from the compilation context
-      this.sources.addAll(cIdeInfo.ruleContext().sources());
       this.sources.addAll(cIdeInfo.ruleContext().headers());
       this.sources.addAll(cIdeInfo.ruleContext().textualHeaders());
 
@@ -502,12 +472,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     @CanIgnoreReturnValue
     public Builder setAndroidAarInfo(AndroidAarIdeInfo aarInfo) {
       this.androidAarIdeInfo = aarInfo;
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder setAndroidInstrumentationInfo(AndroidInstrumentationInfo instrumentationInfo) {
-      this.androidInstrumentationInfo = instrumentationInfo;
       return this;
     }
 
@@ -609,7 +573,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           androidIdeInfo,
           null,
           androidAarIdeInfo,
-          androidInstrumentationInfo,
           pyIdeInfo,
           goIdeInfo,
           jsIdeInfo,
@@ -643,7 +606,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(androidIdeInfo, that.androidIdeInfo)
         && Objects.equals(androidSdkIdeInfo, that.androidSdkIdeInfo)
         && Objects.equals(androidAarIdeInfo, that.androidAarIdeInfo)
-        && Objects.equals(androidInstrumentationInfo, that.androidInstrumentationInfo)
         && Objects.equals(pyIdeInfo, that.pyIdeInfo)
         && Objects.equals(goIdeInfo, that.goIdeInfo)
         && Objects.equals(jsIdeInfo, that.jsIdeInfo)
@@ -670,7 +632,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         androidIdeInfo,
         androidSdkIdeInfo,
         androidAarIdeInfo,
-        androidInstrumentationInfo,
         pyIdeInfo,
         goIdeInfo,
         jsIdeInfo,

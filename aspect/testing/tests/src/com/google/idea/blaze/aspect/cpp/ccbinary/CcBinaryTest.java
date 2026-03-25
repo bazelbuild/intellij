@@ -39,7 +39,7 @@ public class CcBinaryTest extends BazelIntellijAspectTest {
     final var ruleCtx = ideInfo.getRuleContext();
     assertThat(ruleCtx.getCoptsList()).isEmpty();
     assertThat(ruleCtx.getArgs(0)).isEqualTo("simpleArg");
-    assertThat(ruleCtx.getSources(0).getRelativePath()).endsWith("simple/simple.cc");
+    assertThat(target.getSrcs(0).getRelativePath()).endsWith("simple/simple.cc");
 
     // output groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-cpp")).isEmpty();

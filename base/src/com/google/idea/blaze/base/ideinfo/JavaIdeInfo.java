@@ -27,7 +27,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
   private final ImmutableList<LibraryArtifact> jars;
   private final ImmutableList<LibraryArtifact> generatedJars;
   @Nullable private final LibraryArtifact filteredGenJar;
-  private final ImmutableList<ArtifactLocation> sources;
   @Nullable private final ArtifactLocation packageManifest;
   @Nullable private final ArtifactLocation jdepsFile;
   @Nullable private final String javaBinaryMainClass;
@@ -38,7 +37,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       ImmutableList<LibraryArtifact> jars,
       ImmutableList<LibraryArtifact> generatedJars,
       @Nullable LibraryArtifact filteredGenJar,
-      ImmutableList<ArtifactLocation> sources,
       @Nullable ArtifactLocation packageManifest,
       @Nullable ArtifactLocation jdepsFile,
       @Nullable String javaBinaryMainClass,
@@ -46,7 +44,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       ImmutableList<LibraryArtifact> pluginProcessorJars) {
     this.jars = jars;
     this.generatedJars = generatedJars;
-    this.sources = sources;
     this.packageManifest = packageManifest;
     this.jdepsFile = jdepsFile;
     this.filteredGenJar = filteredGenJar;
@@ -60,7 +57,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         ProtoWrapper.map(proto.getJarsList(), LibraryArtifact::fromProto),
         ProtoWrapper.map(proto.getGeneratedJarsList(), LibraryArtifact::fromProto),
         proto.hasFilteredGenJar() ? LibraryArtifact.fromProto(proto.getFilteredGenJar()) : null,
-        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         proto.hasPackageManifest() ? ArtifactLocation.fromProto(proto.getPackageManifest()) : null,
         proto.hasJdeps() ? ArtifactLocation.fromProto(proto.getJdeps()) : null,
         Strings.emptyToNull(proto.getMainClass()),
@@ -74,7 +70,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         IntellijIdeInfo.JavaIdeInfo.newBuilder()
             .addAllJars(ProtoWrapper.mapToProtos(jars))
             .addAllGeneratedJars(ProtoWrapper.mapToProtos(generatedJars))
-            .addAllSources(ProtoWrapper.mapToProtos(sources))
             .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars));
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setFilteredGenJar, filteredGenJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPackageManifest, packageManifest);
@@ -82,10 +77,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     ProtoWrapper.setIfNotNull(builder::setMainClass, javaBinaryMainClass);
     ProtoWrapper.setIfNotNull(builder::setTestClass, testClass);
     return builder.build();
-  }
-
-  public ImmutableList<ArtifactLocation> getSources() {
-    return sources;
   }
 
   /**
@@ -201,7 +192,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
           jars.build(),
           generatedJars.build(),
           filteredGenJar,
-          ImmutableList.of(),
           null,
           jdepsFile,
           mainClass,
@@ -222,7 +212,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return Objects.equals(jars, that.jars)
         && Objects.equals(generatedJars, that.generatedJars)
         && Objects.equals(filteredGenJar, that.filteredGenJar)
-        && Objects.equals(sources, that.sources)
         && Objects.equals(packageManifest, that.packageManifest)
         && Objects.equals(jdepsFile, that.jdepsFile)
         && Objects.equals(javaBinaryMainClass, that.javaBinaryMainClass)
@@ -236,7 +225,6 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         jars,
         generatedJars,
         filteredGenJar,
-        sources,
         packageManifest,
         jdepsFile,
         javaBinaryMainClass,
