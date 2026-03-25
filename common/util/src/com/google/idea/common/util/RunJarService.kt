@@ -22,14 +22,13 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
 class RunJarService {
@@ -61,7 +60,8 @@ class RunJarService {
 
   @Throws(ExecutionException::class)
   private suspend fun capture(jar: Path, vararg args: String): ProcessOutput {
-    return CapturingProcessRunner(run(jar, *args)).runProcess()
+    val runner = CapturingProcessRunner(run(jar, *args))
+    return coroutineToIndicator(runner::runProcess)
   }
 
   @Throws(IOException::class)

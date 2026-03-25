@@ -56,6 +56,12 @@ kt_jvm_library(
     deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
+kt_jvm_library(
+    name = "file_util",
+    srcs = ["src/com/google/idea/common/util/FileUtil.kt"],
+    deps = ["//intellij_platform_sdk:plugin_api"],
+)
+
 java_test(
     name = "CommandLineTaskTest",
     size = "medium",
