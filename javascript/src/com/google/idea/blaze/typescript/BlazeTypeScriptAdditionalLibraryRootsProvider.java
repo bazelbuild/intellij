@@ -22,7 +22,6 @@ import com.google.common.io.Files;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -84,8 +83,7 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
     ArtifactLocationDecoder decoder = projectData.artifactLocationDecoder();
     return projectData.targetMap().targets().stream()
         .filter(t -> t.getTsIdeInfo() != null)
-        .map(TargetIdeInfo::getTsIdeInfo)
-        .map(TsIdeInfo::getSources)
+        .map(TargetIdeInfo::getSources)
         .flatMap(Collection::stream)
         .filter(BlazeTypeScriptAdditionalLibraryRootsProvider::isTypeScriptArtifact)
         .filter(location -> isExternalArtifact(importRoots, location))
