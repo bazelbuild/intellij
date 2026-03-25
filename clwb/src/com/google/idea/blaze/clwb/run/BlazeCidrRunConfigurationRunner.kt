@@ -13,121 +13,108 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.clwb.run;
+package com.google.idea.blaze.clwb.run
 
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.buildview.BazelBuildService;
-import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.util.SaveUtil;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.openapi.util.registry.Registry;
-import com.jetbrains.cidr.execution.CidrCommandLineState;
+import com.google.common.collect.ImmutableList
+import com.google.idea.blaze.base.command.BlazeInvocationContext
+import com.google.idea.blaze.base.model.primitives.Label
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
+import com.google.idea.blaze.base.run.ExecutorType
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner
+import com.google.idea.blaze.base.util.SaveUtil
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.RunCanceledByUserException
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.cidr.execution.CidrCommandLineState
+import java.io.File
+import java.nio.file.Path
+import kotlin.coroutines.cancellation.CancellationException
 
-import java.nio.file.Path;
-import java.io.File;
-import java.util.concurrent.CancellationException;
+/** CLion-specific handler for [BlazeCommandRunConfiguration]s. */
+class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRunConfiguration) :
+  BlazeCommandRunConfigurationRunner {
 
-/**
- * CLion-specific handler for {@link BlazeCommandRunConfiguration}s.
- */
-public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
+  /** Calculated during the before-run task, and made available to the debugger. */
+  @JvmField
+  var executableToDebug: File? = null
 
-  private final BlazeCommandRunConfiguration configuration;
-
-  /**
-   * Calculated during the before-run task, and made available to the debugger.
-   */
-  File executableToDebug = null;
-
-  BlazeCidrRunConfigurationRunner(BlazeCommandRunConfiguration configuration) {
-    this.configuration = configuration;
+  override fun getRunProfileState(executor: Executor, env: ExecutionEnvironment): RunProfileState {
+    return CidrCommandLineState(env, BlazeCidrLauncher(configuration, this, env))
   }
 
-  @Override
-  public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment env) {
-    return new CidrCommandLineState(env, new BlazeCidrLauncher(configuration, this, env));
-  }
+  override fun executeBeforeRunTask(env: ExecutionEnvironment): Boolean {
+    executableToDebug = null
+    if (!isDebugging(env)) return true
 
-  @Override
-  public boolean executeBeforeRunTask(ExecutionEnvironment env) {
-    executableToDebug = null;
-    if (!isDebugging(env)) {
-      return true;
-    }
     try {
-      final var executable = getExecutableToDebug(env);
+      val executable: Path? = getExecutableToDebug(env)
       if (executable != null) {
-        executableToDebug = executable.toFile();
-        return true;
+        executableToDebug = executable.toFile()
+        return true
       }
-    } catch (ExecutionException e) {
-      ExecutionUtil.handleExecutionError(
-          env.getProject(), env.getExecutor().getToolWindowId(), env.getRunProfile(), e);
+    } catch (e: ExecutionException) {
+      ExecutionUtil.handleExecutionError(env.project, env.executor.toolWindowId, env.runProfile, e)
     }
-    return false;
-  }
-
-  private static boolean isDebugging(ExecutionEnvironment environment) {
-    Executor executor = environment.getExecutor();
-    return executor instanceof DefaultDebugExecutor;
-  }
-
-  private static Label getSingleTarget(BlazeCommandRunConfiguration config)
-      throws ExecutionException {
-    ImmutableList<? extends TargetExpression> targets = config.getTargets();
-    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
-      throw new ExecutionException("Invalid configuration: doesn't have a single target label");
-    }
-    return (Label) targets.get(0);
+    return false
   }
 
   /**
    * Builds blaze C/C++ target in debug mode, and returns the output build artifact.
-   *
+   * 
    * @throws ExecutionException if no unique output artifact was found.
    */
-  private Path getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
-    SaveUtil.saveAllFiles();
+  @kotlin.Throws(ExecutionException::class)
+  private fun getExecutableToDebug(env: ExecutionEnvironment): Path {
+    SaveUtil.saveAllFiles()
 
-    final var flagsBuilder = BazelDebugFlagsBuilder.fromDefaults(
-        RunConfigurationUtils.getDebuggerKind(configuration),
-        RunConfigurationUtils.getCompilerKind(configuration)
-    );
+    val flagsBuilder: BazelDebugFlagsBuilder = BazelDebugFlagsBuilder.fromDefaults(
+      RunConfigurationUtils.getDebuggerKind(configuration),
+      RunConfigurationUtils.getCompilerKind(configuration)
+    )
 
-    if (!Registry.is("bazel.clwb.debug.extraflags.disabled")) {
-      flagsBuilder.withBuildFlags(WorkspaceRoot.fromProject(env.getProject()).toString());
+    if (!Registry.`is`("bazel.clwb.debug.extraflags.disabled")) {
+      flagsBuilder.withBuildFlags(WorkspaceRoot.fromProject(env.project).toString())
     }
 
-    Label target = getSingleTarget(configuration);
+    val target: Label = getSingleTarget(configuration)
 
-    final var executableFuture = BazelBuildService.buildForRunConfig(
-        env.getProject(),
+    val executableFuture = BazelBuildService.buildForRunConfig(
+        env.project,
         configuration,
-        BlazeInvocationContext.runConfigContext(
-            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+        BlazeInvocationContext.runConfigContext(ExecutorType.fromExecutor(env.executor), configuration.type, true),
         ImmutableList.of(),
         flagsBuilder.build(),
         target
-    );
+      )
 
     try {
-      return executableFuture.get();
-    } catch (InterruptedException | CancellationException e) {
-      throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(String.format("Failed to get output artifacts when building %s", target), e);
+      return executableFuture.get()
+    } catch (_: InterruptedException) {
+      throw RunCanceledByUserException()
+    } catch (_: CancellationException) {
+      throw RunCanceledByUserException()
+    } catch (e: java.util.concurrent.ExecutionException) {
+      throw ExecutionException("Failed to get output artifacts when building $target", e)
     }
   }
+}
+
+private fun isDebugging(environment: ExecutionEnvironment): Boolean {
+  return environment.executor is DefaultDebugExecutor
+}
+
+@Throws(ExecutionException::class)
+private fun getSingleTarget(config: BlazeCommandRunConfiguration): Label {
+  val targets = config.targets
+  if (targets.size != 1 || targets[0] !is Label) {
+    throw ExecutionException("Invalid configuration: doesn't have a single target label")
+  }
+
+  return targets[0] as Label
 }
