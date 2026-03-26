@@ -15,21 +15,29 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import javax.annotation.Nullable;
 
-public class PendingTargetRunConfigurationHandlerProvider
-    implements BlazeCommandRunConfigurationHandlerProvider {
+public class PendingTargetRunConfigurationHandlerProvider implements BlazeCommandRunConfigurationHandlerProvider {
 
-  @Override
-  public String getDisplayLabel() {
-    return "(select)";
+  public static PendingTargetRunConfigurationHandlerProvider getInstance() {
+    return BlazeCommandRunConfigurationHandlerProvider.EP_NAME
+        .findExtension(PendingTargetRunConfigurationHandlerProvider.class);
   }
 
   @Override
-  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
-    return state.equals(TargetState.PENDING);
+  public String getDisplayLabel() {
+    return "Pending";
+  }
+
+  @Override
+  public boolean isUserSelectable() { return false; }
+
+  @Override
+  public ImmutableList<Kind> getDefaultKinds() {
+    return ImmutableList.of();
   }
 
   @Override
