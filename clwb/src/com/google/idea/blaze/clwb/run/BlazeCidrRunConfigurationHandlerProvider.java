@@ -15,15 +15,15 @@
  */
 package com.google.idea.blaze.clwb.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import javax.annotation.Nullable;
+import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
-public class BlazeCidrRunConfigurationHandlerProvider
-    implements BlazeCommandRunConfigurationHandlerProvider {
+public class BlazeCidrRunConfigurationHandlerProvider implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
   public String getDisplayLabel() {
@@ -31,8 +31,8 @@ public class BlazeCidrRunConfigurationHandlerProvider
   }
 
   @Override
-  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
-    return RunConfigurationUtils.canUseClionHandler(kind);
+  public ImmutableList<Kind> getDefaultKinds() {
+    return ImmutableList.of(RuleTypes.CC_BINARY.getKind(), RuleTypes.CC_TEST.getKind());
   }
 
   @Override
