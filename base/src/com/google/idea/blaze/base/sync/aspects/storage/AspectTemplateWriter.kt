@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.ProjectViewSet
+import com.google.idea.blaze.base.projectview.section.sections.DetectScalaInfoProviderSection
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.aspects.storage.AspectRepositoryProvider.ASPECT_TEMPLATE_DIRECTORY
@@ -120,7 +121,12 @@ class AspectTemplateWriter : AspectWriter {
     val isPythonEnabled = activeLanguages.contains(LanguageClass.PYTHON) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_python")))
 
-    val isScalaEnabled = activeLanguages.contains(LanguageClass.SCALA) &&
+    val detectScalaInfoProvider = state.projectViewSet
+        .getScalarValue(DetectScalaInfoProviderSection.KEY)
+        .orElse(true)
+
+    val isScalaEnabled = detectScalaInfoProvider &&
+        activeLanguages.contains(LanguageClass.SCALA) &&
         (externalWorkspaceData != null && (!isAtLeastBazel8 || isNotBzlmod || hasRepository("rules_scala")))
 
     return ImmutableMap.of(
