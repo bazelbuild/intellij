@@ -16,3 +16,22 @@ CODE_GENERATOR_RULE_NAMES = struct(
 ###end
 # TEMPLATE-INCLUDE-END
 )
+
+# Custom rule source configurations for rules that need special source
+# attribute collection. Maps rule kinds to language class and source attributes.
+CUSTOM_RULE_SOURCES = struct(
+# TEMPLATE-INCLUDE-BEGIN
+###foreach( $customRule in $customRuleSourceConfigs )
+##    $customRule.ruleKind = struct(
+##        language_class = "$customRule.languageClass",
+##        source_attrs = [$customRule.sourceAttrsCommaSeparated],
+##    ),
+###end
+# TEMPLATE-INCLUDE-END
+)
+
+def get_custom_rule_source_config(rule_kind):
+    """Returns the custom source config for a rule kind, or None."""
+    if hasattr(CUSTOM_RULE_SOURCES, rule_kind):
+        return getattr(CUSTOM_RULE_SOURCES, rule_kind)
+    return None
