@@ -632,6 +632,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildEventParser" interface="com.google.idea.blaze.base.buildview.events.BuildEventParser" />
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectWriter" interface="com.google.idea.blaze.base.sync.aspects.storage.AspectWriter" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.ArtifactLocationTransformer" interface="com.google.idea.blaze.base.ideinfo.ArtifactLocationTransformer" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
