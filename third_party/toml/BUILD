@@ -5,12 +5,8 @@ java_library(
     name = "toml_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2025.1": ["@toml_2025_1//:toml"],
-        "intellij-2025.2": ["@toml_2025_2//:toml"],
         "intellij-2025.3": ["@toml_2025_3//:toml"],
         "intellij-2026.1": ["@toml_2026_1//:toml"],
-        "intellij-ue-2025.1": ["@toml_2025_1//:toml"],
-        "intellij-ue-2025.2": ["@toml_2025_2//:toml"],
         "intellij-ue-2025.3": ["@toml_2025_3//:toml"],
         "intellij-ue-2026.1": ["@toml_2026_1//:toml"],
         "default": [],

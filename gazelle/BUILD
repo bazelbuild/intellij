@@ -74,6 +74,8 @@ intellij_integration_test_suite(
         "--add-exports=java.desktop/com.apple.eawt=ALL-UNNAMED",
         "--add-exports=java.desktop/com.apple.laf=ALL-UNNAMED",
         "--add-exports=java.desktop/com.apple.eawt.event=ALL-UNNAMED",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
     ],
     required_plugins = "com.google.idea.blaze.gazelle",
     tags = ["large"],
