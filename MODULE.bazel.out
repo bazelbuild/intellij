@@ -322,7 +322,7 @@ http_archive(
 _TOML_BUILD_FILE = """
 java_import(
     name = "toml",
-    jars = glob(["toml/lib/modules/intellij.toml.backend.jar", "toml/lib/modules/intellij.toml.frontend.jar", "toml/lib/toml.jar"]),
+    jars = glob(["toml/lib/toml.jar", "toml/lib/modules/*.jar"]),
     visibility = ["//visibility:public"],
 )
 """
@@ -347,6 +347,53 @@ http_archive(
     build_file_content = _TOML_BUILD_FILE,
     sha256 = TOML_PLUGIN_261_SHA,
     url = TOML_PLUGIN_261_URL,
+)
+
+ARTIFACTS_VERISION_253 = "253.32098.37"
+
+TEST_FRAMEWORK_JAR_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework/" + ARTIFACTS_VERISION_253 + "/test-framework-" + ARTIFACTS_VERISION_253 + ".jar"
+TEST_FRAMEWORK_JAR_253_SHA = "a2c33e32a0ce78bf820fe92e57505c71d0dfb585e442d2f4911722cb296c9729"
+
+http_jar(
+    name = "test_framework_253",
+    url = TEST_FRAMEWORK_JAR_253_URL,
+    sha256 = TEST_FRAMEWORK_JAR_253_SHA,
+)
+
+TEST_FRAMEWORK_COMMON_JAR_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework-common/" + ARTIFACTS_VERISION_253 + "/test-framework-common-" + ARTIFACTS_VERISION_253 + ".jar"
+TEST_FRAMEWORK_COMMON_JAR_253_SHA = "d50d3027d2aeeb41e54270f67cc9e90bdc19d1e10417795103137753f78fbec8"
+
+http_jar(
+    name = "test_framework_common_253",
+    url = TEST_FRAMEWORK_COMMON_JAR_253_URL,
+    sha256 = TEST_FRAMEWORK_COMMON_JAR_253_SHA,
+)
+
+TEST_FRAMEWORK_CORE_JAR_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/platform/test-framework-core/" + ARTIFACTS_VERISION_253 + "/test-framework-core-" + ARTIFACTS_VERISION_253 + ".jar"
+TEST_FRAMEWORK_CORE_JAR_253_SHA = "a3f232b4f2be007b4d968b6afd9a3f5d3b97985bf1a8adadf8bf9af29cc01822"
+
+http_jar(
+    name = "test_framework_core_253",
+    url = TEST_FRAMEWORK_CORE_JAR_253_URL,
+    sha256 = TEST_FRAMEWORK_CORE_JAR_253_SHA,
+)
+
+JAVA_TEST_FRAMEWORK_JAR_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/java/java-test-framework/" + ARTIFACTS_VERISION_253 + "/java-test-framework-" + ARTIFACTS_VERISION_253 + ".jar"
+JAVA_TEST_FRAMEWORK_JAR_253_SHA = "7141f2032a1132fba7538072bcd04bc1b96ecc4af5315cd2c77235f982c06b8b"
+
+http_jar(
+    name = "java_test_framework_253",
+    url = JAVA_TEST_FRAMEWORK_JAR_253_URL,
+    sha256 = JAVA_TEST_FRAMEWORK_JAR_253_SHA,
+)
+
+JAVA_TEST_FRAMEWORK_SHARED_JAR_253_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/java/java-test-framework-shared/" + ARTIFACTS_VERISION_253 + "/java-test-framework-shared-" + ARTIFACTS_VERISION_253 + ".jar"
+JAVA_TEST_FRAMEWORK_SHARED_JAR_253_SHA = "734e0e279f034906c95935a034057fc57bb4ec355c659a1c0e46d198c736530a"
+
+http_jar(
+    name = "java_test_framework_shared_253",
+    url = JAVA_TEST_FRAMEWORK_SHARED_JAR_253_URL,
+    sha256 = JAVA_TEST_FRAMEWORK_SHARED_JAR_253_SHA,
 )
 
 ARTIFACTS_VERISION_261 = "261.22158.277"

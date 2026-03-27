@@ -26,6 +26,7 @@ java_library(
             "com/google/idea/sdkcompat/base/**",
             "com/google/idea/sdkcompat/ide/**",
             "com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/testFramework/**",
         ]),
         intellij_ue = glob([
@@ -33,6 +34,7 @@ java_library(
             "com/google/idea/sdkcompat/ide/**",
             "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/python/**",
+            "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/testFramework/**",
         ]),
     ),
@@ -42,5 +44,6 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//third_party/javascript",  #api252
         "//third_party/python",
+        "//third_party/scala",
     ],
 )

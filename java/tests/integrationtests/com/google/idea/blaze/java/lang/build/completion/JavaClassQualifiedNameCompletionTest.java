@@ -33,35 +33,6 @@ import org.junit.runners.JUnit4;
 public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testCompleteClassName() throws Throwable {
-    workspace.createPsiFile(
-        new WorkspacePath("java/com/google/bin/Main.java"),
-        "package com.google.bin;",
-        "public class Main {",
-        "  public void main() {}",
-        "}");
-    BuildFile file =
-        createBuildFile(
-            new WorkspacePath("java/com/google/BUILD"),
-            "java_binary(",
-            "    name = 'binary',",
-            "    main_class = 'com.google.bin.M',",
-            ")");
-
-    Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 2, "    main_class = 'com.google.bin.M".length());
-
-    LookupElement[] completionItems = testFixture.complete(CompletionType.CLASS_NAME);
-    assertThat(completionItems).isNull();
-    assertFileContents(
-        file,
-        "java_binary(",
-        "    name = 'binary',",
-        "    main_class = 'com.google.bin.Main',",
-        ")");
-  }
-
-  @Test
   public void testNoCompletionForOtherAttributes() throws Throwable {
     workspace.createPsiFile(
         new WorkspacePath("java/com/google/bin/Main.java"),

@@ -60,7 +60,6 @@ java_import(
     jars = glob([
         "plugins/javascript-plugin/lib/*.jar",
         "plugins/javascript-plugin/lib/modules/*.jar",
-        "plugins/javascript-plugin/lib/frontend-split/*.jar"
     ]),
 )
 
@@ -68,7 +67,6 @@ java_import(
     name = "css",
     jars = glob([
         "plugins/css-plugin/lib/*.jar",
-        "plugins/css-plugin/lib/frontend-split/*.jar",
         "plugins/css-plugin/lib/modules/*.jar",
     ]),
 )

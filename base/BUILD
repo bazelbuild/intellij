@@ -61,7 +61,6 @@ kt_jvm_library(
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = [
-        "src/META-INF/dependency-on-lvcs-impl.xml",
         "src/META-INF/blaze-base.xml",
     ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,

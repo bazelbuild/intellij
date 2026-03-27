@@ -16,6 +16,7 @@ public class SimpleTest extends IjwbHeadlessTestCase {
   @Test
   public void testIjwb() {
     final var errors = runSync(defaultSyncParams().build());
+
     errors.assertNoErrors();
 
     checkModule();
