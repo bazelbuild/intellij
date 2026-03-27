@@ -17,6 +17,8 @@ def ijwb_headless_test(name, project, srcs, deps = []):
             "-Dcom.google.testing.junit.runner.shouldInstallTestSecurityManager=false",
             # fixes preferences not writable on mac
             "-Djava.util.prefs.PreferencesFactory=com.google.idea.testing.headless.InMemoryPreferencesFactory",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
         ],
         deps = deps + [
             ":ijwb_lib",
