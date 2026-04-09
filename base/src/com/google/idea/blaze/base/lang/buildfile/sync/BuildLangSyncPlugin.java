@@ -105,14 +105,11 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeContext context) {
-    BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project);
     try {
       ListenableFuture<byte[]> future =
           BlazeInfoRunner.getInstance()
               .runBlazeInfoGetBytes(
                   project,
-                  invoker,
                   context,
                   BlazeFlags.blazeFlags(
                       project,

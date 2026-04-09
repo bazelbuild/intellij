@@ -101,7 +101,6 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
     }
     return BlazeInfoRunner.getInstance()
             .runBlazeInfo(project,
-                    this,
                     blazeContext,
                     buildSystem.getName(),
                     syncFlags);

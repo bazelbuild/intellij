@@ -84,13 +84,9 @@ public class BlazeInfoProvider {
             if (importSettings == null) {
                 return null;
             }
-            BuildSystem.BuildInvoker buildInvoker = Blaze.getBuildSystemProvider(project)
-                    .getBuildSystem()
-                    .getDefaultInvoker(project);
             logger.debug("Running bazel info");
             blazeInfo = BlazeInfoRunner.getInstance().runBlazeInfo(
                     project,
-                    buildInvoker,
                     context,
                     importSettings.getBuildSystem(),
                     blazeFlags
