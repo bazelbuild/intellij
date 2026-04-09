@@ -23,7 +23,7 @@ import java.nio.file.Path
 
 object FileUtil {
 
-  suspend fun deleteOnException(path: Path, body: suspend () -> Unit) {
+  suspend inline fun deleteOnException(path: Path, crossinline body: suspend () -> Unit) {
     try {
       body()
     } catch (t: Throwable) {

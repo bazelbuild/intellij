@@ -27,6 +27,6 @@ class ExeclogTempFileClosedListener(private val project: Project) : FileEditorMa
     if (file.extension != ExeclogBundleProvider.EXECLOG_FILE_EXTENSION) return
     if (source.getEditors(file).isNotEmpty()) return
 
-    ExeclogParseService.release(project, Path.of(file.path))
+    ExeclogParseService.release(project, file.toNioPath())
   }
 }
