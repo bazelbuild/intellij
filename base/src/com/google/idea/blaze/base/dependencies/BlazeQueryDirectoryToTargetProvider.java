@@ -20,6 +20,8 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.buildview.BazelExecService;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -28,6 +30,7 @@ import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -88,6 +91,8 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
 
     final var outputProcessor = new BlazeQueryLabelKindParser(t -> true);
     try (final var result = BazelExecService.of(project).exec(context, command)) {
+      result.throwOnFailure(ThrowOption.ALLOW_PARTIAL_SUCCESS);
+
       try (final var queryResultStream = result.getStdout()) {
         new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
             .lines()
@@ -95,7 +100,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
       }
 
       return outputProcessor.getTargets();
-    } catch (IOException | ExecutionException e) {
+    } catch (IOException | BuildException | ExecutionException e) {
       logger.error(e.getMessage(), e);
       return null;
     }
