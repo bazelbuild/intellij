@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.google.idea.common.util
 
-package com.google.idea.blaze.base.util;
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+object FileUtil {
 
-public class FileUtil {
-  public static void writeIfDifferent(Path path, String fileContent) throws IOException {
-    if (!Files.exists(path) || !getFileContent(path).equals(fileContent)) {
-      Files.writeString(path, fileContent);
+  suspend inline fun deleteOnException(path: Path, crossinline body: suspend () -> Unit) {
+    try {
+      body()
+    } catch (t: Throwable) {
+      try {
+        withContext(Dispatchers.IO) {
+          Files.deleteIfExists(path)
+        }
+      } catch (e: IOException) {
+        // best effort cleanup
+      }
+      throw t
     }
-  }
-  private static String getFileContent(Path path) throws IOException {
-    return Files.readString(path);
   }
 }

@@ -9,5 +9,15 @@
   <extensions defaultExtensionNs="com.intellij">
     <textmate.bundleProvider
       implementation="com.google.idea.blaze.base.execlog.ExeclogBundleProvider"/>
+    <fileEditorProvider
+      implementation="com.google.idea.blaze.base.execlog.ExeclogEditorProvider"/>
+    <notificationGroup
+      displayType="BALLOON" id="ExeclogParserAction"/>
   </extensions>
+
+  <projectListeners>
+    <listener
+      class="com.google.idea.blaze.base.execlog.ExeclogTempFileClosedListener"
+      topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>
