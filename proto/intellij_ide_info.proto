@@ -125,11 +125,6 @@ message ResFolderLocation {
   ArtifactLocation aar = 3;
 }
 
-message AndroidAarIdeInfo {
-  ArtifactLocation aar = 1;
-  string java_package = 2;
-}
-
 message PyIdeInfo {
   enum PythonVersion {
     UNKNOWN = 0;
@@ -225,7 +220,6 @@ message TargetIdeInfo {
   JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
   AndroidIdeInfo android_ide_info = 110;
-  AndroidAarIdeInfo android_aar_ide_info = 111;
   CIdeInfo c_ide_info = 120;
   CToolchainIdeInfo c_toolchain_ide_info = 121;
 
