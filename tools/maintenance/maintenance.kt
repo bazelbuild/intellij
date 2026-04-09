@@ -35,8 +35,6 @@ fun main(args: Array<String>) {
 
   content = bumpSdk("2025.3", eap = false, content)
   content = bumpPythonPlugin("253", content)
-  content = bumpSdk("2025.2", eap = false, content)
-  content = bumpPythonPlugin("252", content)
   content = bumpSdk("2026.1", eap = false, content)
   content = bumpPythonPlugin("261", content)
 

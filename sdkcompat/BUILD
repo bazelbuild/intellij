@@ -16,31 +16,7 @@ java_library(
     name = "sdkcompat",
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_version({
-        "2025.2": ["//sdkcompat/v252"],
         "2025.3": ["//sdkcompat/v253"],
         "2026.1": ["//sdkcompat/v261"],
-    }),
-)
-
-# Separate target since testFramework sources should not be bundled in the release jar
-java_library(
-    name = "testFramework",
-    testonly = 1,
-    visibility = SDK_COMPAT_VISIBILITY,
-    exports = select_for_version({
-        "2025.2": ["//sdkcompat/v252:v252_testFramework"],
-        "2025.3": ["//sdkcompat/v253:v253_testFramework"],
-        "2026.1": ["//sdkcompat/v261:v261_testFramework"],
-    }),
-)
-
-#api252 needs to be a separate target since radler sources are not always available
-java_library(
-    name = "radler",
-    visibility = SDK_COMPAT_VISIBILITY,
-    exports = select_for_version({
-        "2025.2": ["//sdkcompat/v252:v252_radler"],
-        "2025.3": ["//sdkcompat/v253:v253_radler"],
-        "2026.1": ["//sdkcompat/v261:v261_radler"],
     }),
 )

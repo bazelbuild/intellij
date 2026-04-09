@@ -16,7 +16,7 @@
 package com.google.idea.blaze.clwb.radler
 
 import com.google.idea.blaze.base.settings.Blaze
-import com.google.idea.sdkcompat.radler.RadProjectFallbackConfigDisabler
+import com.intellij.rider.cpp.core.projectModel.RadProjectFallbackConfigDisabler
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 

@@ -21,36 +21,12 @@ licenses(["notice"])
 kt_jvm_library(
     name = "v253",
     srcs = glob([
-        "com/google/idea/sdkcompat/javascript/**",
-        "com/google/idea/sdkcompat/python/**",
-        "com/google/idea/sdkcompat/clion/**",  #api252
-        "com/google/idea/sdkcompat/ide/**",  #api252
+        "com/google/idea/sdkcompat/clion/**",
     ]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
         "//third_party/javascript",
-    ],
-)
-
-kt_jvm_library(
-    name = "v253_testFramework",
-    testonly = 1,
-    srcs = glob(["com/google/idea/sdkcompat/testFramework/**"]),  #api252
-    visibility = ["//sdkcompat:__pkg__"],
-    deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:plugin_api_for_tests",
-    ],
-)
-
-kt_jvm_library(
-    name = "v253_radler",
-    srcs = glob(["com/google/idea/sdkcompat/radler/**"]),  #api252
-    visibility = ["//sdkcompat:__pkg__"],
-    deps = [
-        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
-        "//intellij_platform_sdk:plugin_api",
     ],
 )

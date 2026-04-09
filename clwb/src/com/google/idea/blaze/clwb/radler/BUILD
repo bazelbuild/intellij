@@ -11,8 +11,5 @@ intellij_plugin_library(
     srcs = glob(["*.kt"]),
     optional_plugin_xmls = [":plugin_xml"],
     visibility = ["//clwb:__subpackages__"],
-    deps = [
-        "//clwb:clwb_lib",
-        "//sdkcompat:radler",
-    ],
+    deps = ["//clwb:clwb_lib"],
 )

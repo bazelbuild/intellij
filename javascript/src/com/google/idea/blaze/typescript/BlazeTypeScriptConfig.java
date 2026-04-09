@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.sdkcompat.javascript.TypeScriptConfigAdapter;
 import com.intellij.lang.javascript.config.JSFileImports;
 import com.intellij.lang.javascript.config.JSFileImportsImpl;
 import com.intellij.lang.javascript.config.JSModuleResolution;
@@ -79,7 +78,7 @@ import java.util.stream.Stream;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
+class BlazeTypeScriptConfig implements TypeScriptConfig {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -735,6 +734,16 @@ class BlazeTypeScriptConfig extends TypeScriptConfigAdapter {
   @Override
   public boolean keyofStringsOnly() {
     return false;
+  }
+
+  @Override
+  public @NotNull JSModuleResolution getEffectiveModuleResolution() {
+    return getEffectiveResolution();
+  }
+
+  @Override
+  public @NotNull JSModuleResolution getModuleResolution() {
+    return getResolution();
   }
 
   static class PathSubstitution implements JSModulePathSubstitution {

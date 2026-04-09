@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.sync.SyncMode
 import com.google.idea.blaze.base.sync.SyncResult
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.google.idea.blaze.cpp.BlazeResolveConfigurationID
-import com.google.idea.sdkcompat.radler.OCResolveContextSettingsCompat
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -41,6 +40,7 @@ import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
+import com.jetbrains.cidr.lang.settings.OCResolveContextSettings
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurations
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
@@ -156,7 +156,7 @@ private class BazelConfigSwitchComboAction(
   ) : AnAction(config.name) {
 
     override fun actionPerformed(e: AnActionEvent) {
-      OCResolveContextSettingsCompat.setSelectedConfiguration(project, config.ocResolveConfig)
+      OCResolveContextSettings.getInstance(project).setSelectedConfiguration(config.ocResolveConfig)
     }
 
     override fun update(e: AnActionEvent) {
@@ -169,7 +169,7 @@ private class BazelConfigSwitchComboAction(
   private inner class AutoSelectAction(val isCurrent: Boolean) : AnAction("Auto") {
 
     override fun actionPerformed(e: AnActionEvent) {
-      OCResolveContextSettingsCompat.resetConfigurationPriorities(project)
+      OCResolveContextSettings.getInstance(project).resetConfigurationPriorities()
     }
 
     override fun update(e: AnActionEvent) {
