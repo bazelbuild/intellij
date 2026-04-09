@@ -111,7 +111,7 @@ public class TransitionTest extends ClwbHeadlessTestCase {
 
     final var targets = projectData.targetMap().get(Label.create("//main:simple"));
     for (final var target : targets) {
-      assertThat(configurationData.get(target.getKey())).isNotNull();
+      assertThat(configurationData.get(target.getKey().configuration())).isNotNull();
     }
   }
 
