@@ -34,7 +34,6 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
   @Override
   public ListenableFuture<byte[]> runBlazeInfoGetBytes(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
       String... keys
@@ -57,14 +56,12 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
   @Override
   public ListenableFuture<BlazeInfo> runBlazeInfo(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
       List<String> blazeFlags) {
     return Futures.transform(
         runBlazeInfoGetBytes(
             project,
-            invoker,
             context,
             blazeFlags,
             BlazeInfo.blazeBinKey(buildSystemName),
