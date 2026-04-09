@@ -44,6 +44,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -268,7 +269,8 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       result.throwOnFailure();
       return CharStreams.toString(new InputStreamReader(result.getStdout(), UTF_8)).trim();
     } catch (ExecutionException | BuildException | IOException e) {
-      context.output(PrintOutput.log(String.format("Failed to execute blaze query: %s", e.getCause().getMessage())));
+      final var cause = ObjectUtils.coalesce(e.getCause(), e);
+      context.output(PrintOutput.log(String.format("Failed to execute blaze query: %s", cause.getMessage())));
       throw new BlazeQuerySourceToTargetException(e.getCause().getMessage(), e);
     }
   }
