@@ -51,8 +51,8 @@ data class BlazeResolveConfiguration(
     )
   }
 
-  fun getUniqueId(): BlazeResolveConfigurationID {
-    return BlazeResolveConfigurationID.fromBlazeResolveConfigurationData(configurationData)
+  val uniqueId: BlazeResolveConfigurationID by lazy {
+    BlazeResolveConfigurationID.fromBlazeResolveConfigurationData(configurationData)
   }
 
   fun getSources(targetKey: TargetKey): ImmutableList<VirtualFile> {
