@@ -32,6 +32,10 @@ import java.util.Optional;
 @AutoValue
 public abstract class BlazeCommand {
 
+  /**
+   * @deprecated Binary path is now resolved by BazelExecService at execution time.
+   */
+  @Deprecated
   public abstract Path binary();
 
   public abstract BlazeCommandName name();
@@ -61,12 +65,26 @@ public abstract class BlazeCommand {
         .build();
   }
 
+  /**
+   * Creates a builder for a Bazel command. The binary path is resolved by {@link
+   * com.google.idea.blaze.base.buildview.BazelExecService} at execution time.
+   */
+  public static Builder builder(BlazeCommandName name) {
+    return new Builder(name);
+  }
+
+  /**
+   * @deprecated Use {@link #builder(BlazeCommandName)} instead. Binary path is now resolved by
+   * BazelExecService at execution time.
+   */
+  @Deprecated
   public static Builder builder(BuildInvoker invoker, BlazeCommandName name) {
     return new Builder(invoker.getBinaryPath(), name);
   }
 
   /**
-   * @deprecated Use {@link #builder(BuildInvoker, BlazeCommandName)} instead.
+   * @deprecated Use {@link #builder(BlazeCommandName)} instead. Binary path is now resolved by
+   * BazelExecService at execution time.
    */
   @Deprecated
   public static Builder builder(String binaryPath, BlazeCommandName name) {
@@ -83,6 +101,16 @@ public abstract class BlazeCommand {
     private final ImmutableList.Builder<String> cmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
     private final ImmutableMap.Builder<String, String> environment = ImmutableMap.builder();
+
+    /**
+     * Creates a builder without a binary path. The binary is resolved by BazelExecService at
+     * execution time.
+     */
+    Builder(BlazeCommandName name) {
+      this.binary = Path.of("bazel"); // placeholder, overridden by BazelExecService
+      this.name = name;
+      addBlazeFlags(BlazeFlags.getToolTagFlag());
+    }
 
     public Builder(String binaryPath, BlazeCommandName name) {
       this.binary = Path.of(binaryPath);
