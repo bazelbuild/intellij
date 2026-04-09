@@ -73,7 +73,7 @@ public class BlazeQueryMacroTargetProvider implements MacroTargetProvider {
 
       try (final var result = BazelExecService.of(project).exec(context, command)) {
         result.throwOnFailure(ThrowOption.ALLOW_PARTIAL_SUCCESS);
-        return BlazeQueryProtoParser.parseProtoOutput(new ByteArrayInputStream(result.getStdout().readAllBytes()));
+        return BlazeQueryProtoParser.parseProtoOutput(result.getStdout());
       } catch (IOException e) {
         logger.warn("Couldn't parse blaze query proto output", e);
         return null;
