@@ -37,7 +37,6 @@ import java.util.List;
 public class BlazeModRunnerImpl extends BlazeModRunner {
 
   private static final String DUMP_REPO_MAPPING = "dump_repo_mapping";
-  private static final String DEPS = "deps";
   private static final String ROOT_WORKSPACE = "";
 
   /**
@@ -53,17 +52,14 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
   @Override
   public ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
       Project project,
-      BuildSystem.BuildInvoker invoker,
       BlazeContext context,
-      BuildSystemName buildSystemName,
       List<String> flags) {
 
     // TODO: when 8.0.0 is released add this only if it's disabled explicitly for the repo
     flags.add("--noenable_workspace");
 
     return Futures.transform(
-        runBlazeModGetBytes(
-            project, invoker, context, ImmutableList.of(DUMP_REPO_MAPPING, ROOT_WORKSPACE), flags),
+        runBlazeModGetBytes(project, context, ImmutableList.of(DUMP_REPO_MAPPING, ROOT_WORKSPACE), flags),
         bytes -> {
           JsonObject json =
               JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8).trim())
@@ -81,26 +77,9 @@ public class BlazeModRunnerImpl extends BlazeModRunner {
         BlazeExecutor.getInstance().getExecutor());
   }
 
-    @Override
-    public ListenableFuture<String> getDeps(
-            Project project,
-            BuildSystem.BuildInvoker invoker,
-            BlazeContext context,
-            BuildSystemName buildSystemName,
-            List<String> flags) {
-        return Futures.transform(
-                runBlazeModGetBytes(
-                        project, invoker, context, ImmutableList.of(DEPS, ROOT_WORKSPACE, "--output=json"), flags),
-                bytes -> new String(bytes, StandardCharsets.UTF_8),
-                BlazeExecutor.getInstance().getExecutor()
-        );
-
-  }
-
   @Override
   protected ListenableFuture<byte[]> runBlazeModGetBytes(
       Project project,
-      BuildSystem.BuildInvoker invoker,
       BlazeContext context,
       List<String> args,
       List<String> flags) {

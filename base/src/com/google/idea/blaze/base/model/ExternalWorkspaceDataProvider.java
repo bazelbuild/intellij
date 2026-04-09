@@ -125,15 +125,9 @@ public class ExternalWorkspaceDataProvider {
       if (importSettings == null) {
         return ExternalWorkspaceData.EMPTY;
       }
-      BuildSystem.BuildInvoker buildInvoker =
-          Blaze.getBuildSystemProvider(project)
-              .getBuildSystem()
-              .getDefaultInvoker(project);
-
       externalWorkspaceData =
           BlazeModRunner.getInstance()
-              .dumpRepoMapping(
-                  project, buildInvoker, context, importSettings.getBuildSystem(), blazeFlags)
+              .dumpRepoMapping(project, context, blazeFlags)
               .get();
     } catch (InterruptedException | ExecutionException e) {
       context.handleExceptionAsWarning(
