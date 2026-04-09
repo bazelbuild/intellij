@@ -37,7 +37,6 @@ public abstract class BlazeInfoRunner {
    */
   public abstract ListenableFuture<byte[]> runBlazeInfoGetBytes(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
       List<String> blazeFlags,
       String ...keys);
@@ -51,7 +50,6 @@ public abstract class BlazeInfoRunner {
    */
   public abstract ListenableFuture<BlazeInfo> runBlazeInfo(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
       List<String> blazeFlags);

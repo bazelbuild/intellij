@@ -209,9 +209,6 @@ final class ProjectStateSyncTask {
       return BlazeInfoRunner.getInstance()
                  .runBlazeInfo(
                      project,
-                     Blaze.getBuildSystemProvider(project)
-                         .getBuildSystem()
-                         .getDefaultInvoker(project),
                      context,
                      importSettings.getBuildSystem(),
                      syncFlags);

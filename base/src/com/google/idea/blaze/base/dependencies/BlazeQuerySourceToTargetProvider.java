@@ -23,7 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.buildview.BazelExecService;
+import com.google.idea.blaze.base.buildview.ExecResult;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
@@ -34,15 +35,16 @@ import com.google.idea.blaze.base.query.BlazeQueryOutputBaseProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -194,31 +196,38 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
 
   @Nullable
   private static ImmutableList<TargetInfo> getTargetInfoList(
-      Project project, BlazeContext context, ContextType type, String rdepsQuery)
-          throws BlazeQuerySourceToTargetException {
-    Path queryFile = prepareQueryFile(project, rdepsQuery);
-    BlazeCommand.Builder command =
-        getBlazeCommandBuilder(
-            project, type, "--query_file=" + queryFile.toAbsolutePath(), ImmutableList.of("--output=label_kind"));
-    try (InputStream queryResultStream = runQuery(project, command, context)) {
-      BlazeQueryLabelKindParser blazeQueryLabelKindParser =
-          new BlazeQueryLabelKindParser(t -> true);
-      if (queryResultStream == null) {
-        return null;
-      }
-      new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
+      Project project,
+      BlazeContext context,
+      ContextType type,
+      String rdepsQuery
+  ) throws BlazeQuerySourceToTargetException {
+    final var queryFile = prepareQueryFile(project, rdepsQuery);
+    final var command = getBlazeCommandBuilder(
+        /* project = */ project,
+        /* type = */ type,
+        /* query = */ "--query_file=" + queryFile.toAbsolutePath(),
+        /* additionalBlazeFlags = */ ImmutableList.of("--output=label_kind")
+    );
+
+    try (final var result = BazelExecService.of(project).exec(context, command)) {
+      result.throwOnFailure();
+
+      final var blazeQueryLabelKindParser = new BlazeQueryLabelKindParser(t -> true);
+
+      new BufferedReader(new InputStreamReader(result.getStdout(), UTF_8))
           .lines()
           .forEach(blazeQueryLabelKindParser::processLine);
+
       return blazeQueryLabelKindParser.getTargets();
-    } catch (BuildException | IOException e) {
+    } catch (ExecutionException | BuildException e) {
       throw new BlazeQuerySourceToTargetException("Failed to get target info list", e);
     } finally {
       if (!Registry.is("bazel.sync.keep.query.files")) {
-          try {
-              Files.deleteIfExists(queryFile);
-          } catch (IOException e) {
-              logger.error("Failed to delete query file", e);
-          }
+        try {
+          Files.deleteIfExists(queryFile);
+        } catch (IOException e) {
+          logger.error("Failed to delete query file", e);
+        }
       }
     }
   }
@@ -245,32 +254,25 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
 
   @Nullable
   private static String getPackageName(
-      Project project, BlazeContext context, ContextType type, String expr)
-      throws BlazeQuerySourceToTargetException {
-    BlazeCommand.Builder commandBuilder =
-        getBlazeCommandBuilder(project, type, expr, ImmutableList.of("--output=package"));
+      Project project,
+      BlazeContext context,
+      ContextType type, String expr
+  ) throws BlazeQuerySourceToTargetException {
+    final var command = getBlazeCommandBuilder(
+        /* project = */ project,
+        /* type = */ type,
+        /* query = */ expr,
+        /* additionalBlazeFlags = */ ImmutableList.of("--output=package")
+    );
 
-    try (InputStream queryResultStream = runQuery(project, commandBuilder, context)) {
-      return queryResultStream == null
-          ? null
-          : CharStreams.toString(new InputStreamReader(queryResultStream, UTF_8)).trim();
-    } catch (BuildException | IOException e) {
-      context.output(
-          PrintOutput.log(
-              String.format("Failed to execute blaze query: %s", e.getCause().getMessage())));
+    try (final var result = BazelExecService.of(project).exec(context, command)) {
+      result.throwOnFailure();
+      return CharStreams.toString(new InputStreamReader(result.getStdout(), UTF_8)).trim();
+    } catch (ExecutionException | BuildException | IOException e) {
+      final var cause = ObjectUtils.coalesce(e.getCause(), e);
+      context.output(PrintOutput.log(String.format("Failed to execute blaze query: %s", cause.getMessage())));
       throw new BlazeQuerySourceToTargetException(e.getCause().getMessage(), e);
     }
-  }
-
-  @Nullable
-  @MustBeClosed
-  private static InputStream runQuery(
-      Project project, BlazeCommand.Builder blazeCommand, BlazeContext context)
-      throws BuildException {
-    return Blaze.getBuildSystemProvider(project)
-        .getBuildSystem()
-        .getDefaultInvoker(project)
-        .invokeQuery(blazeCommand, context);
   }
 
   private static BlazeCommand.Builder getBlazeCommandBuilder(
@@ -279,18 +281,14 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       String query,
       List<String> additionalBlazeFlags) {
     // never use a custom output base for queries during sync
-    String outputBaseFlag =
-        type == ContextType.Sync
-            ? null
-            : BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
-    BuildInvoker buildInvoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project);
-    return BlazeCommand.builder(buildInvoker, BlazeCommandName.QUERY)
+    final var outputBaseFlag = type == ContextType.Sync
+        ? null
+        : BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
+    return BlazeCommand.builder(BlazeCommandName.QUERY)
         .addBlazeFlags(additionalBlazeFlags)
         .addBlazeFlags("--keep_going")
         .addBlazeFlags(query)
-        .addBlazeStartupFlags(
-            outputBaseFlag == null ? ImmutableList.of() : ImmutableList.of(outputBaseFlag));
+        .addBlazeStartupFlags(outputBaseFlag == null ? ImmutableList.of() : ImmutableList.of(outputBaseFlag));
   }
 
   /**

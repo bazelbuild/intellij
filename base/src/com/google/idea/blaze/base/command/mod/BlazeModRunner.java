@@ -41,17 +41,8 @@ public abstract class BlazeModRunner {
    */
   public abstract ListenableFuture<ExternalWorkspaceData> dumpRepoMapping(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
-      BuildSystemName buildSystemName,
       List<String> flags);
-
-  public abstract ListenableFuture<String> getDeps(
-          Project project,
-          BuildInvoker invoker,
-          BlazeContext context,
-          BuildSystemName buildSystemName,
-          List<String> flags);
 
   /**
    * @param args The arguments passed into `blaze mod ...`
@@ -60,7 +51,6 @@ public abstract class BlazeModRunner {
    */
   protected abstract ListenableFuture<byte[]> runBlazeModGetBytes(
       Project project,
-      BuildInvoker invoker,
       BlazeContext context,
       List<String> args,
       List<String> flags);
