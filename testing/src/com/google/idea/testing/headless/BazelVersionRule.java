@@ -26,23 +26,37 @@ import org.junit.runners.model.Statement;
 
 public class BazelVersionRule implements TestRule {
 
-  private final BazelVersion min;
+  private final @Nullable BazelVersion min;
+  private final @Nullable BazelVersion max;
   private final @Nullable OS os;
 
-  public BazelVersionRule(@Nullable OS os, int major, int minor) {
-    this.min = new BazelVersion(major, minor, 0);
+  private BazelVersionRule(@Nullable OS os, @Nullable BazelVersion min, @Nullable BazelVersion max) {
+    this.min = min;
+    this.max = max;
     this.os = os;
   }
 
-  public BazelVersionRule(int major, int minor) {
-    this(null, major, minor);
+  public static BazelVersionRule min(@Nullable OS os, int major, int minor) {
+    return new BazelVersionRule(os, new BazelVersion(major, minor, 0), null);
+  }
+
+  public static BazelVersionRule min(int major, int minor) {
+    return min(null, major, minor);
+  }
+
+  public static BazelVersionRule max(@Nullable OS os, int major, int minor) {
+    return new BazelVersionRule(os, null, new BazelVersion(major, minor, 0));
+  }
+
+  public static BazelVersionRule max(int major, int minor) {
+    return max(null, major, minor);
   }
 
   @Override
   public Statement apply(Statement base, Description description) {
     final var version = getBazelVersion();
     if (version.isEmpty()) {
-      return Statements.fail("Could not read bazel version from BIT_BAZEL_VERSION");
+      return Statements.fail("Could not read Bazel version from BIT_BAZEL_VERSION");
     }
 
     // check if the rule applies for the current OS
@@ -50,15 +64,25 @@ public class BazelVersionRule implements TestRule {
       return base;
     }
 
-    if (version.get().isAtLeast(min)) {
-      return base;
-    } else {
+    if (min != null && !version.get().isAtLeast(min)) {
       return Statements.message(
-          "Test '%s' does not run on bazel version %s",
+          "Test '%s' does not run on Bazel version %s (minimum: %s)",
           description.getDisplayName(),
-          version.get().toString()
+          version.get().toString(),
+          min.toString()
       );
     }
+
+    if (max != null && !version.get().isAtMost(max)) {
+      return Statements.message(
+          "Test '%s' does not run on Bazel version %s (maximum: %s)",
+          description.getDisplayName(),
+          version.get().toString(),
+          max.toString()
+      );
+    }
+
+    return base;
   }
 
   public static Optional<BazelVersion> getBazelVersion() {

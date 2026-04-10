@@ -59,6 +59,7 @@ DEPS = [
     "tests",  # From test_suite
     "compilers",  # From go_proto_library
     "associates",  # From kotlin rules
+    "binary", # From platform_transition_binary rule in aspect_bazel_lib (used for testing
 ]
 
 # Run-time dependency attributes, grouped by type.

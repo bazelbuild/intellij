@@ -39,7 +39,7 @@ public class ClangClTest extends ClwbHeadlessTestCase {
 
   // clang-cl requires Bazel 8+; should work for 7 too, but I cannot get it working :c
   @Rule
-  public final BazelVersionRule bazelRule = new BazelVersionRule(8, 0);
+  public final BazelVersionRule bazelRule = BazelVersionRule.min(8, 0);
 
   @Test
   public void testClwb() {
