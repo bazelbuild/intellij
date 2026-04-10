@@ -150,10 +150,7 @@ private fun executeBuild(
     invocationContext,
   )
 
-  val commandBuilder = BlazeCommand.builder(
-    Blaze.getBuildSystemProvider(project).buildSystem.getDefaultInvoker(project),
-    BlazeCommandName.BUILD,
-  )
+  val commandBuilder = BlazeCommand.builder(BlazeCommandName.BUILD)
 
   commandBuilder.addTargets(targets)
     .addBlazeFlags(overridableFlags)
