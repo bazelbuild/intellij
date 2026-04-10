@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+@file:OptIn(FlowPreview::class)
 @file:Suppress("UnstableApiUsage")
 
 package com.google.idea.blaze.clwb.radler
@@ -26,16 +26,11 @@ import com.google.idea.blaze.base.sync.SyncListener
 import com.google.idea.blaze.base.sync.SyncMode
 import com.google.idea.blaze.base.sync.SyncResult
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
-import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.cpp.BlazeResolveConfigurationID
 import com.google.idea.sdkcompat.radler.OCResolveContextSettingsCompat
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -44,22 +39,16 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ListenableToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 class BazelResolveConfigurationWidgetProvider : InspectionWidgetActionProvider {
 
@@ -74,45 +63,40 @@ class BazelResolveConfigurationWidgetProvider : InspectionWidgetActionProvider {
   }
 }
 
-
 private class BazelConfigSwitchComboAction(
   private val project: Project,
   private val file: VirtualFile,
 ) : ExpandableComboAction(), Disposable {
 
-  private val scope: CoroutineScope = pluginProjectScope(project).childScope("BlazeCcConfigurationSwitcher")
-  private val state: MutableStateFlow<SwitcherState> = MutableStateFlow(SwitcherState.Unknown)
+  private val state: MemoizedProperty<SwitcherState> = MemoizedProperty { computeState() }
+  private var comboBox: ToolbarComboButton? = null
 
   init {
-    val update = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 0)
-    val bus = project.messageBus.connect(scope)
-
-    scope.launch {
-      update.mapLatest { computeState() }.collect { state.value = it }
-    }
+    val bus = project.messageBus.connect(this)
 
     // trigger update on configuration changes
     bus.subscribe(OCWorkspaceListener.TOPIC, object : OCWorkspaceListener {
       override fun selectedResolveConfigurationChanged() {
-        update.tryEmit(Unit)
+        state.invalidate()
+      }
+
+      override fun workspaceChanged(event: OCWorkspaceListener.OCWorkspaceEvent) {
+        state.invalidate()
       }
     })
 
     // trigger update on project data changes
     bus.subscribe(SyncListener.TOPIC, object : SyncListener {
       override fun afterSync(project: Project, context: BlazeContext, syncMode: SyncMode, syncResult: SyncResult, buildIds: ImmutableSet<Int>) {
-        update.tryEmit(Unit)
+        state.invalidate()
       }
     })
-
-    // trigger initial computation
-    update.tryEmit(Unit)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val state = state.value
+    val state = this.state.get()
     val current = state.currentConfig
 
     if (current == null || state.availableConfigs.size <= 1) {
@@ -123,11 +107,17 @@ private class BazelConfigSwitchComboAction(
     e.presentation.text = current.name
     e.presentation.icon = AllIcons.General.Settings
     e.presentation.isVisible = true
+
+    ActionToolbar.findToolbarBy(comboBox)?.let { toolbar ->
+      UIUtil.invokeLaterIfNeeded {
+        toolbar.updateActionsAsync()
+      }
+    }
   }
 
   private fun createPopupActionGroup(): DefaultActionGroup {
+    val state = this.state.get()
     val actionGroup = DefaultActionGroup()
-    val state = state.value
 
     for (config in state.availableConfigs) {
       actionGroup.add(
@@ -141,7 +131,9 @@ private class BazelConfigSwitchComboAction(
     return actionGroup
   }
 
-  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton = SwitcherComboBox(model)
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return ToolbarComboButton(model).also { comboBox = it }
+  }
 
   override fun createPopup(event: AnActionEvent): JBPopup {
     return JBPopupFactory.getInstance().createActionGroupPopup(
@@ -161,15 +153,6 @@ private class BazelConfigSwitchComboAction(
     scope.cancel()
   }
 
-  private inner class SwitcherComboBox(model: ToolbarComboButtonModel) : ListenableToolbarComboButton(model) {
-
-    override fun installListeners(project: Project?, disposable: Disposable) {
-      state.debounce(100.milliseconds)
-        .onEach { updateWidgetAction() }
-        .launchIn(scope.childScope("ui scope", Dispatchers.EDT))
-    }
-  }
-
   private inner class SwitchContextAction(
     private val config: SwitcherConfig,
     val isCurrent: Boolean,
@@ -185,7 +168,7 @@ private class BazelConfigSwitchComboAction(
   private fun toSwitcherConfig(data: BlazeProjectData, config: OCResolveConfiguration): SwitcherConfig? {
     val id = BlazeResolveConfigurationID.fromOCResolveConfiguration(config) ?: return null
     val configuration = data.configurationData().get(id.configurationId) ?: return null
-    val name = "${configuration.mnemonic()} - ${configuration.cpu()} (${id.configurationId})"
+    val name = "${configuration.platformName()} (${id.configurationId})"
 
     return SwitcherConfig(name, id.configurationId, config)
   }
@@ -245,3 +228,18 @@ private fun isCppFile(file: VirtualFile): Boolean {
   return OCFileTypeHelpers.isSourceFile(name) || OCFileTypeHelpers.isHeaderFile(name)
 }
 
+private class MemoizedProperty<T : Any>(private val compute: () -> T) {
+
+  private var value: T? = null
+
+  @Synchronized
+  fun get(): T {
+    value?.let { return it }
+    return compute().also { value = it }
+  }
+
+  @Synchronized
+  fun invalidate() {
+    value = null;
+  }
+}
