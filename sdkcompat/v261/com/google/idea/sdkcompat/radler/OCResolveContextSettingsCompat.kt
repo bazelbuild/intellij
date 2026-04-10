@@ -28,4 +28,8 @@ object OCResolveContextSettingsCompat {
   fun setSelectedConfiguration(project: Project, config: OCResolveConfiguration) {
     OCResolveContextSettings.getInstance(project).setSelectedConfiguration(config)
   }
+
+  fun resetConfigurationPriorities(project: Project) {
+    OCResolveContextSettings.getInstance(project).resetConfigurationPriorities()
+  }
 }

@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FlowPreview::class)
-@file:Suppress("UnstableApiUsage")
 
 package com.google.idea.blaze.clwb.radler
 
@@ -44,11 +42,10 @@ import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
+import com.jetbrains.cidr.lang.workspace.OCResolveConfigurations
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceListener
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.*
+import org.jetbrains.letsPlot.commons.intern.filterNotNullValues
 
 class BazelResolveConfigurationWidgetProvider : InspectionWidgetActionProvider {
 
@@ -66,9 +63,9 @@ class BazelResolveConfigurationWidgetProvider : InspectionWidgetActionProvider {
 private class BazelConfigSwitchComboAction(
   private val project: Project,
   private val file: VirtualFile,
-) : ExpandableComboAction(), Disposable {
+) : ExpandableComboAction(), Disposable.Default {
 
-  private val state: MemoizedProperty<SwitcherState> = MemoizedProperty { computeState() }
+  private val state: MemoizedProperty<SwitcherState?> = MemoizedProperty { computeState() }
   private var comboBox: ToolbarComboButton? = null
 
   init {
@@ -97,14 +94,15 @@ private class BazelConfigSwitchComboAction(
 
   override fun update(e: AnActionEvent) {
     val state = this.state.get()
-    val current = state.currentConfig
 
-    if (current == null || state.availableConfigs.size <= 1) {
+    if (state == null || state.availableConfigs.size <= 1) {
       e.presentation.isVisible = false
       return
     }
 
-    e.presentation.text = current.name
+    val autoPrefix = if (state.isAutoSelect) "Auto: " else ""
+
+    e.presentation.text = autoPrefix + state.currentConfig.name
     e.presentation.icon = AllIcons.General.Settings
     e.presentation.isVisible = true
 
@@ -116,14 +114,17 @@ private class BazelConfigSwitchComboAction(
   }
 
   private fun createPopupActionGroup(): DefaultActionGroup {
-    val state = this.state.get()
     val actionGroup = DefaultActionGroup()
+    val state = this.state.get() ?: return actionGroup
+
+    actionGroup.add(AutoSelectAction(state.isAutoSelect))
+    actionGroup.add(Separator.create())
 
     for (config in state.availableConfigs) {
       actionGroup.add(
         SwitchContextAction(
           config = config,
-          isCurrent = config == state.currentConfig,
+          isCurrent = !state.isAutoSelect && config == state.currentConfig,
         )
       )
     }
@@ -149,10 +150,6 @@ private class BazelConfigSwitchComboAction(
     )
   }
 
-  override fun dispose() {
-    scope.cancel()
-  }
-
   private inner class SwitchContextAction(
     private val config: SwitcherConfig,
     val isCurrent: Boolean,
@@ -162,8 +159,26 @@ private class BazelConfigSwitchComboAction(
       OCResolveContextSettingsCompat.setSelectedConfiguration(project, config.ocResolveConfig)
     }
 
+    override fun update(e: AnActionEvent) {
+      e.presentation.icon = if (isCurrent) AllIcons.Actions.Checked else null
+    }
+
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
+
+  private inner class AutoSelectAction(val isCurrent: Boolean) : AnAction("Auto") {
+
+    override fun actionPerformed(e: AnActionEvent) {
+      OCResolveContextSettingsCompat.resetConfigurationPriorities(project)
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.icon = if (isCurrent) AllIcons.Actions.Checked else null
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  }
+
 
   private fun toSwitcherConfig(data: BlazeProjectData, config: OCResolveConfiguration): SwitcherConfig? {
     val id = BlazeResolveConfigurationID.fromOCResolveConfiguration(config) ?: return null
@@ -173,31 +188,21 @@ private class BazelConfigSwitchComboAction(
     return SwitcherConfig(name, id.configurationId, config)
   }
 
-  private fun findSelectedConfiguration(configurations: List<SwitcherConfig>): SwitcherConfig {
-    val mapping = configurations.associateBy { it.ocResolveConfig }
-    val priorityConfig = OCResolveContextSettingsCompat.findPriorityConfiguration(project, mapping.keys)
-
-    return if (priorityConfig != null) {
-      mapping.getValue(priorityConfig)
-    } else {
-      configurations[0]
-    }
-  }
-
-  private fun computeState(): SwitcherState {
-    val projectData = BlazeProjectDataManager.getInstance(project).blazeProjectData ?: return SwitcherState.Unknown
+  private fun computeState(): SwitcherState? {
+    val projectData = BlazeProjectDataManager.getInstance(project).blazeProjectData ?: return null
 
     val configurations = OCWorkspace.getInstance(project)
       .getConfigurationsForFile(file)
-      .mapNotNull { toSwitcherConfig(projectData, it) }
+      .associateWith { toSwitcherConfig(projectData, it) }
+      .filterNotNullValues()
 
-    if (configurations.isEmpty()) {
-      return SwitcherState.Unknown
-    }
+    if (configurations.isEmpty()) return null
+    val selected = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys)
 
-    return SwitcherState.Loaded(
-      currentConfig = findSelectedConfiguration(configurations),
-      availableConfigs = configurations,
+    return SwitcherState(
+      currentConfig = configurations.getValue(selected.first),
+      availableConfigs = configurations.values.toList(),
+      isAutoSelect = !selected.second,
     )
   }
 }
@@ -208,38 +213,37 @@ private data class SwitcherConfig(
   val ocResolveConfig: OCResolveConfiguration,
 )
 
-private sealed interface SwitcherState {
-  val currentConfig: SwitcherConfig?
-  val availableConfigs: List<SwitcherConfig>
-
-  object Unknown : SwitcherState {
-    override val currentConfig: SwitcherConfig? get() = null
-    override val availableConfigs: List<SwitcherConfig> get() = emptyList()
-  }
-
-  data class Loaded(
-    override val currentConfig: SwitcherConfig,
-    override val availableConfigs: List<SwitcherConfig>,
-  ) : SwitcherState
-}
+private data class SwitcherState(
+  val currentConfig: SwitcherConfig,
+  val availableConfigs: List<SwitcherConfig>,
+  val isAutoSelect: Boolean,
+)
 
 private fun isCppFile(file: VirtualFile): Boolean {
   val name = file.name
   return OCFileTypeHelpers.isSourceFile(name) || OCFileTypeHelpers.isHeaderFile(name)
 }
 
-private class MemoizedProperty<T : Any>(private val compute: () -> T) {
+private class MemoizedProperty<T>(private val compute: () -> T) {
 
-  private var value: T? = null
+  companion object {
+    private val INVALID = Any()
+  }
+
+  private var value: Any? = INVALID
 
   @Synchronized
   fun get(): T {
-    value?.let { return it }
-    return compute().also { value = it }
+    if (value == INVALID) {
+      value = compute()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    return value as T
   }
 
   @Synchronized
   fun invalidate() {
-    value = null;
+    value = INVALID
   }
 }
