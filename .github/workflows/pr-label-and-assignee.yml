@@ -30,23 +30,10 @@ jobs:
           retry-exempt-status-codes: 400,401
           script: |
             let issue_number = context.payload.pull_request.number;
-            const labels = (await github.rest.issues.listLabelsOnIssue({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              })).data.map(label => label.name);
-            const assignees = [];
-            const labelsToAssignees = {
-              'product: CLion': ['ujohnny'],
-              'product: IntelliJ': ['sellophane'],
-              'product: GoLand': ['iliakondratev'],
-              'product: PyCharm': ['agluszak']
-            };
-            for (const label of labels) {
-              if (label in labelsToAssignees) {
-                assignees.push(...labelsToAssignees[label]);
-              }
-            }
+            const author = context.payload.pull_request.user.login;
+            const defaultAssignees = ['ujohnny', 'LeFrosch'];
+            
+            const assignees = defaultAssignees.filter(login => login !== author);
             if (assignees.length > 0) {
               await github.rest.issues.addAssignees({
                 issue_number,
