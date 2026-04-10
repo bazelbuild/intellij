@@ -79,7 +79,7 @@ def _repo_name(tag):
     if tag.alias:
         return tag.alias
 
-    (release, major, _) = tag.version.split(".")
+    (release, major) = tag.version.split(".")[:2]
     return "%s_%s_%s" % (tag.name, release, major)
 
 def _collect_tags(mctx, tag_name):

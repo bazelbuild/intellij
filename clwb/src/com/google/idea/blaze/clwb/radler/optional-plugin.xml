@@ -24,6 +24,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="true" description="Disable fallback resolve configurations for radler." key="bazel.clwb.radler.fallback.configurations.disabled"/>
+    <iw.actionProvider implementation="com.google.idea.blaze.clwb.radler.BazelResolveConfigurationWidgetProvider"/>
   </extensions>
 
   <applicationListeners>

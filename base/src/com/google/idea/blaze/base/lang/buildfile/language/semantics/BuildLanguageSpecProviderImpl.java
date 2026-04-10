@@ -147,12 +147,9 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
   }
 
   private ListenableFuture<BuildLanguageSpec> fetchBuildLanguageSpec(BlazeContext context) {
-    BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project);
     ListenableFuture<byte[]> future =
         BlazeInfoRunner.getInstance()
-            .runBlazeInfoGetBytes(
-                project, invoker, context, ImmutableList.of(), BlazeInfo.BUILD_LANGUAGE);
+            .runBlazeInfoGetBytes(project, context, ImmutableList.of(), BlazeInfo.BUILD_LANGUAGE);
 
     /**
      * TransformAsync allows the checked {@link InvalidProtocolBufferException} to propagate to
@@ -170,11 +167,9 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
   }
 
   private ListenableFuture<String> fetchBlazeRelease(BlazeContext context) {
-    BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getDefaultInvoker(project);
     ListenableFuture<byte[]> future =
         BlazeInfoRunner.getInstance()
-            .runBlazeInfoGetBytes(project, invoker, context, ImmutableList.of(), BlazeInfo.RELEASE);
+            .runBlazeInfoGetBytes(project, context, ImmutableList.of(), BlazeInfo.RELEASE);
     return Futures.transform(
         future,
         bytes -> new String(bytes, UTF_8).trim(),

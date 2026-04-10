@@ -80,60 +80,6 @@ message CIdeInfo {
   CompilationContext compilation_context = 2;
 }
 
-message AndroidIdeInfo {
-  // resources contains the unique res folders. This field is deprecated in
-  // favor of res_folders which includes more information.
-  repeated ArtifactLocation resources = 1;
-  ArtifactLocation apk = 2;
-  repeated ArtifactLocation dependency_apk = 3;
-  ArtifactLocation manifest = 4;
-  string java_package = 5;
-  bool has_idl_sources = 6;
-  LibraryArtifact idl_jar = 7;
-  bool generate_resource_class = 8;
-  string legacy_resources = 9;
-  LibraryArtifact resource_jar = 10;
-  string idl_import_root = 11;
-  map<string, string> manifest_values = 12;
-
-  // Details about Android res folders: An android_library's resource_files attr
-  // takes in a list of labels. The resource merger expects that all the
-  // resources share the same basename (which is typically `res`), but these
-  // folders can reside outside the current package. We generate one
-  // `ResFolderLocation` message for each such folder.
-  repeated ResFolderLocation res_folders = 13;
-
-  // Label for the target android_binary to instrument.
-  string instruments = 14;
-  // Jar used for resolving render time dependencies. Contains all runtime
-  // dependencies of a binary without the desugared APIs. This field is not set
-  // for non-binary targets
-  ArtifactLocation render_resolve_jar = 15;
-}
-
-// Details about an Android res folder
-message ResFolderLocation {
-  // The res folder itself
-  ArtifactLocation root = 1;
-
-  // Relative paths to the specific res files underneath the root.
-  // Deprecated: we no longer return path to resources. Instead, resource files
-  // will be packed as an aar and stored in aar field
-  repeated string resources = 2 [deprecated = true];
-
-  // An aar containing all the resources included from within this folder.
-  ArtifactLocation aar = 3;
-}
-
-message AndroidSdkIdeInfo {
-  ArtifactLocation android_jar = 1;
-}
-
-message AndroidAarIdeInfo {
-  ArtifactLocation aar = 1;
-  string java_package = 2;
-}
-
 message PyIdeInfo {
   enum PythonVersion {
     UNKNOWN = 0;
@@ -182,18 +128,6 @@ message TestInfo {
   string size = 1;
 }
 
-message JavaToolchainIdeInfo {
-  string source_version = 1;
-  string target_version = 2;
-  repeated ArtifactLocation javac_jars = 4;
-}
-
-message KotlinToolchainIdeInfo {
-  string language_version = 1;
-  repeated string sdk_library_targets = 2;
-  repeated string kotlin_compiler_common_flags = 3;
-}
-
 message TargetKey {
   string label = 1;
   repeated string aspect_ids = 3;
@@ -226,11 +160,7 @@ message TargetIdeInfo {
   int64 sync_time_millis = 20;
 
   JavaIdeInfo java_ide_info = 100;
-  JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
-  AndroidIdeInfo android_ide_info = 110;
-  AndroidAarIdeInfo android_aar_ide_info = 111;
-  AndroidSdkIdeInfo android_sdk_ide_info = 112;
   CIdeInfo c_ide_info = 120;
   CToolchainIdeInfo c_toolchain_ide_info = 121;
 
@@ -238,5 +168,4 @@ message TargetIdeInfo {
   JsIdeInfo js_ide_info = 150;
   TsIdeInfo ts_ide_info = 160;
   DartIdeInfo dart_ide_info = 170;
-  KotlinToolchainIdeInfo kt_toolchain_ide_info = 180;
 }
