@@ -220,8 +220,9 @@ private data class SwitcherState(
 )
 
 private fun isCppFile(file: VirtualFile): Boolean {
-  val name = file.name
-  return OCFileTypeHelpers.isSourceFile(name) || OCFileTypeHelpers.isHeaderFile(name)
+  return OCFileTypeHelpers.isSourceFile(file.name) ||
+      OCFileTypeHelpers.isHeaderFile(file.name) ||
+      file.extension.isNullOrBlank() // headers without an extension
 }
 
 private class MemoizedProperty<T>(private val compute: () -> T) {
