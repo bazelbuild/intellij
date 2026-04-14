@@ -35,7 +35,7 @@ final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonSt
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, debugPortState, blazeBinary);
+    return ImmutableList.of(command, blazeFlags, exeFlags, envVars, debugPortState);
   }
 
   EnvironmentVariablesState getEnvVarsState() {

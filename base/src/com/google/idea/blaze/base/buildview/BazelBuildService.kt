@@ -102,7 +102,6 @@ class BazelBuildService(private val project: Project, private val scope: Corouti
       val output = executeBuild(
         ctx = ctx,
         project = project,
-        customBazelBinary = handlerState?.blazeBinaryState?.blazeBinary?.let(Path::of),
         invocationContext = invocationContext,
         requiredFlags = handlerRequiredFlags,
         overridableFlags = overridableFlags,
@@ -132,7 +131,6 @@ private fun getProgressMessage(targets: ImmutableList<TargetExpression>): String
 private fun executeBuild(
   ctx: BlazeContext,
   project: Project,
-  customBazelBinary: Path?,
   invocationContext: BlazeInvocationContext,
   requiredFlags: List<String>,
   overridableFlags: List<String>,
@@ -152,16 +150,7 @@ private fun executeBuild(
     invocationContext,
   )
 
-  val commandBuilder = if (customBazelBinary != null)
-    BlazeCommand.builder(
-      customBazelBinary.toString(),
-      BlazeCommandName.BUILD,
-    )
-  else
-    BlazeCommand.builder(
-      Blaze.getBuildSystemProvider(project).buildSystem.getDefaultInvoker(project),
-      BlazeCommandName.BUILD,
-    )
+  val commandBuilder = BlazeCommand.builder(BlazeCommandName.BUILD)
 
   commandBuilder.addTargets(targets)
     .addBlazeFlags(overridableFlags)
