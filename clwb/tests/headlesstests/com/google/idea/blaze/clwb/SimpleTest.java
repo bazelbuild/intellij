@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsCompilerFlag;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
+import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 import static com.google.idea.blaze.clwb.base.Assertions.assertNotContainsCompilerFlag;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
@@ -78,6 +79,9 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     assertContainsCompilerFlag("-Wall", compilerSettingsC);
     assertContainsCompilerFlag("-DCONLYOPTS", compilerSettingsC);
     assertNotContainsCompilerFlag("-DCXXOPTS", compilerSettingsC);
+
+    assertDefine("SIMPLE_DEFINE", compilerSettingsCC).isEqualTo("42");
+    assertDefine("SPACE_DEFINE", compilerSettingsCC).isEqualTo("1 2 3");
   }
 
   private void checkTest() {
