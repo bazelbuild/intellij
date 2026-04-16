@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb.run
 
 import com.google.common.collect.ImmutableList
+import com.google.idea.blaze.base.buildview.BazelBuildService
 import com.google.idea.blaze.base.command.BlazeInvocationContext
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
@@ -53,11 +54,8 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
     if (!isDebugging(env)) return true
 
     try {
-      val executable: Path? = getExecutableToDebug(env)
-      if (executable != null) {
-        executableToDebug = executable.toFile()
-        return true
-      }
+      executableToDebug = getExecutableToDebug(env).toFile()
+      return true
     } catch (e: ExecutionException) {
       ExecutionUtil.handleExecutionError(env.project, env.executor.toolWindowId, env.runProfile, e)
     }
@@ -74,8 +72,7 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
     SaveUtil.saveAllFiles()
 
     val flagsBuilder: BazelDebugFlagsBuilder = BazelDebugFlagsBuilder.fromDefaults(
-      RunConfigurationUtils.getDebuggerKind(configuration),
-      RunConfigurationUtils.getCompilerKind(configuration)
+      RunConfigurationUtils.getDebuggerKind(configuration), RunConfigurationUtils.getCompilerKind(configuration)
     )
 
     if (!Registry.`is`("bazel.clwb.debug.extraflags.disabled")) {
@@ -85,13 +82,13 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
     val target: Label = getSingleTarget(configuration)
 
     val executableFuture = BazelBuildService.buildForRunConfig(
-        env.project,
-        configuration,
-        BlazeInvocationContext.runConfigContext(ExecutorType.fromExecutor(env.executor), configuration.type, true),
-        ImmutableList.of(),
-        flagsBuilder.build(),
-        target
-      )
+      env.project,
+      configuration,
+      BlazeInvocationContext.runConfigContext(ExecutorType.fromExecutor(env.executor), configuration.type, true),
+      ImmutableList.of(),
+      flagsBuilder.build(),
+      target
+    )
 
     try {
       return executableFuture.get()
