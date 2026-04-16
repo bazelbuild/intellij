@@ -351,36 +351,23 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
   }
 
   private void updateTargetKindFromTargetInfoFuture(ListenableFuture<TargetInfo> future, Label label, Runnable asyncCallback) {
-    TargetInfo targetInfo = FuturesUtil.getIgnoringErrors(future);
-    if (targetInfo == null) {
-      Throwable throwable = getFutureFailure(future);
-      if (throwable != null) {
-        logger.warn(
-          String.format("Failed to retrieve target info for run config %s target %s. Error: %s", this, label, throwable),
-          throwable);
-      }
+    TargetInfo targetInfo;
+    try {
+      targetInfo = future.get();
+    } catch (Throwable e) {
+      logger.warn(String.format("Failed to retrieve target info for run config %s target %s", this, label), e);
+      targetInfo = null;
     }
-    else {
-      if (!Objects.equals(getTargetKind(), targetInfo.getKind())) {
-        logger.info(
-          String.format("Run configuration %s target %s kind updated to %s", this, targetInfo.getLabel(), targetInfo.getKind()));
-      }
+
+    if (targetInfo != null && !Objects.equals(getTargetKind(), targetInfo.getKind())) {
+      logger.info(String.format("Run configuration %s target %s kind updated to %s", this, targetInfo.getLabel(), targetInfo.getKind()));
     }
+
     if (updateTargetKindFromSingleTarget(targetInfo)) {
       if (asyncCallback != null) {
         asyncCallback.run();
       }
     }
-  }
-
-  private static Throwable getFutureFailure(ListenableFuture<TargetInfo> future) {
-    Throwable throwable = null;
-    try {
-      future.get();
-    } catch (Throwable t) {
-      throwable = t;
-    }
-    return throwable;
   }
 
   private boolean updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
