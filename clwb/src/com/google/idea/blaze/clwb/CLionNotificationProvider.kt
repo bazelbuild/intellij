@@ -113,6 +113,7 @@ class BazelProjectFixesProvider : ProjectFixesProvider {
 
   override suspend fun collectFixes(project: Project, file: VirtualFile?, context: DataContext): List<AnAction> {
     val workspaceRoot = readAction { guessWorkspaceRoot(project, file) } ?: return emptyList()
+    if (withContext(Dispatchers.IO) { !validateWorkspaceRoot(workspaceRoot) }) return emptyList()
     return listOf(BazelImportCurrentProjectAction(File(workspaceRoot)))
   }
 }
