@@ -53,7 +53,8 @@
      Therefore, we register a service that returns nothing.
      We override this registration on macOS systems later. -->
     <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
-                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderNoopImpl"/>
+                    serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderNoopImpl"
+                    open="true"/>
     <projectService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
                     serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"
                     os="mac"
