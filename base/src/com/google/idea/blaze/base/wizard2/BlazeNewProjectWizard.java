@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.help.BlazeHelpHandler;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.ide.AbstractWizardAdapter;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
@@ -33,7 +32,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.NonNls;
 
 /** Largely copied from AbstractProjectWizard / AddModuleWizard (which aren't in the CLion SDK). */
-abstract class BlazeNewProjectWizard extends AbstractWizardAdapter<ProjectImportWizardStep> {
+abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardStep> {
 
   final WizardContext context;
   final BlazeProjectImportBuilder builder;

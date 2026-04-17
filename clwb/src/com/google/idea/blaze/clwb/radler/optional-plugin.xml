@@ -27,7 +27,7 @@
     <iw.actionProvider implementation="com.google.idea.blaze.clwb.radler.BazelResolveConfigurationWidgetProvider"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="com.google.idea.blaze.clwb.radler.RadBazelProjectFallbackConfigRegister" topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
+  <extensions defaultExtensionNs="com.intellij.rider.cpp.core.projectModel">
+    <radProjectFallbackConfigDisabler implementation="com.google.idea.blaze.clwb.radler.RadBazelProjectFallbackConfigDisabler"/>
+  </extensions>
 </idea-plugin>

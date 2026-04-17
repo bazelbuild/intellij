@@ -20,6 +20,16 @@ import com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor
 import com.google.idea.blaze.base.settings.Blaze
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.wizard2.BazelImportCurrentProjectAction
+import com.intellij.clion.projectStatus.isProjectAwareFile
+import com.intellij.clion.projectStatus.widget.DefaultWidgetStatus
+import com.intellij.clion.projectStatus.widget.WidgetStatus
+import com.intellij.clion.projectStatus.widget.Status
+import com.intellij.clion.projectStatus.widget.Scope
+import com.intellij.clion.projectStatus.popup.ProjectFixesProvider
+import com.intellij.clion.projectStatus.widget.WidgetStatusProvider
+import com.intellij.clion.projectStatus.notifications.EditorNotificationWarningProvider
+import com.intellij.clion.projectStatus.notifications.ProjectNotification
+import com.intellij.clion.projectStatus.convertStatus
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
@@ -27,7 +37,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.cidr.lang.daemon.OCFileScopeProvider.Companion.getProjectSourceLocationKind
-import com.google.idea.sdkcompat.clion.projectStatus.*
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.jetbrains.cidr.project.workspace.CidrWorkspace
 import kotlinx.coroutines.Dispatchers

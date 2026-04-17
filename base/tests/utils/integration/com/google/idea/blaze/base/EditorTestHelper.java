@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.sdkcompat.testFramework.EditorTestHelperCompat;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -25,6 +25,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -32,13 +33,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretAndSelectionState;
+import com.intellij.testFramework.common.EditorCaretTestUtil.CaretInfo;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 
 /** Helper methods for editor tests. */
-public class EditorTestHelper extends EditorTestHelperCompat {
+public class EditorTestHelper {
   private final Project project;
   private final CodeInsightTestFixture testFixture;
 
@@ -130,5 +133,17 @@ public class EditorTestHelper extends EditorTestHelperCompat {
         };
     ApplicationManager.getApplication()
         .runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(renameOp));
+  }
+
+
+  public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) throws Throwable {
+    final var info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
+    EdtTestUtil.runInEdtAndWait(() ->
+            EditorTestUtil.setCaretsAndSelection(editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
+  }
+
+  public void assertCaretPosition(Editor editor, int lineNumber, int columnNumber) {
+    final var info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
+    EditorTestUtil.verifyCaretAndSelectionState(editor, new CaretAndSelectionState(ImmutableList.of(info), null));
   }
 }

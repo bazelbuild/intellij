@@ -44,11 +44,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2025.2",
-    values = {"define": "ij_product=clion-2025.2"},
-)
-
-config_setting(
     name = "clion-2025.3",
     values = {"define": "ij_product=clion-2025.3"},
 )
