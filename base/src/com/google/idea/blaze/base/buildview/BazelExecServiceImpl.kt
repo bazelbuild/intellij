@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection
 import com.google.idea.blaze.base.scope.BlazeContext
+import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
@@ -204,25 +205,19 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     BuildEventParser.parse(event, issueReportingMode)?.let(ctx::output)
   }
 
-  private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {
-    return launch(Dispatchers.IO + CoroutineName("EventParser")) {
-      try {
-        // wait for bazel to create the output file
-        while (!helper.outputFile.exists()) {
-          delay(10.milliseconds)
-        }
+  private suspend fun parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep) {
+    // wait for bazel to create the output file
+    while (!helper.outputFile.exists()) {
+      delay(10.milliseconds)
+    }
 
-        FileInputStream(helper.outputFile).buffered().use { stream ->
-          // keep reading events while the coroutine is active, i.e. bazel is still running,
-          // or while the stream has data available (to ensure that all events are processed)
-          while (isActive || stream.available() > 0) {
-            parseEvent(ctx, stream)
-          }
+    withContext(Dispatchers.IO) {
+      FileInputStream(helper.outputFile).buffered().use { stream ->
+        // keep reading events while the coroutine is active, i.e. bazel is still running,
+        // or while the stream has data available (to ensure that all events are processed)
+        while (isActive || stream.available() > 0) {
+          parseEvent(ctx, stream)
         }
-      } catch (e: CancellationException) {
-        throw e
-      } catch (e: Exception) {
-        LOG.error("error in event parser", e)
       }
     }
   }
@@ -236,13 +231,24 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
       BuildResultHelperBep().use { provider ->
         cmdBuilder.addBlazeFlags(provider.buildFlags)
 
-        val parseJob = parseEvents(ctx, provider)
+        val result = coroutineScope {
+          val parseJob = launch(CoroutineName("EventParser")) {
+            try {
+              parseEvents(ctx, provider)
+            } catch (e: CancellationException) {
+              throw e
+            } catch (e: Exception) {
+              IssueOutput.warn("BEP parsing failed, build results may be incomplete").withThrowable(e).submit(ctx)
+            }
+          }
 
-        val lineProcessor = LineProcessingOutputStream.of({ line -> ctx.println(line); false })
-        val exitCode = execute(ctx, cmdBuilder, usePty = true, stdout = lineProcessor)
-        val result = BuildResult.fromExitCode(exitCode)
+          val lineProcessor = LineProcessingOutputStream.of({ line -> ctx.println(line); false })
+          val exitCode = execute(ctx, cmdBuilder, usePty = true, stdout = lineProcessor)
 
-        parseJob.cancelAndJoin()
+          parseJob.cancelAndJoin()
+
+          BuildResult.fromExitCode(exitCode)
+        }
 
         if (result.status == BuildResult.Status.FATAL_ERROR) {
           return@executionScope BlazeBuildOutputs.noOutputs(result)
