@@ -21,8 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
@@ -38,14 +36,12 @@ import com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfiguratio
 import com.google.idea.blaze.base.run.state.ConsoleOutputFileSettingsUi;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.run.ui.TargetExpressionListUi;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManagerEx;
@@ -330,57 +326,25 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
    */
   void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
     ImmutableList<TargetExpression> targets = parseTargets(targetPatterns);
-    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+    if (targets.size() == 1 && targets.get(0) instanceof Label label) {
+      final var info = TargetFinder.findTargetInfo(getProject(), label);
+      updateTargetKindFromSingleTarget(info);
+    } else {
       // TODO(brendandouglas): any reason to support multiple targets here?
       updateTargetKind(null);
-      return;
-    }
-
-    Label label = (Label) targets.get(0);
-    ListenableFuture<TargetInfo> future = TargetFinder.findTargetInfoFuture(getProject(), label);
-    if (future.isDone()) {
-      updateTargetKindFromTargetInfoFuture(future, label, null);
-    }
-    else {
-      updateTargetKindFromSingleTarget(null);
-      future.addListener(
-          () -> updateTargetKindFromTargetInfoFuture(future, label, asyncCallback),
-          MoreExecutors.directExecutor()
-      );
     }
   }
 
-  private void updateTargetKindFromTargetInfoFuture(ListenableFuture<TargetInfo> future, Label label, Runnable asyncCallback) {
-    TargetInfo targetInfo;
-    try {
-      targetInfo = future.get();
-    } catch (Throwable e) {
-      logger.warn(String.format("Failed to retrieve target info for run config %s target %s", this, label), e);
-      targetInfo = null;
-    }
-
-    if (targetInfo != null && !Objects.equals(getTargetKind(), targetInfo.getKind())) {
-      logger.info(String.format("Run configuration %s target %s kind updated to %s", this, targetInfo.getLabel(), targetInfo.getKind()));
-    }
-
-    if (updateTargetKindFromSingleTarget(targetInfo)) {
-      if (asyncCallback != null) {
-        asyncCallback.run();
-      }
-    }
+  private void updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
+    updateTargetKind(target == null ? null : target.kindString);
   }
 
-  private boolean updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
-    return updateTargetKind(target == null ? null : target.kindString);
-  }
-
-  private boolean updateTargetKind(@Nullable String kind) {
+  private void updateTargetKind(@Nullable String kind) {
     if (Objects.equals(targetKindString, kind)) {
-      return false;
+      return;
     }
     targetKindString = kind;
     updateHandler();
-    return true;
   }
 
   /**

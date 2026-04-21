@@ -27,36 +27,29 @@ import java.util.concurrent.Future;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/** Finds information about targets matching a given label. */
+/**
+ * Finds information about targets matching a given label.
+ */
 public interface TargetFinder {
 
   ExtensionPointName<TargetFinder> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.TargetFinder");
 
   /**
-   * Iterates through all {@link TargetFinder}s, returning a {@link Future} representing the first
-   * non-null result, prioritizing any which are immediately available.
-   *
-   * <p>Future returns null if this no non-null result was found.
-   */
-  @NotNull
-  static ListenableFuture<@Nullable TargetInfo> findTargetInfoFuture(Project project, Label label) {
-    Iterable<Future<TargetInfo>> futures =
-        Iterables.transform(
-            Arrays.asList(EP_NAME.getExtensions()), f -> f.findTarget(project, label));
-    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull);
-  }
-
-  /**
-   * Iterates through all {@link TargetFinder}s, returning the first immediately available, non-null
-   * result.
+   * Iterates through all {@link TargetFinder}s, returning the first non-null result.
    */
   @Nullable
   static TargetInfo findTargetInfo(Project project, Label label) {
-    ListenableFuture<TargetInfo> future = findTargetInfoFuture(project, label);
-    return future.isDone() ? FuturesUtil.getIgnoringErrors(future) : null;
+    return EP_NAME.getExtensionList().stream()
+        .map(it -> it.findTarget(project, label))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
-  /** Returns a future for a {@link TargetInfo} corresponding to the given blaze label. */
-  Future<TargetInfo> findTarget(Project project, Label label);
+  /**
+   * Returns a future for a {@link TargetInfo} corresponding to the given blaze label.
+   */
+  @Nullable
+  TargetInfo findTarget(Project project, Label label);
 }

@@ -34,6 +34,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.util.concurrent.Future;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -99,8 +100,9 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
 
   private static class MockTargetFinder implements TargetFinder {
     @Override
-    public Future<TargetInfo> findTarget(Project project, Label label) {
-      return Futures.immediateFuture(null);
+    @Nullable
+    public TargetInfo findTarget(Project project, Label label) {
+      return null;
     }
   }
 }
