@@ -120,7 +120,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     for (RunConfiguration config :
         manager.getConfigurationsList(BlazeCommandRunConfigurationType.getInstance())) {
       if (config instanceof BlazeCommandRunConfiguration) {
-        ((BlazeCommandRunConfiguration) config).updateTargetKindAsync(null);
+        ((BlazeCommandRunConfiguration) config).updateTargetKind();
         beforeRunTasksChanged |= enableBlazeBeforeRunTask((BlazeCommandRunConfiguration) config);
       }
     }
