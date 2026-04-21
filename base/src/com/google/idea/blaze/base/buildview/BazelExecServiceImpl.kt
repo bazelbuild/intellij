@@ -44,6 +44,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.LimitedInputStream
+import com.intellij.util.io.awaitExit
 import com.intellij.util.system.OS
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -135,19 +136,17 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
 
     ctx.println("Executing: ${cmdLine.commandLineString}")
 
-    var handler: OSProcessHandler? = null
+    val process = withContext(Dispatchers.IO) {
+      cmdLine.createProcess()
+    }
     val exitCode = try {
-      handler = withContext(Dispatchers.IO) {
-        OSProcessHandler(cmdLine)
-      }
-
       coroutineScope {
         launch(Dispatchers.IO + CoroutineName("stdout")) {
-          handler.process.inputStream.transferTo(stdout)
+          process.inputStream.transferTo(stdout)
         }
 
         launch(Dispatchers.IO + CoroutineName("stderr")) {
-          handler.process.errorStream.bufferedReader().use { reader ->
+          process.errorStream.bufferedReader().use { reader ->
             reader.lines().forEach { line ->
               ctx.println(line)
               LOG.debug("BAZEL ERR: $line")
@@ -155,15 +154,10 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
           }
         }
 
-        handler.startNotify()
-        while (!handler.isProcessTerminated) {
-          delay(100.milliseconds)
-        }
-
-        handler.exitCode ?: 1
+        process.awaitExit()
       }
     } finally {
-      handler?.destroyProcess()
+      process.destroy()
     }
 
     if (exitCode != 0) {
