@@ -54,7 +54,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -251,7 +250,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
     updateTargetKind();
   }
 
-  /** Sets the target expression and asynchronously kicks off a target kind update. */
+  /** Sets the target expression and kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
     targetPatterns = target != null ? ImmutableList.of(target.toString().trim()) : ImmutableList.of();
     updateTargetKind();
@@ -318,8 +317,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
   }
 
   /**
-   * Queries the kind of the current target pattern, possibly asynchronously, in the case where
-   * there's only a single target.
+   * Queries the kind of the current target pattern, in the case where there's only a single target.
    */
   void updateTargetKind() {
     final var targets = parseTargets(targetPatterns);
@@ -706,33 +704,28 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
         logger.error(e);
       }
 
-      // finally, update the handler
+      // update target kind (may change the handler if kind changes)
       config.targetPatterns = targetsUi.getTargetExpressions();
       config.updateTargetKind();
 
+      // if kind changed, refresh handler dropdown (may auto-select best handler)
       if (!Objects.equals(handlersLoadedForKind, config.targetKindString)) {
         handlersLoadedForKind = config.targetKindString;
-        updateHandlerListAndAutoSelect(config, true);
+        updateHandlerListAndAutoSelect(config);
       }
-      if (editorHandlerProvider != config.handlerProvider) {
-        updateHandlerEditor(config, config.handlerProvider);
-      }
-      fireEditorStateChanged();
 
-      updateHandlerListAndAutoSelect(config, false);
-      if (editorHandlerProvider != config.handlerProvider) {
-        updateHandlerEditor(config, config.handlerProvider);
-      }
-      updateEditor(config);
+      // sync editor with final config state
       if (config.handlerProvider != editorHandlerProvider) {
         updateHandlerEditor(config, config.handlerProvider);
         handlerStateEditor.resetEditorFrom(config.handler.getState());
       } else {
         handlerStateEditor.applyEditorTo(config.handler.getState());
       }
+      updateEditor(config);
+      fireEditorStateChanged();
     }
 
-    private void updateHandlerListAndAutoSelect(BlazeCommandRunConfiguration config, boolean autoSelect) {
+    private void updateHandlerListAndAutoSelect(BlazeCommandRunConfiguration config) {
       final var handlers = BlazeCommandRunConfigurationHandlerProvider.findHandlerProviders()
           .stream()
           .filter(BlazeCommandRunConfigurationHandlerProvider::isUserSelectable)
