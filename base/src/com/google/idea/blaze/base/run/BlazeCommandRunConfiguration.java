@@ -248,13 +248,13 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
 
   public void setTargets(ImmutableList<TargetExpression> targets) {
     targetPatterns = targets.stream().map(TargetExpression::toString).collect(toImmutableList());
-    updateTargetKindAsync(null);
+    updateTargetKind();
   }
 
   /** Sets the target expression and asynchronously kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
     targetPatterns = target != null ? ImmutableList.of(target.toString().trim()) : ImmutableList.of();
-    updateTargetKindAsync(null);
+    updateTargetKind();
   }
 
   private void updateHandler() {
@@ -320,23 +320,22 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
   /**
    * Queries the kind of the current target pattern, possibly asynchronously, in the case where
    * there's only a single target.
-   *
-   * @param asyncCallback if the kind is updated asynchronously, this will be run after the kind is
-   *     updated. If it's updated synchronously, this will not be run.
    */
-  void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
-    ImmutableList<TargetExpression> targets = parseTargets(targetPatterns);
-    if (targets.size() == 1 && targets.get(0) instanceof Label label) {
-      final var info = TargetFinder.findTargetInfo(getProject(), label);
-      updateTargetKindFromSingleTarget(info);
-    } else {
+  void updateTargetKind() {
+    final var targets = parseTargets(targetPatterns);
+    if (targets.size() != 1) {
       // TODO(brendandouglas): any reason to support multiple targets here?
       updateTargetKind(null);
+      return;
     }
-  }
 
-  private void updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
-    updateTargetKind(target == null ? null : target.kindString);
+    final var target = targets.get(0);
+    if (target instanceof Label label) {
+      final var info = TargetFinder.findTargetInfo(getProject(), label);
+      updateTargetKind(info != null ? info.kindString : null);
+    } else {
+      updateTargetKind(null);
+    }
   }
 
   private void updateTargetKind(@Nullable String kind) {
@@ -709,19 +708,17 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
 
       // finally, update the handler
       config.targetPatterns = targetsUi.getTargetExpressions();
-      config.updateTargetKindAsync(
-          () -> {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (!Objects.equals(handlersLoadedForKind, config.targetKindString)) {
-                handlersLoadedForKind = config.targetKindString;
-                updateHandlerListAndAutoSelect(config, true);
-              }
-              if (editorHandlerProvider != config.handlerProvider) {
-                updateHandlerEditor(config, config.handlerProvider);
-              }
-              fireEditorStateChanged();
-            });
-          });
+      config.updateTargetKind();
+
+      if (!Objects.equals(handlersLoadedForKind, config.targetKindString)) {
+        handlersLoadedForKind = config.targetKindString;
+        updateHandlerListAndAutoSelect(config, true);
+      }
+      if (editorHandlerProvider != config.handlerProvider) {
+        updateHandlerEditor(config, config.handlerProvider);
+      }
+      fireEditorStateChanged();
+
       updateHandlerListAndAutoSelect(config, false);
       if (editorHandlerProvider != config.handlerProvider) {
         updateHandlerEditor(config, config.handlerProvider);
