@@ -138,7 +138,6 @@ java_library(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
-        "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
@@ -177,7 +176,6 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//cpp",
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
@@ -278,7 +276,6 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
-        "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
@@ -298,7 +295,6 @@ intellij_integration_test_suite(
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
         ":aswb_bazel",
-        "//cpp",
         "//java",
     ],
     deps = [
@@ -322,7 +318,6 @@ intellij_plugin(
     deps = [
         ":plugin_library",
         "//base:plugin_library",
-        "//cpp:plugin_library",
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",

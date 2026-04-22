@@ -309,75 +309,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-latest",
-    values = {
-        "define": "ij_product=clion-latest",
-    },
-)
-
-config_setting(
-    name = "clion-oss-oldest-stable",
-    values = {
-        "define": "ij_product=clion-oss-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "clion-oss-latest-stable",
-    values = {
-        "define": "ij_product=clion-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "clion-oss-under-dev",
-    values = {
-        "define": "ij_product=clion-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-latest-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=clion-latest",
-    },
-)
-
-config_setting(
-    name = "clion-beta",
-    values = {
-        "define": "ij_product=clion-beta",
-    },
-)
-
-config_setting(
-    name = "clion-under-dev",
-    values = {
-        "define": "ij_product=clion-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-2022.3",
-    values = {
-        "define": "ij_product=clion-2022.3",
-    },
-)
-
-config_setting(
-    name = "clion-2022.3-mac",
-    constraint_values = [
-        "@platforms//os:macos",
-    ],
-    values = {
-        "define": "ij_product=clion-2022.3",
-    },
-)
-
-config_setting(
     name = "intellij-cc-oldest-stable",
     values = {
         "define": "ij_product=intellij-cc-oldest-stable",
@@ -435,10 +366,6 @@ java_library(
             ":test_recorder",
             ":platform_images",
         ],
-        clion = [
-            ":sdk",
-            ":clion_plugins",
-        ],
         intellij = [
             ":sdk",
             ":java",
@@ -463,7 +390,6 @@ java_library(
         android_studio = [
             ":kotlinc_version",
         ],
-        clion = [":javascript-lsp"],
         # From 2022.1 forward, the version of kotlinc will be obtained
         # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
         # so we need to provide this to our tests
@@ -497,7 +423,6 @@ java_library(
     testonly = True,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
-        clion = [":guava"],
         intellij = [":guava"],
     ),
 )
@@ -507,7 +432,6 @@ java_library(
     visibility = ASPECT_TOOLS_PACKAGE,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
-        clion = [":guava"],
         intellij = [":guava"],
     ),
 )
@@ -532,7 +456,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":coverage"],
-        clion = [],
         intellij = [":coverage"],
     ),
 )
@@ -543,7 +466,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":coverage"],
-        clion = [],
         intellij = [":coverage"],
     ),
 )
@@ -554,7 +476,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":devkit"],
-        clion = [],
         intellij = [":devkit"],
     ),
 )
@@ -565,7 +486,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":hg4idea"],
-        clion = [":hg4idea"],
         intellij = [":hg4idea"],
     ),
 )
@@ -576,7 +496,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":intellilang"],
     ),
 )
@@ -587,7 +506,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":kotlin"],
-        clion = [],
         intellij = [":kotlin"],
     ),
 )
@@ -598,7 +516,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":kotlin"],
-        clion = [],
         intellij = [":kotlin"],
     ),
 )
@@ -609,7 +526,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":junit"],
-        clion = [],
         intellij = [":junit"],
     ),
 )
@@ -620,7 +536,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":terminal"],
-        clion = [":terminal"],
         intellij = [":terminal"],
     ),
 )
@@ -630,7 +545,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [":terminal"],
-        clion = [":terminal"],
         intellij = [":terminal"],
     ),
 )
@@ -641,7 +555,6 @@ java_library(
     testonly = 1,
     runtime_deps = select_from_plugin_api_directory(
         android_studio = [":bundled_plugins"],
-        clion = [":bundled_plugins"],
         intellij = [":bundled_plugins"],
     ),
 )
@@ -652,7 +565,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":shared_indexes"],
         intellij_ue = [":shared_indexes"],
     ),
@@ -664,7 +576,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":shared_indexes"],
         intellij_ue = [":shared_indexes"],
     ),
@@ -676,7 +587,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":git4idea"],
     ),
 )
@@ -686,7 +596,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":git4idea"],
     ),
 )
@@ -697,7 +606,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":cwm"],
     ),
 )
@@ -707,7 +615,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":cwm"],
     ),
 )
@@ -718,7 +625,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":maven"],
     ),
 )
@@ -728,7 +634,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":maven_bundled_plugins"],
     ),
 )
@@ -739,7 +644,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":maven_model"],
     ),
 )
@@ -749,7 +653,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":maven_model"],
     ),
 )
@@ -760,7 +663,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":yaml"],
     ),
 )
@@ -770,7 +672,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":yaml"],
     ),
 )
@@ -781,7 +682,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":gradle"],
     ),
 )
@@ -791,7 +691,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":gradle"],
     ),
 )
@@ -802,7 +701,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [],
         intellij_ue = [":database_tools"],
     ),
@@ -813,7 +711,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [],
         intellij_ue = [":database_tools"],
     ),
@@ -825,7 +722,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [],
         intellij_ue = [":javaee"],
     ),
@@ -836,7 +732,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [],
         intellij_ue = [":javaee"],
     ),
@@ -848,7 +743,6 @@ java_library(
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":markdown"],
     ),
 )
@@ -858,7 +752,6 @@ java_library(
     testonly = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
-        clion = [],
         intellij = [":markdown"],
     ),
 )
@@ -867,7 +760,6 @@ filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
         android_studio = [":application_info_json"],
-        clion = [":application_info_json"],
         intellij = [":application_info_json"],
     ),
 )

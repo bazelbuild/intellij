@@ -67,17 +67,6 @@ test_suite(
     ],
 )
 
-# CLwB tests, run with a CLion plugin SDK
-test_suite(
-    name = "clwb_tests",
-    tests = [
-        "//base:unit_tests",
-        "//clwb:unit_tests",
-        "//cpp:unit_tests",
-        "//dart:unit_tests",
-        "//python:unit_tests",
-    ],
-)
 # END-EXTERNAL
 
 # ASwB tests, run with an Android Studio plugin SDK
@@ -88,8 +77,6 @@ test_suite(
         "//aswb:unit_tests",
         "//base:integration_tests",
         "//base:unit_tests",
-        "//cpp:integration_tests",
-        "//cpp:unit_tests",
         "//dart:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",

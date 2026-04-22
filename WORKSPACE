@@ -22,13 +22,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.3.3/ideaIU-2022.3.3.zip",
 )
 
-# The plugin api for clion_2022_3 clion. This is required to build CLwB\, and run integration tests.
-http_archive(
-    name = "clion_2022_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion223",
-    sha256 = "1b46ff0791bcb38ecb39c5f4a99941f99ed73d4f6d924a2042fdb55afc5fc03d",
-    url = "https://download.jetbrains.com/cpp/CLion-2022.3.3.tar.gz",
-)
 
 _PYTHON_CE_BUILD_FILE = """
 java_import(
@@ -500,15 +493,6 @@ http_archive(
     ],
 )
 
-# needed for cpp tests
-http_archive(
-    name = "com_google_absl",
-    sha256 = "987ce98f02eefbaf930d6e38ab16aa05737234d7afbab2d5c4ea7adbe50c28ed",
-    strip_prefix = "abseil-cpp-20230802.1",
-    urls = [
-         "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
-    ],
-)
 
 jvm_maven_import_external(
     name = "io_netty_netty_common",
