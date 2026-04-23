@@ -1,14 +1,21 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
-load(":foo_bar.bzl", "foo_bar_binary")
+load(":copt_transition.bzl", "copt_transition_binary")
 
 cc_binary(
     name = "simple",
     srcs = ["simple.cc"],
 )
 
-foo_bar_binary(
-    name = "foo_bar",
-    deps = ":simple",
+copt_transition_binary(
+    name = "simple_bar",
+    binary = ":simple",
+    copts = ["-DBAR"],
+)
+
+copt_transition_binary(
+    name = "simple_foo",
+    binary = ":simple",
+    copts = ["-DFOO"],
 )
 
 cc_library(
