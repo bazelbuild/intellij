@@ -19,23 +19,22 @@ package com.google.idea.blaze.clwb;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsCompilerFlag;
 import static com.google.idea.blaze.clwb.base.Assertions.assertContainsHeader;
-import static com.google.idea.blaze.clwb.base.Assertions.assertContainsPattern;
 import static com.google.idea.blaze.clwb.base.Assertions.assertDefine;
 import static com.google.idea.blaze.clwb.base.Assertions.assertNotContainsCompilerFlag;
 
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
+import com.google.idea.blaze.cpp.BazelClangCompilerKind;
+import com.google.idea.blaze.cpp.BazelCompilerKind;
+import com.google.idea.blaze.cpp.BazelGCCCompilerKind;
+import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
-import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
-import java.io.IOException;
-import java.nio.file.Files;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +44,7 @@ import org.junit.runners.JUnit4;
 public class SimpleTest extends ClwbHeadlessTestCase {
 
   @Test
-  public void testClwb() throws IOException {
+  public void testClwb() {
     final var errors = runSync(defaultSyncParams().build());
     errors.assertNoErrors();
 
@@ -61,11 +60,15 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     final var compilerSettingsC = findFileCompilerSettings("main/main.c", CLanguageKind.C);
 
     if (SystemInfo.isMac) {
-      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
-      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
     } else if (SystemInfo.isLinux) {
-      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
-      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
     } else if (SystemInfo.isWindows) {
       assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
       assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
@@ -91,20 +94,20 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     assertContainsHeader("catch2/catch_test_macros.hpp", compilerSettings);
   }
 
-  private void checkXcode() throws IOException {
+  private void checkXcode() {
     if (!SystemInfo.isMac) {
       return;
     }
 
-    final var compilerSettings = findFileCompilerSettings("main/test.cc");
 
-    final var compilerExecutable = compilerSettings.getCompilerExecutable();
-    assertThat(compilerExecutable).isNotNull();
+    final var configs = BlazeCWorkspace.getInstance(myProject).getResolveConfigurations();
+    assertThat(configs).isNotEmpty();
 
-    final var scriptLines = Files.readAllLines(compilerSettings.getCompilerExecutable().toPath());
-
-    assertContainsPattern("export DEVELOPER_DIR=/.*/Xcode.*.app/Contents/Developer", scriptLines);
-    assertContainsPattern("export SDKROOT=/.*/Xcode.*.app/Contents/Developer/.*", scriptLines);
+    final var environment = configs.get(0).getConfigurationData().compilerSettings().environment();
+    assertThat(environment).containsKey("DEVELOPER_DIR");
+    assertThat(environment.get("DEVELOPER_DIR")).containsMatch("Xcode.*\\.app/Contents/Developer");
+    assertThat(environment).containsKey("SDKROOT");
+    assertThat(environment.get("SDKROOT")).containsMatch("Xcode.*\\.app/Contents/Developer");
   }
 
   private void checkResolveRulesCC() {
