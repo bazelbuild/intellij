@@ -612,10 +612,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
       keepInSyncCheckBox.addItemListener(e -> updateEnabledStatus());
       handlerCombo.addActionListener(e -> {
         if (handlerCombo.getSelectedItem() instanceof ProviderItem providerItem) {
-          updateHandlerProviderToConfig(
-              config,
-              BlazeCommandRunConfigurationHandlerProvider.getHandlerProvider(providerItem.provider().getId())
-          );
+          updateHandlerProviderToConfig(config, providerItem.provider());
         }
       });
     }
@@ -737,15 +734,15 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<Loc
         currentHandlers.add(handlerCombo.getModel().getElementAt(i));
       }
 
-      var selected = handlerCombo.getSelectedItem();
+      var selected = (ProviderItem) handlerCombo.getSelectedItem();
       if (!Objects.equals(currentHandlers.build(), handlers)) {
         handlerCombo.setModel(new DefaultComboBoxModel<>(handlers.toArray(ProviderItem[]::new)));
 
         final var newBestSelection = BlazeCommandRunConfigurationHandlerProvider.findPreferredHandler(config.getTargetKind()).orElse(null);
-        if (newBestSelection != null && selected != newBestSelection) {
+        if (newBestSelection != null && selected.provider != newBestSelection) {
           // Note, we only auto-update the configuration in the UI. At the runtime the configuration updates its handler only if it is in
           // the pending state, i.e. the handler is unknown or intentionally set to pending.
-          selected = newBestSelection;
+          selected = new ProviderItem(newBestSelection);
           logger.info(String.format("Auto-updating %s run configuration handler to %s", config, newBestSelection));
         }
       }
