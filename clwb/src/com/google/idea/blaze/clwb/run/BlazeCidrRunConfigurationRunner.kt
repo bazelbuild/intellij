@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.buildview.println
 import com.google.idea.blaze.base.buildview.tryExecute
 import com.google.idea.blaze.base.command.BlazeInvocationContext
 import com.google.idea.blaze.base.model.primitives.Label
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.ExecutorType
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner
@@ -33,6 +34,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.execution.CidrCommandLineState
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
@@ -70,7 +72,8 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
   private fun getExecutableToDebug(env: ExecutionEnvironment): Path {
     SaveUtil.saveAllFiles()
 
-    val target: Label = getSingleTarget(configuration)
+    val target = getSingleTarget(configuration)
+    val debugFlags = legacyDebugFlags(env, configuration)
 
     val executableFuture = launchBuild(env.project, "Build $target") { ctx ->
       val invocationContext = BlazeInvocationContext.runConfigContext(
@@ -79,8 +82,21 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
         /* beforeRunTask = */ true,
       )
 
-      val config = DiscoverTargetConfigurations(env.project, configuration, invocationContext, target).tryExecute(ctx)
-      val build = RunConfigBuild(env.project, configuration, invocationContext, target).execute(ctx)
+      val config = DiscoverTargetConfigurations(
+        project = env.project,
+        configuration = configuration,
+        invocationContext = invocationContext,
+        target = target,
+        additionalFlags = debugFlags
+      ).tryExecute(ctx)
+
+      val build = RunConfigBuild(
+        project = env.project,
+        configuration = configuration,
+        invocationContext = invocationContext,
+        target = target,
+        additionalFlags = debugFlags
+      ).execute(ctx)
 
       if (config != null) {
         ctx.println("Target configuration: ${config.mainTarget} (${config.mainConfiguration})")
@@ -107,6 +123,18 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
 
 private fun isDebugging(environment: ExecutionEnvironment): Boolean {
   return environment.executor is DefaultDebugExecutor
+}
+
+@Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
+private fun legacyDebugFlags(env: ExecutionEnvironment, configuration: BlazeCommandRunConfiguration): List<String> {
+  if (!isDebugging(env) || !Registry.`is`("bazel.clwb.debug.extraflags.legacy")) return emptyList()
+
+  return BazelDebugFlagsBuilder.fromDefaults(
+    RunConfigurationUtils.getDebuggerKind(configuration),
+    RunConfigurationUtils.getCompilerKind(configuration),
+  ).apply {
+    withBuildFlags(WorkspaceRoot.fromProject(env.project).toString())
+  }.build()
 }
 
 @Throws(ExecutionException::class)

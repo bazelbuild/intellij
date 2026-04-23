@@ -24,6 +24,9 @@ class DiscoverTargetConfigurations(
   private val configuration: BlazeCommandRunConfiguration,
   private val invocationContext: BlazeInvocationContext,
   private val target: Label,
+
+  @Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
+  private val additionalFlags: List<String> = emptyList(),
 ) : BuildStep<DiscoverTargetConfigurations.Output> {
 
   override val title: String = "Discover CC Target Configurations"
@@ -47,6 +50,7 @@ class DiscoverTargetConfigurations(
 
     val cmd = BlazeCommand.builder(BlazeCommandName.AQUERY)
       .addBlazeFlags("deps($target)")
+      .addBlazeFlags(additionalFlags)
       .addBlazeFlags(flags)
       .addBlazeFlags(externalFlags)
       .addBlazeFlags("--output=streamed_proto")

@@ -20,11 +20,14 @@ import java.nio.file.Path
 
 private const val DEFAULT_OUTPUT_GROUP_NAME = "default"
 
-class RunConfigBuild(
+class RunConfigBuild @JvmOverloads constructor(
   private val project: Project,
   private val configuration: BlazeCommandRunConfiguration,
   private val invocationContext: BlazeInvocationContext,
   private val target: Label,
+
+  @Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
+  private val additionalFlags: List<String> = emptyList(),
 ) : BuildStep<RunConfigBuild.Output> {
 
   override val title: String = "Building $target"
@@ -48,6 +51,7 @@ class RunConfigBuild(
 
     val cmd = BlazeCommand.builder(BlazeCommandName.BUILD)
       .addTargets(target)
+      .addBlazeFlags(additionalFlags)
       .addBlazeFlags(flags)
       .addBlazeFlags(externalFlags)
       .addBlazeFlags()

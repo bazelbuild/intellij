@@ -56,7 +56,7 @@ object BlazeGDBServerProvider {
       RunConfigurationUtils.getCompilerKind(configuration),
     )
 
-    if (!Registry.`is`("bazel.clwb.debug.extraflags.disabled")) {
+    if (Registry.`is`("bazel.clwb.debug.extraflags.legacy")) {
       builder.withBuildFlags()
     }
 
