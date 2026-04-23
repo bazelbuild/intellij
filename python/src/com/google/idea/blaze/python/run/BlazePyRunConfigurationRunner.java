@@ -15,10 +15,13 @@
  */
 package com.google.idea.blaze.python.run;
 
+import static com.google.idea.blaze.base.buildview.BuildStepKt.execute;
+import static com.google.idea.blaze.base.buildview.BuildStepKt.launchBuild;
+
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.buildview.BazelBuildService;
+import com.google.idea.blaze.base.buildview.RunConfigBuild;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -32,7 +35,6 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
@@ -64,13 +66,11 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
-import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.run.PythonScriptCommandLineState;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -132,29 +132,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         nativeConfig.setEnvs(envState.getEnvs());
       }
       nativeConfig.setScriptParameters(Strings.emptyToNull(ParametersListUtil.join(args)));
-      Label target = getSingleTarget(configuration);
       return new PythonScriptCommandLineState(nativeConfig, env) {
-
-        private final CommandLinePatcher applyHelperPydevFlags =
-            (commandLine) ->
-                BlazePyDebugHelper.doBlazeDebugCommandlinePatching(
-                    nativeConfig.getProject(), target, commandLine);
-
-        @Override
-        protected ProcessHandler startProcess(
-            PythonProcessStarter starter, @Nullable CommandLinePatcher... patchers)
-            throws ExecutionException {
-          // Need to run after the other CommandLinePatchers
-          List<CommandLinePatcher> modifiedPatchers = new ArrayList<>();
-          if (patchers != null) {
-            Collections.addAll(modifiedPatchers, patchers);
-          }
-          modifiedPatchers.add(applyHelperPydevFlags);
-          ProcessHandler process =
-              super.startProcess(starter, modifiedPatchers.toArray(new CommandLinePatcher[0]));
-          BlazePyDebugHelper.attachProcessListeners(target, process);
-          return process;
-        }
 
         @Override
         public boolean isDebug() {
@@ -299,21 +277,24 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     Label target = getSingleTarget(configuration);
     ImmutableList<String> args = getPythonArgsFor(blazeProjectData, target);
-    String validationError = BlazePyDebugHelper.validateDebugTarget(env.getProject(), target);
-    if (validationError != null) {
-      throw new WithBrowserHyperlinkExecutionException(validationError);
-    }
 
     SaveUtil.saveAllFiles();
-    final var executableFuture = BazelBuildService.buildForRunConfig(
-        project,
-        configuration,
-        BlazeInvocationContext.runConfigContext(
-            ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
-        BlazePyDebugHelper.getAllBlazeDebugFlags(configuration.getProject(), target),
-        ImmutableList.of(),
-        target
-    );
+
+    final var executableFuture = launchBuild(env.getProject(), "Build " + target, ctx -> {
+      final var build = execute(new RunConfigBuild(
+          env.getProject(),
+          configuration,
+          BlazeInvocationContext.runConfigContext(
+              ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
+          target
+      ), ctx);
+
+      if (build == null) {
+        throw new ExecutionException("Failed to build " + target);
+      }
+
+      return build.getExecutable();
+    });
 
     try {
       final var executable = executableFuture.get().toFile();
