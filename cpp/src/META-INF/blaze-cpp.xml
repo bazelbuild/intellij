@@ -45,6 +45,7 @@
   <extensions defaultExtensionNs="cidr.lang">
     <languageKindHelper implementation="com.google.idea.blaze.cpp.BlazeLanguageKindCalculatorHelper"/>
     <ownModuleDetector implementation="com.google.idea.blaze.cpp.BlazeOwnModuleDetector"/>
+    <compilerKindProvider id="bazel" implementation="com.google.idea.blaze.cpp.BazelCompilerKindProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.google.idea.blaze.cpp.BlazeCTargetInfoService"/>
@@ -83,8 +84,6 @@
 
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerVersionChecker"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
-    <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
-                        serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.cpp.HeaderRootTrimmer"
                     serviceImplementation="com.google.idea.blaze.cpp.HeaderRootTrimmerImpl"/>
     <postStartupActivity implementation="com.google.idea.blaze.cpp.CMakeWorkspaceOverride"/>
