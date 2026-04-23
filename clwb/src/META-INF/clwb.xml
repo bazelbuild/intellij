@@ -46,6 +46,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp">
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.MSVCEnvironmentProvider" />
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.ClangClEnvironmentProvider" />
+    <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.BazelEnvironmentProvider" order="last" />
   </extensions>
 
   <actions>
