@@ -81,9 +81,9 @@ public abstract class BlazeCompilerSettings {
   public OCCompilerKind getCompilerKind() {
     return when(
         /* msvc */ () -> MSVCCompilerKind.INSTANCE,
-        /* clang */ () -> ClangCompilerKind.INSTANCE,
+        /* clang */ () -> BazelClangCompilerKind.INSTANCE,
         /* clangCl */ () -> ClangClCompilerKind.INSTANCE,
-        /* gcc */ () -> GCCCompilerKind.INSTANCE
+        /* gcc */ () -> BazelGCCCompilerKind.INSTANCE
     );
   }
 
