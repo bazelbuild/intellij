@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.buildview
 
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.errorprone.annotations.MustBeClosed
+import com.google.idea.blaze.base.async.process.LineProcessingOutputStream
 import com.google.idea.blaze.base.buildview.events.BuildEventParser
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
@@ -30,32 +31,29 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection
 import com.google.idea.blaze.base.scope.BlazeContext
+import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
-import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
-import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.util.io.LimitedInputStream
+import com.intellij.util.io.awaitExit
 import com.intellij.util.system.OS
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import java.io.BufferedInputStream
 import java.io.FileInputStream
+import java.io.OutputStream
 import java.nio.file.Files
-import java.util.Optional
+import java.util.*
 import kotlin.io.path.pathString
-import kotlin.jvm.Throws
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG: Logger = Logger.getInstance(BazelExecServiceImpl::class.java)
@@ -107,7 +105,7 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     ctx: BlazeContext,
     cmdBuilder: BlazeCommand.Builder,
     usePty: Boolean,
-    textAvailable: (String) -> Unit,
+    stdout: OutputStream,
   ): Int {
     performGuardCheck()
 
@@ -136,32 +134,30 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
       .withEnvironment(cmd.environment())
       .withWorkDirectory(root.pathString)
 
-    var handler: OSProcessHandler? = null
+    ctx.println("Executing: ${cmdLine.commandLineString}")
+
+    val process = withContext(Dispatchers.IO) {
+      cmdLine.createProcess()
+    }
     val exitCode = try {
-      handler = withContext(Dispatchers.IO) {
-        OSProcessHandler(cmdLine)
-      }
-
-      handler.addProcessListener(object : ProcessListener {
-        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-          when (outputType) {
-            ProcessOutputTypes.STDOUT -> textAvailable(event.text)
-            ProcessOutputTypes.SYSTEM -> ctx.println(event.text)
-            else -> ctx.output(PrintOutput.process(event.text))
-          }
-
-          LOG.debug("BAZEL OUTPUT: " + event.text)
+      coroutineScope {
+        launch(Dispatchers.IO + CoroutineName("stdout")) {
+          process.inputStream.transferTo(stdout)
         }
-      })
-      handler.startNotify()
 
-      while (!handler.isProcessTerminated) {
-        delay(100.milliseconds)
+        launch(Dispatchers.IO + CoroutineName("stderr")) {
+          process.errorStream.bufferedReader().use { reader ->
+            reader.lines().forEach { line ->
+              ctx.println(line)
+              LOG.debug("BAZEL ERR: $line")
+            }
+          }
+        }
+
+        process.awaitExit()
       }
-
-      handler.exitCode ?: 1
     } finally {
-      handler?.destroyProcess()
+      process.destroy()
     }
 
     if (exitCode != 0) {
@@ -203,25 +199,19 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     BuildEventParser.parse(event, issueReportingMode)?.let(ctx::output)
   }
 
-  private fun CoroutineScope.parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep): Job {
-    return launch(Dispatchers.IO + CoroutineName("EventParser")) {
-      try {
-        // wait for bazel to create the output file
-        while (!helper.outputFile.exists()) {
-          delay(10.milliseconds)
-        }
+  private suspend fun parseEvents(ctx: BlazeContext, helper: BuildResultHelperBep) {
+    // wait for bazel to create the output file
+    while (!helper.outputFile.exists()) {
+      delay(10.milliseconds)
+    }
 
-        FileInputStream(helper.outputFile).buffered().use { stream ->
-          // keep reading events while the coroutine is active, i.e. bazel is still running,
-          // or while the stream has data available (to ensure that all events are processed)
-          while (isActive || stream.available() > 0) {
-            parseEvent(ctx, stream)
-          }
+    withContext(Dispatchers.IO) {
+      FileInputStream(helper.outputFile).buffered().use { stream ->
+        // keep reading events while the coroutine is active, i.e. bazel is still running,
+        // or while the stream has data available (to ensure that all events are processed)
+        while (isActive || stream.available() > 0) {
+          parseEvent(ctx, stream)
         }
-      } catch (e: CancellationException) {
-        throw e
-      } catch (e: Exception) {
-        LOG.error("error in event parser", e)
       }
     }
   }
@@ -235,12 +225,24 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
       BuildResultHelperBep().use { provider ->
         cmdBuilder.addBlazeFlags(provider.buildFlags)
 
-        val parseJob = parseEvents(ctx, provider)
+        val result = coroutineScope {
+          val parseJob = launch(CoroutineName("EventParser")) {
+            try {
+              parseEvents(ctx, provider)
+            } catch (e: CancellationException) {
+              throw e
+            } catch (e: Exception) {
+              IssueOutput.warn("BEP parsing failed, build results may be incomplete").withThrowable(e).submit(ctx)
+            }
+          }
 
-        val exitCode = execute(ctx, cmdBuilder, usePty = true, ctx::println)
-        val result = BuildResult.fromExitCode(exitCode)
+          val lineProcessor = LineProcessingOutputStream.of({ line -> ctx.println(line); false })
+          val exitCode = execute(ctx, cmdBuilder, usePty = true, stdout = lineProcessor)
 
-        parseJob.cancelAndJoin()
+          parseJob.cancelAndJoin()
+
+          BuildResult.fromExitCode(exitCode)
+        }
 
         if (result.status == BuildResult.Status.FATAL_ERROR) {
           return@executionScope BlazeBuildOutputs.noOutputs(result)
@@ -266,9 +268,7 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     val exitCode = try {
       executionScope(ctx) {
         Files.newOutputStream(tempFile).use { out ->
-          execute(ctx, cmdBuilder, usePty = false) { text ->
-            out.write(text.toByteArray())
-          }
+          execute(ctx, cmdBuilder, usePty = false, stdout = out)
         }
       }
     } catch (e: ExecutionException) {
