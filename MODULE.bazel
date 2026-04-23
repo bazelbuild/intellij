@@ -9,7 +9,7 @@ bazel_dep(name = "rules_jvm_external", version = "7.0")
 
 # required for aspect tests
 bazel_dep(name = "rules_shell", version = "0.8.0")
-bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_cc", version = "0.2.18")
 bazel_dep(name = "abseil-cpp", version = "20250814.2")
 
 # import clwb test projects for aspect tests
