@@ -69,7 +69,6 @@ class RunConfigBuild @JvmOverloads constructor(
       .addBlazeFlags(additionalFlags)
       .addBlazeFlags(flags)
       .addBlazeFlags(externalFlags)
-      .addBlazeFlags()
 
     val result = BazelExecService.of(project).build(ctx, cmd)
 
