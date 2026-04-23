@@ -3,5 +3,6 @@
   "extends": [
     "config:recommended"
   ],
-  "ignorePaths": ["testing/test_deps/**"]
+  "ignorePaths": ["testing/test_deps/**"],
+  "ignoreDeps": ["org.jetbrains.kotlin:kotlin-stdlib"]
 }
