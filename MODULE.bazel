@@ -55,7 +55,7 @@ use_repo(python, "python_3_12", "python_versions")
 bazel_binaries = use_extension("@rules_bazel_integration_test//:extensions.bzl", "bazel_binaries")
 bazel_binaries.download(version = "7.7.1")
 bazel_binaries.download(version = "8.6.0")
-bazel_binaries.download(version = "9.0.2")
+bazel_binaries.download(version = "9.1.0")
 bazel_binaries.download(version = "last_green")
 use_repo(
     bazel_binaries,
@@ -63,7 +63,7 @@ use_repo(
     "bazel_binaries_bazelisk",
     "build_bazel_bazel_7_7_1",
     "build_bazel_bazel_8_6_0",
-    "build_bazel_bazel_9_0_2",
+    "build_bazel_bazel_9_1_0",
     "build_bazel_bazel_last_green",
 )
 
@@ -185,6 +185,6 @@ bazel_build_jars(
         "//third_party/bazel/jars:starlark_repl.patch",
         "//third_party/bazel/jars:execlog_parser.patch",
     ],
-    sha256 = "81e3d5f26c47ae7ed3792c7a1a6316d40aa316066de5d78b403b563b62ab6106",
-    tag = "9.0.2",
+    sha256 = "af3efc2a0ae12b9100bb133ea0720d7ca44dd0100ae32dc4413ea5e4d326258e",
+    tag = "9.1.0",
 )
