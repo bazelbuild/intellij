@@ -20,9 +20,9 @@ import com.google.idea.blaze.base.command.BlazeCommandName
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.state.RunConfigurationState
 import com.google.idea.blaze.clwb.ToolchainUtils
+import com.google.idea.blaze.clwb.sync.shouldInjectDebugFlags
 import com.google.idea.common.util.Datafiles
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
@@ -56,7 +56,7 @@ object BlazeGDBServerProvider {
       RunConfigurationUtils.getCompilerKind(configuration),
     )
 
-    if (Registry.`is`("bazel.clwb.debug.extraflags.legacy")) {
+    if (shouldInjectDebugFlags(configuration.project)) {
       builder.withBuildFlags()
     }
 

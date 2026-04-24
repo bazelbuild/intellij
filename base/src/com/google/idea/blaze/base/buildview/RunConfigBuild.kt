@@ -40,8 +40,6 @@ class RunConfigBuild @JvmOverloads constructor(
   private val configuration: BlazeCommandRunConfiguration,
   private val invocationContext: BlazeInvocationContext,
   private val target: Label,
-
-  @Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
   private val additionalFlags: List<String> = emptyList(),
 ) : BuildStep<RunConfigBuild.Output> {
 

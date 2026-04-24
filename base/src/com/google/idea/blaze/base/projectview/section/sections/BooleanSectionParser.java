@@ -23,11 +23,11 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 
 import javax.annotation.Nullable;
 
-class BooleanSectionParser
+public class BooleanSectionParser
         extends ScalarSectionParser<Boolean> {
     private final String quickDocs;
 
-    BooleanSectionParser(SectionKey<Boolean, ScalarSection<Boolean>> key, String quickDocs) {
+    public BooleanSectionParser(SectionKey<Boolean, ScalarSection<Boolean>> key, String quickDocs) {
         super(key, ':');
         this.quickDocs = quickDocs;
     }

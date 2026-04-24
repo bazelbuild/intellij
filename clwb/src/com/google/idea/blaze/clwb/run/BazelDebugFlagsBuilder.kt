@@ -77,7 +77,6 @@ class BazelDebugFlagsBuilder private constructor(
 
   private fun isGdb() = debuggerKind == BlazeDebuggerKind.BUNDLED_GDB || debuggerKind == BlazeDebuggerKind.GDB_SERVER
 
-  @Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
   fun withBuildFlags(workspaceRoot: String? = null) {
     flags.add("--compilation_mode=dbg")
     flags.add("--strip=never")

@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.ExecutorType
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner
 import com.google.idea.blaze.base.util.SaveUtil
+import com.google.idea.blaze.clwb.sync.shouldInjectDebugFlags
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
 import com.intellij.execution.RunCanceledByUserException
@@ -34,7 +35,6 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.cidr.execution.CidrCommandLineState
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
@@ -73,7 +73,7 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
     SaveUtil.saveAllFiles()
 
     val target = getSingleTarget(configuration)
-    val debugFlags = legacyDebugFlags(env, configuration)
+    val debugFlags = debugFlagsToInject(env, configuration)
 
     val executableFuture = launchBuild(env.project, "Build $target") { ctx ->
       val invocationContext = BlazeInvocationContext.runConfigContext(
@@ -102,7 +102,7 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
         ctx.println("Target configuration: ${config.mainTarget} (${config.mainConfiguration})")
 
         if (isDebugging(env)) {
-          DebugInfoCheck(env.project, config).execute(ctx)
+          DebugInfoCheck(env, config).execute(ctx)
         }
       }
 
@@ -125,9 +125,8 @@ private fun isDebugging(environment: ExecutionEnvironment): Boolean {
   return environment.executor is DefaultDebugExecutor
 }
 
-@Deprecated("Should only be used for backwards compatibility, do not inject extra build flags.")
-private fun legacyDebugFlags(env: ExecutionEnvironment, configuration: BlazeCommandRunConfiguration): List<String> {
-  if (!isDebugging(env) || !Registry.`is`("bazel.clwb.debug.extraflags.legacy")) return emptyList()
+private fun debugFlagsToInject(env: ExecutionEnvironment, configuration: BlazeCommandRunConfiguration): List<String> {
+  if (!isDebugging(env) || !shouldInjectDebugFlags(env.project)) return emptyList()
 
   return BazelDebugFlagsBuilder.fromDefaults(
     RunConfigurationUtils.getDebuggerKind(configuration),
