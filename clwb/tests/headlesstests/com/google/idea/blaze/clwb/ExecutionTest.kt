@@ -85,6 +85,8 @@ class ExecutionTest : ClwbHeadlessTestCase() {
       builder.addBuildFlag("--cxxopt=-std=c++17")
     }
 
+    builder.addBuildFlag("--compilation_mode=dbg")
+
     return builder
   }
 

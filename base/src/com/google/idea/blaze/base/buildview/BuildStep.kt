@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.buildview
 
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.output.IssueOutput
+import com.google.idea.blaze.base.scope.scopes.IdeaLogScope
 import com.google.idea.blaze.base.scope.scopes.TimingScope
 import com.google.idea.blaze.base.util.pluginProjectScope
 import com.intellij.execution.ExecutionException
@@ -123,6 +124,7 @@ fun <T> launchBuild(project: Project, title: String, body: BuildBody<T>): Future
     BlazeContext.create().use { ctx ->
       ctx.push(TimingScope(title, TimingScope.EventType.Other))
       ctx.push(BuildViewScope.forBuild(project, title))
+      ctx.push(IdeaLogScope())
 
       try {
         ctx.pushJob { body.run(ctx) }
