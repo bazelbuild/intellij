@@ -33,6 +33,7 @@ import com.intellij.util.asSafely
 import java.io.IOException
 
 private const val CC_COMPILE_MNEMONIC = "CppCompile"
+private const val CC_LINK_MNEMONIC = "CppLink"
 
 class DiscoverTargetConfigurations(
   private val project: Project,
@@ -77,14 +78,19 @@ class DiscoverTargetConfigurations(
         fail("failed to parse action graph", e)
       }
 
-      val configurations = graph.targets.mapNotNull { target ->
+      val compileActions = graph.targets.mapNotNull { target ->
         target.compileAction()?.let { Label.create(target.label) to it }
+      }.toMap()
+
+      val linkActions = graph.targets.mapNotNull { target ->
+        target.linkAction()?.let { Label.create(target.label) to it }
       }.toMap()
 
       return Output(
         mainTarget = Label.create(graph.defaultTarget.label),
         mainConfiguration = graph.defaultConfiguration,
-        compileActions = configurations,
+        compileActions = compileActions,
+        linkActions = linkActions,
       )
     }
   }
@@ -93,9 +99,14 @@ class DiscoverTargetConfigurations(
     val mainTarget: Label,
     val mainConfiguration: ActionGraph.Configuration,
     val compileActions: Map<Label, ActionGraph.Action>,
+    val linkActions: Map<Label, ActionGraph.Action>,
   )
 }
 
 private fun ActionGraph.Target.compileAction(): ActionGraph.Action? {
   return actions.firstOrNull { it.mnemonic == CC_COMPILE_MNEMONIC }
+}
+
+private fun ActionGraph.Target.linkAction(): ActionGraph.Action? {
+  return actions.firstOrNull { it.mnemonic == CC_LINK_MNEMONIC }
 }

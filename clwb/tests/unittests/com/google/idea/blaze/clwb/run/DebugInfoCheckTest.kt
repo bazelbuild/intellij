@@ -21,6 +21,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
+import com.intellij.util.system.OS
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -29,11 +30,11 @@ import org.junit.runners.JUnit4
 class DebugInfoCheckTest {
 
   private fun assertPasses(arguments: List<String>, compilerKind: OCCompilerKind?) {
-    assertThat(checkDebugInfoPresent(arguments, compilerKind)).isTrue()
+    assertThat(checkCompileAction(arguments, compilerKind)).isTrue()
   }
 
   private fun assertFails(arguments: List<String>, compilerKind: OCCompilerKind?) {
-    assertThat(checkDebugInfoPresent(arguments, compilerKind)).isFalse()
+    assertThat(checkCompileAction(arguments, compilerKind)).isFalse()
   }
 
   // -- GCC tests --
@@ -159,5 +160,41 @@ class DebugInfoCheckTest {
   @Test
   fun unknown_withDashG0_fails() {
     assertFails(listOf("/some/compiler", "-c", "-g0", "main.c"), null)
+  }
+
+  // -- Link action tests --
+  // Note: checkLinkAction uses OS.CURRENT, so on non-macOS these always pass trivially.
+  // The tests are still valuable as documentation and will exercise the real logic on macOS CI.
+
+  @Test
+  fun linkAction_gcc_alwaysPasses() {
+    assertThat(checkLinkAction(listOf("/usr/bin/ld", "-o", "a.out", "main.o"), GCCCompilerKind)).isTrue()
+  }
+
+  @Test
+  fun linkAction_msvc_alwaysPasses() {
+    assertThat(checkLinkAction(listOf("link.exe", "/OUT:a.exe", "main.obj"), MSVCCompilerKind)).isTrue()
+  }
+
+  @Test
+  fun linkAction_nullCompiler_alwaysPasses() {
+    assertThat(checkLinkAction(listOf("/usr/bin/ld", "-o", "a.out"), null)).isTrue()
+  }
+
+  @Test
+  fun linkAction_clang_withOsoPrefix_passesOnMacOS() {
+    // On non-macOS this passes trivially; on macOS it validates the flag is present
+    assertThat(checkLinkAction(listOf("/usr/bin/clang", "-Wl,-oso_prefix,.", "-o", "a.out"), ClangCompilerKind)).isTrue()
+  }
+
+  @Test
+  fun linkAction_clang_withoutOsoPrefix_failsOnMacOS() {
+    val result = checkLinkAction(listOf("/usr/bin/clang", "-o", "a.out", "main.o"), ClangCompilerKind)
+    if (OS.CURRENT == OS.macOS) {
+      assertThat(result).isFalse()
+    } else {
+      // On non-macOS, link action checks are skipped
+      assertThat(result).isTrue()
+    }
   }
 }
