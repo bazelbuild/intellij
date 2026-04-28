@@ -70,27 +70,16 @@ When enabled, debug builds add (see
 
 ## I had working debug before — what should I do?
 
-1. Verify command-line debug still works:
-   `bazel run -c dbg //your:target` and attach a debugger, or build
-   with the same flags you normally use and inspect the output.
-2. If command-line works but the IDE warns: pick **Continue** or
-   **Dismiss for Target/Project**. The check is conservative —
-   toolchain wrappers can append `-g` in ways `aquery` does not show.
-3. If you prefer the previous behavior (no check, no injection),
-   leave `inject_debug_flags` unset (it defaults to `false`) and
-   dismiss for project once.
-
-## My debug was broken before — what should I do?
-
 1. Click **inject debug flags** in the dialog. The plugin writes
    `inject_debug_flags: true` to your local `.bazelproject` and
-   re-runs the configuration with the injected flags.
-2. If that still does not yield breakpoints, run
-   `bazel aquery --output=text 'deps(//your:target)'` and confirm the
-   compile actions contain `-g*` and (on macOS) the link action
-   contains `-Wl,-oso_prefix,.`. If they do not, your toolchain is
-   stripping them — the fix belongs in the toolchain or `--copt`s,
-   not the plugin.
+   re-runs the configuration with the injected flags. This is similar
+   to the plugin's previous behavior.
+2. Verify command-line debug still works:
+   `bazel run -c dbg //your:target` and attach a debugger, or build
+   with the same flags you normally use and inspect the output.
+3. If command-line works but the IDE warns: pick **Continue** or
+   **Dismiss for Target/Project**. The check is conservative —
+   toolchain wrappers can append `-g` in ways `aquery` does not show.
 
 ## Reverting / power-user knobs
 
