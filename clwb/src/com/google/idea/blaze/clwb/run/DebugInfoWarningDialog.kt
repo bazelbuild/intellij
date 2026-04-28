@@ -21,6 +21,7 @@ import com.google.idea.common.aquery.ActionGraph
 import com.intellij.execution.RunManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -30,6 +31,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 private const val NOTIFICATION_TITLE = "Debug Info Warning"
+private const val DOC_URL = "https://github.com/bazelbuild/intellij/blob/master/docs/cpp/debugging.md"
 
 internal const val INJECT_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 internal const val DISMISS_TARGET_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE + 1
@@ -100,6 +102,11 @@ private class DebugInfoWarningDialog(
       )
     }
     separator()
+    row {
+      text("Learn more <a>here</a> about this check and how to resolve it.") {
+        BrowserUtil.browse(DOC_URL)
+      }
+    }
   }
 
   override fun createActions(): Array<Action> = arrayOf(
