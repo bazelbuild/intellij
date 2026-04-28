@@ -263,6 +263,7 @@ message ExternalRepository {
     BAD_REPO_CONTENTS_CACHE = 5 [(metadata) = { exit_code: 2 }];
     UNKNOWN_REGISTRY = 6 [(metadata) = { exit_code: 2 }];
     SYMLINKING_FAILED = 7 [(metadata) = { exit_code: 2 }];
+    REPOSITORY_MAPPING_IO_EXCEPTION = 8 [(metadata) = { exit_code: 36 }];
   }
   Code code = 1;
   // Additional data could include external repository names.
