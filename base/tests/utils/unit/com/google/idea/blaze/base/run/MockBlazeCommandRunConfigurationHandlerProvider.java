@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
@@ -33,11 +34,16 @@ import javax.swing.JComponent;
 import org.jdom.Element;
 
 /** A mock {@link BlazeCommandRunConfigurationHandlerProvider}. */
-public class MockBlazeCommandRunConfigurationHandlerProvider
-    implements BlazeCommandRunConfigurationHandlerProvider {
+public class MockBlazeCommandRunConfigurationHandlerProvider implements BlazeCommandRunConfigurationHandlerProvider {
+
   @Override
-  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
-    return true;
+  public String getDisplayLabel() {
+    return "Mock";
+  }
+
+  @Override
+  public ImmutableList<Kind> getDefaultKinds() {
+    return ImmutableList.of();
   }
 
   @Override

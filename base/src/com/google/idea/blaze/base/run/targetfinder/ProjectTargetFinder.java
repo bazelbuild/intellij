@@ -28,9 +28,8 @@ import java.util.concurrent.Future;
 class ProjectTargetFinder implements TargetFinder {
 
   @Override
-  public Future<TargetInfo> findTarget(Project project, Label label) {
+  public TargetInfo findTarget(Project project, Label label) {
     final var projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    final var targetInfo = projectData != null ? projectData.getTargetInfo(label) : null;
-    return Futures.immediateFuture(targetInfo);
+    return projectData != null ? projectData.getTargetInfo(label) : null;
   }
 }

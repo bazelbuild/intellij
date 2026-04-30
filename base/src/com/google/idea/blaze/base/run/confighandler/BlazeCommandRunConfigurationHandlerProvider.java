@@ -15,9 +15,12 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import java.util.Collection;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -27,28 +30,19 @@ import javax.annotation.Nullable;
 public interface BlazeCommandRunConfigurationHandlerProvider {
 
   ExtensionPointName<BlazeCommandRunConfigurationHandlerProvider> EP_NAME =
-      ExtensionPointName.create(
-          "com.google.idea.blaze.BlazeCommandRunConfigurationHandlerProvider");
+      ExtensionPointName.create("com.google.idea.blaze.BlazeCommandRunConfigurationHandlerProvider");
 
-  /** The target state of a blaze run configuration. */
-  enum TargetState {
-    KNOWN,
-    PENDING;
-  }
+  String getDisplayLabel();
 
   /**
-   * Find a BlazeCommandRunConfigurationHandlerProvider applicable to the given kind. If no provider
-   * is more relevant, {@link BlazeCommandGenericRunConfigurationHandlerProvider} is returned.
+   * Find BlazeCommandRunConfigurationHandlerProviders applicable to the given kind.
    */
-  static BlazeCommandRunConfigurationHandlerProvider findHandlerProvider(
-      TargetState state, @Nullable Kind kind) {
-    for (BlazeCommandRunConfigurationHandlerProvider handlerProvider : EP_NAME.getExtensions()) {
-      if (handlerProvider.canHandleKind(state, kind)) {
-        return handlerProvider;
-      }
-    }
-    throw new RuntimeException(
-        "No BlazeCommandRunConfigurationHandlerProvider found for Kind " + kind);
+  static Optional<BlazeCommandRunConfigurationHandlerProvider> findPreferredHandler(@Nullable Kind kind) {
+    return EP_NAME.getExtensionList().stream().filter(it -> it.getDefaultKinds().contains(kind)).findFirst();
+  }
+
+  static Collection<BlazeCommandRunConfigurationHandlerProvider> findHandlerProviders(){
+    return EP_NAME.getExtensionList();
   }
 
   /** Get the BlazeCommandRunConfigurationHandlerProvider with the given ID, if one exists. */
@@ -62,8 +56,11 @@ public interface BlazeCommandRunConfigurationHandlerProvider {
     return null;
   }
 
-  /** Whether this extension is applicable to the kind. */
-  boolean canHandleKind(TargetState state, @Nullable Kind kind);
+  /** Whether this handler should appear in the user-facing handler selection dropdown. */
+  default boolean isUserSelectable() { return true; }
+
+  /** The kinds for which this handler should be selected by default. Empty for fallback/internal handlers. */
+  ImmutableList<Kind> getDefaultKinds();
 
   /** Returns the corresponding {@link BlazeCommandRunConfigurationHandler}. */
   BlazeCommandRunConfigurationHandler createHandler(BlazeCommandRunConfiguration configuration);

@@ -15,25 +15,35 @@
  */
 package com.google.idea.blaze.base.run.confighandler;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import javax.annotation.Nullable;
 
 /**
  * Generic handler provider for {@link BlazeCommandRunConfiguration}s, used as a fallback in the
  * case where no other handler providers are more relevant.
  */
-public class BlazeCommandGenericRunConfigurationHandlerProvider
-    implements BlazeCommandRunConfigurationHandlerProvider {
+public class BlazeCommandGenericRunConfigurationHandlerProvider implements BlazeCommandRunConfigurationHandlerProvider {
 
   public static BlazeCommandGenericRunConfigurationHandlerProvider getInstance() {
-    return BlazeCommandRunConfigurationHandlerProvider.EP_NAME.findExtension(
-        BlazeCommandGenericRunConfigurationHandlerProvider.class);
+    return BlazeCommandRunConfigurationHandlerProvider.EP_NAME
+        .findExtension(BlazeCommandGenericRunConfigurationHandlerProvider.class);
+  }
+
+  /** Returns the registered instance, or creates a new one if extension points aren't available (e.g., in tests). */
+  public static BlazeCommandGenericRunConfigurationHandlerProvider getInstanceOrCreate() {
+    BlazeCommandGenericRunConfigurationHandlerProvider instance = getInstance();
+    return instance != null ? instance : new BlazeCommandGenericRunConfigurationHandlerProvider();
   }
 
   @Override
-  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
-    return !state.equals(TargetState.PENDING);
+  public String getDisplayLabel() {
+    return "Generic Command";
+  }
+
+  @Override
+  public ImmutableList<Kind> getDefaultKinds() {
+    return ImmutableList.of();
   }
 
   @Override
