@@ -4,6 +4,7 @@ The best way to become familiar with the plugin is to watch [this](https://www.y
 ## Advanced features
 
 - [Python code generation](python/code-generators.md)
+- [Debugging C/C++ Bazel targets](cpp/debugging.md)
 - [Query Sync](querysync.md)
 - [Starlark Debugger](starlark_debugger.md)
 - [Sub-target incremental compilation](fastbuild.md)

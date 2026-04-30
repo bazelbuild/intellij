@@ -1,0 +1,419 @@
+rule_classes {
+  id: 1
+  name: "cc_binary"
+}
+targets {
+  id: 1
+  label: "//main:main_cc"
+  rule_class_id: 1
+}
+configuration {
+  id: 1
+  mnemonic: "k8-fastbuild"
+  platform_name: "k8"
+  checksum: "91e24984663c795f7d9f904758d4b84ba1954389b2ab756f70a6f32db2a79020"
+}
+path_fragments {
+  id: 3
+  label: "external"
+}
+path_fragments {
+  id: 2
+  label: "rules_cc++cc_configure_extension+local_config_cc"
+  parent_id: 3
+}
+path_fragments {
+  id: 1
+  label: "builtin_include_directory_paths"
+  parent_id: 2
+}
+artifacts {
+  id: 1
+  path_fragment_id: 1
+}
+path_fragments {
+  id: 4
+  label: "cc_wrapper.sh"
+  parent_id: 2
+}
+artifacts {
+  id: 2
+  path_fragment_id: 4
+}
+path_fragments {
+  id: 5
+  label: "deps_scanner_wrapper.sh"
+  parent_id: 2
+}
+artifacts {
+  id: 3
+  path_fragment_id: 5
+}
+path_fragments {
+  id: 6
+  label: "validate_static_library.sh"
+  parent_id: 2
+}
+artifacts {
+  id: 4
+  path_fragment_id: 6
+}
+dep_set_of_files {
+  id: 2
+  direct_artifact_ids: 1
+  direct_artifact_ids: 2
+  direct_artifact_ids: 3
+  direct_artifact_ids: 4
+}
+path_fragments {
+  id: 8
+  label: "main"
+}
+path_fragments {
+  id: 7
+  label: "main.cc"
+  parent_id: 8
+}
+artifacts {
+  id: 5
+  path_fragment_id: 7
+}
+dep_set_of_files {
+  id: 1
+  transitive_dep_set_ids: 2
+  direct_artifact_ids: 5
+}
+path_fragments {
+  id: 15
+  label: "bazel-out"
+}
+path_fragments {
+  id: 14
+  label: "k8-fastbuild"
+  parent_id: 15
+}
+path_fragments {
+  id: 13
+  label: "bin"
+  parent_id: 14
+}
+path_fragments {
+  id: 12
+  label: "main"
+  parent_id: 13
+}
+path_fragments {
+  id: 11
+  label: "_objs"
+  parent_id: 12
+}
+path_fragments {
+  id: 10
+  label: "main_cc"
+  parent_id: 11
+}
+path_fragments {
+  id: 9
+  label: "main.pic.o"
+  parent_id: 10
+}
+artifacts {
+  id: 6
+  path_fragment_id: 9
+}
+path_fragments {
+  id: 16
+  label: "main.pic.d"
+  parent_id: 10
+}
+artifacts {
+  id: 7
+  path_fragment_id: 16
+}
+actions {
+  target_id: 1
+  action_key: "edb8535d89ba628747e3a255231fae823d4126628316053bbd0c2d30ea8d2156"
+  mnemonic: "CppCompile"
+  configuration_id: 1
+  arguments: "/usr/bin/gcc"
+  arguments: "-U_FORTIFY_SOURCE"
+  arguments: "-fstack-protector"
+  arguments: "-Wall"
+  arguments: "-Wunused-but-set-parameter"
+  arguments: "-Wno-free-nonheap-object"
+  arguments: "-fno-omit-frame-pointer"
+  arguments: "-std=c++17"
+  arguments: "-MD"
+  arguments: "-MF"
+  arguments: "bazel-out/k8-fastbuild/bin/main/_objs/main_cc/main.pic.d"
+  arguments: "-frandom-seed=bazel-out/k8-fastbuild/bin/main/_objs/main_cc/main.pic.o"
+  arguments: "-fPIC"
+  arguments: "-iquote"
+  arguments: "."
+  arguments: "-iquote"
+  arguments: "bazel-out/k8-fastbuild/bin"
+  arguments: "-iquote"
+  arguments: "external/rules_cc+"
+  arguments: "-iquote"
+  arguments: "bazel-out/k8-fastbuild/bin/external/rules_cc+"
+  arguments: "-iquote"
+  arguments: "external/bazel_tools"
+  arguments: "-iquote"
+  arguments: "bazel-out/k8-fastbuild/bin/external/bazel_tools"
+  arguments: "-Wall"
+  arguments: "-DCXXOPTS"
+  arguments: "-c"
+  arguments: "main/main.cc"
+  arguments: "-o"
+  arguments: "bazel-out/k8-fastbuild/bin/main/_objs/main_cc/main.pic.o"
+  arguments: "-fno-canonical-system-headers"
+  arguments: "-Wno-builtin-macro-redefined"
+  arguments: "-D__DATE__=\"redacted\""
+  arguments: "-D__TIMESTAMP__=\"redacted\""
+  arguments: "-D__TIME__=\"redacted\""
+  environment_variables {
+    key: "PATH"
+    value: "/bin:/usr/bin:/usr/local/bin"
+  }
+  environment_variables {
+    key: "PWD"
+    value: "/proc/self/cwd"
+  }
+  input_dep_set_ids: 1
+  output_ids: 6
+  output_ids: 7
+  discovers_inputs: true
+  primary_output_id: 6
+  execution_platform: "@@platforms//host:host"
+}
+path_fragments {
+  id: 21
+  label: "rules_cc+"
+  parent_id: 3
+}
+path_fragments {
+  id: 20
+  label: "cc"
+  parent_id: 21
+}
+path_fragments {
+  id: 19
+  label: "private"
+  parent_id: 20
+}
+path_fragments {
+  id: 18
+  label: "toolchain"
+  parent_id: 19
+}
+path_fragments {
+  id: 17
+  label: "build_interface_so"
+  parent_id: 18
+}
+artifacts {
+  id: 8
+  path_fragment_id: 17
+}
+path_fragments {
+  id: 22
+  label: "link_dynamic_library.sh"
+  parent_id: 18
+}
+artifacts {
+  id: 9
+  path_fragment_id: 22
+}
+dep_set_of_files {
+  id: 4
+  transitive_dep_set_ids: 2
+  direct_artifact_ids: 8
+  direct_artifact_ids: 9
+}
+dep_set_of_files {
+  id: 3
+  transitive_dep_set_ids: 4
+  direct_artifact_ids: 6
+}
+path_fragments {
+  id: 23
+  label: "main_cc"
+  parent_id: 12
+}
+artifacts {
+  id: 10
+  path_fragment_id: 23
+}
+actions {
+  target_id: 1
+  action_key: "7b34af2af249cb502b4b6d38b00463e10d679a0ea8167a01b9a54889484060fc"
+  mnemonic: "CppLink"
+  configuration_id: 1
+  arguments: "/usr/bin/gcc"
+  arguments: "-o"
+  arguments: "bazel-out/k8-fastbuild/bin/main/main_cc"
+  arguments: "-Wl,-S"
+  arguments: "-fuse-ld=lld"
+  arguments: "-B/usr/bin"
+  arguments: "-Wl,-no-as-needed"
+  arguments: "-Wl,-z,relro,-z,now"
+  arguments: "-pass-exit-codes"
+  arguments: "bazel-out/k8-fastbuild/bin/main/_objs/main_cc/main.pic.o"
+  arguments: "-Wl,--push-state,-as-needed"
+  arguments: "-lstdc++"
+  arguments: "-Wl,--pop-state"
+  arguments: "-Wl,--push-state,-as-needed"
+  arguments: "-lm"
+  arguments: "-Wl,--pop-state"
+  environment_variables {
+    key: "PATH"
+    value: "/bin:/usr/bin:/usr/local/bin"
+  }
+  environment_variables {
+    key: "ZERO_AR_DATE"
+    value: "1"
+  }
+  environment_variables {
+    key: "PWD"
+    value: "/proc/self/cwd"
+  }
+  input_dep_set_ids: 3
+  output_ids: 10
+  primary_output_id: 10
+  execution_platform: "@@platforms//host:host"
+}
+dep_set_of_files {
+  id: 5
+  direct_artifact_ids: 10
+}
+path_fragments {
+  id: 24
+  label: "main_cc.stripped"
+  parent_id: 12
+}
+artifacts {
+  id: 11
+  path_fragment_id: 24
+}
+actions {
+  target_id: 1
+  action_key: "fa1838b69ba920949054471969cddae461619e5ff67d48868aa4601c4beee990"
+  mnemonic: "CcStrip"
+  configuration_id: 1
+  arguments: "/usr/bin/strip"
+  arguments: "-S"
+  arguments: "-p"
+  arguments: "-o"
+  arguments: "bazel-out/k8-fastbuild/bin/main/main_cc.stripped"
+  arguments: "bazel-out/k8-fastbuild/bin/main/main_cc"
+  environment_variables {
+    key: "PATH"
+    value: "/bin:/usr/bin:/usr/local/bin"
+  }
+  input_dep_set_ids: 5
+  output_ids: 11
+  primary_output_id: 11
+  execution_platform: "@@platforms//host:host"
+}
+path_fragments {
+  id: 25
+  label: "main_cc.dwp"
+  parent_id: 12
+}
+artifacts {
+  id: 12
+  path_fragment_id: 25
+}
+actions {
+  target_id: 1
+  action_key: "4422f442ec223c47c6b503a3d25860acc406026bf372721c6c7147e09aff2452"
+  mnemonic: "FileWrite"
+  configuration_id: 1
+  output_ids: 12
+  primary_output_id: 12
+  execution_platform: "@@platforms//host:host"
+}
+path_fragments {
+  id: 26
+  label: "main_cc.repo_mapping"
+  parent_id: 12
+}
+artifacts {
+  id: 13
+  path_fragment_id: 26
+}
+actions {
+  target_id: 1
+  action_key: "4342662a54ae52c77ca83b98d43ccb93ce0bcdc6732bcdb5658614ed0b0daf05"
+  mnemonic: "RepoMappingManifest"
+  configuration_id: 1
+  output_ids: 13
+  primary_output_id: 13
+  execution_platform: "@@platforms//host:host"
+}
+path_fragments {
+  id: 27
+  label: "main_cc.runfiles_manifest"
+  parent_id: 12
+}
+artifacts {
+  id: 14
+  path_fragment_id: 27
+}
+actions {
+  target_id: 1
+  action_key: "7adaf51a9239f9985b77536c08f6c3a19ebcd3679527c993f69cddcd71a12d60"
+  mnemonic: "SourceSymlinkManifest"
+  configuration_id: 1
+  output_ids: 14
+  primary_output_id: 14
+  execution_platform: "@@platforms//host:host"
+}
+dep_set_of_files {
+  id: 6
+  direct_artifact_ids: 14
+}
+path_fragments {
+  id: 29
+  label: "main_cc.runfiles"
+  parent_id: 12
+}
+path_fragments {
+  id: 28
+  label: "MANIFEST"
+  parent_id: 29
+}
+artifacts {
+  id: 15
+  path_fragment_id: 28
+}
+actions {
+  target_id: 1
+  action_key: "993f442bf4ddd9ee04497729d1370b1136a223e8aa85e6f7c8fd24fb5846671b"
+  mnemonic: "SymlinkTree"
+  configuration_id: 1
+  input_dep_set_ids: 6
+  output_ids: 15
+  primary_output_id: 15
+  execution_platform: "@@platforms//host:host"
+}
+dep_set_of_files {
+  id: 7
+  direct_artifact_ids: 10
+  direct_artifact_ids: 15
+  direct_artifact_ids: 13
+}
+artifacts {
+  id: 16
+  path_fragment_id: 29
+}
+actions {
+  target_id: 1
+  action_key: "64524680ae352918974e5de22f89166472d4f41ef8c12369e8c62a2141413139"
+  mnemonic: "RunfilesTree"
+  configuration_id: 1
+  input_dep_set_ids: 7
+  output_ids: 16
+  primary_output_id: 16
+  execution_platform: "@@platforms//host:host"
+}

@@ -28,11 +28,10 @@ public class IdeaLogScope implements BlazeScope {
 
   private static final Logger logger = Logger.getInstance(IdeaLogScope.class);
 
-  private static final OutputSink<IssueOutput> issueSink =
-      (output) -> {
-        logger.warn(output.getTitle());
-        return OutputSink.Propagation.Continue;
-      };
+  private static final OutputSink<IssueOutput> issueSink = (output) -> {
+    logger.warn(output.toString());
+    return OutputSink.Propagation.Continue;
+  };
 
   private static final OutputSink<PrintOutput> printSink =
       (output) -> {

@@ -38,7 +38,8 @@ public class TransitionTest extends ClwbHeadlessTestCase {
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     final var builder = super.projectViewText(version);
 
-    builder.addTarget("//main:foo_bar");
+    builder.addTarget("//main:simple_foo");
+    builder.addTarget("//main:simple_bar");
     builder.addTarget("//main:shared_a");
     builder.addTarget("//main:shared_b");
 

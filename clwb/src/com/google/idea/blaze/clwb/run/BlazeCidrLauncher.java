@@ -46,9 +46,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.cpp.CppBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -60,10 +58,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.CidrCoroutineHelper;
@@ -80,7 +75,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -232,7 +226,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     if (target == null) {
       throw new ExecutionException("Cannot parse run configuration target.");
     }
-    if (runner.executableToDebug == null) {
+    if (runner.executable == null) {
       throw new ExecutionException("No debug binary found.");
     }
     EventLoggingService.getInstance().logEvent(getClass(), "debugging-cpp");
@@ -244,14 +238,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     if (debuggerKind != BlazeDebuggerKind.GDB_SERVER) {
 
       File workingDir =
-          new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
+          new File(runner.executable + ".runfiles", workspaceRootDirectory.getName());
 
       if (!workingDir.exists()) {
         workingDir = workspaceRootDirectory;
       }
 
       GeneralCommandLine commandLine =
-          new GeneralCommandLine(runner.executableToDebug.getPath()).withWorkDirectory(workingDir);
+          new GeneralCommandLine(runner.executable.toString()).withWorkDirectory(workingDir);
 
       commandLine.addParameters(getTargetArguments(target));
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
@@ -303,7 +297,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     CidrRemoteDebugParameters parameters =
         new CidrRemoteDebugParameters(
             "tcp:localhost:" + handlerState.getDebugPortState().port,
-            runner.executableToDebug.getPath(),
+            runner.executable.toString(),
             "target:",
             ImmutableList.of(
                 new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
