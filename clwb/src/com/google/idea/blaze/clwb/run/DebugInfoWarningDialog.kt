@@ -31,7 +31,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 private const val NOTIFICATION_TITLE = "Debug Info Warning"
-private const val DOC_URL = "https://github.com/bazelbuild/intellij/blob/master/docs/cpp/debugging.md"
+private const val DOC_URL = "https://jb.gg/clwb-debug-docs"
 
 internal const val INJECT_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 internal const val DISMISS_TARGET_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE + 1
