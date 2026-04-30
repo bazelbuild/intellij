@@ -109,7 +109,6 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     compilerVersionChecker = new MockCompilerVersionChecker("1234");
     applicationServices.register(CompilerVersionChecker.class, compilerVersionChecker);
     applicationServices.register(ProgressManager.class, new ProgressManagerImpl());
-    applicationServices.register(CompilerWrapperProvider.class, new CompilerWrapperProviderImpl());
     xcodeSettingsProvider = new MockXcodeSettingsProvider();
     projectServices.register(XcodeCompilerSettingsProvider.class, xcodeSettingsProvider);
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));

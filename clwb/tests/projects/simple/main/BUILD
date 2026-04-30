@@ -9,6 +9,10 @@ cc_binary(
         "$(STACK_FRAME_UNLIMITED)",  # empty make variable should be stripped by make variable tokenization
     ],
     cxxopts = ["-DCXXOPTS"],
+    defines = [
+        'SPACE_DEFINE="1 2 3"',
+        "SIMPLE_DEFINE=42",
+    ],
 )
 
 cc_binary(
@@ -20,6 +24,10 @@ cc_binary(
         "$(STACK_FRAME_UNLIMITED)",  # empty make variable should be stripped by make variable tokenization
     ],
     cxxopts = ["-DCXXOPTS"],
+    defines = [
+        'SPACE_DEFINE="1 2 3"',
+        "SIMPLE_DEFINE=42",
+    ],
 )
 
 cc_test(

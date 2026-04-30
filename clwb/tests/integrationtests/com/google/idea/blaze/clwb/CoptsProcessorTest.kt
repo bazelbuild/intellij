@@ -144,6 +144,23 @@ class CoptsProcessorTest : BasePlatformTestCase() {
   )
 
   @Test
+  fun `pass through defines with spaces`() = doTest(
+    compilers = listOf(GCCCompilerKind, ClangCompilerKind),
+    copts = listOf(
+      """-DSPACE_DEFINE="1 2 3"""",
+      "-DSIMPLE_DEFINE=42",
+      """-DQUOTED_PATH="path/with spaces/file.h"""",
+      """-DPARENS_DEFINE="foo(bar)"""",
+    ),
+    expected = listOf(
+      """-DSPACE_DEFINE="1 2 3"""",
+      "-DSIMPLE_DEFINE=42",
+      """-DQUOTED_PATH="path/with spaces/file.h"""",
+      """-DPARENS_DEFINE="foo(bar)"""",
+    ),
+  )
+
+  @Test
   fun `expand sysroot`() = doTest(
     compilers = listOf(GCCCompilerKind, ClangCompilerKind),
     copts = listOf(
