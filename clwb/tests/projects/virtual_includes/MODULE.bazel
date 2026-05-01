@@ -1,7 +1,7 @@
 module(name = "clwb_virtual_includes_project")
 
 bazel_dep(name = "rules_cc", version = "0.2.18")
-bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "platforms", version = "1.1.0")
 
 # local external dependency
 bazel_dep(name = "clwb_virtual_includes_external")
