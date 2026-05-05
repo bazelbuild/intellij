@@ -1,3 +1,13 @@
+v2026.05.05
+===========
+* Further improvements to transition support
+* Add toolbar to switch the preferred Bazel configuration for C/C++ #8278
+* Detect missing debug flags rather than injecting them #8317
+* Handle large execlog files #8261
+* Drop 2025.2 support and promote 2026.1 to stable #8288
+* Fix corrupted stdout in BazelExecService #8308
+* Fix import suggestion for projects with invalid workspace root #8298
+
 v2026.03.20
 ===========
 * Further improvements to transition support
