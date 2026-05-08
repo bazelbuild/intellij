@@ -20,7 +20,7 @@ The Bazel for CLion plugin is built and released from the [master branch](https:
 
 The Bazel for IntelliJ plugin is built and released from the [ijwb branch](https://github.com/bazelbuild/intellij/tree/ijwb) of this repository. However, maintenance for the IntelliJ plugin is limited to ensuring compatibility with new versions of JetBrains IDEs. No new features or bug fixes will be provided.
 
-The Bazel for Android Studio plugin is built and released from [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/). The [google branch](https://github.com/bazelbuild/intellij/tree/google) is now deprecated. The last snapshot of the Android Studio plugin that was hosted in this repository can be found on the [aswb branch](https://github.com/bazelbuild/intellij/tree/aswb).
+The Bazel for Android Studio plugin is built and released from [AOSP](https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/aswb/) — that is the only location with up-to-date sources. The [google branch](https://github.com/bazelbuild/intellij/tree/google) is deprecated, and the [aswb branch](https://github.com/bazelbuild/intellij/tree/aswb) holds only an outdated snapshot of the Android Studio plugin from when it was last hosted in this repository. Thus, do not use it as a reference for current Android Studio plugin code.
 
 Although the code in this repository and in AOSP share the same structure and core components, they have diverged from each other. 
 
