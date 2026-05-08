@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.sync.SyncListener
 import com.google.idea.blaze.base.sync.SyncMode
 import com.google.idea.blaze.base.sync.SyncResult
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
+import com.google.idea.blaze.clwb.run.LastBuildConfigurations
 import com.google.idea.blaze.cpp.BlazeResolveConfigurationID
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
@@ -85,6 +86,13 @@ private class BazelConfigSwitchComboAction(
     // trigger update on project data changes
     bus.subscribe(SyncListener.TOPIC, object : SyncListener {
       override fun afterSync(project: Project, context: BlazeContext, syncMode: SyncMode, syncResult: SyncResult, buildIds: ImmutableSet<Int>) {
+        state.invalidate()
+      }
+    })
+
+    // trigger update when the preferred run configuration changes
+    bus.subscribe(LastBuildConfigurations.TOPIC, object : LastBuildConfigurations.Listener {
+      override fun preferredConfigurationChanged() {
         state.invalidate()
       }
     })
@@ -197,12 +205,13 @@ private class BazelConfigSwitchComboAction(
       .filterNotNullValues()
 
     if (configurations.isEmpty()) return null
-    val selected = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys)
+    val current = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys).first
+    val selected = OCResolveContextSettings.getInstance(project).findPriorityConfiguration(configurations.keys)
 
     return SwitcherState(
-      currentConfig = configurations.getValue(selected.first),
+      currentConfig = configurations.getValue(current),
       availableConfigs = configurations.values.toList(),
-      isAutoSelect = !selected.second,
+      isAutoSelect = selected == null,
     )
   }
 }

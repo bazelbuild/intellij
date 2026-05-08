@@ -40,12 +40,18 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.clwb.sync.BlazeCLionSyncPlugin"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.clwb.run.BlazeCidrRunConfigurationHandlerProvider" order="first"/>
+    <SyncListener implementation="com.google.idea.blaze.clwb.run.LastBuildConfigurations$SyncCleaner"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze.cpp">
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.MSVCEnvironmentProvider" />
     <CppEnvironmentProvider implementation="com.google.idea.blaze.clwb.environment.ClangClEnvironmentProvider" />
   </extensions>
+
+  <projectListeners>
+    <listener class="com.google.idea.blaze.clwb.run.LastBuildConfigurations$OCResolveContextNotifier"
+              topic="com.google.idea.blaze.clwb.run.LastBuildConfigurations$Listener"/>
+  </projectListeners>
 
   <actions>
     <action id="Bazel.ShowResolveContext"
