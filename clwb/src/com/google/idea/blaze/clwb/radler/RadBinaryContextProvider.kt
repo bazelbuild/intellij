@@ -23,8 +23,11 @@ import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunC
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.intellij.clion.radler.core.protocol.RadSymbolsHost
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafElement
+import java.lang.reflect.Method
 import java.util.*
 
 /**
@@ -44,11 +47,26 @@ class RadBinaryContextProvider : BinaryContextProvider {
   }
 }
 
+// #api261: workaround for breaking API change inside major version
+private val isEntryPointOffsetMethod: Method by lazy {
+  try {
+    RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", VirtualFile::class.java, Int::class.javaPrimitiveType)
+  } catch (_: NoSuchMethodException) {
+    RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", PsiFile::class.java, Int::class.javaPrimitiveType)
+  }
+}
+
 private fun isMain(element: PsiElement?): Boolean {
   if (element !is LeafElement) return false
 
+  val file = if (isEntryPointOffsetMethod.parameterTypes[0] == VirtualFile::class.java) {
+    element.containingFile.viewProvider.virtualFile
+  } else {
+    element.containingFile
+  }
+
   val symbolsHost = RadSymbolsHost.getInstance(element.project)
-  return symbolsHost.isEntryPointOffset(element.containingFile.viewProvider.virtualFile, element.startOffset)
+  return isEntryPointOffsetMethod.invoke(symbolsHost, file, element.startOffset) as Boolean
 }
 
 private fun findTargets(context: ConfigurationContext): Collection<TargetInfo> {
