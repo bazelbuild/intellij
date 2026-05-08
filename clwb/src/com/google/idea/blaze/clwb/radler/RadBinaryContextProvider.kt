@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunC
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.intellij.clion.radler.core.protocol.RadSymbolsHost
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -48,25 +49,25 @@ class RadBinaryContextProvider : BinaryContextProvider {
 }
 
 // #api261: workaround for breaking API change inside major version
-private val isEntryPointOffsetMethod: Method by lazy {
+private val isEntryPointOffsetMethod: ((Project, PsiFile, Int) -> Boolean) by lazy {
   try {
-    RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", VirtualFile::class.java, Int::class.javaPrimitiveType)
+    val method = RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", VirtualFile::class.java, Int::class.javaPrimitiveType)
+
+    return@lazy { project, file, offset ->
+      method.invoke(RadSymbolsHost.getInstance(project), file.viewProvider.virtualFile, offset) as Boolean
+    }
   } catch (_: NoSuchMethodException) {
-    RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", PsiFile::class.java, Int::class.javaPrimitiveType)
+    val method = RadSymbolsHost::class.java.getDeclaredMethod("isEntryPointOffset", PsiFile::class.java, Int::class.javaPrimitiveType)
+
+    return@lazy { project, file, offset ->
+      method.invoke(RadSymbolsHost.getInstance(project), file, offset) as Boolean
+    }
   }
 }
 
 private fun isMain(element: PsiElement?): Boolean {
   if (element !is LeafElement) return false
-
-  val file = if (isEntryPointOffsetMethod.parameterTypes[0] == VirtualFile::class.java) {
-    element.containingFile.viewProvider.virtualFile
-  } else {
-    element.containingFile
-  }
-
-  val symbolsHost = RadSymbolsHost.getInstance(element.project)
-  return isEntryPointOffsetMethod.invoke(symbolsHost, file, element.startOffset) as Boolean
+  return isEntryPointOffsetMethod(element.project, element.containingFile, element.startOffset) as Boolean
 }
 
 private fun findTargets(context: ConfigurationContext): Collection<TargetInfo> {
