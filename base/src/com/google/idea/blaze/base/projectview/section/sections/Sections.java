@@ -48,6 +48,7 @@ public class Sections {
           BazelBinarySection.PARSER,
           BuildConfigSection.PARSER,
           UseExclusionPatternsSection.PARSER,
+          DetectScalaInfoProviderSection.PARSER,
           UseQuerySyncSection.PARSER,
           ViewProjectRootSection.PARSER);
 
