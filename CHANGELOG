@@ -1,6 +1,6 @@
 v2026.05.11
 ===========
-* Fix for breaking API change in 261.1 #8326
+* Fix "Nothing here" for run gutter icons in 2026.1, #8326
 
 v2026.05.05
 ===========
