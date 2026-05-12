@@ -1,8 +1,8 @@
 load("@rules_java//java:defs.bzl", "java_test")
 
-package(
-    default_visibility = [":visibility"],
-)
+package(default_visibility = [":visibility"])
+
+licenses(["notice"])
 
 package_group(
     name = "visibility",

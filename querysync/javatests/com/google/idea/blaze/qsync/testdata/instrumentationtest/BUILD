@@ -5,6 +5,8 @@ load(
     "android_library",
 )
 
+licenses(["notice"])
+
 android_binary(
     name = "app",
     manifest = "AppManifest.xml",

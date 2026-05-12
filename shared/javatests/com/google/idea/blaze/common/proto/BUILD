@@ -3,9 +3,9 @@ load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_java//java:defs.bzl", "java_test")
 load("//:build-visibility.bzl", "DEFAULT_TEST_VISIBILITY")
 
-package(
-    default_visibility = DEFAULT_TEST_VISIBILITY,
-)
+package(default_visibility = DEFAULT_TEST_VISIBILITY)
+
+licenses(["notice"])
 
 proto_library(
     name = "test_proto",
