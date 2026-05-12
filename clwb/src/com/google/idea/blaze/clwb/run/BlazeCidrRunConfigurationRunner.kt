@@ -101,6 +101,9 @@ class BlazeCidrRunConfigurationRunner(private val configuration: BlazeCommandRun
       if (config != null) {
         ctx.println("Target configuration: ${config.mainTarget} (${config.mainConfiguration})")
 
+        // update the preferred configuration based on what is currently run
+        LastBuildConfigurations.getInstance(env.project).update(config.compileActions)
+
         if (isDebugging(env)) {
           DebugInfoCheck(env, config).execute(ctx)
         }

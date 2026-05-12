@@ -27,6 +27,10 @@
     <iw.actionProvider implementation="com.google.idea.blaze.clwb.radler.BazelResolveConfigurationWidgetProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="cidr.projectModel">
+    <resolveConfigurationChooser implementation="com.google.idea.blaze.clwb.radler.RadRunConfigurationChooser" order="after PriorityBasedChooser"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij.rider.cpp.core.projectModel">
     <radProjectFallbackConfigDisabler implementation="com.google.idea.blaze.clwb.radler.RadBazelProjectFallbackConfigDisabler"/>
   </extensions>
