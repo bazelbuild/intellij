@@ -16,14 +16,12 @@
 package com.google.idea.blaze.base.run.targetfinder;
 
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.Future;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,7 @@ public interface TargetFinder {
   }
 
   /**
-   * Returns a future for a {@link TargetInfo} corresponding to the given blaze label.
+   * Returns the {@link TargetInfo} corresponding to the given blaze label, or null if not found.
    */
   @Nullable
   TargetInfo findTarget(Project project, Label label);
