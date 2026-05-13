@@ -26,7 +26,8 @@ import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.system.OS;
-import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.google.idea.blaze.cpp.BazelClangCompilerKind;
+import com.google.idea.blaze.cpp.BazelCompilerKind;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +77,8 @@ public class LibCppTest extends ClwbHeadlessTestCase {
 
   private void checkCompiler() {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
-    assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+    assertThat(compilerSettings.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+    assertThat(compilerSettings.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
   }
 
   private void checkLibCpp() throws IOException {

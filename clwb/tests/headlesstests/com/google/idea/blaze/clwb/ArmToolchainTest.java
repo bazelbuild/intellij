@@ -28,7 +28,8 @@ import com.google.idea.testing.headless.OSRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.lang.CLanguageKind;
-import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
+import com.google.idea.blaze.cpp.BazelCompilerKind;
+import com.google.idea.blaze.cpp.BazelGCCCompilerKind;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,7 +90,8 @@ public class ArmToolchainTest extends ClwbHeadlessTestCase {
   private void checkCompilerSettings() {
     final var compilerSettings = findFileCompilerSettings("srcs/main.c", CLanguageKind.C);
 
-    assertThat(compilerSettings.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+    assertThat(compilerSettings.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
+    assertThat(compilerSettings.getCompilerKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
     assertContainsCompilerFlag("-mcpu=cortex-m33", compilerSettings);
     assertContainsCompilerFlag("-mthumb", compilerSettings);
     assertContainsCompilerFlag("-DSTM32U575xx", compilerSettings);

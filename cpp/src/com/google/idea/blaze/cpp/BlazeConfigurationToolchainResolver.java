@@ -301,16 +301,21 @@ public final class BlazeConfigurationToolchainResolver {
                   return new SimpleImmutableEntry<>(toolchain, oldSettings);
                 }
 
-                final var settings = createBlazeCompilerSettings(
-                    context,
-                    project,
-                    toolchain,
-                    xcodeCompilerSettings,
-                    executionRootPathResolver.getExecutionRoot(),
-                    cCompiler,
-                    cppCompiler,
-                    compilerVersion
-                );
+                final var environment = XcodeCompilerSettingsProvider
+                    .getInstance(project)
+                    .asEnvironmentVariables(xcodeCompilerSettings);
+
+                final var settings = BlazeCompilerSettings.builder()
+                    .setCCompiler(cCompiler)
+                    .setCppCompiler(cppCompiler)
+                    .setCSwitches(toolchain.cCompilerOptions())
+                    .setCppSwitches(toolchain.cppCompilerOptions())
+                    .setVersion(compilerVersion)
+                    .setEnvironment(environment)
+                    .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
+                    .setName(toolchain.compilerName())
+                    .setSysroot(toolchain.sysroot())
+                    .build();
 
                 if (settings == null) {
                   return null;
@@ -384,46 +389,6 @@ public final class BlazeConfigurationToolchainResolver {
       }
       return null;
     }
-  }
-
-  @Nullable
-  private static BlazeCompilerSettings createBlazeCompilerSettings(
-      BlazeContext context,
-      Project project,
-      CToolchainIdeInfo toolchainIdeInfo,
-      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
-      File executionRoot,
-      File cCompiler,
-      File cppCompiler,
-      String compilerVersion) {
-    final var compilerWrapperEnvVars = XcodeCompilerSettingsProvider.getInstance(project)
-        .asEnvironmentVariables(xcodeCompilerSettings);
-
-    final var cCompilerWrapper = CompilerWrapperProvider.getInstance()
-        .createCompilerExecutableWrapper(executionRoot, cCompiler, compilerWrapperEnvVars);
-    if (cCompilerWrapper == null) {
-      IssueOutput.error("Unable to create compiler wrapper for: " + cCompiler).submit(context);
-      return null;
-    }
-
-    final var cppCompilerWrapper = CompilerWrapperProvider.getInstance()
-        .createCompilerExecutableWrapper(executionRoot, cppCompiler, compilerWrapperEnvVars);
-    if (cppCompilerWrapper == null) {
-      IssueOutput.error("Unable to create compiler wrapper for: " + cppCompiler).submit(context);
-      return null;
-    }
-
-    return BlazeCompilerSettings.builder()
-        .setCCompiler(cCompilerWrapper)
-        .setCppCompiler(cppCompilerWrapper)
-        .setCSwitches(toolchainIdeInfo.cCompilerOptions())
-        .setCppSwitches(toolchainIdeInfo.cppCompilerOptions())
-        .setVersion(compilerVersion)
-        .setEnvironment(compilerWrapperEnvVars)
-        .setBuiltInIncludes(toolchainIdeInfo.builtInIncludeDirectories())
-        .setName(toolchainIdeInfo.compilerName())
-        .setSysroot(toolchainIdeInfo.sysroot())
-        .build();
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {
