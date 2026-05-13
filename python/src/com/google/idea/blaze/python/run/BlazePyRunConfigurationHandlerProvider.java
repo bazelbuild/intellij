@@ -15,19 +15,24 @@
  */
 package com.google.idea.blaze.python.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import javax.annotation.Nullable;
+import com.google.idea.blaze.python.PythonBlazeRules.RuleTypes;
 
 /** Python-specific handler provider for {@link BlazeCommandRunConfiguration}s. */
-public class BlazePyRunConfigurationHandlerProvider
-    implements BlazeCommandRunConfigurationHandlerProvider {
+public class BlazePyRunConfigurationHandlerProvider implements BlazeCommandRunConfigurationHandlerProvider {
 
   @Override
-  public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
-    return PyDebugUtils.canUsePyDebugger(kind);
+  public String getDisplayLabel() {
+    return "Python Compatible (Binary or Test)";
+  }
+
+  @Override
+  public ImmutableList<Kind> getDefaultKinds() {
+    return ImmutableList.of(RuleTypes.PY_BINARY.getKind(), RuleTypes.PY_TEST.getKind());
   }
 
   @Override

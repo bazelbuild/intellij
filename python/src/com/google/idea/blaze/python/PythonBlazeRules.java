@@ -15,33 +15,50 @@
  */
 package com.google.idea.blaze.python;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import java.util.Arrays;
 import java.util.function.Function;
 
 /** Contributes python rules to {@link Kind}. */
 public final class PythonBlazeRules implements Kind.Provider {
 
-  private final static Kind PY_LIBRARY = Kind.Provider.create("py_library", LanguageClass.PYTHON, RuleType.LIBRARY);
+  public enum RuleTypes {
+    PY_LIBRARY("py_library", RuleType.LIBRARY),
+    PY_BINARY("py_binary", RuleType.BINARY),
+    PY_TEST("py_test", RuleType.TEST);
+
+    private final String name;
+    private final RuleType ruleType;
+
+    RuleTypes(String name, RuleType ruleType) {
+      this.name = name;
+      this.ruleType = ruleType;
+    }
+
+    public Kind getKind() {
+      return Preconditions.checkNotNull(Kind.fromRuleName(name));
+    }
+  }
 
   @Override
   public ImmutableSet<Kind> getTargetKinds() {
-    return ImmutableSet.of(
-        PY_LIBRARY,
-        Kind.Provider.create("py_binary", LanguageClass.PYTHON, RuleType.BINARY),
-        Kind.Provider.create("py_test", LanguageClass.PYTHON, RuleType.TEST),
-        Kind.Provider.create("py_appengine_binary", LanguageClass.PYTHON, RuleType.BINARY),
-        Kind.Provider.create("py_web_test", LanguageClass.PYTHON, RuleType.TEST));
+    return Arrays.stream(RuleTypes.values())
+        .map(e -> Kind.Provider.create(e.name, LanguageClass.PYTHON, e.ruleType))
+        .collect(toImmutableSet());
   }
 
   @Override
   public Function<TargetIdeInfo, Kind> getTargetKindHeuristics() {
-    return (tii) -> {
-      if (tii.hasPyIdeInfo() && tii.getPyIdeInfo().getIsCodeGenerator()) {
-        return PY_LIBRARY;
+    return (info) -> {
+      if (info.hasPyIdeInfo() && info.getPyIdeInfo().getIsCodeGenerator()) {
+        return RuleTypes.PY_LIBRARY.getKind();
       }
 
       return null;

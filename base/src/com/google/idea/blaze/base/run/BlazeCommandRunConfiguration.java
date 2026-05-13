@@ -21,8 +21,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
@@ -30,14 +28,14 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.state.ConsoleOutputFileSettingsUi;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.run.ui.TargetExpressionListUi;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -56,28 +54,28 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.Box;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import org.jdom.Element;
 
 /** A run configuration which executes Blaze commands. */
-public class BlazeCommandRunConfiguration
-    extends LocatableConfigurationBase<LocatableRunConfigurationOptions>
-    implements BlazeRunConfiguration,
-        ModuleRunProfile,
-        RunConfigurationWithSuppressedDefaultDebugAction {
+public class BlazeCommandRunConfiguration extends LocatableConfigurationBase<LocatableRunConfigurationOptions>
+    implements BlazeRunConfiguration, ModuleRunProfile, RunConfigurationWithSuppressedDefaultDebugAction {
 
   private static final Logger logger = Logger.getInstance(BlazeCommandRunConfiguration.class);
 
@@ -123,7 +121,24 @@ public class BlazeCommandRunConfiguration
    * Used when we don't yet know all the configuration details, but want to provide a 'run/debug'
    * context action anyway.
    */
-  @Nullable private volatile PendingRunConfigurationContext pendingContext;
+  @Nullable
+  private volatile PendingRunConfigurationContext pendingContext;
+  private volatile ImmutableList<String> targetPatterns = ImmutableList.of();
+
+  // null if the target is null or not a single Label
+  @Nullable
+  private volatile String targetKindString;
+
+  // used to recognize previously created pending targets by their corresponding source element
+  @Nullable
+  private volatile String contextElementString;
+
+  // for keeping imported configurations in sync with their source XML
+  @Nullable
+  private Boolean keepInSync = null;
+
+  private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
+  private BlazeCommandRunConfigurationHandler handler;
 
   /** Set up a run configuration with a not-yet-known target pattern. */
   public void setPendingContext(PendingRunConfigurationContext pendingContext) {
@@ -131,7 +146,7 @@ public class BlazeCommandRunConfiguration
     this.targetPatterns = ImmutableList.of();
     this.targetKindString = null;
     this.contextElementString = pendingContext.getSourceElementString();
-    updateHandler();
+    updateHandlerIfDifferentProvider(PendingTargetRunConfigurationHandlerProvider.getInstance());
     EventLoggingService.getInstance().logEvent(getClass(), "async-run-config");
   }
 
@@ -161,24 +176,12 @@ public class BlazeCommandRunConfiguration
     return pendingContext;
   }
 
-  private volatile ImmutableList<String> targetPatterns = ImmutableList.of();
-  // null if the target is null or not a single Label
-  @Nullable private volatile String targetKindString;
-  // used to recognize previously created pending targets by their corresponding source element
-  @Nullable private volatile String contextElementString;
-
-  // for keeping imported configurations in sync with their source XML
-  @Nullable private Boolean keepInSync = null;
-
-  private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
-  private BlazeCommandRunConfigurationHandler handler;
-
   public BlazeCommandRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
-    // start with whatever fallback is present
-    handlerProvider =
-        BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(TargetState.KNOWN, null);
+
+    handlerProvider = BlazeCommandGenericRunConfigurationHandlerProvider.getInstanceOrCreate();
     handler = handlerProvider.createHandler(this);
+
     try {
       handler.getState().readExternal(blazeElementState);
     } catch (InvalidDataException e) {
@@ -244,27 +247,21 @@ public class BlazeCommandRunConfiguration
 
   public void setTargets(ImmutableList<TargetExpression> targets) {
     targetPatterns = targets.stream().map(TargetExpression::toString).collect(toImmutableList());
-    updateTargetKindAsync(null);
+    updateTargetKind();
   }
 
-  /** Sets the target expression and asynchronously kicks off a target kind update. */
+  /** Sets the target expression and kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
-    targetPatterns =
-        target != null ? ImmutableList.of(target.toString().trim()) : ImmutableList.of();
-    updateTargetKindAsync(null);
+    targetPatterns = target != null ? ImmutableList.of(target.toString().trim()) : ImmutableList.of();
+    updateTargetKind();
   }
 
   private void updateHandler() {
-    BlazeCommandRunConfigurationHandlerProvider handlerProvider =
-        BlazeCommandRunConfigurationHandlerProvider.findHandlerProvider(
-            getTargetState(), getTargetKind());
-    updateHandlerIfDifferentProvider(handlerProvider);
-  }
+    final var handler = BlazeCommandRunConfigurationHandlerProvider
+        .findPreferredHandler(getTargetKind())
+        .orElse(BlazeCommandGenericRunConfigurationHandlerProvider.getInstance());
 
-  private TargetState getTargetState() {
-    return targetPatterns.isEmpty() && pendingContext != null
-        ? TargetState.PENDING
-        : TargetState.KNOWN;
+    updateHandlerIfDifferentProvider(handler);
   }
 
   private void updateHandlerIfDifferentProvider(
@@ -320,41 +317,29 @@ public class BlazeCommandRunConfiguration
   }
 
   /**
-   * Queries the kind of the current target pattern, possibly asynchronously, in the case where
-   * there's only a single target.
-   *
-   * @param asyncCallback if the kind is updated asynchronously, this will be run after the kind is
-   *     updated. If it's updated synchronously, this will not be run.
+   * Queries the kind of the current target pattern, in the case where there's only a single target.
    */
-  void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
-    ImmutableList<TargetExpression> targets = parseTargets(targetPatterns);
-    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+  void updateTargetKind() {
+    final var targets = parseTargets(targetPatterns);
+    if (targets.size() != 1) {
       // TODO(brendandouglas): any reason to support multiple targets here?
       updateTargetKind(null);
       return;
     }
-    Label label = (Label) targets.get(0);
-    ListenableFuture<TargetInfo> future = TargetFinder.findTargetInfoFuture(getProject(), label);
-    if (future.isDone()) {
-      updateTargetKindFromSingleTarget(FuturesUtil.getIgnoringErrors(future));
+
+    final var target = targets.get(0);
+    if (target instanceof Label label) {
+      final var info = TargetFinder.findTargetInfo(getProject(), label);
+      updateTargetKind(info != null ? info.kindString : null);
     } else {
-      updateTargetKindFromSingleTarget(null);
-      future.addListener(
-          () -> {
-            updateTargetKindFromSingleTarget(FuturesUtil.getIgnoringErrors(future));
-            if (asyncCallback != null) {
-              asyncCallback.run();
-            }
-          },
-          MoreExecutors.directExecutor());
+      updateTargetKind(null);
     }
   }
 
-  private void updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
-    updateTargetKind(target == null ? null : target.kindString);
-  }
-
   private void updateTargetKind(@Nullable String kind) {
+    if (Objects.equals(targetKindString, kind)) {
+      return;
+    }
     targetKindString = kind;
     updateHandler();
   }
@@ -427,15 +412,18 @@ public class BlazeCommandRunConfiguration
                           "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
         }
       }
-      if (!pattern.startsWith("//") && !pattern.startsWith("@")) {
+      if (!pattern.startsWith("//") && !pattern.startsWith("@") && !pattern.startsWith("-//") && !pattern.startsWith("-@")) {
         throw new RuntimeConfigurationError(
-            "You must specify the full target expression, starting with // or @");
+            "You must specify the full target expression, starting with '//' or '@' or '-' for a negative one");
       }
 
       String error = TargetExpression.validate(pattern);
       if (error != null) {
         throw new RuntimeConfigurationError(error);
       }
+    }
+    if (handlerProvider instanceof PendingTargetRunConfigurationHandlerProvider) {
+      throw new RuntimeConfigurationError("Language handler must be selected");
     }
   }
 
@@ -579,8 +567,9 @@ public class BlazeCommandRunConfiguration
   static class BlazeCommandRunConfigurationSettingsEditor
       extends SettingsEditor<BlazeCommandRunConfiguration> {
 
-    private BlazeCommandRunConfigurationHandlerProvider handlerProvider;
-    private BlazeCommandRunConfigurationHandler handler;
+    private String handlersLoadedForKind;
+    private BlazeCommandRunConfigurationHandlerProvider editorHandlerProvider;
+    private BlazeCommandRunConfigurationHandler editorHandler;
     private RunConfigurationStateEditor handlerStateEditor;
     private JComponent handlerStateComponent;
     private Element elementState;
@@ -591,6 +580,15 @@ public class BlazeCommandRunConfiguration
     private final JBLabel targetExpressionLabel;
     private final ConsoleOutputFileSettingsUi<BlazeCommandRunConfiguration> outputFileUi;
     private final TargetExpressionListUi targetsUi;
+    private final JLabel handlerLabel;
+    private final ComboBox<ProviderItem> handlerCombo;
+
+    public record ProviderItem(BlazeCommandRunConfigurationHandlerProvider provider) {
+      @Override
+      public String toString() {
+        return provider.getDisplayLabel();
+      }
+    }
 
     BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
       Project project = config.getProject();
@@ -599,13 +597,24 @@ public class BlazeCommandRunConfiguration
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
       outputFileUi = new ConsoleOutputFileSettingsUi<>();
-      editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetsUi);
+      handlerLabel = new JLabel("Language handler");
+      handlerCombo =
+        new ComboBox<>(new DefaultComboBoxModel<>(BlazeCommandRunConfigurationHandlerProvider.findHandlerProviders().stream().map(
+          ProviderItem::new).toArray(ProviderItem[]::new)));
+      handlerCombo.setEditable(false);
+
+      editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetsUi, handlerLabel, handlerCombo);
       editor =
           UiUtil.createBox(
               editorWithoutSyncCheckBox, outputFileUi.getComponent(), keepInSyncCheckBox);
       updateEditor(config);
-      updateHandlerEditor(config);
+      updateHandlerEditor(config, config.handlerProvider);
       keepInSyncCheckBox.addItemListener(e -> updateEnabledStatus());
+      handlerCombo.addActionListener(e -> {
+        if (handlerCombo.getSelectedItem() instanceof ProviderItem providerItem) {
+          updateHandlerProviderToConfig(config, providerItem.provider());
+        }
+      });
     }
 
     private void updateEditor(BlazeCommandRunConfiguration config) {
@@ -613,7 +622,8 @@ public class BlazeCommandRunConfiguration
           String.format(
               "Target expression (%s handled by %s):",
               config.getTargetKindName(), config.handler.getHandlerName()));
-      keepInSyncCheckBox.setVisible(config.keepInSync != null);
+      // Always visible so users can control XML sync linking
+      keepInSyncCheckBox.setVisible(true);
       if (config.keepInSync != null) {
         keepInSyncCheckBox.setSelected(config.keepInSync);
       }
@@ -630,23 +640,27 @@ public class BlazeCommandRunConfiguration
       }
       targetsUi.setEnabled(enabled);
       outputFileUi.setComponentEnabled(enabled);
+      handlerCombo.setEnabled(enabled);
     }
 
-    private void updateHandlerEditor(BlazeCommandRunConfiguration config) {
-      handlerProvider = config.handlerProvider;
-      handler = handlerProvider.createHandler(config);
+    private void updateHandlerEditor(BlazeCommandRunConfiguration config, BlazeCommandRunConfigurationHandlerProvider newProvider) {
+      editorHandlerProvider = newProvider;
+      editorHandler = editorHandlerProvider.createHandler(config);
       try {
-        handler.getState().readExternal(config.blazeElementState);
+        editorHandler.getState().readExternal(config.blazeElementState);
       } catch (InvalidDataException e) {
         logger.error(e);
       }
-      handlerStateEditor = handler.getState().getEditor(config.getProject());
+      handlerStateEditor = editorHandler.getState().getEditor(config.getProject());
 
       if (handlerStateComponent != null) {
         editorWithoutSyncCheckBox.remove(handlerStateComponent);
       }
       handlerStateComponent = handlerStateEditor.createComponent();
       editorWithoutSyncCheckBox.add(handlerStateComponent);
+      if (!Objects.equals(handlerCombo.getSelectedItem(), new ProviderItem(newProvider))) {
+        handlerCombo.setSelectedItem(new ProviderItem(newProvider));
+      }
     }
 
     @Override
@@ -657,9 +671,10 @@ public class BlazeCommandRunConfiguration
     @Override
     protected void resetEditorFrom(BlazeCommandRunConfiguration config) {
       elementState = config.blazeElementState.clone();
+      handlerCombo.setSelectedItem(new ProviderItem(config.handlerProvider));
       updateEditor(config);
-      if (config.handlerProvider != handlerProvider) {
-        updateHandlerEditor(config);
+      if (config.handlerProvider != editorHandlerProvider) {
+        updateHandlerEditor(config, config.handlerProvider);
       }
       targetsUi.setTargetExpressions(config.targetPatterns);
       outputFileUi.resetEditorFrom(config);
@@ -669,16 +684,16 @@ public class BlazeCommandRunConfiguration
     @Override
     protected void applyEditorTo(BlazeCommandRunConfiguration config) {
       outputFileUi.applyEditorTo(config);
-      handlerStateEditor.applyEditorTo(handler.getState());
+      handlerStateEditor.applyEditorTo(editorHandler.getState());
       try {
-        handler.getState().writeExternal(elementState);
+        editorHandler.getState().writeExternal(elementState);
       } catch (WriteExternalException e) {
         logger.error(e);
       }
       config.keepInSync = keepInSyncCheckBox.isVisible() ? keepInSyncCheckBox.isSelected() : null;
 
       // now set the config's state, based on the editor's (possibly out of date) handler
-      config.updateHandlerIfDifferentProvider(handlerProvider);
+      config.updateHandlerIfDifferentProvider(editorHandlerProvider);
       config.blazeElementState = elementState.clone();
       try {
         config.handler.getState().readExternal(config.blazeElementState);
@@ -686,16 +701,82 @@ public class BlazeCommandRunConfiguration
         logger.error(e);
       }
 
-      // finally, update the handler
+      // update target kind (may change the handler if kind changes)
       config.targetPatterns = targetsUi.getTargetExpressions();
-      config.updateTargetKindAsync(
-          () -> ApplicationManager.getApplication().invokeLater(this::fireEditorStateChanged));
-      updateEditor(config);
-      if (config.handlerProvider != handlerProvider) {
-        updateHandlerEditor(config);
+      config.updateTargetKind();
+
+      // if kind changed, refresh handler dropdown (may auto-select best handler)
+      if (!Objects.equals(handlersLoadedForKind, config.targetKindString)) {
+        handlersLoadedForKind = config.targetKindString;
+        updateHandlerListAndAutoSelect(config);
+      }
+
+      // sync editor with final config state
+      if (config.handlerProvider != editorHandlerProvider) {
+        updateHandlerEditor(config, config.handlerProvider);
         handlerStateEditor.resetEditorFrom(config.handler.getState());
       } else {
         handlerStateEditor.applyEditorTo(config.handler.getState());
+      }
+      updateEditor(config);
+      fireEditorStateChanged();
+    }
+
+    private void updateHandlerListAndAutoSelect(BlazeCommandRunConfiguration config) {
+      final var handlers = BlazeCommandRunConfigurationHandlerProvider.findHandlerProviders()
+          .stream()
+          .filter(BlazeCommandRunConfigurationHandlerProvider::isUserSelectable)
+          .map(ProviderItem::new)
+          .collect(toImmutableList());
+
+      final var currentHandlers = ImmutableList.<ProviderItem>builder();
+      for (var i = 0; i < handlerCombo.getModel().getSize(); i++) {
+        currentHandlers.add(handlerCombo.getModel().getElementAt(i));
+      }
+
+      var selected = (ProviderItem) handlerCombo.getSelectedItem();
+      if (!Objects.equals(currentHandlers.build(), handlers)) {
+        handlerCombo.setModel(new DefaultComboBoxModel<>(handlers.toArray(ProviderItem[]::new)));
+
+        final var newBestSelection = BlazeCommandRunConfigurationHandlerProvider.findPreferredHandler(config.getTargetKind()).orElse(null);
+        if (newBestSelection != null && selected.provider != newBestSelection) {
+          // Note, we only auto-update the configuration in the UI. At the runtime the configuration updates its handler only if it is in
+          // the pending state, i.e. the handler is unknown or intentionally set to pending.
+          selected = new ProviderItem(newBestSelection);
+          logger.info(String.format("Auto-updating %s run configuration handler to %s", config, newBestSelection));
+        }
+      }
+      if (!handlers.contains(selected)) {
+        selected = Iterables.getFirst(handlers, null);
+      }
+      if (!Objects.equals(handlerCombo.getSelectedItem(), selected)) {
+        handlerCombo.setSelectedItem(selected);
+      }
+    }
+
+    private void updateHandlerProviderToConfig(
+        BlazeCommandRunConfiguration config,
+        BlazeCommandRunConfigurationHandlerProvider provider
+    ) {
+      try {
+        try {
+          handlerStateEditor.applyEditorTo(editorHandler.getState());
+          editorHandler.getState().writeExternal(elementState);
+        }
+        catch (Throwable t) {
+          logger.error("Attempt to preserve state crashed", t);
+        }
+        updateHandlerEditor(config, provider);
+        try {
+          editorHandler.getState().readExternal(elementState);
+        }
+        catch (Throwable t) {
+          logger.error("Attempt to preserve state crashed", t);
+        }
+        handlerStateEditor.resetEditorFrom(editorHandler.getState());
+      }
+      catch (Throwable t){
+        logger.error("Cannot configure handler provider", t);
       }
     }
   }
