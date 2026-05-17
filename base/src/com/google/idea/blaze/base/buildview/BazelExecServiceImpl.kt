@@ -35,11 +35,11 @@ import com.google.idea.blaze.base.scope.output.IssueOutput
 import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
+import com.google.idea.blaze.common.PrintOutput
 import com.google.protobuf.CodedInputStream
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
-import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -146,10 +146,23 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
         }
 
         launch(Dispatchers.IO + CoroutineName("stderr")) {
-          process.errorStream.bufferedReader().use { reader ->
-            reader.lines().forEach { line ->
-              ctx.println(line)
-              LOG.debug("BAZEL ERR: $line")
+          if (usePty) {
+            process.errorStream.bufferedReader().use { reader ->
+              val buf = CharArray(DEFAULT_BUFFER_SIZE)
+              while (true) {
+                val n = reader.read(buf)
+                if (n < 0) break
+                val text = String(buf, 0, n)
+                ctx.output(PrintOutput.process(text))
+                // no log.debug because it's pty
+              }
+            }
+          } else {
+            process.errorStream.bufferedReader().use { reader ->
+              reader.lines().forEach { line ->
+                ctx.println(line)
+                LOG.debug("BAZEL ERR: $line")
+              }
             }
           }
         }
