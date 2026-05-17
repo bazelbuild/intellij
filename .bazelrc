@@ -25,4 +25,4 @@ common --repo_env=ANDROID_NDK_ROOT=""
 
 # Avoids frequent protoc rebuilds 
 build --@protobuf//bazel/toolchains:prefer_prebuilt_protoc
-
+build --define=ij_product=clion-oss-latest-stable
