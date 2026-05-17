@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.util.pluginProjectScope
 import com.google.idea.blaze.cpp.CppBlazeRules.RuleTypes
 import com.intellij.clion.radler.testing.RadTestPsiElement
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.openapi.application.readAction
 import com.intellij.util.asSafely
 import com.intellij.util.io.await
 import com.jetbrains.rider.model.RadTestElementModel
@@ -64,7 +65,7 @@ abstract class RadTestContextProvider : TestContextProvider {
 }
 
 private suspend fun findTargets(context: ConfigurationContext): Collection<TargetInfo> {
-  val virtualFile = context.location?.virtualFile ?: return emptyList()
+  val virtualFile = readAction{ context.location?.virtualFile } ?: return emptyList()
 
   return SourceToTargetFinder.findTargetInfoFuture(
     context.project,
@@ -83,8 +84,8 @@ private fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
   return JdkFutureAdapters.listenInPoolThread(asCompletableFuture(), PooledThreadExecutor.INSTANCE)
 }
 
-private fun chooseTargetForFile(context: ConfigurationContext, targets: Collection<TargetInfo>): TargetInfo? {
-  val psiFile = context.psiLocation?.containingFile ?: return null
+private suspend fun chooseTargetForFile(context: ConfigurationContext, targets: Collection<TargetInfo>): TargetInfo? {
+  val psiFile = readAction { context.psiLocation?.containingFile } ?: return null
   val virtualFile = psiFile.virtualFile ?: return null
 
   val ccTargets = targets.filter { it -> it.kind == RuleTypes.CC_TEST.kind }
