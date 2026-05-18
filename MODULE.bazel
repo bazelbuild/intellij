@@ -99,7 +99,7 @@ maven.install(
         "org.opentest4j:opentest4j:1.3.0",
         # Only required for the maintenance script, otherwise use the stdlib for the sdk
         "org.jetbrains.kotlin:kotlin-stdlib:2.2.21",
-        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0",
     ],
     fail_if_repin_required = True,
     generate_compat_repositories = True,
