@@ -66,8 +66,9 @@ jobs:
         run: |
           bazel build //intellij_platform_sdk:build_name --define=ij_product=${MATRIX_PRODUCT}
           mkdir out
-          mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt).zip
+          mv bazel-bin/clwb/clwb_bazel.zip out/$(cat bazel-bin/intellij_platform_sdk/build_name.txt)-${INPUTS_VERSION}.zip
         env:
+          INPUTS_VERSION: ${{ inputs.version }}
           MATRIX_PRODUCT: ${{ matrix.product }}
 
       - name: Upload Plugin Zip
