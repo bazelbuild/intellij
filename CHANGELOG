@@ -1,6 +1,13 @@
+v2026.05.20
+===========
+* Fix configuration selector widget ClassNotFoundException #8329
+* Fix broken PTY view #8332
+* Fix missing read actions in RadTestContextProvider $8333
+* Transition Support: automatically select resolve configurations based on the last run config #8324
+
 v2026.05.11
 ===========
-* Fix "Nothing here" for run gutter icons in 2026.1, #8326
+* Fix "Nothing here" for run gutter icons in 2026.1 #8326
 
 v2026.05.05
 ===========
