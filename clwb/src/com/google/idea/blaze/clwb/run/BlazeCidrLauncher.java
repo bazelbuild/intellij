@@ -290,8 +290,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     configProcessHandler(targetProcess, false, true, getProject());
 
-    targetProcess.startNotify();
-
     // CidrRemoteDebugParameters can't be constructed with a null sysroot, so pass in the default
     // value "target:". Causes paths/files to be resolved in the context of the target.
     CidrRemoteDebugParameters parameters =

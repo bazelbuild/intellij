@@ -260,6 +260,7 @@ private class ExecutionResultListener(
     if (debugProcess is BlazeCidrRemoteDebugProcess) {
       waitForRemoteDebugProcess = true
 
+      // this is probably a race with startNotify
       debugProcess.targetProcess.addProcessListener(listener)
       debugProcess.targetProcess.addProcessListener(object : ProcessListener {
         override fun processTerminated(event: ProcessEvent) {
