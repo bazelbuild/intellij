@@ -4,7 +4,7 @@
     "com.google.auto.value:auto-value": -661233359,
     "com.google.auto.value:auto-value-annotations": 1386235898,
     "com.google.code.findbugs:jsr305": 495355163,
-    "com.google.code.gson:gson": 245099245,
+    "com.google.code.gson:gson": 2063056812,
     "com.google.errorprone:error_prone_annotations": 1790047777,
     "com.google.flogger:flogger": 1661800041,
     "com.google.flogger:flogger-system-backend": -285378212,
@@ -19,7 +19,7 @@
     "net.java.dev.jna:jna": 929040997,
     "org.hamcrest:hamcrest-core": 477294799,
     "org.jetbrains.kotlin:kotlin-stdlib": 52847824,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1535405612,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": -261545747,
     "org.jetbrains.pty4j:pty4j": 1622800979,
     "org.jetbrains:annotations": 989775437,
     "org.mockito:mockito-core": 1330163800,
@@ -28,41 +28,41 @@
     "repositories": 1485828590
   },
   "__RESOLVED_ARTIFACTS_HASH": {
-    "com.google.auto.value:auto-value": -705738638,
-    "com.google.auto.value:auto-value-annotations": -2013802823,
-    "com.google.code.findbugs:jsr305": 791001056,
-    "com.google.code.gson:gson": 2042045116,
-    "com.google.errorprone:error_prone_annotations": -1886231926,
-    "com.google.flogger:flogger": -1740275500,
-    "com.google.flogger:flogger-system-backend": 1877116653,
-    "com.google.guava:failureaccess": -1910047741,
-    "com.google.guava:guava": 1452834541,
-    "com.google.guava:listenablefuture": -1095866050,
-    "com.google.j2objc:j2objc-annotations": -1230082854,
-    "com.google.truth:truth": 2092996716,
-    "com.googlecode.java-diff-utils:diffutils": 485967796,
-    "junit:junit": 1978237313,
-    "net.bytebuddy:byte-buddy": -51665708,
-    "net.bytebuddy:byte-buddy-agent": 1163487494,
-    "net.java.dev.jna:jna": -272438571,
-    "net.java.dev.jna:jna-platform": 7542462,
-    "org.hamcrest:hamcrest": 1226587447,
-    "org.hamcrest:hamcrest-core": 1117998846,
-    "org.jetbrains.kotlin:kotlin-stdlib": 2070469654,
-    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": -1928407068,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": 639624661,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1524391268,
-    "org.jetbrains.pty4j:pty4j": -1031427085,
-    "org.jetbrains:annotations": -1247094787,
-    "org.jspecify:jspecify": 70212170,
-    "org.mockito:mockito-core": -250034090,
-    "org.objenesis:objenesis": -814040267,
-    "org.opentest4j:opentest4j": -1037660935,
-    "org.ow2.asm:asm": 1007188183,
-    "org.slf4j:slf4j-api": 1053919275
+    "com.google.auto.value:auto-value": -308134042,
+    "com.google.auto.value:auto-value-annotations": -1262682963,
+    "com.google.code.findbugs:jsr305": 377355476,
+    "com.google.code.gson:gson": -1553582341,
+    "com.google.errorprone:error_prone_annotations": -710086274,
+    "com.google.flogger:flogger": -539652174,
+    "com.google.flogger:flogger-system-backend": 1340066852,
+    "com.google.guava:failureaccess": 120263671,
+    "com.google.guava:guava": 1445779144,
+    "com.google.guava:listenablefuture": 2001005618,
+    "com.google.j2objc:j2objc-annotations": -77575218,
+    "com.google.truth:truth": -1332405218,
+    "com.googlecode.java-diff-utils:diffutils": -1594449752,
+    "junit:junit": 64898858,
+    "net.bytebuddy:byte-buddy": 1898585544,
+    "net.bytebuddy:byte-buddy-agent": -927976454,
+    "net.java.dev.jna:jna": -1081871159,
+    "net.java.dev.jna:jna-platform": -1997856020,
+    "org.hamcrest:hamcrest": -2067871445,
+    "org.hamcrest:hamcrest-core": -1752676859,
+    "org.jetbrains.kotlin:kotlin-stdlib": -1966999684,
+    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": 1066920260,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": -2019062389,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1681628020,
+    "org.jetbrains.pty4j:pty4j": -1429347091,
+    "org.jetbrains:annotations": 1361021425,
+    "org.jspecify:jspecify": 463317310,
+    "org.mockito:mockito-core": -12013538,
+    "org.objenesis:objenesis": 1321346345,
+    "org.opentest4j:opentest4j": -408028435,
+    "org.ow2.asm:asm": 49325259,
+    "org.slf4j:slf4j-api": 1670924319
   },
   "conflict_resolution": {
-    "org.jetbrains.kotlin:kotlin-stdlib:2.2.21": "org.jetbrains.kotlin:kotlin-stdlib:2.3.0"
+    "org.jetbrains.kotlin:kotlin-stdlib:2.2.21": "org.jetbrains.kotlin:kotlin-stdlib:2.3.20"
   },
   "artifacts": {
     "com.google.auto.value:auto-value": {
@@ -85,9 +85,9 @@
     },
     "com.google.code.gson:gson": {
       "shasums": {
-        "jar": "dd0ce1b55a3ed2080cb70f9c655850cda86c206862310009dcb5e5c95265a5e0"
+        "jar": "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f"
       },
-      "version": "2.13.2"
+      "version": "2.14.0"
     },
     "com.google.errorprone:error_prone_annotations": {
       "shasums": {
@@ -187,27 +187,27 @@
     },
     "org.jetbrains.kotlin:kotlin-stdlib": {
       "shasums": {
-        "jar": "887587c91713250ad52fe14ad9166d042c33835049890e9437f355ffc5a195b1"
+        "jar": "0ae12504a5040ebaf37703908483420d1a5624dd1d93f357665f8c77c848a01e"
       },
-      "version": "2.3.0"
+      "version": "2.3.20"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": {
       "shasums": {
-        "jar": "14d6f27ce28f61ebc4a516d562f911b7bc01cfbe5397fb884c45ea0db044c635"
+        "jar": "f4a801c647d4351327cd9e1ac4113e2be9ea37a64ab0abae269c25a52e28f35d"
       },
-      "version": "1.10.0"
+      "version": "1.11.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-json": {
       "shasums": {
-        "jar": "cb3f264c04f7ed056897f861f7a5959f9bdaa431e4614d9bb67e28326c0afc48"
+        "jar": "57788c37107f55fa980ef36c157e70ecef573158a762783bfd30ed4824419e80"
       },
-      "version": "1.10.0"
+      "version": "1.11.0"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": {
       "shasums": {
-        "jar": "af1e3e1e8ee3176468e1ec729df853b2066071de94a84c412ad9fa135cb37f3a"
+        "jar": "563a25b4eb5c9128ae9c2479f3d1a5c44dcd176112b91cf03682e906eba5c935"
       },
-      "version": "1.10.0"
+      "version": "1.11.0"
     },
     "org.jetbrains.pty4j:pty4j": {
       "shasums": {
