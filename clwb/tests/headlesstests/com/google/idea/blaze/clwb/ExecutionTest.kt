@@ -73,6 +73,8 @@ class ExecutionTest : ClwbHeadlessTestCase() {
       checkRun(DefaultDebugExecutor.EXECUTOR_ID)
       checkArgs(DefaultDebugExecutor.EXECUTOR_ID)
       checkTest(DefaultDebugExecutor.EXECUTOR_ID)
+
+      checkTestSandboxNoNetwork()
     }
   }
 
@@ -154,6 +156,19 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     assertThat(catchFiltered.output).doesNotContain("Test0")
   }
 
+  fun checkTestSandboxNoNetwork() {
+    val result = execute(
+      Label.create("//main:gtest"), DefaultDebugExecutor.EXECUTOR_ID,
+      flags = listOf("--nosandbox_default_allow_network")
+    )
+
+    if (OS.CURRENT != OS.Linux) {
+      result.assertSuccess()
+    } else {
+      assertThat(result.exitCode).isEqualTo(3)
+    }
+  }
+
   private fun executeEcho(target: String, executorId: String, args: String): List<String> {
     val result = execute(Label.create("//main:$target"), executorId, args = listOf(args))
     result.assertSuccess()
@@ -173,6 +188,23 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     flags: List<String> = emptyList(),
     args: List<String> = emptyList()
   ): ExecutionResult {
+    val future = CompletableFuture<Int>()
+    val outputBuilder = StringBuilder()
+
+    val listener = object : ProcessListener {
+      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+        if (outputType == ProcessOutputTypes.STDOUT) {
+          outputBuilder.append(event.text)
+        }
+      }
+    }
+
+    // register the listener first before starting the run config
+    project.messageBus.connect(testRootDisposable).subscribe(
+      ExecutionManager.EXECUTION_TOPIC,
+      ExecutionResultListener(myProject, listener, future)
+    )
+
     val element = findRule(label)
 
     val dataContextBuilder = SimpleDataContext.builder()
@@ -201,22 +233,6 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     manager.forceCompilationInTests = true
     manager.restartRunProfile(environmentBuilder.build())
 
-    val future = CompletableFuture<Int>()
-    val outputBuilder = StringBuilder()
-
-    val listener = object : ProcessListener {
-      override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          outputBuilder.append(event.text)
-        }
-      }
-    }
-
-    project.messageBus.connect(testRootDisposable).subscribe(
-      ExecutionManager.EXECUTION_TOPIC,
-      ExecutionResultListener(myProject, listener, future)
-    )
-
     val exitCode = pullFuture(future, 2, TimeUnit.MINUTES)
     return ExecutionResult(outputBuilder.toString(), exitCode ?: -1)
   }
@@ -235,11 +251,26 @@ private class ExecutionResultListener(
   private val future: CompletableFuture<Int>
 ) : ExecutionListener {
 
-  private var waitForRemoteDebugProcess = false
+  // For remote debug we need to wait for two terminations and prefer the target's exit code.
+  // thenCombine fires only after both have completed, picking the target code when present.
+  private val targetTermination = CompletableFuture<Int?>()
+  private val handlerTermination = CompletableFuture<Int>()
 
-  override fun processStarted(executor: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+  init {
+    targetTermination
+      .thenCombine(handlerTermination) { target, handler -> target ?: handler }
+      .whenComplete { exit, throwable ->
+        if (throwable != null)
+          future.completeExceptionally(throwable)
+        else
+          future.complete(exit)
+      }
+  }
+
+  override fun processStarting(executor: String, env: ExecutionEnvironment, handler: ProcessHandler) {
     if (executor == DefaultRunExecutor.EXECUTOR_ID) {
       handler.addProcessListener(listener)
+      targetTermination.complete(null)
       return
     }
 
@@ -254,16 +285,16 @@ private class ExecutionResultListener(
     val debugProcess = session.debugProcess
     if (debugProcess is CidrLocalDebugProcess) {
       debugProcess.processHandler.addProcessListener(listener)
+      targetTermination.complete(null)
       return
     }
 
     if (debugProcess is BlazeCidrRemoteDebugProcess) {
-      waitForRemoteDebugProcess = true
-
       debugProcess.targetProcess.addProcessListener(listener)
+
       debugProcess.targetProcess.addProcessListener(object : ProcessListener {
         override fun processTerminated(event: ProcessEvent) {
-          future.complete(event.exitCode)
+          targetTermination.complete(event.exitCode)
         }
       })
 
@@ -278,8 +309,6 @@ private class ExecutionResultListener(
   }
 
   override fun processTerminated(executor: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-    if (!waitForRemoteDebugProcess) {
-      future.complete(exitCode)
-    }
+    handlerTermination.complete(exitCode)
   }
 }

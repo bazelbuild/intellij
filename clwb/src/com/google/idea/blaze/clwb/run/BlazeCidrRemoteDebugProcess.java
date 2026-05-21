@@ -18,10 +18,12 @@ package com.google.idea.blaze.clwb.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.NotNull;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
@@ -38,6 +40,7 @@ import java.io.File;
  * <p>This should be extending CidrRemoteGDBDebugProcess, but that is 'final'
  */
 public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
+
   private final ProcessHandler targetProcess;
   private final CidrRemoteDebugParameters remoteDebugParameters;
 
@@ -49,25 +52,60 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
       TextConsoleBuilder textConsoleBuilder)
       throws ExecutionException {
     super(
-        new TrivialRunParameters(
-            debuggerDriverConfiguration, new TrivialInstaller(new GeneralCommandLine())),
+        new TrivialRunParameters(debuggerDriverConfiguration, new TrivialInstaller(new GeneralCommandLine())),
         xDebugSession,
-        textConsoleBuilder);
+        textConsoleBuilder
+    );
+
     this.remoteDebugParameters = remoteDebugParameters;
     this.targetProcess = targetProcess;
+
+    installServerProcess();
   }
 
-  private void writeLineToConsole(String s) {
-    myConsole.print(s + System.lineSeparator(), ConsoleViewContentType.SYSTEM_OUTPUT);
-  }
+  // mirrors GdbWithGdbServerProcess#installServerProcess
+  private void installServerProcess() {
+    targetProcess.addProcessListener(new ProcessListener() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        getSession().stop();
+      }
 
-  @Override
-  public ConsoleView createConsole() {
-    writeLineToConsole("Running debug binary");
-    writeLineToConsole("Command: " + targetProcess);
-    writeLineToConsole("");
-    myConsole.attachToProcess(targetProcess);
-    return myConsole;
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        getProcessHandler().notifyTextAvailable(event.getText(), outputType);
+      }
+    });
+
+    getProcessHandler().addProcessListener(new ProcessListener() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        printlnToConsole("Running debug binary");
+        printlnToConsole("Command: " + targetProcess);
+        printlnToConsole("");
+
+        targetProcess.startNotify();
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        if (!targetProcess.isStartNotified()) {
+          targetProcess.startNotify();
+        }
+
+        // let targetProcess (bazel run + gdbserver --once) drain on its own when the inferior
+        // exits; only force-destroy if it is still alive after the grace period
+        if (!targetProcess.isProcessTerminated()) {
+          targetProcess.waitFor(5000);
+        }
+
+        if (!targetProcess.isProcessTerminated()) {
+          targetProcess.destroyProcess();
+        }
+
+        event.getProcessHandler().removeProcessListener(this);
+      }
+    });
   }
 
   @Override
@@ -77,15 +115,23 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
 
   @Override
   protected Inferior doLoadTarget(DebuggerDriver debuggerDriver) throws ExecutionException {
-    if (!(debuggerDriver instanceof GDBDriver)) {
+    if (targetProcess.isProcessTerminated()) {
+      throw new ExecutionException(
+          "Target process terminated before debugger could attach (exit code "
+              + targetProcess.getExitCode() + "). "
+              + "Please check the console output for errors.");
+    }
+
+    if (!(debuggerDriver instanceof GDBDriver gdbDriver)) {
       throw new ExecutionException("Invalid DebuggerDriver - wanted GDBDriver");
     }
-    GDBDriver gdbDriver = (GDBDriver) debuggerDriver;
+
     return gdbDriver.loadForRemote(
         remoteDebugParameters.getRemoteCommand(),
         new File(remoteDebugParameters.getSymbolFile()),
         new File(remoteDebugParameters.getSysroot()),
-        remoteDebugParameters.driverPathMapping());
+        remoteDebugParameters.driverPathMapping()
+    );
   }
 
   public ProcessHandler getTargetProcess() {

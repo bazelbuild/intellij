@@ -54,6 +54,23 @@ gdbserver_wrapper::detect_version() {
   return 0
 }
 
+gdbserver_wrapper::check_network_access() {
+  # Bazel sandboxing can disable network access. If there is no network access,
+  # the gdbserver will not be able to communicate with the IDE outside the sandbox.
+  # We check this by verifying if the loopback interface 'lo' is the only interface
+  # present in /sys/class/net, which indicates an isolated network namespace.
+  local active_interfaces
+  if [[ -d /sys/class/net ]]; then
+    active_interfaces="$(ls /sys/class/net 2>/dev/null)"
+    if [[ "${active_interfaces}" == "lo" ]] || [[ -z "${active_interfaces}" ]]; then
+      echo >&2 "error: gdbserver_wrapper: No network access detected in sandbox."
+      echo >&2 "The IDE debugger cannot connect to a gdbserver inside a network-isolated sandbox."
+      echo >&2 "Please ensure network is allowed (e.g., by omitting --nosandbox_default_allow_network)."
+      exit 1
+    fi
+  fi
+}
+
 gdbserver_wrapper::setup() {
   # create work directory for all temporary files
   work_directory="$(mktemp --tmpdir --directory "gdbserver_wrapper.XXXXXXXX")"
@@ -189,6 +206,8 @@ gdbserver_wrapper::main() {
   verbose="${GDB_WRAPPER_VERBOSE}"
 
   original_args=("$@")
+
+  gdbserver_wrapper::check_network_access
 
   # detect version from the first arg (gdbserver binary)
   gdbserver_version="$(gdbserver_wrapper::detect_version "${original_args[0]}")"
