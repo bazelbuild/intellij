@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.sdkcompat.javascript.BlazeTypeScriptConfigCompat;
 import com.intellij.lang.javascript.config.JSFileImports;
 import com.intellij.lang.javascript.config.JSFileImportsImpl;
 import com.intellij.lang.javascript.config.JSModuleResolution;
@@ -78,7 +79,7 @@ import java.util.stream.Stream;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig implements TypeScriptConfig {
+class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -479,7 +480,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
 
   @Override
   public @NotNull JSModulePathMappings<JSModulePathSubstitution> getPathMappings() {
-    return JSModulePathMappings.build(getPaths());
+    return JSModulePathMappings.build(paths);
   }
 
   @Override
@@ -500,11 +501,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   @Override
   public @Nullable String getDeclarationDir() {
     return null;
-  }
-
-  @Override
-  public Collection<JSModulePathSubstitution> getPaths() {
-    return paths;
   }
 
   @Override
@@ -552,16 +548,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   @Override
   public Collection<VirtualFile> getTypeRoots() {
     return ImmutableList.of();
-  }
-
-  @Override
-  public @NotNull JSModuleResolution getResolution() {
-    return moduleResolution;
-  }
-
-  @Override
-  public JSModuleResolution getEffectiveResolution() {
-    return moduleResolution;
   }
 
   @Override
@@ -670,17 +656,17 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   }
 
   @Override
-  public boolean noImplicitAny() {
+  protected boolean noImplicitAnyImpl() {
     return noImplicitAny;
   }
 
   @Override
-  public boolean noImplicitThis() {
+  protected boolean noImplicitThisImpl() {
     return noImplicitThis;
   }
 
   @Override
-  public boolean strictNullChecks() {
+  protected boolean strictNullChecksImpl() {
     return strictNullChecks;
   }
 
@@ -690,7 +676,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
   }
 
   @Override
-  public boolean strictBindCallApply() {
+  protected boolean strictBindCallApplyImpl() {
     return false;
   }
 
@@ -738,12 +724,12 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
 
   @Override
   public @NotNull JSModuleResolution getEffectiveModuleResolution() {
-    return getEffectiveResolution();
+    return moduleResolution;
   }
 
   @Override
   public @NotNull JSModuleResolution getModuleResolution() {
-    return getResolution();
+    return moduleResolution;
   }
 
   static class PathSubstitution implements JSModulePathSubstitution {

@@ -22,6 +22,7 @@ kt_jvm_library(
     name = "v261",
     srcs = glob([
         "com/google/idea/sdkcompat/clion/**",
+        "com/google/idea/sdkcompat/javascript/**",
     ]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
