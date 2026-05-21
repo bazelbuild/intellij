@@ -31,21 +31,19 @@ public class CppBlazeRules implements Kind.Provider {
 
   /** C++-specific blaze rule types. */
   public enum RuleTypes {
-    CC_LIBRARY("cc_library", LanguageClass.C, RuleType.LIBRARY),
-    CC_BINARY("cc_binary", LanguageClass.C, RuleType.BINARY),
-    CC_TEST("cc_test", LanguageClass.C, RuleType.TEST),
-    CC_INC_LIBRARY("cc_inc_library", LanguageClass.C, RuleType.LIBRARY),
-    CC_TOOLCHAIN("cc_toolchain", LanguageClass.C, RuleType.UNKNOWN),
-    CC_TOOLCHAIN_ALIAS("cc_toolchain_alias", LanguageClass.C, RuleType.UNKNOWN),
-    CC_TOOLCHAIN_SUITE("cc_toolchain_suite", LanguageClass.C, RuleType.UNKNOWN);
+    CC_LIBRARY("cc_library", RuleType.LIBRARY),
+    CC_BINARY("cc_binary", RuleType.BINARY),
+    CC_TEST("cc_test", RuleType.TEST),
+    CC_INC_LIBRARY("cc_inc_library", RuleType.LIBRARY),
+    CC_TOOLCHAIN("cc_toolchain", RuleType.UNKNOWN),
+    CC_TOOLCHAIN_ALIAS("cc_toolchain_alias", RuleType.UNKNOWN),
+    CC_TOOLCHAIN_SUITE("cc_toolchain_suite", RuleType.UNKNOWN);
 
     private final String name;
-    private final LanguageClass languageClass;
     private final RuleType ruleType;
 
-    RuleTypes(String name, LanguageClass languageClass, RuleType ruleType) {
+    RuleTypes(String name, RuleType ruleType) {
       this.name = name;
-      this.languageClass = languageClass;
       this.ruleType = ruleType;
     }
 
@@ -57,7 +55,7 @@ public class CppBlazeRules implements Kind.Provider {
   @Override
   public ImmutableSet<Kind> getTargetKinds() {
     return Arrays.stream(RuleTypes.values())
-        .map(e -> Kind.Provider.create(e.name, e.languageClass, e.ruleType))
+        .map(e -> Kind.Provider.create(e.name, LanguageClass.C, e.ruleType))
         .collect(toImmutableSet());
   }
 

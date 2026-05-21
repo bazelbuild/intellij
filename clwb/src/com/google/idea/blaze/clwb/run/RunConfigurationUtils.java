@@ -31,25 +31,18 @@ import javax.annotation.Nullable;
 /** Utility methods for CLion run configurations */
 public class RunConfigurationUtils {
 
-  static boolean canUseClionHandler(@Nullable Kind kind) {
-    return kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
-        || kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind();
-  }
-
   public static boolean canUseClionRunner(BlazeCommandRunConfiguration config) {
-    Kind kind = config.getTargetKind();
-    BlazeCommandRunConfigurationCommonState handlerState =
-        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    final var handlerState = config.getHandlerStateIfType(BlazeCidrRunConfigState.class);
     if (handlerState == null) {
       return false;
     }
-    BlazeCommandName command = handlerState.getCommandState().getCommand();
-    return kind != null
-        && command != null
-        && ((kind == CppBlazeRules.RuleTypes.CC_TEST.getKind()
-                && command.equals(BlazeCommandName.TEST))
-            || (kind == CppBlazeRules.RuleTypes.CC_BINARY.getKind()
-                && command.equals(BlazeCommandName.RUN))) ;
+
+    final var command = handlerState.getCommandState().getCommand();
+    if (command == null) {
+      return false;
+    }
+
+    return command.equals(BlazeCommandName.TEST) || command.equals(BlazeCommandName.RUN);
   }
 
   public static OCCompilerKind getCompilerKind(BlazeCommandRunConfiguration runConfig) {
