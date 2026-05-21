@@ -93,6 +93,12 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
           targetProcess.startNotify();
         }
 
+        // let targetProcess (bazel run + gdbserver --once) drain on its own when the inferior
+        // exits; only force-destroy if it is still alive after the grace period
+        if (!targetProcess.isProcessTerminated()) {
+          targetProcess.waitFor(5000);
+        }
+
         if (!targetProcess.isProcessTerminated()) {
           targetProcess.destroyProcess();
         }
