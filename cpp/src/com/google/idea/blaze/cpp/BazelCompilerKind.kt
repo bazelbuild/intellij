@@ -48,10 +48,7 @@ open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by d
     compilerWorkingDirectory: File,
     environment: CidrToolEnvironment,
     tempFilesPool: TempFilesPool,
-  ): OCCompiler = object : GCCCompiler(compilerExecutable, compilerWorkingDirectory, environment, tempFilesPool) {
-
-    override fun getCommandLineShortener(): OCCompilerCommandLineShortener = BasicCompilerCommandLineShortener()
-  }
+  ): OCCompiler = BazelGCCCompiler(compilerExecutable, compilerWorkingDirectory, environment, tempFilesPool)
 
   override fun equals(other: Any?): Boolean =
     delegate == other || (other is BazelCompilerKind && delegate == other.delegate)
@@ -59,6 +56,23 @@ open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by d
   override fun hashCode(): Int = delegate.hashCode()
 
   override fun toString(): String = "Bazel($delegate)"
+
+  /** Default methods require a manual override even with by delegate. */
+  override fun skipLanguageNotRelatedSwitches(switches: List<String?>): List<String?> = delegate.skipLanguageNotRelatedSwitches(switches)
+
+  /** Default methods require a manual override even with by delegate. */
+  override fun fixPchSwitches(switches: List<String?>): List<String?> = delegate.fixPchSwitches(switches)
+
+}
+
+private class BazelGCCCompiler(
+  compilerExecutable: File,
+  compilerWorkingDirectory: File,
+  environment: CidrToolEnvironment,
+  tempFilesPool: TempFilesPool,
+) : GCCCompiler(compilerExecutable, compilerWorkingDirectory, environment, tempFilesPool) {
+
+  override fun getCommandLineShortener(): OCCompilerCommandLineShortener = BasicCompilerCommandLineShortener()
 }
 
 /** Bazel-specific GCC compiler kind that disables response files. */
