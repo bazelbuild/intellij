@@ -74,7 +74,10 @@ private fun migrateToProjectView(project: Project, affected: Map<String, List<St
 
   val edit = ProjectViewEdit.editLocalProjectView(project) { builder ->
     val existing = builder.getLast(BuildFlagsSection.KEY)
-    val updated = ListSection.update(BuildFlagsSection.KEY, existing).apply { deduped.forEach(::add) }
+    val existingFlags = existing?.items()?.toSet() ?: emptySet()
+    val updated = ListSection.update(BuildFlagsSection.KEY, existing).apply {
+      deduped.filter { it !in existingFlags }.forEach(::add)
+    }
     builder.replace(existing, updated)
     true
   }
