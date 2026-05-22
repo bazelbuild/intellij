@@ -16,38 +16,34 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.intellij.psi.PsiElement;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** A context related to a blaze test target, used to configure a run configuration. */
 public abstract class TestContext implements RunConfigurationContext {
-  final PsiElement sourceElement;
-  final ImmutableList<BlazeFlagsModification> blazeFlags;
-  @Nullable final String description;
 
-  TestContext(
-      PsiElement sourceElement,
-      ImmutableList<BlazeFlagsModification> blazeFlags,
-      @Nullable String description) {
+  final PsiElement sourceElement;
+
+  @Nullable
+  final String testFilter;
+
+  @Nullable
+  final String description;
+
+  TestContext(PsiElement sourceElement, @Nullable String testFilter, @Nullable String description) {
     this.sourceElement = sourceElement;
-    this.blazeFlags = blazeFlags;
+    this.testFilter = testFilter;
     this.description = description;
   }
 
@@ -69,10 +65,7 @@ public abstract class TestContext implements RunConfigurationContext {
       return false;
     }
     commonState.getCommandState().setCommand(BlazeCommandName.TEST);
-
-    List<String> flags = new ArrayList<>(commonState.getBlazeFlagsState().getRawFlags());
-    blazeFlags.forEach(m -> m.modifyFlags(flags));
-    commonState.getBlazeFlagsState().setRawFlags(flags);
+    commonState.getTestFilterState().setTestFilter(testFilter);
 
     if (description != null) {
       BlazeConfigurationNameBuilder nameBuilder = new BlazeConfigurationNameBuilder(config);
@@ -96,9 +89,7 @@ public abstract class TestContext implements RunConfigurationContext {
     if (!Objects.equals(commonState.getCommandState().getCommand(), BlazeCommandName.TEST)) {
       return false;
     }
-    RunConfigurationFlagsState flagsState = commonState.getBlazeFlagsState();
-    return matchesTarget(config)
-        && blazeFlags.stream().allMatch(m -> m.matchesConfigState(flagsState));
+    return matchesTarget(config) && Objects.equals(testFilter, commonState.getTestFilterState().getTestFilter());
   }
 
   /** Returns true if the target is successfully set up. */
@@ -108,14 +99,16 @@ public abstract class TestContext implements RunConfigurationContext {
   abstract boolean matchesTarget(BlazeCommandRunConfiguration config);
 
   static class KnownTargetTestContext extends TestContext {
+
     final TargetInfo target;
 
     KnownTargetTestContext(
         TargetInfo target,
         PsiElement sourceElement,
-        ImmutableList<BlazeFlagsModification> blazeFlags,
-        @Nullable String description) {
-      super(sourceElement, blazeFlags, description);
+        @Nullable String testFilter,
+        @Nullable String description
+    ) {
+      super(sourceElement, testFilter, description);
       this.target = target;
     }
 
@@ -131,70 +124,6 @@ public abstract class TestContext implements RunConfigurationContext {
     }
   }
 
-  /**
-   * A modification to the blaze flags list for a run configuration. For example, setting a test
-   * filter.
-   */
-  public interface BlazeFlagsModification {
-    void modifyFlags(List<String> flags);
-
-    boolean matchesConfigState(RunConfigurationFlagsState state);
-
-    static BlazeFlagsModification addFlagIfNotPresent(String flag) {
-      return new BlazeFlagsModification() {
-        @Override
-        public void modifyFlags(List<String> flags) {
-          if (!flags.contains(flag)) {
-            flags.add(flag);
-          }
-        }
-
-        @Override
-        public boolean matchesConfigState(RunConfigurationFlagsState state) {
-          return state.getRawFlags().contains(flag);
-        }
-      };
-    }
-
-    static BlazeFlagsModification testFilter(String filter) {
-      return new BlazeFlagsModification() {
-        @Override
-        public void modifyFlags(List<String> flags) {
-          // remove old test filter flag if present
-          flags.removeIf((flag) -> flag.startsWith(BlazeFlags.TEST_FILTER));
-          if (filter != null) {
-            flags.add(BlazeFlags.TEST_FILTER + "=" + BlazeParametersListUtil.encodeParam(filter));
-          }
-        }
-
-        @Override
-        public boolean matchesConfigState(RunConfigurationFlagsState state) {
-          return state
-              .getRawFlags()
-              .contains(BlazeFlags.TEST_FILTER + "=" + BlazeParametersListUtil.encodeParam(filter));
-        }
-      };
-    }
-
-    static BlazeFlagsModification testEnv(String testEnv) {
-      return new BlazeFlagsModification() {
-        @Override
-        public void modifyFlags(List<String> flags) {
-          if (testEnv != null) {
-            flags.add(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
-          }
-        }
-
-        @Override
-        public boolean matchesConfigState(RunConfigurationFlagsState state) {
-          return state
-              .getRawFlags()
-              .contains(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
-        }
-      };
-    }
-  }
-
   public static Builder builder(
       PsiElement sourceElement, ImmutableSet<ExecutorType> supportedExecutors) {
     return new Builder(sourceElement, supportedExecutors);
@@ -202,12 +131,16 @@ public abstract class TestContext implements RunConfigurationContext {
 
   /** Builder class for {@link TestContext}. */
   public static class Builder {
+
     private final PsiElement sourceElement;
     private final ImmutableSet<ExecutorType> supportedExecutors;
     private ListenableFuture<RunConfigurationContext> contextFuture = null;
     private ListenableFuture<TargetInfo> targetFuture = null;
-    private final ImmutableList.Builder<BlazeFlagsModification> blazeFlags =
-        ImmutableList.builder();
+
+    @Nullable
+    private String testFilter = null;
+
+    @Nullable
     private String description = null;
 
     private Builder(PsiElement sourceElement, ImmutableSet<ExecutorType> supportedExecutors) {
@@ -235,26 +168,13 @@ public abstract class TestContext implements RunConfigurationContext {
 
     @CanIgnoreReturnValue
     public Builder setTestFilter(@Nullable String filter) {
-      if (filter != null) {
-        blazeFlags.add(BlazeFlagsModification.testFilter(filter));
-      }
-      return this;
-    }
-
-    @CanIgnoreReturnValue
-    public Builder addBlazeFlagsModification(BlazeFlagsModification modification) {
-      this.blazeFlags.add(modification);
+      this.testFilter = filter;
       return this;
     }
 
     @CanIgnoreReturnValue
     public Builder setDescription(String description) {
       this.description = description;
-      return this;
-    }
-
-    public Builder addTestEnv(String env) {
-      this.blazeFlags.add(BlazeFlagsModification.testEnv(env));
       return this;
     }
 
@@ -266,12 +186,12 @@ public abstract class TestContext implements RunConfigurationContext {
             contextFuture,
             "Resolving test context",
             sourceElement,
-            blazeFlags.build(),
+            testFilter,
             description);
       }
       Preconditions.checkState(targetFuture != null);
       return PendingAsyncTestContext.fromTargetFuture(
-          supportedExecutors, targetFuture, sourceElement, blazeFlags.build(), description);
+          supportedExecutors, targetFuture, sourceElement, testFilter, description);
     }
   }
 }

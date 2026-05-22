@@ -21,17 +21,24 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import javax.annotation.Nullable;
+import java.awt.event.ItemEvent;
+import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 /** State for a {@link BlazeCommandName}. */
 public final class BlazeCommandState implements RunConfigurationState {
+
   private static final String COMMAND_ATTR = "blaze-command";
 
-  @Nullable private BlazeCommandName command;
+  @Nullable
+  private BlazeCommandName command;
 
   public BlazeCommandState() {}
 
@@ -65,7 +72,8 @@ public final class BlazeCommandState implements RunConfigurationState {
     return new BlazeCommandStateEditor(project);
   }
 
-  private static class BlazeCommandStateEditor implements RunConfigurationStateEditor {
+  static class BlazeCommandStateEditor implements RunConfigurationStateEditor {
+
     private final String buildSystemName;
 
     private final ComboBox<?> commandCombo;
@@ -76,6 +84,50 @@ public final class BlazeCommandState implements RunConfigurationState {
           new ComboBox<>(new DefaultComboBoxModel<>(BlazeCommandName.knownCommands().toArray()));
       // Allow the user to manually specify an unlisted command.
       commandCombo.setEditable(true);
+    }
+
+    /**
+     * Invokes {@code listener} whenever the selected command changes, either by
+     * selection or by free text edit.
+     */
+    public void addCommandChangeListener(Consumer<@Nullable BlazeCommandName> listener) {
+      commandCombo.addItemListener(event -> {
+        if (event.getStateChange() == ItemEvent.SELECTED) {
+          listener.accept(currentCommand());
+        }
+      });
+
+      final var editorComponent = commandCombo.getEditor().getEditorComponent();
+      if (editorComponent instanceof JTextComponent text) {
+        text.getDocument().addDocumentListener(
+            new DocumentListener() {
+              @Override
+              public void insertUpdate(DocumentEvent e) {
+                listener.accept(currentCommand());
+              }
+
+              @Override
+              public void removeUpdate(DocumentEvent e) {
+                listener.accept(currentCommand());
+              }
+
+              @Override
+              public void changedUpdate(DocumentEvent e) {
+                listener.accept(currentCommand());
+              }
+            });
+      }
+    }
+
+    @Nullable
+    private BlazeCommandName currentCommand() {
+      final var selected = commandCombo.getSelectedItem();
+      if (selected instanceof BlazeCommandName name) {
+        return name;
+      }
+
+      final var text = selected == null ? null : selected.toString();
+      return Strings.isNullOrEmpty(text) ? null : BlazeCommandName.fromString(text);
     }
 
     @Override

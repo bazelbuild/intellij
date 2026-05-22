@@ -23,7 +23,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.buildview.RunConfigBuild;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -178,17 +177,16 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       };
     }
 
-    private static ImmutableList<String> getScriptParams(
-        BlazeCommandRunConfigurationCommonState state) {
+    private static ImmutableList<String> getScriptParams(BlazeCommandRunConfigurationCommonState state) {
       ImmutableList.Builder<String> paramsBuilder = ImmutableList.builder();
       paramsBuilder.addAll(state.getExeFlagsState().getFlagsForExternalProcesses());
-      paramsBuilder.addAll(state.getTestArgs());
-      String filterFlag = state.getTestFilterFlag();
-      if (filterFlag != null) {
-        String testFilterArg = filterFlag.substring((BlazeFlags.TEST_FILTER + "=").length());
-        // testFilterArg is a space-delimited list of filters
-        paramsBuilder.addAll(Splitter.on(" ").splitToList(testFilterArg));
+
+      final var testFilter = state.getTestFilterForExternalProcesses();
+      if (testFilter != null) {
+        // testFilter is a space-delimited list of filters
+        paramsBuilder.addAll(Splitter.on(' ').splitToList(testFilter));
       }
+
       return paramsBuilder.build();
     }
   }

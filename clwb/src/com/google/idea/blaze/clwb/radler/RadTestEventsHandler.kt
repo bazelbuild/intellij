@@ -40,7 +40,7 @@ class RadTestEventsHandler: BlazeTestEventsHandler {
     project: Project?,
     testLocations: List<Location<*>?>?
   ): String? {
-    // not supported yet
+    // not supported yet, we need to support both catch and gtest here
     return null
   }
 }

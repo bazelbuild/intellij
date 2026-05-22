@@ -91,7 +91,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
   /** {@link RunProfileState} for generic blaze commands. */
   public static class BlazeCommandRunProfileState extends CommandLineState {
 
-    private static final int BLAZE_BUILD_INTERRUPTED = 8;
     private final BlazeCommandRunConfiguration configuration;
     private final BlazeCommandRunConfigurationCommonState handlerState;
     private final ImmutableList<Filter> consoleFilters;
@@ -244,19 +243,23 @@ public final class BlazeCommandGenericRunConfigurationRunner
         command = BlazeCommandName.COVERAGE;
       }
 
-      return BlazeCommand.builder(invoker, command)
+      final var builder = BlazeCommand.builder(invoker, command)
           .addTargets(configuration.getTargets())
-          .addBlazeFlags(
-              BlazeFlags.blazeFlags(
-                  project,
-                  projectViewSet,
-                  getCommand(),
-                  context,
-                  BlazeInvocationContext.runConfigContext(
-                      executorType, configuration.getType(), false)))
-          .addBlazeFlags(extraBlazeFlags)
-          .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
-          .addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+          .addBlazeFlags(BlazeFlags.blazeFlags(
+              project,
+              projectViewSet,
+              getCommand(),
+              context,
+              BlazeInvocationContext.runConfigContext(executorType, configuration.getType(), false)
+          ))
+          .addBlazeFlags(extraBlazeFlags);
+
+      final var testFilterFlag = handlerState.getTestFilterFlag();
+      if (testFilterFlag != null && BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+        builder.addBlazeFlags(testFilterFlag, BlazeFlags.DISABLE_TEST_SHARDING);
+      }
+
+      return builder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
     }
 
     private BlazeCommandName getCommand() {

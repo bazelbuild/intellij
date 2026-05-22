@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.intellij.execution.ExecutionException;
@@ -31,7 +31,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.search.GlobalSearchScope;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -76,49 +75,32 @@ public class BlazeRerunFailedTestsAction extends AbstractRerunFailedTestsAction 
 
     @Nullable
     @Override
-    public RunProfileState getState(Executor executor, ExecutionEnvironment environment)
-        throws ExecutionException {
-      BlazeCommandRunConfigurationCommonState handlerState =
-          configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-      if (handlerState == null
-          || !BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+    public RunProfileState getState(Executor executor, ExecutionEnvironment environment) throws ExecutionException {
+      final var handlerState = configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+      if (handlerState == null || !BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
         return null;
       }
-      Project project = getProject();
-      List<Location<?>> locations =
-          getFailedTests(project)
-              .stream()
-              .filter(AbstractTestProxy::isLeaf)
-              .map((test) -> toLocation(project, test))
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList());
-      String testFilter = eventsHandler.getTestFilter(getProject(), locations);
-      if (testFilter == null) {
+
+      final var project = getProject();
+
+      final List<Location<?>> locations = getFailedTests(project).stream()
+          .filter(AbstractTestProxy::isLeaf)
+          .map((test) -> toLocation(project, test))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+      final var testFilterFlag = eventsHandler.getTestFilter(project, locations);
+      if (testFilterFlag == null) {
         return null;
       }
-      List<String> blazeFlags =
-          setTestFilter(handlerState.getBlazeFlagsState().getRawFlags(), testFilter);
-      handlerState.getBlazeFlagsState().setRawFlags(blazeFlags);
+
+      handlerState.getTestFilterState().setTestFilter(BlazeParametersListUtil.decodeTestFilterFlag(testFilterFlag));
       return configuration.getState(executor, environment);
     }
 
     @Nullable
     private Location<?> toLocation(Project project, AbstractTestProxy test) {
       return test.getLocation(project, GlobalSearchScope.allScope(project));
-    }
-
-    /** Replaces existing test_filter flag, or appends if none exists. */
-    private List<String> setTestFilter(List<String> flags, String testFilter) {
-      List<String> copy = new ArrayList<>(flags);
-      for (int i = 0; i < copy.size(); i++) {
-        String flag = copy.get(i);
-        if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
-          copy.set(i, testFilter);
-          return copy;
-        }
-      }
-      copy.add(testFilter);
-      return copy;
     }
   }
 }

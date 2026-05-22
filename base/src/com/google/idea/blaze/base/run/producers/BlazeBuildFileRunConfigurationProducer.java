@@ -103,7 +103,7 @@ public class BlazeBuildFileRunConfigurationProducer
 
     // ignore filtered test configs, produced by other configuration producers.
     final var handlerState = configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState != null && handlerState.getTestFilterFlag() != null) {
+    if (handlerState != null && handlerState.getTestFilterState().getTestFilter() != null) {
       return false;
     }
 

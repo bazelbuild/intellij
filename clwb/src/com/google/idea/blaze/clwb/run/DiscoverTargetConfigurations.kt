@@ -25,11 +25,9 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.common.aquery.ActionGraph
 import com.intellij.openapi.project.Project
-import com.intellij.util.asSafely
 import java.io.IOException
 
 private const val CC_COMPILE_MNEMONIC = "CppCompile"
@@ -47,7 +45,6 @@ class DiscoverTargetConfigurations(
 
   override fun run(ctx: BlazeContext): Output {
     val projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet()
-    val handlerState = configuration.handler.state.asSafely<BlazeCommandRunConfigurationCommonState>()
 
     val flags = BlazeFlags.blazeFlags(
       project,
@@ -57,16 +54,10 @@ class DiscoverTargetConfigurations(
       invocationContext,
     )
 
-    val externalFlags = handlerState
-      ?.blazeFlagsState
-      ?.flagsForExternalProcesses
-      ?: emptyList()
-
     val cmd = BlazeCommand.builder(BlazeCommandName.AQUERY)
       .addBlazeFlags("deps($target)")
       .addBlazeFlags(additionalFlags)
       .addBlazeFlags(flags)
-      .addBlazeFlags(externalFlags)
       .addBlazeFlags("--output=streamed_proto")
 
     BazelExecService.of(project).exec(ctx, cmd).use { result ->
