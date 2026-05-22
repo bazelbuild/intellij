@@ -92,7 +92,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
                 + "    factoryName=\"Bazel Command\">\n"
                 + "  <blaze-settings\n"
                 + "      handler-id=\"BlazeCommandGenericRunConfigurationHandlerProvider\">\n"
-                + "    <blaze-user-flag>--some_flag</blaze-user-flag>\n"
+                + "    <blaze-test-filter>Foo#bar</blaze-test-filter>\n"
                 + "  </blaze-settings>\n"
                 + "</configuration>");
 
