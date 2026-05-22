@@ -139,8 +139,8 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
     if (filter != null) {
       testFilter.setTestFilter(filter);
     }
-    if (!testArgs.isEmpty()) {
-      exeFlags.setRawFlags(testArgs);
+    for (String testArg : testArgs) {
+      element.addContent(new Element(USER_EXE_FLAG.getName()).setText(testArg));
     }
 
     legacyUserFlags = ImmutableList.copyOf(leftovers);

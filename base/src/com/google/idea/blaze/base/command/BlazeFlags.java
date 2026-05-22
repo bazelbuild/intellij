@@ -99,9 +99,6 @@ public final class BlazeFlags {
   public static final String ADB_PATH = "--adb_path";
   public static final String DEVICE = "--device";
 
-  // Pass-through arg for sending test arguments.
-  public static final String TEST_ARG = "--test_arg=";
-
   private static final String TOOL_TAG = "--tool_tag=ijwb:";
 
   // TODO: remove these when mobile-install V1 is obsolete
