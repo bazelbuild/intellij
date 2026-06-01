@@ -37,7 +37,6 @@ public final class BaseSdkCompat {
 
   /** #api213: inline this method. */
   public static String getLibraryNameFromLibraryOrigin(LibraryOrigin libraryOrigin) {
-    // TODO(b/230430213): adapt getLibraryNameFromLibraryOrigin to work in 221
     return "";
   }
 
