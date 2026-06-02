@@ -381,7 +381,7 @@
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
         "bzlTransitiveDigest": "wSF7MsEmcSlPwh54iGpCBs89gl5DcDzwwhyXkhp6aUE=",
-        "usagesDigest": "Ox4EA/BipymcYUwtab5bQqlx5x09FQVUX0rfqVkKaT8=",
+        "usagesDigest": "a1m1yN4/Ix/C2Iqjbe1fdoZkD+c0PpRdxMCQpyqUFGQ=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -404,6 +404,15 @@
               "version": "2026.1.2"
             }
           },
+          "clion_2026_2": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_intellij_sdk",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.clion262",
+              "sha256": "c9891eb2a7c217ad5034f5ecae1e4a6a6d4bd7c17ab891b1e2722173b52a9435",
+              "product": "clion",
+              "version": "262.6653.16-EAP-SNAPSHOT"
+            }
+          },
           "python_2025_3": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
@@ -418,6 +427,14 @@
               "build_file": "@@//intellij_platform_sdk:BUILD.python",
               "sha256": "5efe2abc0145eca730ce9fc6e4185ada2925d77d8fea284d811106e06b34ed53",
               "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/261.24374.151/PythonCore-261.24374.151.zip"
+            }
+          },
+          "python_2026_2": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.python",
+              "sha256": "28de79d952acdc4c44eecaf0fa7d3b9b55ccf77b5ee08d0bc35ce3eee03f7b53",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/262.6653.22/PythonCore-262.6653.22.zip"
             }
           }
         }

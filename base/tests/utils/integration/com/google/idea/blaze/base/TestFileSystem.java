@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -110,26 +109,20 @@ public class TestFileSystem {
 
   /** Finds PsiFile, and asserts that it's not null. */
   public PsiFile getPsiFile(VirtualFile file) {
-    return new ReadAction<PsiFile>() {
-      @Override
-      protected void run(Result<? super PsiFile> result) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-        assertThat(psiFile).isNotNull();
-        result.setResult(psiFile);
-      }
-    }.execute().getResultObject();
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      assertThat(psiFile).isNotNull();
+      return psiFile;
+    });
   }
 
   /** Finds PsiDirectory, and asserts that it's not null. */
   public PsiDirectory getPsiDirectory(VirtualFile file) {
-    return new ReadAction<PsiDirectory>() {
-      @Override
-      protected void run(Result<? super PsiDirectory> result) {
-        PsiDirectory psiFile = PsiManager.getInstance(project).findDirectory(file);
-        assertThat(psiFile).isNotNull();
-        result.setResult(psiFile);
-      }
-    }.execute().getResultObject();
+    return ReadAction.compute(() -> {
+      PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(file);
+      assertThat(psiDirectory).isNotNull();
+      return psiDirectory;
+    });
   }
 
   @Nullable
