@@ -27,11 +27,11 @@ import (
 	"strings"
 )
 
-var old = "2025.3"
-var new = "2026.1"
-var old_api = "253"
-var new_api = "261"
-var new_label = "2026_1"
+var old = "2026.1"
+var new = "2026.2"
+var old_api = "261"
+var new_api = "262"
+var new_label = "2026_2"
 
 var jsonPath = "override.json"
 var overrideJson = `{
