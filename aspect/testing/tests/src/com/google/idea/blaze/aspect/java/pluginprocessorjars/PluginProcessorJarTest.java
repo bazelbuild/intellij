@@ -34,7 +34,7 @@ import org.junit.runners.JUnit4;
 public class PluginProcessorJarTest extends BazelIntellijAspectTest {
   // blaze and bazel have different annotation processor paths & names.
   private static final String CUSTOMIZE_LINT_RULE_JAR =
-      "third_party/java_src/auto/value/libvalue_processor.jar";
+      "third_party/java/auto/value/libvalue_processor.jar";
   private static final String CUSTOMIZE_LINT_RULE_JAR_STR =
       jarString(CUSTOMIZE_LINT_RULE_JAR, /*iJar=*/ null, /*sourceJar=*/ null);
   private static final String GLOBAL_LINT_CHECK_JAR_PATH = "java/com/google/android/tools/lint/";
