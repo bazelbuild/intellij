@@ -122,23 +122,9 @@ public abstract class AspectStrategy {
   }
 
   /**
-   * Collects the names of output groups created by the aspect and by registered {@link OutputGroupsProvider} extensions
-   * for the given {@link OutputGroup} and languages.
+   * Collects the names of output groups created by the aspect for the given {@link OutputGroup} and languages.
    */
   protected ImmutableList<String> getOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
-    TreeSet<String> outputGroups = new TreeSet<>();
-
-    outputGroups.addAll(getBaseOutputGroups(outputGroup, activeLanguages));
-    outputGroups.addAll(getAdditionalOutputGroups(outputGroup, activeLanguages));
-
-    return ImmutableList.copyOf(outputGroups);
-  }
-
-  /**
-   * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and languages.
-   */
-  @VisibleForTesting
-  public ImmutableList<String> getBaseOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     ImmutableList.Builder<String> outputGroupsBuilder = ImmutableList.builder();
     if (outputGroup.equals(OutputGroup.INFO)) {
       outputGroupsBuilder.add(outputGroup.prefix + "generic");
@@ -148,18 +134,6 @@ public abstract class AspectStrategy {
         .filter(Objects::nonNull)
         .forEach(outputGroupsBuilder::add);
     return outputGroupsBuilder.build();
-  }
-
-  /**
-   * Collects the names of output groups from registered {@link OutputGroupsProvider} extensions
-   */
-  private static ImmutableList<String> getAdditionalOutputGroups(
-      OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
-    return OutputGroupsProvider.EP_NAME
-        .extensions()
-        .flatMap(p -> p.getAdditionalOutputGroups(outputGroup, ImmutableSet.copyOf(activeLanguages)).stream())
-        .filter(Objects::nonNull)
-        .collect(ImmutableList.toImmutableList());
   }
 
   public final IntellijIdeInfo.TargetIdeInfo readAspectFile(BlazeArtifact file) throws IOException {
