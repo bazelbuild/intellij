@@ -14,4 +14,5 @@ define_kt_toolchain(
     jvm_target = "17",
     kotlinc_options = ":kotlinc_options",
     language_version = "2.1",
+    jvm_runtime = [], # don't link stdlib into deploy jars
 )
