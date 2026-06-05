@@ -44,11 +44,6 @@ public class AspectStrategyTest extends BlazeTestCase {
 
   private static final MockAspectStrategy strategy = new MockAspectStrategy();
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
-    registerExtensionPoint(OutputGroupsProvider.EP_NAME, OutputGroupsProvider.class);
-  }
-
   @Test
   public void testGenericOutputGroupAlwaysPresent() {
     Set<LanguageClass> activeLanguages = ImmutableSet.of();
@@ -181,6 +176,13 @@ public class AspectStrategyTest extends BlazeTestCase {
     @Override
     protected Optional<String> getAspectFlag(Project project, Set<LanguageClass> activeLanguages) {
       return Optional.empty();
+    }
+
+    @Override
+    protected Optional<String> genericOutputGroup(OutputGroup outputGroup) {
+      return outputGroup == OutputGroup.INFO
+          ? Optional.of(outputGroup.prefix + "-generic")
+          : Optional.empty();
     }
   }
 }

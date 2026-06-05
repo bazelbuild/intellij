@@ -61,6 +61,11 @@ class IntelliJAspectStrategy : AspectStrategy() {
     if (aspects.isEmpty()) return Optional.empty()
     return Optional.of("--aspects=" + aspects.joinToString(","))
   }
+
+  override fun genericOutputGroup(outputGroup: OutputGroup): Optional<String> {
+    // unlike the legacy aspect, the generic group is just the bare prefix
+    return if (outputGroup == OutputGroup.INFO) Optional.of(outputGroup.prefix) else Optional.empty()
+  }
 }
 
 private fun toAspectRules(active: Set<LanguageClass>): Set<Rules> = buildSet {

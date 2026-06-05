@@ -20,11 +20,12 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService
 import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
-import java.util.Optional
+import java.util.*
 
 /**
  * The legacy aspect strategy: the bundled aspect is materialized (templated) into the workspace and
@@ -55,5 +56,9 @@ class LegacyAspectStrategy : AspectStrategy() {
 
   override fun getAspectFlag(project: Project, activeLanguages: Set<LanguageClass>): Optional<String> {
     return resolve(project, "intellij_info_bundled.bzl").map { "--aspects=$it%intellij_info_aspect" }
+  }
+
+  override fun genericOutputGroup(outputGroup: OutputGroup): Optional<String> {
+    return if (outputGroup == OutputGroup.INFO) Optional.of("${outputGroup.prefix}-generic") else Optional.empty()
   }
 }

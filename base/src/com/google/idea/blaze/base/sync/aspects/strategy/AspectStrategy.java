@@ -40,9 +40,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 
 /**
  * Aspect strategy for Skylark.
@@ -56,14 +54,23 @@ public abstract class AspectStrategy {
    * A Blaze output group created by the aspect.
    */
   public enum OutputGroup {
-    INFO("intellij-info-"),
-    RESOLVE("intellij-resolve-"),
-    COMPILE("intellij-compile-");
+    INFO("intellij-info"),
+    RESOLVE("intellij-resolve"),
+    COMPILE("intellij-compile");
 
+    /**
+     * The base name shared by all output groups of this kind. It is also the prefix used to match
+     * the kind's groups in the build result: it matches both the language-agnostic group.
+     */
     public final String prefix;
 
     OutputGroup(String prefix) {
       this.prefix = prefix;
+    }
+
+    /** The per-language output group name for this kind, e.g. {@code "intellij-info-cpp"}. */
+    public String outputGroupForLanguage(LanguageOutputGroup language) {
+      return prefix + "-" + language.suffix;
     }
   }
 
@@ -105,6 +112,30 @@ public abstract class AspectStrategy {
   protected abstract Optional<String> getAspectFlag(Project project, Set<LanguageClass> activeLanguages);
 
   /**
+   * The name of the language-agnostic ("generic") output group for the given {@link OutputGroup}, or
+   * empty if the kind has no such group. This is the only part of output group naming that differs
+   * between aspect strategies.
+   */
+  protected abstract Optional<String> genericOutputGroup(OutputGroup outputGroup);
+
+  /**
+   * Collects the names of output groups created by the aspect for the given {@link OutputGroup} and languages.
+   */
+  protected final ImmutableList<String> getOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
+    final var builder = ImmutableList.<String>builder();
+    genericOutputGroup(outputGroup).ifPresent(builder::add);
+
+    activeLanguages.stream()
+        .map(LanguageOutputGroup::forLanguage)
+        .filter(Objects::nonNull)
+        .distinct()
+        .map(outputGroup::outputGroupForLanguage)
+        .forEach(builder::add);
+
+    return builder.build();
+  }
+
+  /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only be called once.
    */
   public final void addAspectAndOutputGroups(
@@ -114,26 +145,12 @@ public abstract class AspectStrategy {
       Set<LanguageClass> activeLanguages) {
     final var groups = outputGroups.stream()
         .flatMap(g -> getOutputGroups(g, activeLanguages).stream())
+        .distinct()
         .collect(toImmutableList());
 
     builder
         .addBlazeFlags(getAspectFlag(project, activeLanguages).map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
-  }
-
-  /**
-   * Collects the names of output groups created by the aspect for the given {@link OutputGroup} and languages.
-   */
-  protected ImmutableList<String> getOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
-    ImmutableList.Builder<String> outputGroupsBuilder = ImmutableList.builder();
-    if (outputGroup.equals(OutputGroup.INFO)) {
-      outputGroupsBuilder.add(outputGroup.prefix + "generic");
-    }
-    activeLanguages.stream()
-        .map(l -> getOutputGroupForLanguage(outputGroup, l))
-        .filter(Objects::nonNull)
-        .forEach(outputGroupsBuilder::add);
-    return outputGroupsBuilder.build();
   }
 
   public final IntellijIdeInfo.TargetIdeInfo readAspectFile(BlazeArtifact file) throws IOException {
@@ -143,11 +160,5 @@ public abstract class AspectStrategy {
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
       return builder.build();
     }
-  }
-
-  @Nullable
-  private static String getOutputGroupForLanguage(OutputGroup group, LanguageClass language) {
-    LanguageOutputGroup langGroup = LanguageOutputGroup.forLanguage(language);
-    return langGroup != null ? group.prefix + langGroup.suffix : null;
   }
 }

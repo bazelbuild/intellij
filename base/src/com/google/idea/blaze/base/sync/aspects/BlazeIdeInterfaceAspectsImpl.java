@@ -208,8 +208,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Collection<OutputArtifact> files =
         buildResult
             .getBuildResult()
-            .getOutputGroupArtifactsLegacySyncOnly(
-                group -> group.startsWith(OutputGroup.INFO.prefix))
+            .getOutputGroupArtifactsLegacySyncOnly(group -> group.startsWith(OutputGroup.INFO.prefix))
             .stream()
             .filter(f -> ideInfoPredicate.test(f.getBazelOutRelativePath()))
             .distinct()
@@ -285,7 +284,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             prevState,
             diff,
             configHandler,
-            projectState.getBlazeVersionData(),
             projectState.getLanguageSettings(),
             importRoots,
             mergeWithOldState,
@@ -315,7 +313,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       @Nullable BlazeIdeInterfaceState prevState,
       ArtifactsDiff fileState,
       BlazeConfigurationHandler configHandler,
-      BlazeVersionData versionData,
       WorkspaceLanguageSettings languageSettings,
       ImportRoots importRoots,
       boolean mergeWithOldState,
