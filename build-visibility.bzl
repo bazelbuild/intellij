@@ -30,10 +30,6 @@ def create_plugin_packages_group(name = None):
         ],
     )
 
-def create_proto_visibility_group(name = None):
-    # This group is not needed externally
-    pass
-
 def create_common_plugins_package(name = None):
     native.package_group(
         name = "common_plugins",
