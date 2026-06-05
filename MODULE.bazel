@@ -15,6 +15,18 @@ bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_cc", version = "0.2.18")
 bazel_dep(name = "abseil-cpp", version = "20250814.2")
 
+# dependency on the new aspect's sdk
+bazel_dep(name = "intellij_aspect_sdk")
+local_path_override(
+    module_name = "intellij_aspect_sdk",
+    path = "/home/daniel_brauner/Projects/split-aspect-poc",
+)
+# git_override(
+#     module_name = "intellij_aspect_sdk",
+#     remote = "https://github.com/JetBrains/intellij-aspect.git",
+#     commit = "38439f8cf1bfdca6ad86445290927c9ace5d58e3",
+# )
+
 # import clwb test projects for aspect tests
 local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
 

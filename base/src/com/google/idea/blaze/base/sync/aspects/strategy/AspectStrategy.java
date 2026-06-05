@@ -25,15 +25,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.TextFormat;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -43,13 +44,17 @@ import java.util.TreeSet;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-/** Aspect strategy for Skylark. */
+/**
+ * Aspect strategy for Skylark.
+ */
 public abstract class AspectStrategy {
 
   public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
 
-  /** A Blaze output group created by the aspect. */
+  /**
+   * A Blaze output group created by the aspect.
+   */
   public enum OutputGroup {
     INFO("intellij-info-"),
     RESOLVE("intellij-resolve-"),
@@ -62,103 +67,97 @@ public abstract class AspectStrategy {
     }
   }
 
-  public static AspectStrategy getInstance(BlazeVersionData versionData) {
+  /**
+   * Returns the single {@link AspectStrategy} selected by the registered {@link AspectStrategyProvider} extensions. The
+   * providers are mutually exclusive (see {@code bazel.sync.use.intellij.aspect}), so exactly one returns a non-null
+   * strategy.
+   */
+  public static AspectStrategy getInstance() {
     AspectStrategy strategy =
         AspectStrategyProvider.EP_NAME
-            .extensions()
-            .map(p -> p.getStrategy(versionData))
+            .getExtensionList()
+            .stream()
+            .map(AspectStrategyProvider::getStrategy)
             .filter(Objects::nonNull)
             .findFirst()
             .orElse(null);
     return Preconditions.checkNotNull(strategy);
   }
 
-  /**
-   * Whether output groups containing a trimmed build graph can be requested, when relevant.
-   *
-   * <p>Per-language switching is hard-coded for now.
-   */
-  private static final BoolExperiment directDepsTrimmingEnabled =
-      new BoolExperiment("sync.allow.requesting.direct.deps", true);
-
-  /** True if the aspect available to the plugin supports direct deps trimming. */
-  private final boolean aspectSupportsDirectDepsTrimming;
-
-  protected AspectStrategy(boolean aspectSupportsDirectDepsTrimming) {
-    this.aspectSupportsDirectDepsTrimming = aspectSupportsDirectDepsTrimming;
-  }
-
   public abstract String getName();
 
-  protected abstract Optional<String> getAspectFlag(Project project);
+  /**
+   * Relative path, under the aspect directory, where this strategy deploys its files.
+   */
+  public abstract Path prefix();
 
   /**
-   * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
-   * be called once.
-   *
-   * @param directDepsOnly when supported for a language, the build outputs will be trimmed to
-   *     direct deps of the top-level targets.
+   * The writers that materialize this strategy's aspect files into {@code dir.resolve(prefix())}.
+   */
+  public abstract List<AspectWriter> writers();
+
+  /**
+   * Resolves a file produced by this strategy (relative to its deployed {@link #prefix()} directory) into a Bazel
+   * {@link Label}, or empty if the file does not exist.
+   */
+  public abstract Optional<Label> resolve(Project project, String relativePath);
+
+  protected abstract Optional<String> getAspectFlag(Project project, Set<LanguageClass> activeLanguages);
+
+  /**
+   * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only be called once.
    */
   public final void addAspectAndOutputGroups(
       Project project,
       BlazeCommand.Builder builder,
       Collection<OutputGroup> outputGroups,
-      Set<LanguageClass> activeLanguages,
-      boolean directDepsOnly) {
-    List<String> groups =
-        outputGroups.stream()
-            .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
-            .collect(toImmutableList());
+      Set<LanguageClass> activeLanguages) {
+    final var groups = outputGroups.stream()
+        .flatMap(g -> getOutputGroups(g, activeLanguages).stream())
+        .collect(toImmutableList());
+
     builder
-        .addBlazeFlags(getAspectFlag(project).map(List::of).orElse(List.of()))
+        .addBlazeFlags(getAspectFlag(project, activeLanguages).map(List::of).orElse(List.of()))
         .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 
   /**
-   * Collects the names of output groups created by the aspect and by registered {@link
-   * OutputGroupsProvider} extensions for the given {@link OutputGroup} and languages.
-   *
-   * <p>Delegates to {@link #getBaseOutputGroups(OutputGroup, Set, boolean)}, and {@link
-   * #getAdditionalOutputGroups(OutputGroup, Set)}
+   * Collects the names of output groups created by the aspect and by registered {@link OutputGroupsProvider} extensions
+   * for the given {@link OutputGroup} and languages.
    */
-  private ImmutableList<String> getOutputGroups(
-      OutputGroup outputGroup, Set<LanguageClass> activeLanguages, boolean directDepsOnly) {
+  protected ImmutableList<String> getOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     TreeSet<String> outputGroups = new TreeSet<>();
 
-    outputGroups.addAll(getBaseOutputGroups(outputGroup, activeLanguages, directDepsOnly));
+    outputGroups.addAll(getBaseOutputGroups(outputGroup, activeLanguages));
     outputGroups.addAll(getAdditionalOutputGroups(outputGroup, activeLanguages));
 
     return ImmutableList.copyOf(outputGroups);
   }
 
   /**
-   * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
-   * languages.
+   * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and languages.
    */
   @VisibleForTesting
-  public final ImmutableList<String> getBaseOutputGroups(
-      OutputGroup outputGroup, Set<LanguageClass> activeLanguages, boolean directDepsOnly) {
+  public ImmutableList<String> getBaseOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     ImmutableList.Builder<String> outputGroupsBuilder = ImmutableList.builder();
     if (outputGroup.equals(OutputGroup.INFO)) {
       outputGroupsBuilder.add(outputGroup.prefix + "generic");
     }
     activeLanguages.stream()
-        .map(l -> getOutputGroupForLanguage(outputGroup, l, directDepsOnly))
+        .map(l -> getOutputGroupForLanguage(outputGroup, l))
         .filter(Objects::nonNull)
         .forEach(outputGroupsBuilder::add);
     return outputGroupsBuilder.build();
   }
 
-  /** Collects the names of output groups from registered {@link OutputGroupsProvider} extensions */
+  /**
+   * Collects the names of output groups from registered {@link OutputGroupsProvider} extensions
+   */
   private static ImmutableList<String> getAdditionalOutputGroups(
       OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     return OutputGroupsProvider.EP_NAME
         .extensions()
-        .flatMap(
-            p ->
-                p
-                    .getAdditionalOutputGroups(outputGroup, ImmutableSet.copyOf(activeLanguages))
-                    .stream())
+        .flatMap(p -> p.getAdditionalOutputGroups(outputGroup, ImmutableSet.copyOf(activeLanguages)).stream())
         .filter(Objects::nonNull)
         .collect(ImmutableList.toImmutableList());
   }
@@ -173,29 +172,8 @@ public abstract class AspectStrategy {
   }
 
   @Nullable
-  private String getOutputGroupForLanguage(
-      OutputGroup group, LanguageClass language, boolean directDepsOnly) {
-    String langSuffix = getLanguageSuffix(language);
-    if (langSuffix == null) {
-      return null;
-    }
-    directDepsOnly = directDepsOnly && allowDirectDepsTrimming(language);
-    if (!directDepsOnly) {
-      return group.prefix + langSuffix;
-    }
-    return group.prefix + langSuffix + "-direct-deps";
-  }
-
-  @Nullable
-  private static String getLanguageSuffix(LanguageClass language) {
-    LanguageOutputGroup group = LanguageOutputGroup.forLanguage(language);
-    return group != null ? group.suffix : null;
-  }
-
-  private boolean allowDirectDepsTrimming(LanguageClass language) {
-    return aspectSupportsDirectDepsTrimming
-        && directDepsTrimmingEnabled.getValue()
-        && language != LanguageClass.C
-        && language != LanguageClass.GO;
+  private static String getOutputGroupForLanguage(OutputGroup group, LanguageClass language) {
+    LanguageOutputGroup langGroup = LanguageOutputGroup.forLanguage(language);
+    return langGroup != null ? group.prefix + langGroup.suffix : null;
   }
 }

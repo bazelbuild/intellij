@@ -30,5 +30,5 @@ public interface AspectStrategyProvider {
    * found.
    */
   @Nullable
-  AspectStrategy getStrategy(BlazeVersionData versionData);
+  AspectStrategy getStrategy();
 }
