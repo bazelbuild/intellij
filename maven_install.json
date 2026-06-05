@@ -17,6 +17,7 @@
     "net.bytebuddy:byte-buddy": -67913315,
     "net.bytebuddy:byte-buddy-agent": -728183915,
     "net.java.dev.jna:jna": 939544101,
+    "net.java.dev.jna:jna-platform": 1246142177,
     "org.hamcrest:hamcrest-core": 477294799,
     "org.jetbrains.kotlin:kotlin-stdlib": 52847824,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": -261545747,
@@ -45,14 +46,14 @@
     "net.bytebuddy:byte-buddy": -940344113,
     "net.bytebuddy:byte-buddy-agent": -1941972178,
     "net.java.dev.jna:jna": 2135635881,
-    "net.java.dev.jna:jna-platform": -1721145322,
+    "net.java.dev.jna:jna-platform": 887790488,
     "org.hamcrest:hamcrest": -2067871445,
     "org.hamcrest:hamcrest-core": -1752676859,
     "org.jetbrains.kotlin:kotlin-stdlib": -1966999684,
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": 1066920260,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": -2019062389,
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1681628020,
-    "org.jetbrains.pty4j:pty4j": -1690954800,
+    "org.jetbrains.pty4j:pty4j": 2011618886,
     "org.jetbrains:annotations": 1361021425,
     "org.jspecify:jspecify": 463317310,
     "org.mockito:mockito-core": 1052971865,
@@ -169,9 +170,9 @@
     },
     "net.java.dev.jna:jna-platform": {
       "shasums": {
-        "jar": "ae4caceb3840730c2537f9b7fb55a01baba580286b4122951488bcee558c2449"
+        "jar": "44ceeb7a0f3f9c1e74b96ecdce047f8cc85a8c72c491f7662ba64db899559870"
       },
-      "version": "5.14.0"
+      "version": "5.19.0"
     },
     "org.hamcrest:hamcrest": {
       "shasums": {
