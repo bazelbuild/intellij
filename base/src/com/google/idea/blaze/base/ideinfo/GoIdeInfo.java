@@ -47,12 +47,32 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
 
   public static GoIdeInfo fromProto(
       IntellijIdeInfo.GoIdeInfo proto, Label targetLabel, Kind targetKind) {
+    ImmutableList<ArtifactLocation> sources =
+        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto);
+    sources = applyTransformers(sources, LanguageClass.GO);
     return new GoIdeInfo(
-        ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
+        sources,
         ImportPathReplacer.fixImportPath(
             Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
         extractLibraryLabels(targetKind, proto.getLibraryLabelsList()),
             proto.getCgo());
+  }
+
+  private static ImmutableList<ArtifactLocation> applyTransformers(
+      ImmutableList<ArtifactLocation> artifacts, LanguageClass languageClass) {
+    ImmutableList.Builder<ArtifactLocation> result = ImmutableList.builder();
+    for (ArtifactLocation artifact : artifacts) {
+      ArtifactLocation transformed = artifact;
+      for (ArtifactLocationTransformer transformer :
+          ArtifactLocationTransformer.EP_NAME.getExtensionList()) {
+        if (transformer.getLanguageClass() == null
+            || transformer.getLanguageClass() == languageClass) {
+          transformed = transformer.transform(transformed);
+        }
+      }
+      result.add(transformed);
+    }
+    return result.build();
   }
 
   private static ImmutableList<Label> extractLibraryLabels(Kind kind, List<String> libraryLabels) {

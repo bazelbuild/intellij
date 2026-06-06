@@ -33,10 +33,10 @@ def cc_info_reference():
 
 # TEMPLATE-INCLUDE-BEGIN
 ## #if( $isCcEnabled == "true")
-##  return [CcInfoCompat]
+##    return [CcInfoCompat]
 ## #else
-##  return []
-##  #end
+##    return []
+## #end
 # TEMPLATE-INCLUDE-END
 
 def cc_info_in_target(target):
@@ -46,11 +46,11 @@ def cc_info_in_target(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if($isCcEnabled == "true")
-##  return CcInfoCompat in target
-##  #else
-##  return None
-##  #end
+##    #if($isCcEnabled == "true")
+##    return CcInfoCompat in target
+##    #else
+##    return None
+##    #end
 # TEMPLATE-INCLUDE-END
 
 def get_cc_info(target):
@@ -63,12 +63,12 @@ def get_cc_info(target):
 # TEMPLATE-IGNORE-END
 
 # TEMPLATE-INCLUDE-BEGIN
-##  #if( $isCcEnabled == "true")
-##  if CcInfoCompat in target:
-##      return target[CcInfoCompat]
-##  else:
-##      return None
-##  #else
-##  return None
-##  #end
+##    #if( $isCcEnabled == "true")
+##    if CcInfoCompat in target:
+##        return target[CcInfoCompat]
+##    else:
+##        return None
+##    #else
+##    return None
+##    #end
 # TEMPLATE-INCLUDE-END
