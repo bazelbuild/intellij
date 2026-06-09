@@ -21,7 +21,11 @@ def _integration_test_suite(name, srcs, deps = []):
             # enable detailed logging in tests to diagnose issues in CI
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
             "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
-        ],
+        ] + select({
+            # enables the new IntelliJ split aspect via its registry key, off by default
+            "//clwb:intellij_aspect_enabled": ["-Dbazel.sync.use.intellij.aspect=true"],
+            "//conditions:default": [],
+        }),
         deps = deps + [
             "//clwb:plugin_library",
             "//base",

@@ -2,6 +2,7 @@
 # Description: Builds clwb
 #
 
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
@@ -128,6 +129,17 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//third_party/java/junit",
     ],
+)
+
+# When enabled, headless/integration tests run with the new IntelliJ split aspect instead of the legacy bundled aspect.
+bool_flag(
+    name = "use_intellij_aspect",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "intellij_aspect_enabled",
+    flag_values = {":use_intellij_aspect": "True"},
 )
 
 clwb_headless_test(
