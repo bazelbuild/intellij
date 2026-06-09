@@ -18,8 +18,8 @@ cc_library(
         "other/headers",
     ],
     defines = ["VERSION2"],
-    local_defines = ["LOCAL_DEFINE"],
     includes = ["foo/bar"],
+    local_defines = ["LOCAL_DEFINE"],
     textual_hdrs = ["simple/simple_textual.h"],
 )
 
@@ -67,7 +67,7 @@ java_test(
         "//aspect/testing/rules:IntellijAspectTest",
         "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
         "//intellij_platform_sdk:test_libs",
-        "//proto:intellij_ide_info_java_proto",
+        "//proto:proto_deps",
         "//third_party/java/junit",
     ],
 )

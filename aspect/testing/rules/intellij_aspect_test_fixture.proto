@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-import "proto/intellij_ide_info.proto";
+import "sdk/proto/ide_info.proto";
 
 package blaze;
 

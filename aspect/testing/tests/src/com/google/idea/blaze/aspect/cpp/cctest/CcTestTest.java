@@ -35,7 +35,6 @@ public class CcTestTest extends BazelIntellijAspectTest {
     assertThat(target.getKind()).isEqualTo("cc_test");
 
     assertThat(target.hasCIdeInfo()).isTrue();
-    assertThat(target.hasJavaIdeInfo()).isFalse();
     CIdeInfo cTargetIdeInfo = target.getCIdeInfo();
 
     assertThat(cTargetIdeInfo.getRuleContext().getCoptsList()).isEmpty();

@@ -25,7 +25,6 @@ import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.OutputGr
 import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.LibraryArtifact;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetKey;
 import java.io.File;
@@ -219,42 +218,6 @@ public abstract class IntellijAspectTest {
         .setDependencyType(DependencyType.COMPILE_TIME)
         .setTarget(targetIdeInfo.getKey())
         .build();
-  }
-
-  protected static String libraryArtifactToString(LibraryArtifact libraryArtifact) {
-    StringBuilder stringBuilder = new StringBuilder();
-    if (libraryArtifact.hasJar()) {
-      stringBuilder.append("<jar:");
-      stringBuilder.append(libraryArtifact.getJar().getRelativePath());
-      stringBuilder.append(">");
-    }
-    if (libraryArtifact.hasInterfaceJar()) {
-      stringBuilder.append("<ijar:");
-      stringBuilder.append(libraryArtifact.getInterfaceJar().getRelativePath());
-      stringBuilder.append(">");
-    }
-    if (libraryArtifact.hasSourceJar()) {
-      stringBuilder.append("<source:");
-      stringBuilder.append(libraryArtifact.getSourceJar().getRelativePath());
-      stringBuilder.append(">");
-    }
-
-    return stringBuilder.toString();
-  }
-
-  /** Constructs a string that matches OutputJar#toString for comparison testing. */
-  protected static String jarString(String jar, String iJar, String sourceJar) {
-    StringBuilder sb = new StringBuilder();
-    if (jar != null) {
-      sb.append("<jar:" + jar + ">");
-    }
-    if (iJar != null) {
-      sb.append("<ijar:" + iJar + ">");
-    }
-    if (sourceJar != null) {
-      sb.append("<source:" + sourceJar + ">");
-    }
-    return sb.toString();
   }
 
   protected static Iterable<String> relativePathsForArtifacts(List<ArtifactLocation> sourcesList) {
