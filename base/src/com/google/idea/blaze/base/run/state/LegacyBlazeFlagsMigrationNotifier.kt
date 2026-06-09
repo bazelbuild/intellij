@@ -25,10 +25,13 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val SHOWN_KEY = "legacy_blaze_flags_migration_shown"
 private const val SYNC_REASON = "LegacyBlazeFlagsMigrationNotifier"
@@ -38,20 +41,20 @@ private const val SYNC_REASON = "LegacyBlazeFlagsMigrationNotifier"
  * no longer have a typed home and offers to move them into the project view's `build_flags:`
  * section via a modal dialog.
  */
-class LegacyBlazeFlagsMigrationNotifier : StartupActivity.DumbAware {
+class LegacyBlazeFlagsMigrationNotifier : ProjectActivity {
 
-  override fun runActivity(project: Project) {
+  override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) return
     if (isLegacyMigrationShown(project)) return
 
     val affected = collectLegacyConfigurations(project)
     if (affected.isEmpty()) return
 
-    ApplicationManager.getApplication().invokeLater {
+    withContext(Dispatchers.EDT) {
       markLegacyMigrationShown(project)
 
       val exitCode = showLegacyBlazeFlagsMigrationDialog(project, affected)
-      if (exitCode != DialogWrapper.OK_EXIT_CODE) return@invokeLater
+      if (exitCode != DialogWrapper.OK_EXIT_CODE) return@withContext
 
       migrateToProjectView(project, affected)
     }
