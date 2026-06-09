@@ -103,10 +103,12 @@ class DiscoverTargetConfigurations(
   )
 }
 
+// Actions in the exec/tool configuration (e.g. code generators like protoc) are never linked into the
+// debuggee, so their lack of debug info is expected and must not be flagged.
 private fun ActionGraph.Target.compileAction(): ActionGraph.Action? {
-  return actions.firstOrNull { it.mnemonic == CC_COMPILE_MNEMONIC }
+  return actions.firstOrNull { it.mnemonic == CC_COMPILE_MNEMONIC && !it.configuration.isTool }
 }
 
 private fun ActionGraph.Target.linkAction(): ActionGraph.Action? {
-  return actions.firstOrNull { it.mnemonic == CC_LINK_MNEMONIC }
+  return actions.firstOrNull { it.mnemonic == CC_LINK_MNEMONIC && !it.configuration.isTool }
 }

@@ -111,6 +111,9 @@ class ActionGraph(
 
     val mnemonic: String get() = src.mnemonic
 
+    /** Whether this configuration is used for building tools (i.e. the exec/tool configuration). */
+    val isTool: Boolean get() = src.isTool
+
     override fun toString(): String = "$mnemonic - ${checksum.substring(0, 8)}"
   }
 }
