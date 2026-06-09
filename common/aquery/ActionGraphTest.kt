@@ -56,7 +56,7 @@ class ActionGraphTest {
   @Test
   fun action_configuration() {
     val action = graph.defaultTarget.actions.first()
-    assertThat(action.configuration).isEqualTo("91e24984663c795f7d9f904758d4b84ba1954389b2ab756f70a6f32db2a79020")
+    assertThat(action.configuration.checksum).isEqualTo("91e24984663c795f7d9f904758d4b84ba1954389b2ab756f70a6f32db2a79020")
   }
 
   @Test
