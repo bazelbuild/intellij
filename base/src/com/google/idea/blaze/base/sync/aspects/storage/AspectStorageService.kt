@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager
 import com.google.idea.blaze.base.toolwindow.Task
@@ -52,7 +53,7 @@ private const val BAZEL_IGNORE_FILE = ".bazelignore"
 private val LOG = logger<AspectStorageService>()
 
 @Service(Service.Level.PROJECT)
-class AspectStorageService(private val project: Project, private val scope: CoroutineScope) {
+class AspectStorageService(private val project: Project) {
 
   companion object {
     @JvmStatic
@@ -62,8 +63,6 @@ class AspectStorageService(private val project: Project, private val scope: Coro
   /**
    * Copies all bundled aspects to a workspace relative directory.
    * This should be called as one of the first steps in the sync workflow.
-   *
-   * Register a [AspectWriter] to provide aspect files.
    */
   @Throws(SyncFailedException::class)
   fun prepare(parentCtx: BlazeContext?, state: SyncProjectState?) {
@@ -77,14 +76,15 @@ class AspectStorageService(private val project: Project, private val scope: Coro
         ctx.push(scope.build())
       }
 
+      val strategy = AspectStrategy.getInstance()
+
       val settings = BlazeImportSettingsManager.getInstance(project).importSettings
         ?: throw SyncFailedException("No import settings found")
 
-      val directory = aspectDirectory(settings)
+      val directory = aspectDirectory(settings)?.resolve(strategy.prefix())
         ?: throw SyncFailedException("Could not determine aspect directory")
 
       ctx.println("Writing aspects to $directory")
-
       detectBazelIgnoreAndEmitWarning(ctx, directory)
 
       try {
@@ -95,7 +95,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
         throw SyncFailedException("Could not create aspect directory", e)
       }
 
-      for (writer in AspectWriter.EP_NAME.extensionList) {
+      for (writer in strategy.writers()) {
         try {
           if (state == null) {
             writer.writeDumb(directory, project)
@@ -112,26 +112,18 @@ class AspectStorageService(private val project: Project, private val scope: Coro
   }
 
   /**
-   * Convince wrapper that derives an appropriate [SyncProjectState] for [prepare].
+   * Resolves a file produced by the currently selected [AspectStrategy] (relative to its deploy
+   * prefix directory) into a [Label]. Delegates to [AspectStrategy.resolve].
    */
-  @Throws(SyncFailedException::class)
-  fun prepare(parentCtx: BlazeContext?, projectData: BlazeProjectData, versionData: BlazeVersionData) {
-    val state = SyncProjectState.builder()
-      .setProjectViewSet(ProjectViewSet.EMPTY) // not used by any AspectWriter
-      .setLanguageSettings(projectData.workspaceLanguageSettings())
-      .setExternalWorkspaceData(projectData.externalWorkspaceData())
-      .setWorkspacePathResolver(projectData.workspacePathResolver())
-      .setWorkingSet(null)
-      .setBlazeVersionData(versionData)
-      .setBlazeInfo(projectData.blazeInfo())
-      .build()
+  fun resolve(file: String): Optional<Label> = AspectStrategy.getInstance().resolve(project, file)
 
-    prepare(parentCtx, state)
-  }
-
-  fun resolve(file: String): Optional<Label> {
+  /**
+   * Resolves [file], located under the aspect directory's [prefix] subdirectory, into a workspace
+   * relative [Label], or empty if the file does not exist.
+   */
+  fun resolve(file: String, prefix: Path): Optional<Label> {
     val settings = BlazeImportSettingsManager.getInstance(project).importSettings ?: return Optional.empty()
-    val directory = aspectDirectory(settings) ?: return Optional.empty()
+    val directory = aspectDirectory(settings)?.resolve(prefix) ?: return Optional.empty()
 
     val relativePath = directory.resolve(file)
     if (!Files.exists(relativePath)) return Optional.empty()
@@ -152,7 +144,7 @@ class AspectStorageService(private val project: Project, private val scope: Coro
       return projectPath.resolve(ASPECT_DIRECTORY)
     }
 
-    // if this is not the case, fallback to .ijwb_aspects or .clwb_aspects
+    // if this is not the case, fall back to .ijwb_aspects or .clwb_aspects
     return workspacePath.resolve(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY + "_aspects")
   }
 

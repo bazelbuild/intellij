@@ -41,7 +41,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   private final ImmutableSet<ArtifactLocation> sources;
   @Nullable private final CIdeInfo cIdeInfo;
   @Nullable private final CToolchainIdeInfo cToolchainIdeInfo;
-  @Nullable private final JavaIdeInfo javaIdeInfo;
   @Nullable private final PyIdeInfo pyIdeInfo;
   @Nullable private final JsIdeInfo jsIdeInfo;
   @Nullable private final TsIdeInfo tsIdeInfo;
@@ -58,7 +57,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       ImmutableSet<ArtifactLocation> sources,
       @Nullable CIdeInfo cIdeInfo,
       @Nullable CToolchainIdeInfo cToolchainIdeInfo,
-      @Nullable JavaIdeInfo javaIdeInfo,
       @Nullable PyIdeInfo pyIdeInfo,
       @Nullable JsIdeInfo jsIdeInfo,
       @Nullable TsIdeInfo tsIdeInfo,
@@ -73,7 +71,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.sources = sources;
     this.cIdeInfo = cIdeInfo;
     this.cToolchainIdeInfo = cToolchainIdeInfo;
-    this.javaIdeInfo = javaIdeInfo;
     this.pyIdeInfo = pyIdeInfo;
     this.jsIdeInfo = jsIdeInfo;
     this.tsIdeInfo = tsIdeInfo;
@@ -117,9 +114,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasCToolchainIdeInfo()
             ? CToolchainIdeInfo.fromProto(proto.getCToolchainIdeInfo())
             : null,
-        proto.hasJavaIdeInfo()
-            ? JavaIdeInfo.fromProto(proto.getJavaIdeInfo())
-            : null,
         proto.hasPyIdeInfo()
             ? PyIdeInfo.fromProto(proto.getPyIdeInfo())
             : null,
@@ -153,7 +147,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setBuildFileArtifactLocation, buildFile);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCIdeInfo, cIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setCToolchainIdeInfo, cToolchainIdeInfo);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaIdeInfo, javaIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPyIdeInfo, pyIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJsIdeInfo, jsIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTsIdeInfo, tsIdeInfo);
@@ -181,7 +174,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         sources,
         cIdeInfo,
         cToolchainIdeInfo,
-        javaIdeInfo,
         pyIdeInfo,
         jsIdeInfo,
         tsIdeInfo,
@@ -226,11 +218,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
-  public JavaIdeInfo getJavaIdeInfo() {
-    return javaIdeInfo;
-  }
-
-  @Nullable
   public PyIdeInfo getPyIdeInfo() {
     return pyIdeInfo;
   }
@@ -263,7 +250,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   public TargetInfo toTargetInfo() {
     return TargetInfo.builder(getKey().label(), getKind().getKindString())
         .setTestSize(getTestIdeInfo() != null ? getTestIdeInfo().getTestSize() : null)
-        .setTestClass(getJavaIdeInfo() != null ? getJavaIdeInfo().getTestClass() : null)
         .setSyncTime(getSyncTime())
         .setSources(ImmutableList.copyOf(getSources()))
         .build();
@@ -301,7 +287,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private final ImmutableSet.Builder<ArtifactLocation> sources = ImmutableSet.builder();
     private CIdeInfo cIdeInfo;
     private CToolchainIdeInfo cToolchainIdeInfo;
-    private JavaIdeInfo javaIdeInfo;
     private PyIdeInfo pyIdeInfo;
     private JsIdeInfo jsIdeInfo;
     private TsIdeInfo tsIdeInfo;
@@ -355,12 +340,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation.Builder source) {
       return addSource(source.build());
-    }
-
-    @CanIgnoreReturnValue
-    public Builder setJavaInfo(JavaIdeInfo.Builder builder) {
-      javaIdeInfo = builder.build();
-      return this;
     }
 
     @CanIgnoreReturnValue
@@ -456,7 +435,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           sources.build(),
           cIdeInfo,
           cToolchainIdeInfo,
-          javaIdeInfo,
           pyIdeInfo,
           jsIdeInfo,
           tsIdeInfo,
@@ -483,7 +461,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(sources, that.sources)
         && Objects.equals(cIdeInfo, that.cIdeInfo)
         && Objects.equals(cToolchainIdeInfo, that.cToolchainIdeInfo)
-        && Objects.equals(javaIdeInfo, that.javaIdeInfo)
         && Objects.equals(pyIdeInfo, that.pyIdeInfo)
         && Objects.equals(jsIdeInfo, that.jsIdeInfo)
         && Objects.equals(tsIdeInfo, that.tsIdeInfo)
@@ -503,7 +480,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         sources,
         cIdeInfo,
         cToolchainIdeInfo,
-        javaIdeInfo,
         pyIdeInfo,
         jsIdeInfo,
         tsIdeInfo,

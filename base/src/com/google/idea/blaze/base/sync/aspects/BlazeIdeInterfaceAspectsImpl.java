@@ -62,7 +62,6 @@ import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Result;
@@ -209,8 +208,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Collection<OutputArtifact> files =
         buildResult
             .getBuildResult()
-            .getOutputGroupArtifactsLegacySyncOnly(
-                group -> group.startsWith(OutputGroup.INFO.prefix))
+            .getOutputGroupArtifactsLegacySyncOnly(group -> group.startsWith(OutputGroup.INFO.prefix))
             .stream()
             .filter(f -> ideInfoPredicate.test(f.getBazelOutRelativePath()))
             .distinct()
@@ -286,7 +284,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             prevState,
             diff,
             configHandler,
-            projectState.getBlazeVersionData(),
             projectState.getLanguageSettings(),
             importRoots,
             mergeWithOldState,
@@ -316,12 +313,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       @Nullable BlazeIdeInterfaceState prevState,
       ArtifactsDiff fileState,
       BlazeConfigurationHandler configHandler,
-      BlazeVersionData versionData,
       WorkspaceLanguageSettings languageSettings,
       ImportRoots importRoots,
       boolean mergeWithOldState,
       @Nullable TargetMap oldTargetMap) {
-    AspectStrategy aspectStrategy = AspectStrategy.getInstance(versionData);
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance();
     Result<TargetMapAndInterfaceState> result =
         Scope.push(
             parentContext,
@@ -595,7 +591,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ImmutableSet<OutputGroup> outputGroups,
       BlazeInvocationContext blazeInvocationContext,
       boolean invokeParallel) {
-    AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance();
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
 
@@ -666,7 +662,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                             project,
                             invoker,
                             childContext,
-                            projectViewSet,
                             workspaceLanguageSettings.getActiveLanguages(),
                             targets,
                             aspectStrategy,
@@ -754,16 +749,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BuildInvoker invoker,
       BlazeContext context,
-      ProjectViewSet viewSet,
       ImmutableSet<LanguageClass> activeLanguages,
       List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy,
       ImmutableSet<OutputGroup> outputGroups,
       List<String> additionalBlazeFlags)
       throws BuildException {
-
-    boolean onlyDirectDeps =
-        viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
     Path targetPatternFile = prepareTargetPatternFile(project, targets);
     BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
@@ -779,7 +770,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       builder.addBlazeFlags("--nofake_stamp_data");
     }
 
-    aspectStrategy.addAspectAndOutputGroups(project, builder, outputGroups, activeLanguages, onlyDirectDeps);
+    aspectStrategy.addAspectAndOutputGroups(project, builder, outputGroups, activeLanguages);
     try {
       return BazelExecService.of(project).build(context, builder);
     } catch (com.intellij.execution.ExecutionException e) {

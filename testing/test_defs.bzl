@@ -236,16 +236,17 @@ def intellij_integration_test_suite(
         "//intellij_platform_sdk:bundled_plugins",
     ])
 
-    jvm_flags = list(jvm_flags)
-    jvm_flags.extend([
+    extra_jvm_flags = [
         "-Didea.classpath.index.enabled=false",
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
-    ])
-    jvm_flags.extend(ADD_OPENS)
+    ]
+    extra_jvm_flags.extend(ADD_OPENS)
 
     if required_plugins:
-        jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
+        extra_jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
+
+    jvm_flags = jvm_flags + extra_jvm_flags
 
     tags = kwargs.pop("tags", [])
     tags.append("notsan")

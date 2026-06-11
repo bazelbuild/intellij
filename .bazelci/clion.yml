@@ -129,6 +129,23 @@ tasks:
     test_targets:
       - //:clwb_tests
     soft_fail: false
+  CLion-Linux-OSS-latest-stable-intellij-aspect:
+    name: CLion Linux OSS Latest Stable (IntelliJ Aspect)
+    platform: ubuntu2204
+    build_flags:
+      - --lockfile_mode=error
+      - --define=ij_product=clion-oss-latest-stable
+      - --//clwb:use_intellij_aspect=true
+    build_targets:
+      - //clwb:clwb_bazel_zip
+      - //clwb:headless_tests
+    test_flags:
+      - --define=ij_product=clion-oss-latest-stable
+      - --//clwb:use_intellij_aspect=true
+      - --test_output=errors
+    test_targets:
+      - //clwb:headless_tests
+    soft_fail: true
   CLion-last-green:
     name: CLion Headless Tests Last Green
     platform: ubuntu2204

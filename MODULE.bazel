@@ -6,11 +6,22 @@ bazel_dep(name = "protobuf", version = "35.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_jvm_external", version = "7.0")
+bazel_dep(name = "rules_kotlin", version = "2.3.20")
+
+register_toolchains("//third_party/kotlin:toolchain")
 
 # required for aspect tests
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_cc", version = "0.2.18")
 bazel_dep(name = "abseil-cpp", version = "20250814.2")
+
+# dependency on the new aspect's sdk
+bazel_dep(name = "intellij_aspect_sdk")
+git_override(
+    module_name = "intellij_aspect_sdk",
+    commit = "6149b049b48845ba8aec82ea11861c31414f7576",
+    remote = "https://github.com/JetBrains/intellij-aspect.git",
+)
 
 # import clwb test projects for aspect tests
 local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "local_repository")
@@ -32,16 +43,6 @@ single_version_override(
     patch_strip = 1,
     patches = ["//third_party/bazel/patches:rules_bazel_integration_test.patch"],
 )
-
-# custom rules kotlin version, patches are required
-bazel_dep(name = "rules_kotlin", version = "2.3.20")
-single_version_override(
-    module_name = "rules_kotlin",
-    patch_strip = 1,
-    patches = ["//third_party/kotlin/patches:strip_stdlib.patch"],
-)
-
-register_toolchains("//third_party/kotlin:toolchain")
 
 # configure python cor rules_python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")

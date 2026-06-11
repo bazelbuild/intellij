@@ -34,8 +34,6 @@ public final class ProjectDataInterner {
       Interners.newWeakInterner();
   private static final Interner<ExecutionRootPath> executionRootPathInterner =
       Interners.newWeakInterner();
-  private static final Interner<LibraryArtifact> libraryArtifactInterner =
-      Interners.newWeakInterner();
 
   public static Label intern(Label label) {
     return labelInterner.intern(label);
@@ -59,9 +57,5 @@ public final class ProjectDataInterner {
 
   public static ExecutionRootPath intern(ExecutionRootPath executionRootPath) {
     return executionRootPathInterner.intern(executionRootPath);
-  }
-
-  static LibraryArtifact intern(LibraryArtifact libraryArtifact) {
-    return libraryArtifactInterner.intern(libraryArtifact);
   }
 }

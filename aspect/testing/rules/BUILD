@@ -9,7 +9,7 @@ licenses(["notice"])
 proto_library(
     name = "intellij_aspect_test_fixture_proto",
     srcs = ["intellij_aspect_test_fixture.proto"],
-    deps = ["//proto:intellij_ide_info_proto"],
+    deps = ["@intellij_aspect_sdk//sdk/proto:ide_info_proto"],
 )
 
 java_proto_library(
@@ -26,7 +26,7 @@ java_binary(
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
-        "//proto:intellij_ide_info_java_proto",
+        "//proto:proto_deps",
         "@protobuf//:protobuf_java",
     ],
 )
@@ -40,8 +40,7 @@ java_library(
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//intellij_platform_sdk:jsr305",
-        "//proto:common_java_proto",
-        "//proto:intellij_ide_info_java_proto",
+        "//proto:proto_deps",
         "//third_party/java/junit",
     ],
 )

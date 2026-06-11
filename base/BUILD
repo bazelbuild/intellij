@@ -1,4 +1,4 @@
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_java//java:defs.bzl", "java_library", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
@@ -53,6 +53,7 @@ kt_jvm_library(
         "//third_party/java/auto_value",
         "@error_prone_annotations//jar",
         "@gson//jar",
+        "@intellij_aspect_sdk//sdk",
     ],
 )
 
