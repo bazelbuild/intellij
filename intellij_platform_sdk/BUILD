@@ -12,6 +12,7 @@ load(
 )
 load(
     ":build_defs.bzl",
+    "define_ij_product_settings",
     "select_build_name",
     "select_from_plugin_api_directory",
 )
@@ -22,41 +23,7 @@ licenses(["notice"])
 
 create_test_libs_visibility_package()
 
-config_setting(
-    name = "clion-oss-oldest-stable",
-    values = {
-        "define": "ij_product=clion-oss-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "clion-oss-latest-stable",
-    values = {
-        "define": "ij_product=clion-oss-latest-stable",
-    },
-)
-
-config_setting(
-    name = "clion-oss-under-dev",
-    values = {
-        "define": "ij_product=clion-oss-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-2025.3",
-    values = {"define": "ij_product=clion-2025.3"},
-)
-
-config_setting(
-    name = "clion-2026.1",
-    values = {"define": "ij_product=clion-2026.1"},
-)
-
-config_setting(
-    name = "clion-2026.2",
-    values = {"define": "ij_product=clion-2026.2"},
-)
+define_ij_product_settings()
 
 config_setting(
     name = "jbr_runtime",
