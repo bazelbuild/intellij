@@ -380,8 +380,8 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "wSF7MsEmcSlPwh54iGpCBs89gl5DcDzwwhyXkhp6aUE=",
-        "usagesDigest": "a1m1yN4/Ix/C2Iqjbe1fdoZkD+c0PpRdxMCQpyqUFGQ=",
+        "bzlTransitiveDigest": "ZDup7daxmTFA5v8tbKClYNMih6VirFnOI+0bMr96w9I=",
+        "usagesDigest": "r0qWXNUGIa80jUZI9JARyy8qIR8cZMEAAStfy6d9gMk=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -435,6 +435,24 @@
               "build_file": "@@//intellij_platform_sdk:BUILD.python",
               "sha256": "28de79d952acdc4c44eecaf0fa7d3b9b55ccf77b5ee08d0bc35ce3eee03f7b53",
               "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/262.6653.22/PythonCore-262.6653.22.zip"
+            }
+          },
+          "jbr_25_0_3": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_jetbrains_runtime",
+            "attributes": {
+              "major": "25.0.3",
+              "minor": "b508.4",
+              "sha256": "3a68f6b8580e6ac99a2d3bc3d7ee1736be845e8804dcad4caed6b7cf2949c747",
+              "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
+            }
+          },
+          "jbr_21_0_11": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_jetbrains_runtime",
+            "attributes": {
+              "major": "21.0.11",
+              "minor": "b1163.116",
+              "sha256": "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e193",
+              "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
             }
           }
         }
