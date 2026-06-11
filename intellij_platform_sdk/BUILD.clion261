@@ -24,7 +24,7 @@ toolchain(
     name = "runtime",
     toolchain_type = "@bazel_tools//tools/jdk:runtime_toolchain_type",
     target_settings = [
-        "@//intellij_platform_sdk:clion-2026.1",
+        "@//intellij_platform_sdk:clion-2026.1-or-alias",
         "@//intellij_platform_sdk:jbr_runtime",
     ],
     toolchain = "@jbr_21_0_11//:runtime",
@@ -34,7 +34,7 @@ toolchain(
     name = "bootstrap_runtime",
     toolchain_type = "@bazel_tools//tools/jdk:bootstrap_runtime_toolchain_type",
     target_settings = [
-        "@//intellij_platform_sdk:clion-2026.1",
+        "@//intellij_platform_sdk:clion-2026.1-or-alias",
         "@//intellij_platform_sdk:jbr_runtime",
     ],
     toolchain = "@jbr_21_0_11//:runtime",

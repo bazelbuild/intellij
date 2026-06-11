@@ -1,5 +1,6 @@
 """Convenience methods for plugin_api."""
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
@@ -47,6 +48,27 @@ def _build_ij_product_dict(versions):
     return result
 
 DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.3", "2026.1", "2026.2"])
+
+def define_ij_product_settings():
+    """Defines a config_setting per ij_product (direct and indirect) and a
+    config_setting_group `<direct>-or-alias` matching either the direct name
+    or its INDIRECT_IJ_PRODUCTS alias. Intended for //intellij_platform_sdk:BUILD."""
+
+    for ij_product in DIRECT_IJ_PRODUCTS.keys():
+        native.config_setting(
+            name = ij_product,
+            values = {"define": "ij_product=" + ij_product},
+        )
+
+    for indirect, direct in INDIRECT_IJ_PRODUCTS.items():
+        native.config_setting(
+            name = indirect,
+            values = {"define": "ij_product=" + indirect},
+        )
+        selects.config_setting_group(
+            name = direct + "-or-alias",
+            match_any = [":" + direct, ":" + indirect],
+        )
 
 def _do_select_for_plugin_api(params):
     """A version of select_for_plugin_api which accepts indirect products."""
