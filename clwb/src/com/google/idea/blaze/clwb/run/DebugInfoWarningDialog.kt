@@ -109,10 +109,10 @@ private class DebugInfoWarningDialog(
   }
 
   override fun createActions(): Array<Action> = arrayOf(
-    DismissAction(),
     DialogWrapperExitAction("Continue Anyway", CONTINUE_ANYWAY_EXIT_CODE),
-    DialogWrapperExitAction("Abort", CANCEL_EXIT_CODE),
-    DialogWrapperExitAction("Inject Debug Flags and Retry", OK_EXIT_CODE).apply { putValue(DEFAULT_ACTION, true) },
+    DialogWrapperExitAction("Abort", CANCEL_EXIT_CODE).apply { putValue(DEFAULT_ACTION, true) },
+    DialogWrapperExitAction("Inject Debug Flags and Retry", OK_EXIT_CODE),
+    DismissAction(),
   )
 
   private inner class DismissAction : AbstractAction("Don't Show for Target"), OptionAction {
