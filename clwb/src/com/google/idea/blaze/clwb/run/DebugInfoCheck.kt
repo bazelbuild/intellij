@@ -18,14 +18,13 @@ package com.google.idea.blaze.clwb.run
 import com.google.idea.blaze.base.buildview.BuildStep
 import com.google.idea.blaze.base.buildview.fail
 import com.google.idea.blaze.base.buildview.warn
-import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.clwb.sync.enableInjectDebugFlags
 import com.google.idea.blaze.cpp.BlazeResolveConfigurationID
-import com.google.idea.common.aquery.ActionGraph
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
+import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.lang.CLanguageKind
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
@@ -66,9 +65,9 @@ class DebugInfoCheck(
     val exitCode = showDebugInfoWarning(project, target, configurations.mainConfiguration)
 
     when (exitCode) {
-      DialogWrapper.OK_EXIT_CODE -> {} // Continue — fall through to the warning below.
-      DialogWrapper.CANCEL_EXIT_CODE -> fail(warning.toString())
-      INJECT_EXIT_CODE -> {
+      CONTINUE_ANYWAY_EXIT_CODE -> Unit // fall through to the warning below
+      CANCEL_EXIT_CODE -> fail(warning.toString())
+      OK_EXIT_CODE -> {
         enableInjectDebugFlags(project)
         rerunRunConfiguration(env)
         fail("Debug flag injection enabled, re-running debug session.")
