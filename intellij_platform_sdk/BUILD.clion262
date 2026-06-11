@@ -20,6 +20,26 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 package(default_visibility = ["//visibility:public"])
 
+toolchain(
+    name = "runtime",
+    toolchain_type = "@bazel_tools//tools/jdk:runtime_toolchain_type",
+    target_settings = [
+        "@//intellij_platform_sdk:clion-2026.2",
+        "@//intellij_platform_sdk:jbr_runtime",
+    ],
+    toolchain = "@jbr_25_0_3//:runtime",
+)
+
+toolchain(
+    name = "bootstrap_runtime",
+    toolchain_type = "@bazel_tools//tools/jdk:bootstrap_runtime_toolchain_type",
+    target_settings = [
+        "@//intellij_platform_sdk:clion-2026.2",
+        "@//intellij_platform_sdk:jbr_runtime",
+    ],
+    toolchain = "@jbr_25_0_3//:runtime",
+)
+
 java_import(
     name = "sdk",
     jars = glob([
