@@ -304,7 +304,7 @@ private class ExecutionResultListener(
     future.completeExceptionally(IllegalStateException("unexpected debug process type"))
   }
 
-  override fun processNotStarted(executor: String, env: ExecutionEnvironment, cause: Throwable) {
+  override fun processNotStarted(executor: String, env: ExecutionEnvironment, cause: Throwable?) {
     future.completeExceptionally(cause)
   }
 
