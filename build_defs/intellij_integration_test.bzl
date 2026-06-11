@@ -24,6 +24,7 @@ _JVM_ADD_OPENS_FLAGS = [
         "java.desktop/sun.awt.image",
         "java.desktop/sun.font",
         "java.desktop/sun.swing",
+        "java.desktop/sun.swing.text",
     ]
 ]
 

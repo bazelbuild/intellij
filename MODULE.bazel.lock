@@ -380,7 +380,7 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "ZDup7daxmTFA5v8tbKClYNMih6VirFnOI+0bMr96w9I=",
+        "bzlTransitiveDigest": "Vh+BzxXY4Zo/PXI01zHC7GZl9cxk1d4GJ5iSuUmgd7g=",
         "usagesDigest": "r0qWXNUGIa80jUZI9JARyy8qIR8cZMEAAStfy6d9gMk=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
