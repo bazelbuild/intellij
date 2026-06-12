@@ -16,12 +16,16 @@
 package com.google.idea.blaze.base.execution;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.BlazeFlags;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.execution.ParametersListUtil;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Workaround issues in ParametersListUtil */
 public class BlazeParametersListUtil {
+
+  private final static String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + "=";
 
   /**
    * Like ParametersListUtil.encode(String) but will quote a param if it contains a single quote.
@@ -43,6 +47,28 @@ public class BlazeParametersListUtil {
     if (params == null) {
       return ImmutableList.of();
     }
+
     return ParametersListUtil.parse(params, true, true);
   }
+
+  /**
+   * Encodes a test filter value e.g., FooTest.testBar into a test filter flag string, e.g.
+   * --test_filter=FooTest.testBar. Uses shall escapes such that the flag can be passed directly to
+   * the blaze command line.
+   */
+  public static String encodeTestFilterFlag(String filterValue) {
+    return TEST_FILTER_FLAG_PREFIX + encodeParam(filterValue);
+  }
+
+  /**
+   * Decodes a test filter flag string, e.g. --test_filter=FooTest.testBar into the raw filter value by
+   * undoing the shall escapes.
+   */
+  public static String decodeTestFilterFlag(String filterFlag) {
+    final var filter = Strings.trimStart(filterFlag, TEST_FILTER_FLAG_PREFIX);
+    final var tokens = ParametersListUtil.parse(filter, false, true);
+
+    return tokens.isEmpty() ? filter : tokens.getFirst();
+  }
+
 }

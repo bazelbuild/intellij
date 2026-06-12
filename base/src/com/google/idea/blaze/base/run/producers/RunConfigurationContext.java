@@ -100,7 +100,7 @@ public interface RunConfigurationContext {
         }
         return Objects.equals(handlerState.getCommandState().getCommand(), command)
             && Objects.equals(config.getTargets(), ImmutableList.of(target))
-            && handlerState.getTestFilterFlag() == null;
+            && handlerState.getTestFilterState().getTestFilter() == null;
       }
     };
   }

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.EditorTestHelper;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -93,13 +92,6 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
     return handlerState != null ? handlerState.getTestFilterFlag() : null;
-  }
-
-  @Nullable
-  protected static ImmutableList<String> getTestArgsContents(BlazeCommandRunConfiguration config) {
-    BlazeCommandRunConfigurationCommonState handlerState =
-        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    return handlerState != null ? handlerState.getTestArgs() : null;
   }
 
   @Nullable

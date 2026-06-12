@@ -87,7 +87,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     BlazeCommandRunConfigurationCommonState state =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     state.getCommandState().setCommand(COMMAND);
-    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getTestFilterState().setTestFilter("Foo#bar");
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
     state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
@@ -104,9 +104,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     BlazeCommandRunConfigurationCommonState readState =
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
     assertThat(readState.getCommandState().getCommand()).isEqualTo(COMMAND);
-    assertThat(readState.getBlazeFlagsState().getRawFlags())
-        .containsExactly("--flag1", "--flag2")
-        .inOrder();
+    assertThat(readState.getTestFilterState().getTestFilter()).isEqualTo("Foo#bar");
     assertThat(readState.getExeFlagsState().getRawFlags()).containsExactly("--exeFlag1");
     assertThat(readState.getUserEnvVarsState().getData().getEnvs()).isEqualTo(ImmutableMap.of("HELLO", "world"));
   }
@@ -134,7 +132,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     BlazeCommandRunConfigurationCommonState state =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
     state.getCommandState().setCommand(COMMAND);
-    state.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    state.getTestFilterState().setTestFilter("Foo#bar");
     state.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
     state.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
@@ -151,8 +149,8 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
     assertThat(readState.getCommandState().getCommand())
         .isEqualTo(state.getCommandState().getCommand());
-    assertThat(readState.getBlazeFlagsState().getRawFlags())
-        .isEqualTo(state.getBlazeFlagsState().getRawFlags());
+    assertThat(readState.getTestFilterState().getTestFilter())
+        .isEqualTo(state.getTestFilterState().getTestFilter());
     assertThat(readState.getExeFlagsState().getRawFlags())
         .isEqualTo(state.getExeFlagsState().getRawFlags());
     assertThat(readState.getUserEnvVarsState().getData().getEnvs())
@@ -184,7 +182,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     BlazeCommandRunConfigurationCommonState readState =
         (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
     readState.getCommandState().setCommand(COMMAND);
-    readState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
+    readState.getTestFilterState().setTestFilter("Foo#bar");
     readState.getExeFlagsState().setRawFlags(ImmutableList.of("--exeFlag1"));
     readState.getUserEnvVarsState().setEnvVars(ImmutableMap.of("HELLO", "world"));
 
@@ -197,8 +195,8 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
     readState = (BlazeCommandRunConfigurationCommonState) readConfiguration.getHandler().getState();
     assertThat(readState.getCommandState().getCommand())
         .isEqualTo(state.getCommandState().getCommand());
-    assertThat(readState.getBlazeFlagsState().getRawFlags())
-        .isEqualTo(state.getBlazeFlagsState().getRawFlags());
+    assertThat(readState.getTestFilterState().getTestFilter())
+        .isEqualTo(state.getTestFilterState().getTestFilter());
     assertThat(readState.getExeFlagsState().getRawFlags())
         .isEqualTo(state.getExeFlagsState().getRawFlags());
     assertThat(readState.getUserEnvVarsState().getData().getEnvs())

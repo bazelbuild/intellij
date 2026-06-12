@@ -24,12 +24,10 @@ import com.google.idea.blaze.base.command.buildresult.LocalFileArtifact
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.projectview.ProjectViewManager
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
-import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
-import com.intellij.util.asSafely
 import java.io.File
 import java.nio.file.Path
 
@@ -47,7 +45,6 @@ class RunConfigBuild @JvmOverloads constructor(
 
   override fun run(ctx: BlazeContext): Output {
     val projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet()
-    val handlerState = configuration.handler.state.asSafely<BlazeCommandRunConfigurationCommonState>()
 
     val flags = BlazeFlags.blazeFlags(
       project,
@@ -57,16 +54,10 @@ class RunConfigBuild @JvmOverloads constructor(
       invocationContext,
     )
 
-    val externalFlags = handlerState
-      ?.blazeFlagsState
-      ?.flagsForExternalProcesses
-      ?: emptyList()
-
     val cmd = BlazeCommand.builder(BlazeCommandName.BUILD)
       .addTargets(target)
       .addBlazeFlags(additionalFlags)
       .addBlazeFlags(flags)
-      .addBlazeFlags(externalFlags)
 
     val result = BazelExecService.of(project).build(ctx, cmd)
 

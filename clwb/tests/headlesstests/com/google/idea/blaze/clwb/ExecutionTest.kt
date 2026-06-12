@@ -19,12 +19,12 @@ package com.google.idea.blaze.clwb
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.idea.blaze.base.bazel.BazelVersion
+import com.google.idea.blaze.base.model.primitives.Label
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess
-import com.google.idea.blaze.base.model.primitives.Label
-import com.google.idea.testing.headless.BazelVersionRule
 import com.google.idea.testing.headless.ProjectViewBuilder
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
@@ -32,7 +32,10 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
-import com.intellij.execution.process.*
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -42,10 +45,10 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.util.asSafely
 import com.intellij.util.system.OS
 import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -88,6 +91,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     }
 
     builder.addBuildFlag("--compilation_mode=dbg")
+    builder.addBuildFlag("--test_output=streamed")
 
     return builder
   }
@@ -128,7 +132,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     // filter gtest by suite name
     val gtestFiltered = execute(
       Label.create("//main:gtest"), executorId,
-      flags = listOf("--test_output=streamed", "--test_filter=FilterSuite.*")
+      testFilter = "FilterSuite.*"
     )
     gtestFiltered.assertSuccess()
     assertThat(gtestFiltered.output).contains("FilterSuite.FilteredTest")
@@ -139,7 +143,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     // filter gtest by specific test
     val gtestSingleTest = execute(
       Label.create("//main:gtest"), executorId,
-      flags = listOf("--test_output=streamed", "--test_filter=FilterSuite.FilteredTest")
+      testFilter = "FilterSuite.FilteredTest"
     )
     gtestSingleTest.assertSuccess()
     assertThat(gtestSingleTest.output).contains("FilterSuite.FilteredTest")
@@ -148,7 +152,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     // filter catch2 tests
     val catchFiltered = execute(
       Label.create("//main:catch"), executorId,
-      flags = listOf("--test_output=streamed", "--test_filter=FilteredTest")
+      testFilter = "FilteredTest"
     )
     catchFiltered.assertSuccess()
     assertThat(catchFiltered.output).contains("FilteredTest")
@@ -185,7 +189,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   private fun execute(
     label: Label,
     executorId: String,
-    flags: List<String> = emptyList(),
+    testFilter: String? = null,
     args: List<String> = emptyList()
   ): ExecutionResult {
     val future = CompletableFuture<Int>()
@@ -211,7 +215,6 @@ class ExecutionTest : ClwbHeadlessTestCase() {
       .add(CommonDataKeys.PROJECT, project)
       .add(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element))
       .add(Location.DATA_KEY, PsiLocation.fromPsiElement(element))
-      .add(BlazeCommandRunConfigurationCommonState.USER_BLAZE_FLAG, flags.toTypedArray())
       .add(BlazeCommandRunConfigurationCommonState.USER_EXE_FLAG, args.toTypedArray())
 
     val context = ConfigurationContext.getFromContext(
@@ -225,6 +228,16 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     val producer = RunConfigurationProducer.getInstance(BlazeBuildFileRunConfigurationProducer::class.java)
     val configuration = producer.createConfigurationFromContext(context)
     requireNotNull(configuration)
+
+    if (testFilter != null) {
+      val blazeConfig = configuration.configuration.asSafely<BlazeCommandRunConfiguration>()
+      requireNotNull(blazeConfig)
+
+      val handlerState = blazeConfig.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState::class.java)
+      requireNotNull(handlerState)
+
+      handlerState.testFilterState.testFilter = testFilter
+    }
 
     val environmentBuilder = ExecutionUtil.createEnvironment(executor, configuration.configurationSettings)
     requireNotNull(environmentBuilder)

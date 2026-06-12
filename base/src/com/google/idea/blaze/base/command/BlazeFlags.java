@@ -49,6 +49,8 @@ public final class BlazeFlags {
   public static final String DISABLE_TEST_SHARDING = "--test_sharding_strategy=disabled";
   // Filters the unit tests that are run (used with regexp for Java/Robolectric tests).
   public static final String TEST_FILTER = "--test_filter";
+  // Arguments passed to the test binary.
+  public static final String TEST_ARG = "--test_arg";
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
   // Environment variables for the test runner
@@ -96,9 +98,6 @@ public final class BlazeFlags {
 
   public static final String ADB_PATH = "--adb_path";
   public static final String DEVICE = "--device";
-
-  // Pass-through arg for sending test arguments.
-  public static final String TEST_ARG = "--test_arg=";
 
   private static final String TOOL_TAG = "--tool_tag=ijwb:";
 

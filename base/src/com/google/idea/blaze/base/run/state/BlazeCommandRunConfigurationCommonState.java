@@ -15,49 +15,55 @@
  */
 package com.google.idea.blaze.base.run.state;
 
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import java.io.File;
+import java.util.ArrayList;
 import javax.annotation.Nullable;
+import org.jdom.Element;
 
 /**
  * Shared state common to several {@link
  * com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler} types.
  */
 public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCompositeState {
-  public static final DataKey<String[]> USER_BLAZE_FLAG = DataKey.create("blaze-user-flag");
   public static final DataKey<String[]> USER_EXE_FLAG = DataKey.create("blaze-user-exe-flag");
 
-  private static final String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + '=';
+  private static final String LEGACY_USER_FLAG_TAG = "blaze-user-flag";
+  private static final String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + "=";
+  private static final String TEST_ARG_FLAG_PREFIX = BlazeFlags.TEST_ARG + "=";
 
   protected final BlazeCommandState command;
-  protected final RunConfigurationFlagsState blazeFlags;
+  protected final TestFilterState testFilter;
   protected final RunConfigurationFlagsState exeFlags;
   protected final EnvironmentVariablesState envVars;
 
+  /**
+   * Flags found in legacy {@code <blaze-user-flag>} XML elements that didn't migrate into a known
+   * state (i.e. weren't {@code --test_filter=...}). Captured at read time so the migration notifier
+   * can surface them to the user.
+   */
+  private ImmutableList<String> legacyUserFlags = ImmutableList.of();
+
   public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
-    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG, buildSystemName + " flags:");
+    testFilter = new TestFilterState();
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG, "Executable flags:");
     envVars = new EnvironmentVariablesState();
   }
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, envVars);
+    return ImmutableList.of(command, testFilter, exeFlags, envVars);
   }
 
-  /** @return The list of blaze flags that the user specified manually. */
-  public RunConfigurationFlagsState getBlazeFlagsState() {
-    return blazeFlags;
+  public TestFilterState getTestFilterState() {
+    return testFilter;
   }
 
   /** @return The list of executable flags the user specified manually. */
@@ -74,44 +80,71 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
     return command;
   }
 
-  /** Searches through all blaze flags for the first one beginning with '--test_filter' */
+  /** Returns the {@code --test_filter=<encoded>} flag for inclusion on a Bazel command line. */
   @Nullable
   public String getTestFilterFlag() {
-    for (String flag : getBlazeFlagsState().getRawFlags()) {
-      if (flag.startsWith(BlazeFlags.TEST_FILTER)) {
-        return flag;
-      }
-    }
-    return null;
+    return testFilter.getTestFilterFlag();
   }
 
   /**
    * The actual test filter value intended to be passed directly to external processes or
-   * environment variables.
-   *
-   * <p>Unlike {@link #getTestFilterFlag()}, this is not a flag intended to be used on the command
-   * line, so the shell-escaping/quoting has been removed.
+   * environment variables. Unlike {@link #getTestFilterFlag()}, this has no shell escaping or
+   * quoting.
    */
   @Nullable
   public String getTestFilterForExternalProcesses() {
-    String testFilterFlag =
-        getBlazeFlagsState().getFlagsForExternalProcesses().stream()
-            .filter(flag -> flag.startsWith(BlazeFlags.TEST_FILTER))
-            .findFirst()
-            .orElse(null);
-    if (testFilterFlag == null) {
-      return null;
-    }
-
-    checkState(testFilterFlag.startsWith(TEST_FILTER_FLAG_PREFIX));
-    return testFilterFlag.substring(TEST_FILTER_FLAG_PREFIX.length());
+    return testFilter.getTestFilter();
   }
 
-  public ImmutableList<String> getTestArgs() {
-    return getBlazeFlagsState().getRawFlags().stream()
-        .filter(f -> f.startsWith(BlazeFlags.TEST_ARG))
-        .map(f -> f.substring(BlazeFlags.TEST_ARG.length()))
-        .collect(toImmutableList());
+  /**
+   * Legacy {@code <blaze-user-flag>} entries that couldn't be migrated to a typed state. Cleared
+   * by the migration notifier after the user moves them to the project view file.
+   */
+  public ImmutableList<String> getLegacyUserFlags() {
+    return legacyUserFlags;
+  }
+
+  public void clearLegacyUserFlags() {
+    legacyUserFlags = ImmutableList.of();
+  }
+
+  @Override
+  protected void migrate(Element element) {
+    final var legacy = new ArrayList<>(element.getChildren(LEGACY_USER_FLAG_TAG));
+    if (legacy.isEmpty()) {
+      return;
+    }
+
+    final var leftovers = new ArrayList<String>();
+    final var testArgs = new ArrayList<String>();
+
+    String filter = null;
+    for (final var child : legacy) {
+      final var raw = child.getTextTrim();
+      if (raw == null || raw.isEmpty()) {
+        continue;
+      }
+
+      if (raw.startsWith(TEST_FILTER_FLAG_PREFIX)) {
+        // last-wins, matching Bazel's repeated-flag semantics
+        filter = BlazeParametersListUtil.decodeTestFilterFlag(raw);
+      } else if (raw.startsWith(TEST_ARG_FLAG_PREFIX)) {
+        // multiple uses are accumulated
+        testArgs.add(raw.substring(TEST_ARG_FLAG_PREFIX.length()));
+      } else {
+        leftovers.add(raw);
+      }
+    }
+
+    if (filter != null) {
+      testFilter.setTestFilter(filter);
+    }
+    for (String testArg : testArgs) {
+      element.addContent(new Element(USER_EXE_FLAG.getName()).setText(testArg));
+    }
+
+    legacyUserFlags = ImmutableList.copyOf(leftovers);
+    element.removeChildren(LEGACY_USER_FLAG_TAG);
   }
 
   public void validate(BuildSystemName buildSystemName) throws RuntimeConfigurationException {
@@ -122,6 +155,6 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
 
   @Override
   public RunConfigurationStateEditor getEditor(Project project) {
-    return new RunConfigurationCompositeStateEditor(project, getStates());
+    return new BlazeCommandRunConfigurationCommonStateEditor(project, getStates());
   }
 }

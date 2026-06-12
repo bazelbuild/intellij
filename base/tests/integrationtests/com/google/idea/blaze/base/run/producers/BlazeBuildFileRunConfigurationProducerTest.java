@@ -17,9 +17,7 @@ package com.google.idea.blaze.base.run.producers;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
@@ -198,10 +196,7 @@ public class BlazeBuildFileRunConfigurationProducerTest
 
     BlazeCommandRunConfigurationCommonState handlerState =
         config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    handlerState
-        .getBlazeFlagsState()
-        .setRawFlags(
-            ImmutableList.of(BlazeFlags.TEST_FILTER + "=com.google.test.SingleTestClass#"));
+    handlerState.getTestFilterState().setTestFilter("com.google.test.SingleTestClass#");
 
     assertThat(
             new BlazeBuildFileRunConfigurationProducer()

@@ -158,9 +158,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                         ExecutorType.fromExecutor(env.getExecutor()),
                         configuration.getType(),
                         false)))
-            .addBlazeFlags(testHandlerFlags)
-            .addBlazeFlags(handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
-            .addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+            .addBlazeFlags(testHandlerFlags);
+
+    String testFilterFlag = handlerState.getTestFilterFlag();
+    if (testFilterFlag != null && BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+      commandBuilder.addBlazeFlags(testFilterFlag, BlazeFlags.DISABLE_TEST_SHARDING);
+    }
+
+    commandBuilder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
 
     state.setConsoleBuilder(createConsoleBuilder(testUiSession));
     state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
@@ -249,14 +254,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       commandLine.addParameters(getTargetArguments(target));
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
-      commandLine.addParameters(handlerState.getTestArgs());
 
       // otherwise is handled in createProcess
       updateCommandlineWithEnvironmentData(commandLine);
 
       // the test filter needs to be passed manually since the binary is not run by bazel
-      final var testFilter = getTestFilter();
-      if (testFilter != null) {
+      final var testFilter = handlerState.getTestFilterForExternalProcesses();
+      if (testFilter != null && !testFilter.isBlank()) {
         commandLine.withEnvironment(TEST_FILTER_ENV_VARIABLE, testFilter);
       }
 
@@ -305,25 +309,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
     return CidrCoroutineHelper.runOnEDT(() -> new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder()));
-  }
-
-  /**
-   * Extracts the --test_filter value from the Blaze flags, if present.
-   */
-  private @Nullable String getTestFilter() {
-    final var flag = handlerState.getTestFilterFlag();
-
-    final var prefix = BlazeFlags.TEST_FILTER + "=";
-    if (flag == null || !flag.startsWith(prefix)) {
-      return null;
-    }
-
-    final var filter = flag.substring(prefix.length());
-    if (filter.isBlank()) {
-      return null;
-    }
-
-    return filter;
   }
 
   @Override
