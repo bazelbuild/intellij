@@ -380,8 +380,8 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "UnNAIkv3NvwgjUuBu4Np+2hUqiDtHvOqk8+XmwjhiZQ=",
-        "usagesDigest": "q94WDOBLeZeGIaQOLjTdYob+iG6EhoNqGkTv9UsRwec=",
+        "bzlTransitiveDigest": "8DceVB+QV/R/r0M+vnTqq0DjaYaqkZtkiEjefhdRzsE=",
+        "usagesDigest": "QaVNrkGgQMgdd2ZAfOzeGTIOqCbuG4s9HemLc5GI4sg=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -456,7 +456,7 @@
               "major": "21.0.11",
               "minor": "b1163.116",
               "sha256": {
-                "osx-aarch64": "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e196",
+                "osx-aarch64": "ff2d12e6cf6b2f9d7793b8b6596afe413bdd4074fbfc91d9a36f379df61df182",
                 "linux-x64": "097bf328b5bf5a236c095b8c8e5204c0eda91e5baa06b37383a7754b10671d8b",
                 "windows-x64": "a3b01a47e67207722064c136616a3c0529e0dc96e17d0d5e44a0e8b4a92c57e7"
               },
