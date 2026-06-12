@@ -372,7 +372,7 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "uhnq3jBQuqrbhOoJWYhyVN5010BxTXqyYnI7u2UWYMU=",
+        "bzlTransitiveDigest": "oqPouiZDItYCv+DyNq1q/kbApNgDcJv0xJ2Jjd0r/Ak=",
         "usagesDigest": "Ox4EA/BipymcYUwtab5bQqlx5x09FQVUX0rfqVkKaT8=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -534,7 +534,7 @@
     },
     "@@intellij_aspect_sdk+//config:extension.bzl%config": {
       "general": {
-        "bzlTransitiveDigest": "uwtvEwifd07VZByPOGDtoVT7X+1lA0V4DmgIxCRp2IQ=",
+        "bzlTransitiveDigest": "Sv3XD1o1fqglyQKqK8kOexW8EWVo8IBUwYH3wAOlg9w=",
         "usagesDigest": "ZuOGolwWAdm5Bm/X98zdtJCRKvHV3xVNJW86FldXci4=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
@@ -547,7 +547,7 @@
     },
     "@@intellij_aspect_sdk+//private:extension.bzl%bazel_registry": {
       "general": {
-        "bzlTransitiveDigest": "f/AS+hLlOLQtU1bfhtfg4w0MQBPh7DiTzRZ95qww6fg=",
+        "bzlTransitiveDigest": "FEBJUsRhKeQp28+KLT716/LSorVETRHfA9zTgJKV0qM=",
         "usagesDigest": "6nxJWhMBc44eMOcHHoBT2lIhS29Xs/YkRn6gqB9Bh7c=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
