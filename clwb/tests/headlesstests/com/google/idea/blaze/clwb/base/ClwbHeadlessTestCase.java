@@ -19,12 +19,11 @@ package com.google.idea.blaze.clwb.base;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.testing.headless.Assertions.abort;
 
-import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.testing.headless.HeadlessTestCase;
-import com.google.idea.testing.headless.ProjectViewBuilder;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
@@ -39,9 +38,22 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    // Must run before super.setUp(): on 253 rider access <home>/lib during app
+    // load (before setUpProject would get a chance to run).
+    final var sdkRoot = findSdkRoot();
+    linkSandboxDir(sdkRoot, "bin", Path.of(PathManager.getBinPath()));
+    linkSandboxDir(sdkRoot, "lib", Path.of(PathManager.getLibPath()));
 
-    setupSandboxBin();
+    super.setUp();
+  }
+
+  @Override
+  protected void setUpProject() throws Exception {
+    super.setUpProject();
+
+    // RadInitialConfigurator (clion-radler) flips AUTO_POPUP_JAVADOC_INFO on
+    // the first launch. The tearDown checks compare against default settings.
+    setDefaultCodeInsightSettings(CodeInsightSettings.getInstance());
   }
 
   @Override
@@ -50,31 +62,33 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     addAllowedVfsRoots(roots);
 
     Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
-    // HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
+    HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
 
     super.tearDown();
   }
 
-  private void setupSandboxBin() {
-    final var clionId = PluginId.getId("com.intellij.clion");
-    assertThat(clionId).isNotNull();
+  private static Path findSdkRoot() {
+    // app.jar lives at <sdk_root>/lib/app.jar; PathManager.getJarPathForClass
+    // works without the application being initialized.
+    final var appJar = PathManager.getJarPathForClass(Application.class);
+    assertThat(appJar).isNotNull();
 
-    final var clionPlugin = PluginManager.getInstance().findEnabledPlugin(clionId);
-    assertThat(clionPlugin).isNotNull();
+    final var libDir = Path.of(appJar).getParent();
+    assertThat(libDir).isNotNull();
+    assertThat(libDir.getFileName().toString()).isEqualTo("lib");
 
-    var pluginsPath = clionPlugin.getPluginPath();
-    while (pluginsPath != null && !pluginsPath.endsWith("plugins")) pluginsPath = pluginsPath.getParent();
-    assertThat(pluginsPath).isNotNull();
+    return libDir.getParent();
+  }
 
-    final var sdkBinPath = pluginsPath.getParent().resolve("bin");
-    assertExists(sdkBinPath.toFile());
+  private static void linkSandboxDir(Path sdkRoot, String dirName, Path link) {
+    final var target = sdkRoot.resolve(dirName);
+    assertExists(target.toFile());
 
     try {
-      final var link = Path.of(PathManager.getBinPath());
       Files.deleteIfExists(link);
-      Files.createSymbolicLink(link, sdkBinPath);
+      Files.createSymbolicLink(link, target);
     } catch (IOException e) {
-      abort("could not create bin path symlink", e);
+      abort("could not create " + dirName + " path symlink", e);
     }
   }
 
