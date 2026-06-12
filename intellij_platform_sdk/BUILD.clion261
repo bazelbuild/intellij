@@ -27,7 +27,7 @@ toolchain(
         "@//intellij_platform_sdk:clion-2026.1-or-alias",
         "@//intellij_platform_sdk:jbr_runtime",
     ],
-    toolchain = "@jbr_21_0_11//:runtime",
+    toolchain = "@jbr_25_0_3//:runtime",
 )
 
 toolchain(
@@ -37,7 +37,7 @@ toolchain(
         "@//intellij_platform_sdk:clion-2026.1-or-alias",
         "@//intellij_platform_sdk:jbr_runtime",
     ],
-    toolchain = "@jbr_21_0_11//:runtime",
+    toolchain = "@jbr_25_0_3//:runtime",
 )
 
 java_import(
