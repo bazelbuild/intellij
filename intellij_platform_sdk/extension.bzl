@@ -3,9 +3,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 _PRODUCT_URL_TEMPLATE = "https://www.jetbrains.com/intellij-repository/{repository}/com/jetbrains/intellij/{product}/{product}/{version}/{product}-{version}.zip"
 _MAVEN_URL_TEMPLATE = "https://www.jetbrains.com/intellij-repository/{repository}/com/jetbrains/intellij/{repo}/{name}/{version}/{name}-{version}.jar"
 _PLUGIN_URL_TEMPLATE = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/{plugin}/{version}/{plugin}-{version}.zip"
-_JBR_URL_TEMPLATE = "https://cache-redirector.jetbrains.com/intellij-jbr/jbr-{major}-{os}-{arch}-{minor}.tar.gz"
-_JBR_PREFIX_TEMPLATE = "jbr-{major}-{os}-{arch}-{minor}"
-_JBR_MAC_PREFIX_TEMPLATE = "jbr-{major}-{os}-{arch}-{minor}/Contents/Home"
+_JBR_URL_TEMPLATE = "https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-{major}-{os}-{arch}-{minor}.tar.gz"
+_JBR_PREFIX_TEMPLATE = "jbrsdk-{major}-{os}-{arch}-{minor}"
+_JBR_MAC_PREFIX_TEMPLATE = "jbrsdk-{major}-{os}-{arch}-{minor}/Contents/Home"
 
 def _guess_repository_name(rctx):
     """Guesses whether the release or snapshots repository should be used based on the version name."""
@@ -30,6 +30,7 @@ def _download_maven_libraries(rctx, product_version):
     content = rctx.read(rctx.attr.build_file)
 
     for line in content.split("\n"):
+        line = line.strip()
         start = line.find(directive)
         if start < 0:
             continue
