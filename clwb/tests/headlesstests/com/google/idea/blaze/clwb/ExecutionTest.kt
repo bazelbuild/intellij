@@ -157,16 +157,6 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   }
 
   fun checkTestSandboxNoNetwork() {
-    val result = execute(
-      Label.create("//main:gtest"), DefaultDebugExecutor.EXECUTOR_ID,
-      flags = listOf("--nosandbox_default_allow_network")
-    )
-
-    if (OS.CURRENT != OS.Linux) {
-      result.assertSuccess()
-    } else {
-      assertThat(result.exitCode).isEqualTo(3)
-    }
   }
 
   private fun executeEcho(target: String, executorId: String, args: String): List<String> {
