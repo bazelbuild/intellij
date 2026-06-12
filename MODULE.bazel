@@ -149,12 +149,20 @@ intellij_platform = use_extension("//intellij_platform_sdk:extension.bzl", "inte
 intellij_platform.jbr(
     major = "25.0.3",
     minor = "b508.4",
-    sha256 = "3a68f6b8580e6ac99a2d3bc3d7ee1736be845e8804dcad4caed6b7cf2949c747",
+    sha256 = {
+        "osx-aarch64": "3a68f6b8580e6ac99a2d3bc3d7ee1736be845e8804dcad4caed6b7cf2949c747",
+        "linux-x64": "8509ce95b3ce62d3cf083f60f43b5aec5be33ee1af33f6bf23522c1adb730adf",
+        "windows-x64": "6c5fe2f8db2912c018c7769de4b369aad3c23445ffa576b50a9b44467c9c7a86",
+    },
 )
 intellij_platform.jbr(
     major = "21.0.11",
     minor = "b1163.116",
-    sha256 = "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e193",
+    sha256 = {
+        "osx-aarch64": "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e193",
+        "linux-x64": "72bf2d1830587a3cd31b718d4af9fc7a88fc6c3740642d842b3b378d4acbe476",
+        "windows-x64": "30bd98fea798a6dc321f5ff1a8e656a09924a07e9da690192e43223be28bc3f3",
+    },
 )
 intellij_platform.sdk(
     name = "clion",
@@ -196,7 +204,7 @@ intellij_platform.plugin(
     sha256 = "28de79d952acdc4c44eecaf0fa7d3b9b55ccf77b5ee08d0bc35ce3eee03f7b53",
     version = "262.6653.22",
 )
-use_repo(intellij_platform, "jbr_25_0_3", "jbr_21_0_11", "clion_2025_3", "clion_2026_1", "clion_2026_2", "python_2025_3", "python_2026_1", "python_2026_2")
+use_repo(intellij_platform, "clion_2025_3", "clion_2026_1", "clion_2026_2", "jbr_21_0_11", "jbr_25_0_3", "python_2025_3", "python_2026_1", "python_2026_2")
 
 register_toolchains(
     "@clion_2025_3//:runtime",

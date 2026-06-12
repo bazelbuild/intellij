@@ -93,7 +93,7 @@ def _jetbrains_runtime_impl(rctx):
             os = os,
             arch = arch,
         ),
-        sha256 = rctx.attr.sha256,
+        sha256 = rctx.attr.sha256["%s-%s" % (os, arch)],
         strip_prefix = prefix_template.format(
             major = rctx.attr.major,
             minor = rctx.attr.minor,
@@ -109,7 +109,7 @@ _jetbrains_runtime = repository_rule(
     attrs = {
         "major": attr.string(mandatory = True),
         "minor": attr.string(mandatory = True),
-        "sha256": attr.string(mandatory = True),
+        "sha256": attr.string_dict(mandatory = True),
         "build_file": attr.label(mandatory = True),
     },
 )
@@ -125,7 +125,7 @@ _sdk = tag_class(attrs = {
 _jbr = tag_class(attrs = {
     "major": attr.string(mandatory = True),
     "minor": attr.string(mandatory = True),
-    "sha256": attr.string(mandatory = True),
+    "sha256": attr.string_dict(mandatory = True),
 })
 
 _plugin = tag_class(attrs = {
