@@ -30,7 +30,9 @@ def _download_maven_libraries(rctx, product_version):
     content = rctx.read(rctx.attr.build_file)
 
     for line in content.split("\n"):
+        # required on Windows, probably because of some leaking line breaks
         line = line.strip()
+
         start = line.find(directive)
         if start < 0:
             continue
