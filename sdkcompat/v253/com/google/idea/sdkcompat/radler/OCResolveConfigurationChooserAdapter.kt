@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationChooser
 
-// #api253
+// #api261
 abstract class OCResolveConfigurationChooserAdapter : OCResolveConfigurationChooser {
   override fun selectResolveConfiguration(
     project: Project,

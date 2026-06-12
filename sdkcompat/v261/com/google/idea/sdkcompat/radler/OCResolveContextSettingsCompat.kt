@@ -15,21 +15,14 @@
  */
 package com.google.idea.sdkcompat.radler
 
-import com.intellij.openapi.project.Project
+import com.jetbrains.cidr.lang.settings.OCResolveContextSettings
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
-import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationChooser
 
 // #api261
-abstract class OCResolveConfigurationChooserAdapter : OCResolveConfigurationChooser {
-  override fun selectPreselectedResolveConfiguration(
-    project: Project,
-    configurations: List<OCResolveConfiguration>,
-  ): OCResolveConfiguration? {
-    return doSelectResolveConfiguration(project, configurations)
-  }
-
-  abstract fun doSelectResolveConfiguration(
-    project: Project,
-    configurations: List<OCResolveConfiguration>,
-  ): OCResolveConfiguration?
+object OCResolveContextSettingsCompat {
+  @JvmStatic
+  fun findPriorityConfiguration(
+    settings: OCResolveContextSettings,
+    configurations: Collection<OCResolveConfiguration>,
+  ): OCResolveConfiguration? = settings.findPriorityConfiguration(configurations)
 }
