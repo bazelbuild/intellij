@@ -19,7 +19,7 @@ bazel_dep(name = "abseil-cpp", version = "20250814.2")
 bazel_dep(name = "intellij_aspect_sdk")
 git_override(
     module_name = "intellij_aspect_sdk",
-    commit = "ab9b1809d414eeb38c679d9938dfebb7b91a7660",
+    commit = "32ccaebd8378cf7ca635fc3b05975d06daada985",
     remote = "https://github.com/JetBrains/intellij-aspect.git",
 )
 
