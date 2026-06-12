@@ -66,7 +66,9 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -351,5 +353,26 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
         .stream()
         .filter(it -> it.getKey().label().equals(label))
         .toList();
+  }
+
+  protected void setBazelrcFlags(List<String> flags) throws IOException {
+    final var file = myProjectRoot.resolve(".bazelrc");
+
+    try (final var writer = Files.newBufferedWriter(
+        file,
+        StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING
+    )) {
+      for (final var flag : flags) {
+        writer.write("common ");
+        writer.write(flag);
+        writer.newLine();
+      }
+    }
+  }
+
+  protected void clearBazelrcFlags() throws IOException {
+    final var file = myProjectRoot.resolve(".bazelrc");
+    Files.deleteIfExists(file);
   }
 }
