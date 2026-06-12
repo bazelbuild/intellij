@@ -23,8 +23,7 @@ import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction
 import com.google.idea.blaze.base.sync.BlazeSyncManager
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.util.runOnceForProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -33,7 +32,7 @@ import com.intellij.openapi.ui.Messages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private const val SHOWN_KEY = "legacy_blaze_flags_migration_shown"
+private const val RUN_ONCE_ID = "legacy_blaze_flags_migration_shown"
 private const val SYNC_REASON = "LegacyBlazeFlagsMigrationNotifier"
 
 /**
@@ -44,19 +43,16 @@ private const val SYNC_REASON = "LegacyBlazeFlagsMigrationNotifier"
 class LegacyBlazeFlagsMigrationNotifier : ProjectActivity {
 
   override suspend fun execute(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
-    if (isLegacyMigrationShown(project)) return
-
     val affected = collectLegacyConfigurations(project)
     if (affected.isEmpty()) return
 
-    withContext(Dispatchers.EDT) {
-      markLegacyMigrationShown(project)
+    runOnceForProject(project, RUN_ONCE_ID) {
+      withContext(Dispatchers.EDT) {
+        val exitCode = showLegacyBlazeFlagsMigrationDialog(project, affected)
+        if (exitCode != DialogWrapper.OK_EXIT_CODE) return@withContext
 
-      val exitCode = showLegacyBlazeFlagsMigrationDialog(project, affected)
-      if (exitCode != DialogWrapper.OK_EXIT_CODE) return@withContext
-
-      migrateToProjectView(project, affected)
+        migrateToProjectView(project, affected)
+      }
     }
   }
 }
@@ -111,12 +107,4 @@ private fun clearLegacyFlagsFromConfigs(project: Project) {
     state.clearLegacyUserFlags()
     runManager.fireRunConfigurationChanged(settings)
   }
-}
-
-private fun isLegacyMigrationShown(project: Project): Boolean {
-  return PropertiesComponent.getInstance(project).getBoolean(SHOWN_KEY, false)
-}
-
-private fun markLegacyMigrationShown(project: Project) {
-  PropertiesComponent.getInstance(project).setValue(SHOWN_KEY, true)
 }
