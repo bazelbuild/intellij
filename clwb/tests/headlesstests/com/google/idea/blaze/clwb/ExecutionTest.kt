@@ -161,15 +161,18 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   }
 
   fun checkTestSandboxNoNetwork() {
-    val result = execute(
-      Label.create("//main:gtest"), DefaultDebugExecutor.EXECUTOR_ID,
-      flags = listOf("--nosandbox_default_allow_network")
-    )
+    setBazelrcFlags(listOf("--nosandbox_default_allow_network"))
 
-    if (OS.CURRENT != OS.Linux) {
-      result.assertSuccess()
-    } else {
-      assertThat(result.exitCode).isEqualTo(3)
+    try {
+      val result = execute(Label.create("//main:gtest"), DefaultDebugExecutor.EXECUTOR_ID)
+
+      if (OS.CURRENT != OS.Linux) {
+        result.assertSuccess()
+      } else {
+        assertThat(result.exitCode).isEqualTo(3)
+      }
+    } finally {
+      clearBazelrcFlags()
     }
   }
 
