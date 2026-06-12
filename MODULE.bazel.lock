@@ -372,8 +372,8 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "dEJqw9WCuEtgQk/yntYW5jI6wNYP4nI54xsRCDoYogs=",
-        "usagesDigest": "AcGuHaDbAcm1lsHtGsK+NB0/pN3TWtfPZ2VwUsIMFUc=",
+        "bzlTransitiveDigest": "UnNAIkv3NvwgjUuBu4Np+2hUqiDtHvOqk8+XmwjhiZQ=",
+        "usagesDigest": "q94WDOBLeZeGIaQOLjTdYob+iG6EhoNqGkTv9UsRwec=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -435,9 +435,9 @@
               "major": "25.0.3",
               "minor": "b508.4",
               "sha256": {
-                "osx-aarch64": "3a68f6b8580e6ac99a2d3bc3d7ee1736be845e8804dcad4caed6b7cf2949c747",
-                "linux-x64": "8509ce95b3ce62d3cf083f60f43b5aec5be33ee1af33f6bf23522c1adb730adf",
-                "windows-x64": "6c5fe2f8db2912c018c7769de4b369aad3c23445ffa576b50a9b44467c9c7a86"
+                "osx-aarch64": "5eec8b014c9e0503ab4b9c60f7890f136752fe765375042a189dd81c297ee7ee",
+                "linux-x64": "b41b8f9451ca76b0bb32270266f8f0e7437bf97a9737be84d46bd0cdfa01b3dd",
+                "windows-x64": "b5d07556d36fa84239e35b5458ce31e7f6e2b8088d6423ddbf29c19ebd8812b4"
               },
               "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
             }
@@ -448,9 +448,9 @@
               "major": "21.0.11",
               "minor": "b1163.116",
               "sha256": {
-                "osx-aarch64": "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e193",
-                "linux-x64": "72bf2d1830587a3cd31b718d4af9fc7a88fc6c3740642d842b3b378d4acbe476",
-                "windows-x64": "30bd98fea798a6dc321f5ff1a8e656a09924a07e9da690192e43223be28bc3f3"
+                "osx-aarch64": "84d0c3a60c3fb0e01c5e5e32712a627fba8bee170a9963f553f2717d8b96e196",
+                "linux-x64": "097bf328b5bf5a236c095b8c8e5204c0eda91e5baa06b37383a7754b10671d8b",
+                "windows-x64": "a3b01a47e67207722064c136616a3c0529e0dc96e17d0d5e44a0e8b4a92c57e7"
               },
               "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
             }
