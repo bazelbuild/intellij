@@ -5,7 +5,7 @@
     "com.google.auto.value:auto-value-annotations": 1386235898,
     "com.google.code.findbugs:jsr305": 495355163,
     "com.google.code.gson:gson": 2063056812,
-    "com.google.errorprone:error_prone_annotations": 1790047777,
+    "com.google.errorprone:error_prone_annotations": 911823543,
     "com.google.flogger:flogger": 1661800041,
     "com.google.flogger:flogger-system-backend": -285378212,
     "com.google.guava:failureaccess": -2032498474,
@@ -32,15 +32,15 @@
     "com.google.auto.value:auto-value": -308134042,
     "com.google.auto.value:auto-value-annotations": -1262682963,
     "com.google.code.findbugs:jsr305": 377355476,
-    "com.google.code.gson:gson": -1553582341,
-    "com.google.errorprone:error_prone_annotations": -710086274,
+    "com.google.code.gson:gson": -1633322735,
+    "com.google.errorprone:error_prone_annotations": -982741075,
     "com.google.flogger:flogger": -539652174,
     "com.google.flogger:flogger-system-backend": 1340066852,
     "com.google.guava:failureaccess": 120263671,
-    "com.google.guava:guava": 1445779144,
+    "com.google.guava:guava": 690689650,
     "com.google.guava:listenablefuture": 2001005618,
     "com.google.j2objc:j2objc-annotations": -77575218,
-    "com.google.truth:truth": -1332405218,
+    "com.google.truth:truth": 812549237,
     "com.googlecode.java-diff-utils:diffutils": -1594449752,
     "junit:junit": 64898858,
     "net.bytebuddy:byte-buddy": -940344113,
@@ -92,9 +92,9 @@
     },
     "com.google.errorprone:error_prone_annotations": {
       "shasums": {
-        "jar": "3b1003e51b8ae56fdbd7c71073e81d1683b97e6c4dff5a9151164d59b769d13c"
+        "jar": "4667724877f1d37a689202da191e23efa7657c62eef93ccdac406eccfe5cdd0a"
       },
-      "version": "2.49.0"
+      "version": "2.50.0"
     },
     "com.google.flogger:flogger": {
       "shasums": {
