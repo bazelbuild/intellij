@@ -17,7 +17,6 @@
 package com.google.idea.blaze.clwb;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
@@ -82,11 +81,12 @@ public class LibCppTest extends ClwbHeadlessTestCase {
   // 0.2.19 stopped resolving this symlink; when clang is invoked through the
   // symlink together it cannot locate its own libc++ headers.
   private static String resolveClang() {
+    final var clang = Path.of("/usr/bin/clang");
     try {
-      return Path.of("/usr/bin/clang").toRealPath().toString();
+      return clang.toRealPath().toString();
     } catch (IOException e) {
-      abort("could not resolve /usr/bin/clang", e);
-      throw new AssertionError(e); // unreachable, abort always throws
+      // fallback to clang from path if the symlink cannot be resolved
+      return "clang";
     }
   }
 
