@@ -17,35 +17,18 @@
 package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.testing.headless.Assertions.abort;
 
 import com.google.idea.testing.headless.HeadlessTestCase;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 
 public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    // Must run before super.setUp(): on 253 rider access <home>/lib during app
-    // load (before setUpProject would get a chance to run).
-    final var sdkRoot = findSdkRoot();
-    linkSandboxDir(sdkRoot, "bin", Path.of(PathManager.getBinPath()));
-    linkSandboxDir(sdkRoot, "lib", Path.of(PathManager.getLibPath()));
-
-    super.setUp();
-  }
 
   @Override
   protected void setUpProject() throws Exception {
@@ -65,31 +48,6 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
 
     super.tearDown();
-  }
-
-  private static Path findSdkRoot() {
-    // app.jar lives at <sdk_root>/lib/app.jar; PathManager.getJarPathForClass
-    // works without the application being initialized.
-    final var appJar = PathManager.getJarPathForClass(Application.class);
-    assertThat(appJar).isNotNull();
-
-    final var libDir = Path.of(appJar).getParent();
-    assertThat(libDir).isNotNull();
-    assertThat(libDir.getFileName().toString()).isEqualTo("lib");
-
-    return libDir.getParent();
-  }
-
-  private static void linkSandboxDir(Path sdkRoot, String dirName, Path link) {
-    final var target = sdkRoot.resolve(dirName);
-    assertExists(target.toFile());
-
-    try {
-      Files.deleteIfExists(link);
-      Files.createSymbolicLink(link, target);
-    } catch (IOException e) {
-      abort("could not create " + dirName + " path symlink", e);
-    }
   }
 
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) { }
