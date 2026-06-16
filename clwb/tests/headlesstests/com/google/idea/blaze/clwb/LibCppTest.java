@@ -31,6 +31,7 @@ import com.google.idea.blaze.cpp.BazelCompilerKind;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.junit.Rule;
@@ -59,13 +60,14 @@ public class LibCppTest extends ClwbHeadlessTestCase {
   @Override
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
     final var builder = super.projectViewText(version);
+    final var clang = resolveClang();
 
     // set the compiler to clang, only required for linux
     builder.addBuildFlag(
-        "--repo_env=CC=/usr/bin/clang",
-        "--repo_env=CXX=/usr/bin/clang",
-        "--action_env=CC=/usr/bin/clang",
-        "--action_env=CXX=/usr/bin/clang"
+        "--repo_env=CC=" + clang,
+        "--repo_env=CXX=" + clang,
+        "--action_env=CC=" + clang,
+        "--action_env=CXX=" + clang
     );
 
     return builder.addBuildFlag(
@@ -73,6 +75,19 @@ public class LibCppTest extends ClwbHeadlessTestCase {
         "--cxxopt=-stdlib=libc++",
         "--linkopt=-stdlib=libc++"
     );
+  }
+
+  // /usr/bin/clang is usually a symlink into the LLVM installation and rules_cc
+  // 0.2.19 stopped resolving this symlink; when clang is invoked through the
+  // symlink together it cannot locate its own libc++ headers.
+  private static String resolveClang() {
+    final var clang = Path.of("/usr/bin/clang");
+    try {
+      return clang.toRealPath().toString();
+    } catch (IOException e) {
+      // fallback to clang from path if the symlink cannot be resolved
+      return "clang";
+    }
   }
 
   private void checkCompiler() {

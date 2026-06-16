@@ -12,7 +12,7 @@ register_toolchains("//third_party/kotlin:toolchain")
 
 # required for aspect tests
 bazel_dep(name = "rules_shell", version = "0.8.0")
-bazel_dep(name = "rules_cc", version = "0.2.18")
+bazel_dep(name = "rules_cc", version = "0.2.19")
 bazel_dep(name = "abseil-cpp", version = "20250814.2")
 
 # dependency on the new aspect's sdk
