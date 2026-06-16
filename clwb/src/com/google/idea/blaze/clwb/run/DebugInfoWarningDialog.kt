@@ -25,15 +25,17 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.ui.dsl.builder.panel
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 
 private const val NOTIFICATION_TITLE = "Debug Info Warning"
 private const val DOC_URL = "https://jb.gg/clwb-debug-docs"
 
-internal const val INJECT_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
+internal const val CONTINUE_ANYWAY_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 internal const val DISMISS_TARGET_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE + 1
 internal const val DISMISS_PROJECT_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE + 2
 
@@ -77,8 +79,6 @@ private class DebugInfoWarningDialog(
 
   init {
     title = NOTIFICATION_TITLE
-    setOKButtonText("Continue")
-    setButtonsAlignment(SwingConstants.CENTER)
     init()
   }
 
@@ -90,10 +90,9 @@ private class DebugInfoWarningDialog(
     separator()
     row {
       text(
-        "The target was built without debug info. You can " +
-            "<a>inject debug flags</a> to have the plugin build " +
-            "C/C++ run configurations in debug mode."
-      ) { close(INJECT_EXIT_CODE, true) }
+        "The target was built without debug info. Enabling debug flag injection " +
+            "will make the plugin build C/C++ run configurations in debug mode."
+      )
     }
     row {
       comment(
@@ -110,9 +109,20 @@ private class DebugInfoWarningDialog(
   }
 
   override fun createActions(): Array<Action> = arrayOf(
-    okAction,
-    cancelAction,
-    DialogWrapperExitAction("Dismiss for Target", DISMISS_TARGET_EXIT_CODE),
-    DialogWrapperExitAction("Dismiss for Project", DISMISS_PROJECT_EXIT_CODE),
+    DialogWrapperExitAction("Continue Anyway", CONTINUE_ANYWAY_EXIT_CODE),
+    DialogWrapperExitAction("Abort", CANCEL_EXIT_CODE).apply { putValue(DEFAULT_ACTION, true) },
+    DialogWrapperExitAction("Inject Debug Flags and Retry", OK_EXIT_CODE),
+    DismissAction(),
   )
+
+  private inner class DismissAction : AbstractAction("Don't Show for Target"), OptionAction {
+
+    override fun actionPerformed(e: ActionEvent) {
+      close(DISMISS_TARGET_EXIT_CODE, false)
+    }
+
+    override fun getOptions(): Array<Action> = arrayOf(
+      DialogWrapperExitAction("Don't Show for Project", DISMISS_PROJECT_EXIT_CODE),
+    )
+  }
 }

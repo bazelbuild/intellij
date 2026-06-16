@@ -25,7 +25,8 @@ import com.google.idea.blaze.cpp.BlazeResolveConfigurationID
 import com.google.idea.common.aquery.ActionGraph
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
+import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.lang.CLanguageKind
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
@@ -34,6 +35,10 @@ import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
+import kotlin.io.path.extension
+import kotlin.text.startsWith
+
+typealias FlaggedActions = Sequence<Pair<Label, ActionGraph.Action>>
 
 class DebugInfoCheck(
   private val env: ExecutionEnvironment,
@@ -46,16 +51,16 @@ class DebugInfoCheck(
     val project = env.project
     val target = configurations.mainTarget
 
-    val compilerKind = findCompilerKind(project, configurations.mainConfiguration.checksum)
+    val compilerKind = findCompilerKind(project, configurations.mainConfiguration.checksum) ?: run {
+      warn(ctx, "Could not find compiler kind for configuration: ${configurations.mainConfiguration.checksum}")
+      return
+    }
 
-    val flaggedCompileActions = configurations.compileActions.asSequence()
-      .filter { (_, action) -> !checkCompileAction(action.arguments, compilerKind) }
-      .map { (label, action) -> label to action }
-    val flaggedLinkActions = configurations.linkActions.asSequence()
-      .filter { (_, action) -> !checkLinkAction(action.arguments, compilerKind) }
-      .map { (label, action) -> label to action }
-
-    val flaggedActions = (flaggedCompileActions + flaggedLinkActions).toList()
+    val flaggedActions = if (compilerKind == MSVCCompilerKind) {
+      checkMsvcDebugInfo(ctx, configurations)
+    } else {
+      checkDebugInfo(compilerKind, configurations)
+    }.toList()
     if (flaggedActions.isEmpty()) return
 
     val warning = StringBuilder("Non-debuggable dependencies:\n")
@@ -66,9 +71,9 @@ class DebugInfoCheck(
     val exitCode = showDebugInfoWarning(project, target, configurations.mainConfiguration)
 
     when (exitCode) {
-      DialogWrapper.OK_EXIT_CODE -> {} // Continue — fall through to the warning below.
-      DialogWrapper.CANCEL_EXIT_CODE -> fail(warning.toString())
-      INJECT_EXIT_CODE -> {
+      CONTINUE_ANYWAY_EXIT_CODE -> Unit // fall through to the warning below
+      CANCEL_EXIT_CODE -> fail(warning.toString())
+      OK_EXIT_CODE -> {
         enableInjectDebugFlags(project)
         rerunRunConfiguration(env)
         fail("Debug flag injection enabled, re-running debug session.")
@@ -79,6 +84,35 @@ class DebugInfoCheck(
     }
 
     warn(ctx, warning.toString())
+  }
+
+  fun checkDebugInfo(compilerKind: OCCompilerKind, configs: DiscoverTargetConfigurations.Output): FlaggedActions {
+    val compilationActions = configs.compileActions.asSequence()
+      .filter { (_, action) -> !action.checkCompileAction(compilerKind) }
+      .map { (label, action) -> label to action }
+    val linkActions = configs.linkActions.asSequence()
+      .filter { (_, action) -> !action.checkLinkAction(compilerKind) }
+      .map { (label, action) -> label to action }
+
+    return compilationActions + linkActions
+  }
+
+  /**
+   * Bazel uses response files on Windows for MSVC thus we cannot look at the
+   * arguments directly. However, the final link action should output the final
+   * pdb file.
+   */
+  fun checkMsvcDebugInfo(ctx: BlazeContext, configs: DiscoverTargetConfigurations.Output): FlaggedActions {
+    val linkAction = configs.linkActions[configs.mainTarget] ?: run {
+      warn(ctx, "Could find main link action.")
+      return emptySequence()
+    }
+
+    return sequence {
+      if (linkAction.outputs.none { it.path.extension == "pdb" }) {
+        yield(configs.mainTarget to linkAction)
+      }
+    }
   }
 }
 
@@ -102,10 +136,10 @@ private fun findCompilerKind(project: Project, bazelConfigHash: String): OCCompi
  * Checks that the given compile action arguments contain debug info flags
  * appropriate for the given compiler kind.
  */
-fun checkCompileAction(arguments: List<String>, compilerKind: OCCompilerKind?): Boolean {
+fun ActionGraph.Action.checkCompileAction(compilerKind: OCCompilerKind?): Boolean {
   return when (compilerKind) {
     GCCCompilerKind, ClangCompilerKind -> hasGccDebugInfo(arguments)
-    MSVCCompilerKind -> hasMsvcDebugInfo(arguments)
+    MSVCCompilerKind -> true // the MSVC toolchain uses response files, so we cannot look at the arguments directly
     ClangClCompilerKind -> hasGccDebugInfo(arguments) || hasClangClDebugInfo(arguments) || hasMsvcDebugInfo(arguments)
     else -> hasGccDebugInfo(arguments) || hasMsvcDebugInfo(arguments)
   }
@@ -129,7 +163,7 @@ private fun hasMsvcDebugInfo(arguments: List<String>): Boolean {
  * Checks that the given link action arguments produce path-independent
  * debug information. Atm only checks for oso_prefix on macOS.
  */
-fun checkLinkAction(arguments: List<String>, compilerKind: OCCompilerKind?): Boolean {
+fun ActionGraph.Action.checkLinkAction(compilerKind: OCCompilerKind?): Boolean {
   if (compilerKind != ClangCompilerKind || OS.CURRENT != OS.macOS) return true
   return arguments.any { it.contains("-oso_prefix,.") }
 }
