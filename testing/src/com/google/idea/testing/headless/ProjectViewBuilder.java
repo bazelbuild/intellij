@@ -16,6 +16,7 @@
 
 package com.google.idea.testing.headless;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,6 @@ public class ProjectViewBuilder {
   private final List<String> sync_flags = new ArrayList<>();
 
   private boolean derive_targets_from_directories = true;
-  private boolean use_query_sync = false;
 
   public ProjectViewBuilder addDirectories(String... values) {
     directories.addAll(Arrays.asList(values));
@@ -51,18 +51,21 @@ public class ProjectViewBuilder {
     return this;
   }
 
+  public ImmutableList<String> getBuildFlags() {
+    return ImmutableList.copyOf(build_flags);
+  }
+
   public ProjectViewBuilder addSyncFlag(String... values) {
     sync_flags.addAll(Arrays.asList(values));
     return this;
   }
 
-  public ProjectViewBuilder setDeriveTargetsFromDirectories(boolean value) {
-    derive_targets_from_directories = value;
-    return this;
+  public ImmutableList<String> getSyncFlags() {
+    return ImmutableList.copyOf(sync_flags);
   }
 
-  public ProjectViewBuilder useQuerySync(boolean value) {
-    use_query_sync = value;
+  public ProjectViewBuilder setDeriveTargetsFromDirectories(boolean value) {
+    derive_targets_from_directories = value;
     return this;
   }
 
@@ -91,7 +94,6 @@ public class ProjectViewBuilder {
     }
 
     builder.append(String.format("derive_targets_from_directories: %b%n", derive_targets_from_directories));
-    builder.append(String.format("use_query_sync: %b%n", use_query_sync));
 
     return builder.toString();
   }

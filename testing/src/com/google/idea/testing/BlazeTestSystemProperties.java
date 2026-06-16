@@ -18,12 +18,15 @@ package com.google.idea.testing;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +66,58 @@ class BlazeTestSystemProperties {
 
     // Reset the home directory to a temporary location so tests can neither read nor
     // write the real user home (e.g. analytics settings or a local SDK under ~/Android).
-    System.setProperty("user.home", new File(sandbox, "userhome").getAbsolutePath());
+    final var userHome = new File(sandbox, "userhome");
+    System.setProperty("user.home", userHome.getAbsolutePath());
+    redirectHomeEnvironmentVariables(userHome);
+  }
+
+  /**
+   * Redirects {@code HOME} and the XDG base-directory environment variables into the sandbox.
+   *
+   * <p>The {@code user.home} system property set above only affects Java path APIs. Native code and
+   * XDG-based resolution (e.g. {@link PathManager}'s common data path uses {@code $XDG_DATA_HOME},
+   * which defaults to {@code $HOME/.local/share}) read the *environment* instead, and would
+   * otherwise write under the real user home -- frequently read-only on CI agents.
+   */
+  private static void redirectHomeEnvironmentVariables(File userHome) {
+    if (SystemInfo.isWindows) {
+      return; // HOME/XDG are POSIX-only; these paths do not derive from the real home on Windows.
+    }
+
+    final var overrides = new HashMap<String, String>();
+    overrides.put("HOME", userHome.getPath());
+    overrides.put("XDG_DATA_HOME", new File(userHome, ".local/share").getPath());
+    overrides.put("XDG_CONFIG_HOME", new File(userHome, ".config").getPath());
+    overrides.put("XDG_CACHE_HOME", new File(userHome, ".cache").getPath());
+    overrides.put("XDG_STATE_HOME", new File(userHome, ".local/state").getPath());
+
+    for (final var path : overrides.values()) {
+      new File(path).mkdirs();
+    }
+
+    overrideEnvironmentVariables(overrides);
+  }
+
+  /**
+   * Overrides environment variables of the running JVM so that both {@link System#getenv} callers
+   * and child processes observe the sandbox values. Relies on {@code
+   * --add-opens=java.base/java.util=ALL-UNNAMED}, which the integration-test rules already pass.
+   *
+   * <p>Note: this only updates the JVM's view of the environment; in-process native code calling
+   * libc {@code getenv} directly is not affected.
+   */
+  @SuppressWarnings("unchecked")
+  private static void overrideEnvironmentVariables(Map<String, String> overrides) {
+    try {
+      final var unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
+      final var backingMapField = unmodifiableMap.getDeclaredField("m");
+      backingMapField.setAccessible(true);
+
+      final var backingMap = (Map<String, String>) backingMapField.get(System.getenv());
+      backingMap.putAll(overrides);
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException("Could not redirect HOME/XDG environment variables for tests", e);
+    }
   }
 
   /**

@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -175,6 +176,18 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     return bazel.toAbsolutePath();
   }
 
+  /**
+   * Run info with the same build flags as the sync so that the reported bazel-bin matches.
+   */
+  private BazelInfo getTestBazelInfo(Path bazelBinary) throws ExecutionException, InterruptedException {
+    final var args = new ArrayList<String>();
+    args.add(bazelBinary.toString());
+    args.add("info");
+    args.addAll(getProjectViewText().getSyncFlags());
+
+    return BazelInfo.parse(exec(args.toArray(new String[0])));
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -182,7 +195,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
     final var bazelBinary = getTestBazelPath();
     BlazeUserSettings.getInstance().setBazelBinaryPath(bazelBinary.toString());
 
-    myBazelInfo = BazelInfo.parse(exec(bazelBinary.toString(), "info"));
+    myBazelInfo = getTestBazelInfo(bazelBinary);
 
     // register the tasks toolwindow, needs to be done manually
     final var windowManager = (ToolWindowHeadlessManagerImpl) ToolWindowManager.getInstance(myProject);
@@ -227,10 +240,7 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
             .build()
     );
 
-    final var bazelVersion = BazelVersionRule.getBazelVersion();
-    assertThat(bazelVersion).isPresent();
-
-    final var projectViewLines = projectViewText(bazelVersion.get()).toString().split("\n");
+    final var projectViewLines = getProjectViewText().toString().split("\n");
     final var projectViewBuilder = ProjectView.builder();
     projectViewBuilder.add(TextBlockSection.of(TextBlock.of(1, projectViewLines)));
     final var projectView = projectViewBuilder.build();
@@ -265,6 +275,13 @@ public abstract class HeadlessTestCase extends HeavyPlatformTestCase {
 
     final var options = new OpenProjectTask(false, null, false, false).withProject(myProject);
     ProjectUtil.openProject(projectFile.toPath(), options);
+  }
+
+  private ProjectViewBuilder getProjectViewText() {
+    final var bazelVersion = BazelVersionRule.getBazelVersion();
+    assertThat(bazelVersion).isPresent();
+
+    return projectViewText(bazelVersion.get());
   }
 
   protected ProjectViewBuilder projectViewText(BazelVersion version) {
