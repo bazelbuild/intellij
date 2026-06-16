@@ -10,9 +10,9 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_version({
-        "2025.2": ["@clion_2025_2//:javascript"],
         "2025.3": ["@clion_2025_3//:javascript"],
         "2026.1": ["@clion_2026_1//:javascript"],
+        "2026.2": ["@clion_2026_2//:javascript"],
     }),
 )
 
@@ -21,9 +21,9 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_version({
-        "2025.2": ["@clion_2025_2//:css"],
         "2025.3": ["@clion_2025_3//:css"],
         "2026.1": ["@clion_2026_1//:css"],
+        "2026.2": ["@clion_2026_2//:css"],
     }),
 )
 
@@ -32,9 +32,9 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_version({
-        "2025.2": ["@clion_2025_2//:tslint"],
         "2025.3": ["@clion_2025_3//:tslint"],
         "2026.1": ["@clion_2026_1//:tslint"],
+        "2026.2": ["@clion_2026_2//:tslint"],
     }),
 )
 

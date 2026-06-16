@@ -18,14 +18,15 @@ package com.google.idea.sdkcompat.radler
 import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationChooser
+import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationSlice
 
 // #api261
 abstract class OCResolveConfigurationChooserAdapter : OCResolveConfigurationChooser {
   override fun selectPreselectedResolveConfiguration(
     project: Project,
-    configurations: List<OCResolveConfiguration>,
+    slice: OCResolveConfigurationSlice,
   ): OCResolveConfiguration? {
-    return doSelectResolveConfiguration(project, configurations)
+    return doSelectResolveConfiguration(project, slice.resolve(project))
   }
 
   abstract fun doSelectResolveConfiguration(

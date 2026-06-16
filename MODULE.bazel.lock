@@ -380,8 +380,8 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "wSF7MsEmcSlPwh54iGpCBs89gl5DcDzwwhyXkhp6aUE=",
-        "usagesDigest": "Ox4EA/BipymcYUwtab5bQqlx5x09FQVUX0rfqVkKaT8=",
+        "bzlTransitiveDigest": "8DceVB+QV/R/r0M+vnTqq0DjaYaqkZtkiEjefhdRzsE=",
+        "usagesDigest": "QaVNrkGgQMgdd2ZAfOzeGTIOqCbuG4s9HemLc5GI4sg=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -404,6 +404,15 @@
               "version": "2026.1.2"
             }
           },
+          "clion_2026_2": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_intellij_sdk",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.clion262",
+              "sha256": "c9891eb2a7c217ad5034f5ecae1e4a6a6d4bd7c17ab891b1e2722173b52a9435",
+              "product": "clion",
+              "version": "262.6653.16-EAP-SNAPSHOT"
+            }
+          },
           "python_2025_3": {
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
@@ -418,6 +427,40 @@
               "build_file": "@@//intellij_platform_sdk:BUILD.python",
               "sha256": "5efe2abc0145eca730ce9fc6e4185ada2925d77d8fea284d811106e06b34ed53",
               "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/261.24374.151/PythonCore-261.24374.151.zip"
+            }
+          },
+          "python_2026_2": {
+            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
+            "attributes": {
+              "build_file": "@@//intellij_platform_sdk:BUILD.python",
+              "sha256": "28de79d952acdc4c44eecaf0fa7d3b9b55ccf77b5ee08d0bc35ce3eee03f7b53",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/262.6653.22/PythonCore-262.6653.22.zip"
+            }
+          },
+          "jbr_25_0_3": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_jetbrains_runtime",
+            "attributes": {
+              "major": "25.0.3",
+              "minor": "b508.4",
+              "sha256": {
+                "osx-aarch64": "5eec8b014c9e0503ab4b9c60f7890f136752fe765375042a189dd81c297ee7ee",
+                "linux-x64": "b41b8f9451ca76b0bb32270266f8f0e7437bf97a9737be84d46bd0cdfa01b3dd",
+                "windows-x64": "b5d07556d36fa84239e35b5458ce31e7f6e2b8088d6423ddbf29c19ebd8812b4"
+              },
+              "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
+            }
+          },
+          "jbr_21_0_11": {
+            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_jetbrains_runtime",
+            "attributes": {
+              "major": "21.0.11",
+              "minor": "b1163.116",
+              "sha256": {
+                "osx-aarch64": "ff2d12e6cf6b2f9d7793b8b6596afe413bdd4074fbfc91d9a36f379df61df182",
+                "linux-x64": "097bf328b5bf5a236c095b8c8e5204c0eda91e5baa06b37383a7754b10671d8b",
+                "windows-x64": "a3b01a47e67207722064c136616a3c0529e0dc96e17d0d5e44a0e8b4a92c57e7"
+              },
+              "build_file": "@@//intellij_platform_sdk:BUILD.jbr"
             }
           }
         }

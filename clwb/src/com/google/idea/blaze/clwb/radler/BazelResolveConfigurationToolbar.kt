@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.cidr.lang.OCFileTypeHelpers
+import com.google.idea.sdkcompat.radler.OCResolveContextSettingsCompat
 import com.jetbrains.cidr.lang.settings.OCResolveContextSettings
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurations
@@ -211,7 +212,7 @@ private class BazelConfigSwitchComboAction(
 
     if (configurations.isEmpty()) return null
     val current = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys).first
-    val selected = OCResolveContextSettings.getInstance(project).findPriorityConfiguration(configurations.keys)
+    val selected = OCResolveContextSettingsCompat.findPriorityConfiguration(OCResolveContextSettings.getInstance(project), configurations.keys)
 
     return SwitcherState(
       currentConfig = configurations.getValue(current),

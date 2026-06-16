@@ -1,0 +1,11 @@
+load("@rules_java//java:defs.bzl", "java_toolchain", "java_runtime")
+
+java_runtime(
+    name = "runtime",
+    srcs = glob(["**"]),
+    java = select({
+          "@platforms//os:windows": "//:bin/java.exe",
+          "//conditions:default": "//:bin/java",
+    }),
+    visibility = ["//visibility:public"],
+)
