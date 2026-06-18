@@ -20,7 +20,7 @@ jobs:
       issues: write
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Set assignees
         uses: actions/github-script@v9
         with:
