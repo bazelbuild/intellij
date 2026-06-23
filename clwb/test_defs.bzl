@@ -18,6 +18,8 @@ def _integration_test_suite(name, srcs, deps = []):
             # suppressed plugin sets for classic, radler is currently disabled for tests
             "-Didea.suppressed.plugins.set.radler=com.intellij.cidr.lang",
             "-Didea.suppressed.plugins.set.selector=radler",
+            # disable backend timeout for radler
+            "-Dpatch.engine.backend.freeze.timeout=-1",
             # enable detailed logging in tests to diagnose issues in CI
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
             "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
