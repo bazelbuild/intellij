@@ -1,3 +1,14 @@
+v2026.06.23
+===========
+* Add support for switching the run configuration type #8296
+* Remove generic Bazel flags field from run configurations #8342
+* Update debug info warning dialog layout #8362
+* Fix tool targets included in debug warning analysis #8354
+* Add experimental support for the new IntelliJ aspect (can be enabled with the bazel.sync.use.intellij.aspect registry key) #8356
+* Fix XXE vulnerability in BlazeXmlSchema #8355
+* Fix compiler wrapper escapes for defines with spaces #8295
+* Fix hanging gdbserver process in sandbox with network namespace #8340
+
 v2026.05.20
 ===========
 * Fix configuration selector widget ClassNotFoundException #8329
