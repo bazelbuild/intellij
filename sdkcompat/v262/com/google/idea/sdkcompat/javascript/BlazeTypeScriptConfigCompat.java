@@ -32,6 +32,8 @@ public abstract class BlazeTypeScriptConfigCompat implements TypeScriptConfig {
 
   protected abstract boolean strictBindCallApplyImpl();
 
+  protected abstract LanguageTarget getLanguageTargetImpl();
+
   @Override
   public final boolean noImplicitAny(boolean ts6orNewer) {
     return noImplicitAnyImpl();
@@ -50,5 +52,10 @@ public abstract class BlazeTypeScriptConfigCompat implements TypeScriptConfig {
   @Override
   public final boolean strictBindCallApply(boolean ts6orNewer) {
     return strictBindCallApplyImpl();
+  }
+
+  @Override
+  public LanguageTarget getLanguageTarget(boolean ts6orNewer) {
+    return getLanguageTargetImpl();
   }
 }

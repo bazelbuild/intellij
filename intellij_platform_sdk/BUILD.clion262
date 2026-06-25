@@ -92,6 +92,10 @@ java_import(
         "plugins/cmake/lib/modules/*.jar",
         "plugins/nativeDebug-plugin/lib/*.jar",
         "plugins/nativeDebug-plugin/lib/modules/*.jar",
+        "plugins/platform-structureView-plugin/lib/*.jar",
+        "plugins/platform-structureView-plugin/lib/modules/*.jar",
+        "plugins/platform-testRunner-plugin/lib/*.jar",
+        "plugins/platform-testRunner-plugin/lib/modules/*.jar",
 
         # for native debug plugin
         "plugins/platform-images/lib/*.jar",

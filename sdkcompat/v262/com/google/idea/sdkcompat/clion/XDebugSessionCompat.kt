@@ -27,6 +27,6 @@ object XDebugSessionCompat {
     fun getRunContentDescriptor(
         runner: CidrRunner, environment: ExecutionEnvironment, cidrState: CidrCommandLineState
     ): RunContentDescriptor? {
-        return runner.startDebugDescriptor(cidrState, environment, false)
+        return CidrRunner.startDebugDescriptor(cidrState, environment, false)
     }
 }
