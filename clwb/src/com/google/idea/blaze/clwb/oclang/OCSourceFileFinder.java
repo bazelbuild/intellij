@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp.oclang;
+package com.google.idea.blaze.clwb.oclang;
 
 import com.google.idea.blaze.cpp.SourceFileFinder;
 import com.intellij.openapi.project.Project;
