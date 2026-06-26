@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot.Config
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess
 import com.google.idea.testing.headless.ProjectViewBuilder
@@ -101,7 +102,7 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   override fun addAllowedVfsRoots(roots: ArrayList<AllowedVfsRoot>) {
     super.addAllowedVfsRoots(roots)
 
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "external/catch2+"))
+    roots.add(AllowedVfsRoot.recursive(Config.DEBUG, "external/catch2+"))
   }
 
   private fun checkRun(executorId: String) {

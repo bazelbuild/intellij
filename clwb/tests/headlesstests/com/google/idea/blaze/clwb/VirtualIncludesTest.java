@@ -23,6 +23,7 @@ import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot.Config;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,8 +66,8 @@ public class VirtualIncludesTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "lib/strip_absolut/_virtual_includes"));
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "external/clwb_virtual_includes_external+"));
+    roots.add(AllowedVfsRoot.recursive(Config.FASTBUILD, "lib/strip_absolut/_virtual_includes"));
+    roots.add(AllowedVfsRoot.recursive(Config.FASTBUILD, "external/clwb_virtual_includes_external+"));
   }
 
   private void checkIncludes() {

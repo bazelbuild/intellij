@@ -22,6 +22,7 @@ import static com.google.idea.blaze.clwb.base.Utils.setIncludesCacheEnabled;
 
 import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.blaze.clwb.base.AllowedVfsRoot;
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot.Config;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
@@ -64,7 +65,8 @@ public class ProtobufTest extends ClwbHeadlessTestCase {
   @Override
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) {
     super.addAllowedVfsRoots(roots);
-    roots.add(AllowedVfsRoot.bazelBinRecursive(myBazelInfo, "proto"));
+    roots.add(AllowedVfsRoot.recursive(Config.FASTBUILD, "proto"));
+    roots.add(AllowedVfsRoot.recursive(Config.FASTBUILD, "external/protobuf+"));
   }
 
   private void checkProto() {
