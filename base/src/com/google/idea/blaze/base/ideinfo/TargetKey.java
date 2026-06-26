@@ -84,4 +84,17 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
         .compare(configuration(), o.configuration())
         .result();
   }
+
+  public String presentable() {
+    final var builder = new StringBuilder();
+    builder.append(label());
+
+    if (configuration().length() >= 7) {
+      builder.append(" (").append(configuration().substring(0, 7)).append(")");
+    } else {
+      builder.append(" (missing)");
+    }
+
+    return builder.toString();
+  }
 }

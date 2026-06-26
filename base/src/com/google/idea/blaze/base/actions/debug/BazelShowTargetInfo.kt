@@ -51,7 +51,7 @@ private class TargetPopupStep(
 ) : BaseListPopupStep<TargetIdeInfo>("Targets", candidates) {
 
   override fun getTextFor(value: TargetIdeInfo): String {
-    return String.format("%s rule %s (%s)", value.kind, value.key.label().toString(), value.key.configuration())
+    return String.format("%s rule %s", value.kind, value.key.presentable())
   }
 
   override fun onChosen(selectedValue: TargetIdeInfo, finalChoice: Boolean): PopupStep<*>? {

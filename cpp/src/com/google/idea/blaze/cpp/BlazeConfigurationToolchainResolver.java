@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -73,117 +74,105 @@ import javax.annotation.Nullable;
  * com.jetbrains.cidr.lang.workspace.OCResolveConfiguration}
  */
 public final class BlazeConfigurationToolchainResolver {
-  private static final Logger logger =
-      Logger.getInstance(BlazeConfigurationToolchainResolver.class);
 
   private BlazeConfigurationToolchainResolver() {}
 
   /** Returns the C toolchain used by each C target */
   @VisibleForTesting
   public static ImmutableMap<TargetKey, CToolchainIdeInfo> buildToolchainLookupMap(
-      BlazeContext context, TargetMap targetMap) {
-    return Scope.push(
-        context,
-        childContext -> {
-          childContext.push(new TimingScope("Build toolchain lookup map", EventType.Other));
+      BlazeContext context,
+      TargetMap targetMap
+  ) {
+    return Scope.push(context, childContext -> {
+      childContext.push(new TimingScope("Build toolchain lookup map", EventType.Other));
 
-          ImmutableMap<TargetKey, CToolchainIdeInfo> toolchains =
-              targetMap.targets().stream()
-                  .filter(target -> target.getcToolchainIdeInfo() != null)
-                  .collect(
-                      toImmutableMap(TargetIdeInfo::getKey, TargetIdeInfo::getcToolchainIdeInfo));
+      final var toolchains = targetMap.targets().stream()
+          .filter(target -> target.getcToolchainIdeInfo() != null)
+          .collect(toImmutableMap(TargetIdeInfo::getKey, TargetIdeInfo::getcToolchainIdeInfo));
 
-          ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable =
-              buildToolchainDepsTable(targetMap.targets(), toolchains);
-          verifyToolchainDeps(context, toolchainDepsTable);
-          return buildLookupTable(toolchainDepsTable, toolchains);
-        });
+      final var toolchainDepsTable = buildToolchainDepsTable(targetMap.targets(), toolchains);
+      verifyToolchainDeps(context, toolchainDepsTable);
+
+      return buildLookupTable(toolchainDepsTable, toolchains);
+    });
   }
 
   private static ImmutableMap<TargetIdeInfo, List<TargetKey>> buildToolchainDepsTable(
-      ImmutableCollection<TargetIdeInfo> targets, Map<TargetKey, CToolchainIdeInfo> toolchains) {
-    ImmutableMap.Builder<TargetIdeInfo, List<TargetKey>> toolchainDepsTable =
-        ImmutableMap.builder();
-    for (TargetIdeInfo target : targets) {
-      if (!target.getKind().hasLanguage(LanguageClass.C) || target.getcToolchainIdeInfo() != null) {
+      ImmutableCollection<TargetIdeInfo> targets,
+      Map<TargetKey, CToolchainIdeInfo> toolchains
+  ) {
+    final var toolchainDepsTable = ImmutableMap.<TargetIdeInfo, List<TargetKey>>builder();
+    for (final var target : targets) {
+      if (target.getcIdeInfo() == null || target.getcToolchainIdeInfo() != null) {
         continue;
       }
-      ImmutableList<TargetKey> toolchainDeps =
-          target.getDependencies().stream()
-              .map(Dependency::getTargetKey)
-              .filter(toolchains::containsKey)
-              .collect(toImmutableList());
+
+      final var toolchainDeps = target.getDependencies().stream()
+          .map(Dependency::getTargetKey)
+          .filter(toolchains::containsKey)
+          .collect(toImmutableList());
+
       toolchainDepsTable.put(target, toolchainDeps);
     }
-    return toolchainDepsTable.build();
-  }
 
-  private static void verifyToolchainDeps(
-      BlazeContext context, ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable) {
-    ListMultimap<Integer, TargetIdeInfo> warningTargets = ArrayListMultimap.create();
-    for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
-      List<TargetKey> toolchainDeps = entry.getValue();
-      if (toolchainDeps.size() != 1) {
-        TargetIdeInfo target = entry.getKey();
-          warningTargets.put(toolchainDeps.size(), target);
-      }
-    }
-    issueToolchainWarning(context, warningTargets);
+    return toolchainDepsTable.build();
   }
 
   private static ImmutableMap<TargetKey, CToolchainIdeInfo> buildLookupTable(
       ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable,
-      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchains) {
-    ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
-    for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
-      TargetIdeInfo target = entry.getKey();
-      List<TargetKey> toolchainDeps = entry.getValue();
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchains
+  ) {
+    final var lookupTable = ImmutableMap.<TargetKey, CToolchainIdeInfo>builder();
+    for (final var entry : toolchainDepsTable.entrySet()) {
+      final var target = entry.getKey();
+      final var toolchainDeps = entry.getValue();
+
       if (!toolchainDeps.isEmpty()) {
-        TargetKey toolchainKey = toolchainDeps.get(0);
-        CToolchainIdeInfo toolchainInfo = toolchains.get(toolchainKey);
+        // pick the first toolchain the target depends on
+        final var toolchainKey = toolchainDeps.get(0);
+        final var toolchainInfo = toolchains.get(toolchainKey);
         lookupTable.put(target.getKey(), toolchainInfo);
       } else {
-        CToolchainIdeInfo arbitraryToolchain = Iterables.getFirst(toolchains.values(), null);
+        // pick an arbitrary toolchain
+        final var arbitraryToolchain = Iterables.getFirst(toolchains.values(), null);
         if (arbitraryToolchain != null) {
           lookupTable.put(target.getKey(), arbitraryToolchain);
         }
       }
     }
+
     return lookupTable.build();
   }
 
-  private static void issueToolchainWarning(
-      BlazeContext context, Multimap<Integer, TargetIdeInfo> warningTargets) {
-    for (Map.Entry<Integer, Collection<TargetIdeInfo>> entry : warningTargets.asMap().entrySet()) {
-      Map<Boolean, List<TargetIdeInfo>> partitionedTargets =
-          entry.getValue().stream()
-              .collect(
-                  Collectors.partitioningBy(
-                      BlazeConfigurationToolchainResolver::usesAppleCcToolchain));
-      if (!partitionedTargets.get(Boolean.FALSE).isEmpty()) {
-        String warningMessage =
-            String.format(
-                "cc target is expected to depend on exactly 1 cc toolchain. "
-                    + "Found %d toolchains for these targets: %s",
-                entry.getKey(),
-                partitionedTargets.get(Boolean.FALSE).stream()
-                    .map(TargetIdeInfo::getKey)
-                    .map(TargetKey::toString)
-                    .collect(joining(", ")));
-        IssueOutput.warn(warningMessage).submit(context);
-      }
-      if (!partitionedTargets.get(Boolean.TRUE).isEmpty()) {
-        logger.warn(
-            String.format(
-                "cc target is expected to depend on exactly 1 cc toolchain. "
-                    + "Found %d toolchains for these targets with apple_cc_toolchain: %s.",
-                entry.getKey(),
-                partitionedTargets.get(Boolean.TRUE).stream()
-                    .map(TargetIdeInfo::getKey)
-                    .map(TargetKey::toString)
-                    .collect(joining(", "))));
-      }
+  private static void verifyToolchainDeps(
+      BlazeContext context,
+      ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable
+  ) {
+    final var invalidTargets = toolchainDepsTable.entrySet()
+        .stream()
+        .filter(deps -> deps.getValue().size() != 1)
+        .toList();
+
+    if (invalidTargets.isEmpty()) {
+      return;
     }
+
+    final var builder = new StringBuilder();
+    for (final var target : invalidTargets) {
+      builder.append(target.getKey().getKey().presentable());
+      builder.append(": ");
+
+      if (target.getValue().isEmpty()) {
+        builder.append("No toolchain dependencies found");
+      } else {
+        builder.append(target.getValue().stream().map(TargetKey::presentable).collect(joining(", ")));
+      }
+      builder.append("\n");
+    }
+
+    IssueOutput.warn("Unexpected number of cc toolchain dependencies")
+        .withDescription(builder.toString())
+        .submit(context);
   }
 
   private static boolean usesAppleCcToolchain(TargetIdeInfo target) {
@@ -347,7 +336,8 @@ public final class BlazeConfigurationToolchainResolver {
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File executable) {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
-    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project).asEnvironmentVariables(xcodeCompilerSettings);
+    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project)
+        .asEnvironmentVariables(xcodeCompilerSettings);
     try {
       return CompilerVersionChecker.getInstance()
           .checkCompilerVersion(executionRoot, executable, compilerEnvFlags);
@@ -395,7 +385,8 @@ public final class BlazeConfigurationToolchainResolver {
     return BlazeExecutor.getInstance().submit(callable);
   }
 
-  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context, Project project, BlazeProjectData projectData) {
+  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context, Project project,
+      BlazeProjectData projectData) {
     return Scope.push(
         context,
         childContext -> {
@@ -404,7 +395,9 @@ public final class BlazeConfigurationToolchainResolver {
             return XcodeCompilerSettingsProvider.getInstance(project).fromContext(context, project, projectData);
           } catch (XcodeCompilerSettingsException e) {
             IssueOutput.warn(
-                String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString())
+                String.format(
+                    "There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.",
+                    e.toString())
             ).submit(childContext);
             return Optional.empty();
           }
