@@ -20,16 +20,12 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -49,7 +45,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.NavigatableAdapter;
@@ -57,7 +52,6 @@ import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +60,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -107,12 +100,23 @@ public final class BlazeConfigurationToolchainResolver {
         continue;
       }
 
-      final var toolchainDeps = target.getDependencies().stream()
+      final var toolchain = target.getDependencies().stream()
+          .filter(it -> it.getDependencyType() == DependencyType.TOOLCHAIN)
+          .map(Dependency::getTargetKey)
+          .filter(toolchains::containsKey)
+          .findFirst();
+
+      if (toolchain.isPresent()) {
+        toolchainDepsTable.put(target, List.of(toolchain.get()));
+        continue;
+      }
+
+      final var candidates = target.getDependencies().stream()
           .map(Dependency::getTargetKey)
           .filter(toolchains::containsKey)
           .collect(toImmutableList());
 
-      toolchainDepsTable.put(target, toolchainDeps);
+      toolchainDepsTable.put(target, candidates);
     }
 
     return toolchainDepsTable.build();
