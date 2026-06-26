@@ -51,6 +51,8 @@ java_import(
         "plugins/platform-*-plugin/lib/modules/*.jar",
         "plugins/jcef-plugin/lib/*.jar",
         "plugins/jcef-plugin/lib/modules/*.jar",
+        "plugins/libraries-misc-plugin/lib/*.jar",
+        "plugins/libraries-misc-plugin/lib/modules/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
