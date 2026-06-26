@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot
+import com.google.idea.blaze.clwb.base.AllowedVfsRoot.Config
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
 import com.google.idea.blaze.clwb.run.BlazeCidrRemoteDebugProcess
 import com.google.idea.testing.headless.ProjectViewBuilder
@@ -54,6 +56,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.ArrayList
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -94,6 +97,12 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     builder.addBuildFlag("--test_output=streamed")
 
     return builder
+  }
+
+  override fun addAllowedVfsRoots(roots: ArrayList<AllowedVfsRoot>) {
+    super.addAllowedVfsRoots(roots)
+
+    roots.add(AllowedVfsRoot.recursive(Config.DEBUG, "external/catch2+"))
   }
 
   private fun checkRun(executorId: String) {

@@ -16,7 +16,6 @@
 
 package com.google.idea.blaze.clwb.base;
 
-import com.google.idea.testing.headless.BazelInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
 import java.nio.file.Path;
@@ -24,49 +23,63 @@ import org.jetbrains.annotations.NotNull;
 
 public class AllowedVfsRoot {
 
-  private final Path root;
+  public enum Config {ANY, FASTBUILD, DEBUG}
+
+  private final Config config;
+  private final Path path;
   private final boolean recursive;
 
-  private AllowedVfsRoot(Path root, boolean recursive) {
-    assert !root.isAbsolute() : "the path should be relative to the execution root";
+  private AllowedVfsRoot(Config config, Path path, boolean recursive) {
+    assert !path.isAbsolute() : "the path should be relative to the execution path";
 
-    this.root = root;
+    this.config = config;
+    this.path = path;
     this.recursive = recursive;
   }
 
-  public static AllowedVfsRoot flat(String path) {
-    return new AllowedVfsRoot(Path.of(path).normalize(), false);
+  public static AllowedVfsRoot flat(Config config, String path) {
+    return new AllowedVfsRoot(config, Path.of(path).normalize(), false);
   }
 
-  public static AllowedVfsRoot recursive(String path) {
-    return new AllowedVfsRoot(Path.of(path).normalize(), true);
-  }
-
-  public static AllowedVfsRoot bazelBinFlat(BazelInfo info, String path) {
-    return new AllowedVfsRoot(info.executionRoot().relativize(info.bazelBin().resolve(path)).normalize(), false);
-  }
-
-  public static AllowedVfsRoot bazelBinRecursive(BazelInfo info, String path) {
-    return new AllowedVfsRoot(info.executionRoot().relativize(info.bazelBin().resolve(path)).normalize(), true);
+  public static AllowedVfsRoot recursive(Config config, String path) {
+    return new AllowedVfsRoot(config, Path.of(path).normalize(), true);
   }
 
   public boolean contains(Path path) {
-    assert !path.isAbsolute() : "the path should be relative to the execution root";
+    assert !path.isAbsolute() : "the path should be relative to the execution path";
+    assert path.getNameCount() > 3 : "the path should contain at least more then 3 elemnts";
+    assert path.getName(0).toString().equals("bazel-out") : "the path should start with bazel-out";
+    assert path.getName(2).toString().equals("bin") : "the path should reside in bazel-bin";
 
+    final var effectiveConfig = path.getName(1).toString();
+    if (config == Config.FASTBUILD && !effectiveConfig.contains("fastbuild")) return false;
+    if (config == Config.DEBUG && !effectiveConfig.contains("dbg")) return false;
+
+    final var effectivePath = path.subpath(3, path.getNameCount());
     if (recursive) {
-      return FileUtil.isAncestor(root.toFile(), path.toFile(), false);
+      return FileUtil.isAncestor(this.path.toFile(), effectivePath.toFile(), false);
     } else {
-      return FileUtil.pathsEqual(root.toString(), ObjectUtils.coalesce(path.getParent(), Path.of("")).toString());
+      return FileUtil.pathsEqual(this.path.toString(), ObjectUtils.coalesce(effectivePath.getParent().toString(), ""));
     }
   }
 
   @Override
   public @NotNull String toString() {
+    final var builder = new StringBuilder();
+
     if (recursive) {
-      return root.toString();
+      builder.append("|");
     } else {
-      return "|" + root.toString();
+      builder.append("-");
     }
+
+    builder.append("[");
+    builder.append(config.toString());
+    builder.append("]:");
+
+    builder.append(path.toString());
+
+    return builder.toString();
   }
 }
 

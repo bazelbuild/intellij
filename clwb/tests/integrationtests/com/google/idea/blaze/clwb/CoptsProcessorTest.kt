@@ -19,6 +19,7 @@ import com.google.common.truth.Truth.assertThat
 import com.google.idea.blaze.clwb.base.ExecutionRootPathResolverStub
 import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.cpp.copts.CoptsProcessor
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind
@@ -38,6 +39,14 @@ private val ALL_COMPILER = listOf(ClangCompilerKind, GCCCompilerKind, ClangClCom
 
 @RunWith(JUnit4::class)
 class CoptsProcessorTest : BasePlatformTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+
+    // RadInitialConfigurator (clion-radler) flips AUTO_POPUP_JAVADOC_INFO on the
+    // first launch. The tearDown checks compare against default settings.
+    setDefaultCodeInsightSettings(CodeInsightSettings.getInstance())
+  }
 
   private fun doTest(
     compilers: List<OCCompilerKind>,

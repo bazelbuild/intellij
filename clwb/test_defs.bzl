@@ -16,8 +16,10 @@ def _integration_test_suite(name, srcs, deps = []):
             # fixes preferences not writable on mac
             "-Djava.util.prefs.PreferencesFactory=com.google.idea.testing.headless.InMemoryPreferencesFactory",
             # suppressed plugin sets for classic, radler is currently disabled for tests
-            "-Didea.suppressed.plugins.set.classic=org.jetbrains.plugins.clion.radler,intellij.rider.cpp.debugger,intellij.rider.plugins.clion.radler.cwm",
-            "-Didea.suppressed.plugins.set.selector=classic",
+            "-Didea.suppressed.plugins.set.radler=com.intellij.cidr.lang",
+            "-Didea.suppressed.plugins.set.selector=radler",
+            # disable backend timeout for radler
+            "-Dpatch.engine.backend.freeze.timeout=-1",
             # enable detailed logging in tests to diagnose issues in CI
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
             "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",

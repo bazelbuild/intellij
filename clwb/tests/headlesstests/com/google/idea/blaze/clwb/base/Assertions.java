@@ -41,7 +41,8 @@ import java.util.stream.Collectors;
 
 public class Assertions {
 
-  private final static Pattern defineRx = Pattern.compile("#define ([^ ]+) ?(.*)");
+  private final static String ASPECT_FILE_EXTENSION = ".intellij-info.txt";
+  private final static Pattern DEFINE_RX = Pattern.compile("#define ([^ ]+) ?(.*)");
 
   public static void assertContainsHeader(String fileName, OCCompilerSettings settings) {
     assertContainsHeader(fileName, true, settings);
@@ -91,7 +92,7 @@ public class Assertions {
     assertThat(defines).isNotEmpty();
 
     for (final var define : defines) {
-      final var matcher = defineRx.matcher(define);
+      final var matcher = DEFINE_RX.matcher(define);
       if (!matcher.find()) {
         continue;
       }

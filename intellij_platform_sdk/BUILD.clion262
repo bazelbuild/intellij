@@ -58,6 +58,7 @@ java_import(
         "maven/test-framework.jar", #MAVEN:platform:test-framework
         "maven/test-framework-common.jar", #MAVEN:platform:test-framework-common
         "maven/test-framework-core.jar", #MAVEN:platform:test-framework-core
+        "maven/test-framework-team-city.jar", #MAVEN:platform:test-framework-team-city
         "maven/java-rt.jar", #MAVEN:java:java-rt
     ]),
 )
