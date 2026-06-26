@@ -28,7 +28,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.buildresult.BuildResult;
 import com.google.idea.blaze.base.command.buildresult.BuildResult.Status;
@@ -221,23 +220,8 @@ public final class SyncPhaseCoordinator {
     buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
-  private boolean useRemoteExecutor(BlazeSyncParams syncParams) {
-    if (syncParams.syncMode() == SyncMode.NO_BUILD) {
-      return false;
-    }
-    SyncStrategy strategy = buildSystem.getSyncStrategy(project);
-    switch (strategy) {
-      case DECIDE_AUTOMATICALLY:
-      case PARALLEL:
-        return true;
-      case SERIAL:
-        return false;
-    }
-    throw new IllegalStateException("Invalid sync strategy: " + strategy);
-  }
-
   ListenableFuture<Void> syncProject(BlazeSyncParams syncParams, BlazeContext parentContext) {
-    boolean singleThreaded = !useRemoteExecutor(syncParams);
+    boolean singleThreaded = true;
     return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
         .setModality(BuildViewMigration.progressModality())

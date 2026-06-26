@@ -25,7 +25,6 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.config.BlazeConfigException;
 import com.google.idea.blaze.base.command.config.BlazeConfigRunner;
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
@@ -197,28 +196,13 @@ public final class BuildPhaseSyncTask {
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
-            defaultInvoker,
-            buildSystem.getSyncStrategy(project));
+            defaultInvoker);
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
-    boolean parallel;
-    SyncStrategy strategy = buildSystem.getSyncStrategy(project);
-    switch (strategy) {
-      case PARALLEL:
-        parallel = true;
-        break;
-      case DECIDE_AUTOMATICALLY:
-        parallel = shardedTargets.shardCount() > 1;
-        break;
-      case SERIAL:
-        parallel = false;
-        break;
-      default:
-        throw new IllegalStateException("Invalid sync strategy: " + strategy);
-    }
+    boolean parallel = false;
 
     if (!shardedTargetsResult
         .shardedTargets
