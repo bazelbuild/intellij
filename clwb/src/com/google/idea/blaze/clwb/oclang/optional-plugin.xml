@@ -14,6 +14,12 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
+  <extensions defaultExtensionNs="cidr.lang">
+    <autoImportHelper implementation="com.google.idea.blaze.clwb.oclang.BlazeCppAutoImportHelper"/>
+    <customHeaderProvider implementation="com.google.idea.blaze.clwb.oclang.BlazeCustomHeaderProvider"/>
+    <includeHelper implementation="com.google.idea.blaze.clwb.oclang.BlazeIncludeHelper"/>
+  </extensions>
+
   <extensions defaultExtensionNs="cidr.debugger">
     <languageSupport language="" implementationClass="com.google.idea.blaze.clwb.oclang.run.BlazeCidrDebuggerSupportFactory"/>
   </extensions>
@@ -22,5 +28,7 @@
     <clwb.googleTestUtilAdapter implementation="com.google.idea.blaze.clwb.oclang.run.CidrGoogleTestUtilAdapter"/>
     <TestContextProvider implementation="com.google.idea.blaze.clwb.oclang.run.producers.CppTestContextProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.oclang.run.test.BlazeCidrTestEventsHandler"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.clwb.oclang.CppSyncStatusContributor"/>
+    <cpp.SourceFileFinder implementation="com.google.idea.blaze.clwb.oclang.OCSourceFileFinder"/>
   </extensions>
 </idea-plugin>

@@ -47,6 +47,12 @@ java_import(
         "lib/modules/*.jar",
         "plugins/moduleSet-plugin-*/lib/*.jar",
         "plugins/moduleSet-plugin-*/lib/modules/*.jar",
+        "plugins/platform-*-plugin/lib/*.jar",
+        "plugins/platform-*-plugin/lib/modules/*.jar",
+        "plugins/jcef-plugin/lib/*.jar",
+        "plugins/jcef-plugin/lib/modules/*.jar",
+        "plugins/libraries-misc-plugin/lib/*.jar",
+        "plugins/libraries-misc-plugin/lib/modules/*.jar",
     ]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
@@ -92,6 +98,10 @@ java_import(
         "plugins/cmake/lib/modules/*.jar",
         "plugins/nativeDebug-plugin/lib/*.jar",
         "plugins/nativeDebug-plugin/lib/modules/*.jar",
+        "plugins/platform-structureView-plugin/lib/*.jar",
+        "plugins/platform-structureView-plugin/lib/modules/*.jar",
+        "plugins/platform-testRunner-plugin/lib/*.jar",
+        "plugins/platform-testRunner-plugin/lib/modules/*.jar",
 
         # for native debug plugin
         "plugins/platform-images/lib/*.jar",

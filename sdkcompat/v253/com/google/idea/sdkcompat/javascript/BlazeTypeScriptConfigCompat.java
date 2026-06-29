@@ -20,7 +20,7 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 /**
  * Bridges {@link TypeScriptConfig}'s strictness checks across SDK versions.
  *
- * <p>#api261: breaking API change with 261.1
+ * <p>#api261: breaking API change with 261.1 
  */
 public abstract class BlazeTypeScriptConfigCompat implements TypeScriptConfig {
 
@@ -31,6 +31,8 @@ public abstract class BlazeTypeScriptConfigCompat implements TypeScriptConfig {
   protected abstract boolean strictNullChecksImpl();
 
   protected abstract boolean strictBindCallApplyImpl();
+
+  protected abstract LanguageTarget getLanguageTargetImpl();
 
   @Override
   public final boolean noImplicitAny() {
@@ -50,5 +52,10 @@ public abstract class BlazeTypeScriptConfigCompat implements TypeScriptConfig {
   @Override
   public final boolean strictBindCallApply() {
     return strictBindCallApplyImpl();
+  }
+
+  @Override
+  public LanguageTarget getLanguageTarget() {
+    return getLanguageTargetImpl();
   }
 }
