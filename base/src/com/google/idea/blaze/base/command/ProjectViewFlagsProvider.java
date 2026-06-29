@@ -37,15 +37,15 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
       return;
     }
 
+    // some build configuration flags can cause the bazel info command to fail
+    if (BlazeCommandName.INFO.equals(command)) {
+      return;
+    }
+
     flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
 
     if (BlazeCommandName.TEST.equals(command)) {
       flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(TestFlagsSection.KEY)));
-    }
-
-    // platforms can break bazel info commands when using Bazel 8 https://github.com/bazelbuild/bazel/issues/25145
-    if (BlazeCommandName.INFO.equals(command)) {
-      flags.removeIf((it) -> it.startsWith("--platforms"));
     }
   }
 
@@ -57,6 +57,13 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
       BlazeContext context,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
-    flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
+    final var syncFlags = BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
+
+    // bazel info cannot resolve --platforms/--config that reference external repos
+    if (BlazeCommandName.INFO.equals(command)) {
+      syncFlags.removeIf((it) -> it.startsWith("--platforms") || it.startsWith("--config"));
+    }
+
+    flags.addAll(syncFlags);
   }
 }
