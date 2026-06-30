@@ -41,6 +41,8 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Kind.Provider;
+import com.google.idea.blaze.cpp.environment.EnvironmentProcessor;
+import com.google.idea.blaze.cpp.environment.ProcSelfCwdEnvironmentProcessor;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -112,6 +114,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new CppBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
+    registerExtensionPoint(EnvironmentProcessor.EP_NAME, EnvironmentProcessor.class)
+        .registerExtension(new ProcSelfCwdEnvironmentProcessor());
 
     projectServices.register(PsiManager.class, new MockPsiManager(project));
     projectServices.register(

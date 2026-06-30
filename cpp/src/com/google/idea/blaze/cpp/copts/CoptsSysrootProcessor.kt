@@ -22,7 +22,6 @@ import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind
-import java.nio.file.Path
 
 class CoptsSysrootProcessor : CoptsProcessor.Transform() {
 
@@ -38,12 +37,12 @@ class CoptsSysrootProcessor : CoptsProcessor.Transform() {
     sink: CompilerSpecificSwitchBuilder,
     resolver: ExecutionRootPathResolver
   ) {
-    val path = Path.of(value)
+    val path = ExecutionRootPath.tryCreate(value)
 
-    if (path.isAbsolute) {
-      sink.withSysroot(path.toString())
+    if (path != null) {
+      sink.withSysroot(resolver.resolveExecutionRootPath(path).toString())
     } else {
-      sink.withSysroot(resolver.resolveExecutionRootPath(ExecutionRootPath.create(path)).path)
+      sink.withSysroot(value)
     }
   }
 }

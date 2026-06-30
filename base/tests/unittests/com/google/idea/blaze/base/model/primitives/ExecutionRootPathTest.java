@@ -107,10 +107,51 @@ public class ExecutionRootPathTest extends BlazeTestCase {
 
   @Test
   public void testCreateRelativePathWithOneAbsolutePathAndOneRelativePathReturnsNull2() {
-    ExecutionRootPath relativePathFragment =
-        ExecutionRootPath.createAncestorRelativePath(
-            createMockDirectory("code/lib/fastmath"), createMockDirectory("/code/lib/slowmath"));
+    final var relativePathFragment = ExecutionRootPath.createAncestorRelativePath(
+        createMockDirectory("code/lib/fastmath"),
+        createMockDirectory("/code/lib/slowmath")
+    );
+
     assertThat(relativePathFragment).isNull();
+  }
+
+  @Test
+  public void testCreateStripsProcSelfCwdPrefixToRelativePath() {
+    final var path = ExecutionRootPath.create("/proc/self/cwd/foo/bar");
+    assertThat(path.isAbsolute()).isFalse();
+    assertThat(path).isEqualTo(ExecutionRootPath.create("foo/bar"));
+  }
+
+  @Test
+  public void testCreateStripsBareProcSelfCwdMarkerToExecutionRoot() {
+    final var path = ExecutionRootPath.create("/proc/self/cwd");
+    assertThat(path.isAbsolute()).isFalse();
+    assertThat(path).isEqualTo(ExecutionRootPath.create(""));
+  }
+
+  @Test
+  public void testCreateLeavesOtherAbsolutePathsUnchanged() {
+    final var path = ExecutionRootPath.create("/usr/include");
+    assertThat(path.isAbsolute()).isTrue();
+  }
+
+  @Test
+  public void testTryCreateReturnsNullForGenuineAbsolutePath() {
+    assertThat(ExecutionRootPath.tryCreate("/usr/include")).isNull();
+  }
+
+  @Test
+  public void testTryCreateAcceptsRelativeAndProcSelfCwdPaths() {
+    assertThat(ExecutionRootPath.tryCreate("foo/bar")).isEqualTo(ExecutionRootPath.create("foo/bar"));
+    assertThat(ExecutionRootPath.tryCreate("/proc/self/cwd/foo")).isEqualTo(ExecutionRootPath.create("foo"));
+  }
+
+  @Test
+  public void testIsProcSelfCwd() {
+    assertThat(ExecutionRootPath.isProcSelfCwd("/proc/self/cwd/foo")).isTrue();
+    assertThat(ExecutionRootPath.isProcSelfCwd("/proc/self/cwd")).isTrue();
+    assertThat(ExecutionRootPath.isProcSelfCwd("/usr/include")).isFalse();
+    assertThat(ExecutionRootPath.isProcSelfCwd("not-a-path-value")).isFalse();
   }
 
   private static File createMockDirectory(String path) {

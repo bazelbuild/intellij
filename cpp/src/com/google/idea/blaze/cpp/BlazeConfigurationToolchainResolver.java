@@ -41,13 +41,12 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
+import com.google.idea.blaze.cpp.environment.EnvironmentProcessor;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.pom.NavigatableAdapter;
 
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
@@ -58,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -269,12 +267,15 @@ public final class BlazeConfigurationToolchainResolver {
           return null;
         }
 
+        final var cEnvironment = EnvironmentProcessor.apply(toolchain.cEnvironment(), executionRootPathResolver);
+        final var cppEnvironment = EnvironmentProcessor.apply(toolchain.cppEnvironment(), executionRootPathResolver);
+
         final var cCompilerVersion = getCompilerVersion(
             project,
             context,
             executionRootPathResolver,
             xcodeCompilerSettings,
-            toolchain.cEnvironment(),
+            cEnvironment,
             cCompiler
         );
         final var cppCompilerVersion = getCompilerVersion(
@@ -282,7 +283,7 @@ public final class BlazeConfigurationToolchainResolver {
             context,
             executionRootPathResolver,
             xcodeCompilerSettings,
-            toolchain.cppEnvironment(),
+            cppEnvironment,
             cppCompiler
         );
 
@@ -301,8 +302,8 @@ public final class BlazeConfigurationToolchainResolver {
             .asEnvironmentVariables(xcodeCompilerSettings);
         final var environment = mergeEnvironments(
             xcodeEnvironment,
-            toolchain.cEnvironment(),
-            toolchain.cppEnvironment()
+            cEnvironment,
+            cppEnvironment
         );
 
         final var settings = BlazeCompilerSettings.builder()

@@ -23,6 +23,8 @@
                     qualifiedName="com.google.idea.blaze.cpp.CppEnvironmentProvider"/>
     <extensionPoint interface="com.google.idea.blaze.cpp.copts.CoptsProcessor"
                     qualifiedName="com.google.idea.blaze.cpp.copts.CoptsProcessor"/>
+    <extensionPoint interface="com.google.idea.blaze.cpp.environment.EnvironmentProcessor"
+                    qualifiedName="com.google.idea.blaze.cpp.environment.EnvironmentProcessor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -40,6 +42,10 @@
     <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsIncludeProcessor$System"/>
     <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsIncludeProcessor$Quote"/>
     <CoptsProcessor implementation="com.google.idea.blaze.cpp.copts.CoptsSysrootProcessor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze.cpp.environment">
+    <EnvironmentProcessor implementation="com.google.idea.blaze.cpp.environment.ProcSelfCwdEnvironmentProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.lang">
