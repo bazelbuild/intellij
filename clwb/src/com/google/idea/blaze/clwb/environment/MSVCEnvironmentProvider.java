@@ -22,7 +22,6 @@ import com.google.idea.sdkcompat.clion.MSVCCompilerVersionCompat;
 import com.google.idea.sdkcompat.clion.OSTypeCompat;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet.Kind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.MSVC;
@@ -68,7 +67,7 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
     toolchain.setToolSetKind(Kind.MSVC);
     toolchain.setToolSetPath(toolSetPath);
 
-    final var environment = new CPPEnvironment(toolchain);
+    final var environment = BazelEnvironmentProvider.create(settings, toolchain);
     ((MSVC) environment.getToolSet()).setToolsVersion(version);
 
     return environment;

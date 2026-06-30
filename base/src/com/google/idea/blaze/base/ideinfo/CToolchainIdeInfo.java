@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import javax.annotation.Nullable;
@@ -35,6 +36,10 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
 
   public abstract ExecutionRootPath cppCompiler();
 
+  public abstract ImmutableMap<String, String> cEnvironment();
+
+  public abstract ImmutableMap<String, String> cppEnvironment();
+
   public abstract String targetName();
 
   public abstract String compilerName();
@@ -51,6 +56,8 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
         .setTargetName(proto.getTargetName())
         .setCompilerName(proto.getCompilerName())
         .setSysroot(ExecutionRootPath.fromNullableProto(proto.getSysroot()))
+        .setCEnvironment(ImmutableMap.copyOf(proto.getCEnvironmentMap()))
+        .setCppEnvironment(ImmutableMap.copyOf(proto.getCppEnvironmentMap()))
         .build();
   }
 
@@ -63,7 +70,9 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
         .setCCompiler(cCompiler().toProto())
         .setCppCompiler(cppCompiler().toProto())
         .setTargetName(targetName())
-        .setCompilerName(compilerName());
+        .setCompilerName(compilerName())
+        .putAllCEnvironment(cEnvironment())
+        .putAllCppEnvironment(cppEnvironment());
 
     final var sysroot = sysroot();
     if (sysroot != null) {
@@ -74,7 +83,9 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
   }
 
   public static Builder builder() {
-    return new AutoValue_CToolchainIdeInfo.Builder();
+    return new AutoValue_CToolchainIdeInfo.Builder()
+        .setCEnvironment(ImmutableMap.of())
+        .setCppEnvironment(ImmutableMap.of());
   }
 
   /**
@@ -98,6 +109,10 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
     public abstract Builder setCompilerName(String value);
 
     public abstract Builder setSysroot(@Nullable ExecutionRootPath value);
+
+    public abstract Builder setCEnvironment(ImmutableMap<String, String> value);
+
+    public abstract Builder setCppEnvironment(ImmutableMap<String, String> value);
 
     public abstract CToolchainIdeInfo build();
   }
