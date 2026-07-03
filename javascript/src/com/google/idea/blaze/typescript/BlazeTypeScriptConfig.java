@@ -509,7 +509,7 @@ class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
   }
 
   @Override
-  public LanguageTarget getLanguageTarget() {
+  protected LanguageTarget getLanguageTargetImpl() {
     return target;
   }
 

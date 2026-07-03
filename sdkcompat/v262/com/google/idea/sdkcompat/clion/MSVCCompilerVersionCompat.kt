@@ -16,17 +16,18 @@
 
 package com.google.idea.sdkcompat.clion
 
-import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.ui.RunContentDescriptor
-import com.jetbrains.cidr.execution.CidrCommandLineState
-import com.jetbrains.cidr.execution.CidrRunner
+import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCArchAndVersion
+import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCache
 
-// #api253
-object XDebugSessionCompat {
-    @JvmStatic
-    fun getRunContentDescriptor(
-        runner: CidrRunner, environment: ExecutionEnvironment, cidrState: CidrCommandLineState
-    ): RunContentDescriptor? {
-        return CidrRunner.startDebugDescriptor(cidrState, environment, false)
-    }
+// #api261: the MSVCCompilerToVersionCache interface was introduced in 2026.2 and the
+// application service is now registered under it instead of the concrete class.
+object MSVCCompilerVersionCompat {
+
+  @JvmStatic
+  fun getCompilerVersion(compilerPath: String): MSVCArchAndVersion? {
+    return ApplicationManager.getApplication()
+      .getService(MSVCCompilerToVersionCache::class.java)
+      ?.getCompilerVersion(compilerPath)
+  }
 }

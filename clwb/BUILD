@@ -34,19 +34,13 @@ licenses(["notice"])
 intellij_plugin_library(
     name = "plugin_library",
     data = {"gdb/gdbserver": ":gdbserver"},
-    optional_plugin_xmls = ["optional_clwb_oclang"],
     plugin_xmls = ["src/META-INF/clwb.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":clwb_lib",
         "//clwb/src/com/google/idea/blaze/clwb/radler",
+        "//clwb/src/com/google/idea/blaze/clwb/oclang",
     ],
-)
-
-optional_plugin_xml(
-    name = "optional_clwb_oclang",
-    module = ["com.intellij.cidr.lang"],
-    plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 
 stamped_plugin_xml(

@@ -36,20 +36,13 @@ kt_jvm_library(
 )
 
 stamped_plugin_xml(
-    name = "non_optional_cidr",
+    name = "plugin_xml",
     plugin_xml = "src/META-INF/blaze-cpp.xml",
-)
-
-optional_plugin_xml(
-    name = "optional_cidr",
-    module = ["com.intellij.cidr.lang"],
-    plugin_xml = "src/META-INF/blaze-cpp-oclang.xml",
 )
 
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_cidr"],
-    plugin_xmls = [":non_optional_cidr"],
+    plugin_xmls = [":plugin_xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )
