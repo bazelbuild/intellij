@@ -1,3 +1,7 @@
+v2026.07.03
+===========
+* Ignore external targets in the debug info check #8382
+
 v2026.06.23
 ===========
 * Add support for switching the run configuration type #8296
