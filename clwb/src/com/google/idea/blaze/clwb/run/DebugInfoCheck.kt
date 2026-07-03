@@ -86,11 +86,19 @@ class DebugInfoCheck(
     warn(ctx, warning.toString())
   }
 
+  /**
+   * Checks that the given compile and link actions contain debug info flags.
+   *
+   * The user probably does not want to debug external dependencies anyway, and
+   * he might not have control over the compiler flags for those.
+   */
   fun checkDebugInfo(compilerKind: OCCompilerKind, configs: DiscoverTargetConfigurations.Output): FlaggedActions {
     val compilationActions = configs.compileActions.asSequence()
+      .filter { (label, _) -> !label.isExternal }
       .filter { (_, action) -> !action.checkCompileAction(compilerKind) }
       .map { (label, action) -> label to action }
     val linkActions = configs.linkActions.asSequence()
+      .filter { (label, _) -> !label.isExternal }
       .filter { (_, action) -> !action.checkLinkAction(compilerKind) }
       .map { (label, action) -> label to action }
 
