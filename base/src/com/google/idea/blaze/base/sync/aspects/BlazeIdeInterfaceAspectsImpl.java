@@ -451,8 +451,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               }
 
               ignoredLanguages.retainAll(
-                  LanguageSupport.availableAdditionalLanguages(languageSettings.getWorkspaceType()));
-              warnIgnoredLanguages(context, ignoredLanguages);
+                  LanguageSupport.availableAdditionalLanguages(
+                      languageSettings.getWorkspaceType()));
+              warnIgnoredLanguages(project, context, ignoredLanguages);
 
               return Result.of(
                   new TargetMapAndInterfaceState(
@@ -505,12 +506,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return null;
   }
 
-  private static void warnIgnoredLanguages(BlazeContext context, Set<LanguageClass> ignoredLangs) {
+  private static void warnIgnoredLanguages(
+      Project project, BlazeContext context, Set<LanguageClass> ignoredLangs) {
     if (ignoredLangs.isEmpty()) {
       return;
     }
-
-    final var sorted = new ArrayList<>(ignoredLangs);
+    List<LanguageClass> sorted = new ArrayList<>(ignoredLangs);
     sorted.sort(Ordering.usingToString());
 
     String msg =

@@ -100,23 +100,23 @@ public final class BlazeConfigurationToolchainResolver {
         continue;
       }
 
-      final var toolchain = target.getDependencies().stream()
+      final var toolchainCandidates = target.getDependencies().stream()
           .filter(it -> it.getDependencyType() == DependencyType.TOOLCHAIN)
-          .map(Dependency::getTargetKey)
-          .filter(toolchains::containsKey)
-          .findFirst();
-
-      if (toolchain.isPresent()) {
-        toolchainDepsTable.put(target, List.of(toolchain.get()));
-        continue;
-      }
-
-      final var candidates = target.getDependencies().stream()
           .map(Dependency::getTargetKey)
           .filter(toolchains::containsKey)
           .collect(toImmutableList());
 
-      toolchainDepsTable.put(target, candidates);
+      if (!toolchainCandidates.isEmpty()) {
+        toolchainDepsTable.put(target, toolchainCandidates);
+        continue;
+      }
+
+      final var fallbackCandidates = target.getDependencies().stream()
+          .map(Dependency::getTargetKey)
+          .filter(toolchains::containsKey)
+          .collect(toImmutableList());
+
+      toolchainDepsTable.put(target, fallbackCandidates);
     }
 
     return toolchainDepsTable.build();
