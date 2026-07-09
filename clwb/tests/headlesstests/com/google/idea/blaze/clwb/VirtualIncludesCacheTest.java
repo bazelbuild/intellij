@@ -48,13 +48,13 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
 
     assertContainsHeader("strip_absolut/strip_absolut.h", compilerSettings);
-    assertCachedHeader("strip_absolut/strip_absolut.h", compilerSettings, myProject, /* symlink = */ true);
+    assertCachedHeader("strip_absolut/strip_absolut.h", compilerSettings, myProject, /* symlink = */ false);
 
     assertContainsHeader("strip_absolut/generated.h", compilerSettings);
-    assertCachedHeader("strip_absolut/generated.h", compilerSettings, myProject, /* symlink = */ true);
+    assertCachedHeader("strip_absolut/generated.h", compilerSettings, myProject, /* symlink = */ false);
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ true);
+    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ false);
 
     assertContainsHeader("raw_default.h", compilerSettings);
     assertWorkspaceHeader("raw_default.h", compilerSettings, myProject);
@@ -66,7 +66,7 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertWorkspaceHeader("raw_quote.h", compilerSettings, myProject);
 
     assertContainsHeader("external/generated.h", compilerSettings);
-    assertCachedHeader("external/generated.h", compilerSettings, myProject, /* symlink = */ true);
+    assertCachedHeader("external/generated.h", compilerSettings, myProject, /* symlink = */ false);
 
     assertContainsHeader("lib/generated.h", compilerSettings);
     assertCachedHeader("lib/generated.h", compilerSettings, myProject, /* symlink = */ false);
@@ -92,6 +92,6 @@ public class VirtualIncludesCacheTest extends ClwbHeadlessTestCase {
     assertThat(headersSearchRoots).isNotEmpty();
 
     assertContainsHeader("strip_relative.h", compilerSettings);
-    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ true);
+    assertCachedHeader("strip_relative.h", compilerSettings, myProject, /* symlink = */ false);
   }
 }
