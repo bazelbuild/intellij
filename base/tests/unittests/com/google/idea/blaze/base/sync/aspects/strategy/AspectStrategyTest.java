@@ -179,10 +179,10 @@ public class AspectStrategyTest extends BlazeTestCase {
     }
 
     @Override
-    protected Optional<String> genericOutputGroup(OutputGroup outputGroup) {
+    protected ImmutableList<String> genericOutputGroup(OutputGroup outputGroup) {
       return outputGroup == OutputGroup.INFO
-          ? Optional.of(outputGroup.prefix + "-generic")
-          : Optional.empty();
+          ? ImmutableList.of(outputGroup.prefix + "-generic")
+          : ImmutableList.of();
     }
   }
 }
