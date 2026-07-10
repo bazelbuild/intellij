@@ -102,6 +102,10 @@ class ExecutionTest : ClwbHeadlessTestCase() {
   override fun addAllowedVfsRoots(roots: ArrayList<AllowedVfsRoot>) {
     super.addAllowedVfsRoots(roots)
 
+    if (OS.CURRENT == OS.Windows) {
+      roots.add(AllowedVfsRoot.recursive(Config.DEBUG, "_virtual_includes"))
+    }
+
     roots.add(AllowedVfsRoot.recursive(Config.DEBUG, "external/catch2+"))
   }
 
