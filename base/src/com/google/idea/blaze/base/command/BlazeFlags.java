@@ -68,6 +68,10 @@ public final class BlazeFlags {
   // even if they were explicitly requested.
   public static final String SKIP_INCOMPATIBLE_TARGETS = "--skip_incompatible_explicit_targets";
 
+  // Prevents bazel from creating/updating the bazel-* convenience symlinks. Used for sync-internal
+  // execution-phase invocations that are built outside ProjectViewFlagsProvider.
+  public static final String NO_CONVENIENCE_SYMLINKS = "--experimental_convenience_symlinks=ignore";
+
   // Custom build metadata. This option takes a key-value pair as an argument.
   public static final String BUILD_METADATA = "--build_metadata=";
 
