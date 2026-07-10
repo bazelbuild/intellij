@@ -65,8 +65,8 @@ class IntelliJAspectStrategy : AspectStrategy() {
   }
 
   override fun genericOutputGroup(outputGroup: OutputGroup): ImmutableList<String> {
-    // we do not support the light weight "SYNC" yet
-    return ImmutableList.of(OutputGroups.INFO.groupName, OutputGroups.BUILD.groupName)
+    // we do not support the light weight "SYNC" without the build output group yet
+    return ImmutableList.of(OutputGroups.INFO.groupName, OutputGroups.SYNC.groupName, OutputGroups.BUILD.groupName)
   }
 }
 
