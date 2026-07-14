@@ -1,5 +1,5 @@
 {
-  "lockFileVersion": 26,
+  "lockFileVersion": 28,
   "registryFileHashes": {
     "https://bcr.bazel.build/bazel_registry.json": "8a28e4aff06ee60aed2a8c281907fb8bcbf3b753c91fb5a5c57da3215d5b3497",
     "https://bcr.bazel.build/modules/abseil-cpp/20210324.2/MODULE.bazel": "7cd0312e064fde87c8d1cd79ba06c876bd23630c83466e9500321be55c96ace2",
@@ -383,7 +383,7 @@
   "moduleExtensions": {
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
-        "bzlTransitiveDigest": "ZZYkRaasfufnRnF1nw5qVOrvoQEmaqjbqmnR2pItjS8=",
+        "bzlTransitiveDigest": "WgE6i3N349thGakuJK1nxa5LEJrLt9Pwd3CNbmP2PZc=",
         "usagesDigest": "fLfiND11fB2QUkQXWzpzyvJehsKehmQi1JqvCxdBWc8=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -471,7 +471,7 @@
     },
     "@@aspect_rules_js+//npm:extensions.bzl%pnpm": {
       "general": {
-        "bzlTransitiveDigest": "refGS/WPAnfahgXndjCzC+qIo4o7xm6ArdZLB39aRtY=",
+        "bzlTransitiveDigest": "lJh24rqs504CcXM9l6y6MO13cQoCZQn9t6IiWNBrZ7Y=",
         "usagesDigest": "ZYGEy1FrDUNPBzAzD+ujlHkMEsVPMYOvpHm9RhUexUE=",
         "recordedInputs": [
           "REPO_MAPPING:aspect_bazel_lib+,bazel_lib bazel_lib+",
@@ -647,7 +647,7 @@
     },
     "@@rules_android+//bzlmod_extensions:apksig.bzl%apksig_extension": {
       "general": {
-        "bzlTransitiveDigest": "IiT2UgJGnHaKiyP2A1yh3U/QWN4W9g/Byolrm78hC/s=",
+        "bzlTransitiveDigest": "qEcqhUuyYlPmvAtyYRqS+4Y7cRHA2Vho3JIBJZJJX+s=",
         "usagesDigest": "zr/niBQ/s2fHozWAsg4vI70wAxcuFjG+QtM15qGkq9o=",
         "recordedInputs": [
           "REPO_MAPPING:rules_android+,bazel_tools bazel_tools"
@@ -665,7 +665,7 @@
     },
     "@@rules_android+//bzlmod_extensions:com_android_dex.bzl%com_android_dex_extension": {
       "general": {
-        "bzlTransitiveDigest": "toD4gOZwGNfBEM+xec6eRi3BM2Z9EZ4oQrORZQH3sNY=",
+        "bzlTransitiveDigest": "gTuOqknGgqPw9YQSCY+qXxgxVwiLRGdBCsCe4i4q/xw=",
         "usagesDigest": "c1Y/KGGjUYCyd8zNIVTUh1bynVXRFz6xGKaSCBpQANM=",
         "recordedInputs": [
           "REPO_MAPPING:rules_android+,bazel_tools bazel_tools"
@@ -697,7 +697,7 @@
     "@@rules_bazel_integration_test+//:extensions.bzl%bazel_binaries": {
       "general": {
         "bzlTransitiveDigest": "XC9nqZ31LIbq8N7cEK+rYa2iXNQLcJ3cyGWw+zPZlc0=",
-        "usagesDigest": "/AgbmOu/wAb/B8raHQJacKnkkn/czmympLqIDBQEELc=",
+        "usagesDigest": "D+2xQZee5VDrXzqV2xO+A4yExQzWhq1u9kLaBL2tbg8=",
         "recordedInputs": [
           "REPO_MAPPING:rules_bazel_integration_test+,bazel_skylib bazel_skylib+",
           "REPO_MAPPING:rules_bazel_integration_test+,cgrindel_bazel_starlib cgrindel_bazel_starlib+"
@@ -716,17 +716,17 @@
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
-          "build_bazel_bazel_8_6_0": {
+          "build_bazel_bazel_8_7_0": {
             "repoRuleId": "@@rules_bazel_integration_test+//bazel_integration_test/private:bazel_binaries.bzl%bazel_binary",
             "attributes": {
-              "version": "8.6.0",
+              "version": "8.7.0",
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
-          "build_bazel_bazel_9_1_1": {
+          "build_bazel_bazel_9_2_0": {
             "repoRuleId": "@@rules_bazel_integration_test+//bazel_integration_test/private:bazel_binaries.bzl%bazel_binary",
             "attributes": {
-              "version": "9.1.1",
+              "version": "9.2.0",
               "bazelisk": "@bazel_binaries_bazelisk//:bazelisk"
             }
           },
@@ -742,8 +742,8 @@
             "attributes": {
               "version_to_repo": {
                 "7.7.1": "build_bazel_bazel_7_7_1",
-                "8.6.0": "build_bazel_bazel_8_6_0",
-                "9.1.1": "build_bazel_bazel_9_1_1",
+                "8.7.0": "build_bazel_bazel_8_7_0",
+                "9.2.0": "build_bazel_bazel_9_2_0",
                 "last_green": "build_bazel_bazel_last_green"
               },
               "current_version": "7.7.1"
@@ -754,8 +754,8 @@
           "explicitRootModuleDirectDeps": [
             "bazel_binaries_bazelisk",
             "build_bazel_bazel_7_7_1",
-            "build_bazel_bazel_8_6_0",
-            "build_bazel_bazel_9_1_1",
+            "build_bazel_bazel_8_7_0",
+            "build_bazel_bazel_9_2_0",
             "build_bazel_bazel_last_green",
             "bazel_binaries"
           ],
@@ -2243,5 +2243,6 @@
         }
       }
     }
-  }
+  },
+  "factsVersions": {}
 }
