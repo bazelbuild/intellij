@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -60,6 +61,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       "#!/bin/bash",
       "__BAZEL_BIN__ cquery \\",
       " 'deps(__TARGET__)' \\",
+      " --experimental_convenience_symlinks=ignore \\",
       " --output=starlark \\",
       " --starlark:file='__QUERY_FILE__'",
   };
@@ -174,6 +176,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
     BlazeCommand.Builder runXcodeLocator = BlazeCommand.builder(invoker, BlazeCommandName.RUN);
     runXcodeLocator.addTargets(
         Label.fromStringSafe("@bazel_tools//tools/osx:xcode-locator"));
+    runXcodeLocator.addBlazeFlags(BlazeFlags.NO_CONVENIENCE_SYMLINKS);
     runXcodeLocator.addExeFlags(xcodeVersion).build();
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

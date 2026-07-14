@@ -141,8 +141,8 @@ class HeaderCacheService(private val project: Project) {
 
         val artifact = decoder.resolveOutput(header)
 
-        // for local files, check if the file is a symlink (e.g. _virtual_includes)
-        if (artifact is LocalFileArtifact) {
+        // for local files which are not generated, check if the file is a symlink (e.g. _virtual_includes)
+        if (artifact is LocalFileArtifact && header.isSource) {
           val localPath = artifact.file.toPath()
           if (Files.isSymbolicLink(localPath)) {
             // fall through to content-copy if symlink creation failed (e.g. Windows without Developer Mode)

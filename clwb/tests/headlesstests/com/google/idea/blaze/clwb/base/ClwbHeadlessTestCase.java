@@ -18,8 +18,11 @@ package com.google.idea.blaze.clwb.base;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.idea.blaze.base.bazel.BazelVersion;
 import com.google.idea.testing.headless.HeadlessTestCase;
+import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
@@ -44,14 +47,29 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     final var roots = new ArrayList<AllowedVfsRoot>();
     addAllowedVfsRoots(roots);
 
-    // TODO: these assertions are failing due to the upgrade to radler
-    // Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
+    Assertions.assertVfsLoads(myBazelInfo.executionRoot(), roots);
     HeavyPlatformTestCase.cleanupApplicationCaches(myProject);
 
     super.tearDown();
   }
 
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) { }
+
+  protected int getCLionBaselineVersion() {
+    return ApplicationInfo.getInstance().getBuild().getBaselineVersion();
+  }
+
+  @Override
+  protected ProjectViewBuilder projectViewText(BazelVersion version) {
+    final var builder = super.projectViewText(version);
+
+    // radler's VFS warm-up on CLion <= 261 follows the bazel-* convenience symlinks into bazel-out
+    if (getCLionBaselineVersion() <= 261) {
+      builder.addBuildFlag("--experimental_convenience_symlinks=clean");
+    }
+
+    return builder;
+  }
 
   protected OCWorkspace getWorkspace() {
     return OCWorkspace.getInstance(myProject);
