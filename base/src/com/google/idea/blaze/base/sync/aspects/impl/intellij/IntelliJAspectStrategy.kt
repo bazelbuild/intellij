@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.impl.intellij
 
+import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService
@@ -23,6 +24,7 @@ import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider
 import com.intellij.aspect.lib.Aspects
 import com.intellij.aspect.lib.Rules
+import com.intellij.aspect.lib.OutputGroups
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
@@ -62,9 +64,9 @@ class IntelliJAspectStrategy : AspectStrategy() {
     return Optional.of("--aspects=" + aspects.joinToString(","))
   }
 
-  override fun genericOutputGroup(outputGroup: OutputGroup): Optional<String> {
-    // unlike the legacy aspect, the generic group is just the bare prefix
-    return if (outputGroup == OutputGroup.INFO) Optional.of(outputGroup.prefix) else Optional.empty()
+  override fun genericOutputGroup(outputGroup: OutputGroup): ImmutableList<String> {
+    // we do not support the light weight "SYNC" without the build output group yet
+    return ImmutableList.of(OutputGroups.INFO.groupName, OutputGroups.SYNC.groupName, OutputGroups.BUILD.groupName)
   }
 }
 

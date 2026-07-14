@@ -115,14 +115,14 @@ public abstract class AspectStrategy {
    * empty if the kind has no such group. This is the only part of output group naming that differs
    * between aspect strategies.
    */
-  protected abstract Optional<String> genericOutputGroup(OutputGroup outputGroup);
+  protected abstract ImmutableList<String> genericOutputGroup(OutputGroup outputGroup);
 
   /**
    * Collects the names of output groups created by the aspect for the given {@link OutputGroup} and languages.
    */
   protected final ImmutableList<String> getOutputGroups(OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     final var builder = ImmutableList.<String>builder();
-    genericOutputGroup(outputGroup).ifPresent(builder::add);
+    genericOutputGroup(outputGroup).forEach(builder::add);
 
     activeLanguages.stream()
         .map(LanguageOutputGroup::forLanguage)

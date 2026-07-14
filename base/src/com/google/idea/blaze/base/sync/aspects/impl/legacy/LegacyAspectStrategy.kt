@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects.impl.legacy
 
+import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService
@@ -58,7 +59,7 @@ class LegacyAspectStrategy : AspectStrategy() {
     return resolve(project, "intellij_info_bundled.bzl").map { "--aspects=$it%intellij_info_aspect" }
   }
 
-  override fun genericOutputGroup(outputGroup: OutputGroup): Optional<String> {
-    return if (outputGroup == OutputGroup.INFO) Optional.of("${outputGroup.prefix}-generic") else Optional.empty()
+  override fun genericOutputGroup(outputGroup: OutputGroup): ImmutableList<String> {
+    return if (outputGroup == OutputGroup.INFO) ImmutableList.of("${outputGroup.prefix}-generic") else ImmutableList.of()
   }
 }
