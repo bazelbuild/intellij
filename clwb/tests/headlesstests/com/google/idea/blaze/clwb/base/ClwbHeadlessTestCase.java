@@ -55,7 +55,7 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
 
   protected void addAllowedVfsRoots(ArrayList<AllowedVfsRoot> roots) { }
 
-  protected int getClionBaselineVersion() {
+  protected int getCLionBaselineVersion() {
     return ApplicationInfo.getInstance().getBuild().getBaselineVersion();
   }
 
@@ -64,7 +64,7 @@ public abstract class ClwbHeadlessTestCase extends HeadlessTestCase {
     final var builder = super.projectViewText(version);
 
     // radler's VFS warm-up on CLion <= 261 follows the bazel-* convenience symlinks into bazel-out
-    if (getClionBaselineVersion() <= 261) {
+    if (getCLionBaselineVersion() <= 261) {
       builder.addBuildFlag("--experimental_convenience_symlinks=clean");
     }
 
