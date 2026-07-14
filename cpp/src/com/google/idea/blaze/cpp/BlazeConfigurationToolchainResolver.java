@@ -96,7 +96,9 @@ public final class BlazeConfigurationToolchainResolver {
   ) {
     final var toolchainDepsTable = ImmutableMap.<TargetIdeInfo, List<TargetKey>>builder();
     for (final var target : targets) {
-      if (target.getcIdeInfo() == null || target.getcToolchainIdeInfo() != null) {
+      // switch to: target.getcIdeInfo() == null || target.getcToolchainIdeInfo() != null
+      // once the intellij aspect becomes the default as it can handle proto correctly
+      if (!target.getKind().hasLanguage(LanguageClass.C)  || target.getcToolchainIdeInfo() != null) {
         continue;
       }
 
@@ -177,14 +179,6 @@ public final class BlazeConfigurationToolchainResolver {
     IssueOutput.warn("Unexpected number of cc toolchain dependencies")
         .withDescription(builder.toString())
         .submit(context);
-  }
-
-  private static boolean usesAppleCcToolchain(TargetIdeInfo target) {
-    return target.getDependencies().stream()
-        .map(Dependency::getTargetKey)
-        .map(TargetKey::label)
-        .map(TargetExpression::toString)
-        .anyMatch(s -> s.startsWith("//tools/osx/crosstool"));
   }
 
   /**
