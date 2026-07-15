@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,61 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp.environment;
+package com.google.idea.blaze.cpp.environment
 
-import static com.google.common.truth.Truth.assertThat;
+import com.google.common.collect.ImmutableMap
+import com.google.common.truth.Truth.assertThat
+import com.google.idea.blaze.base.BlazeTestCase
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider
+import com.google.idea.blaze.base.ideinfo.TargetMap
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolverImpl
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+import java.io.File
+import java.nio.file.Path
 
-import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolverImpl;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import java.io.File;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+private val WORKSPACE_ROOT = WorkspaceRoot(File("/path/to/root"))
 
-/** Unit tests for {@link ProcSelfCwdEnvironmentProcessor}. */
-@RunWith(JUnit4.class)
-public class ProcSelfCwdEnvironmentProcessorTest extends BlazeTestCase {
+private val EXECUTION_ROOT = Path.of("/path/to/_bazel_user/1234bf129e/execroot/__main__")
+private val OUTPUT_BASE = Path.of("/path/to/_bazel_user/1234bf129e")
 
-  private static final WorkspaceRoot WORKSPACE_ROOT = new WorkspaceRoot(new File("/path/to/root"));
-  private static final String EXECUTION_ROOT = "/path/to/_bazel_user/1234bf129e/execroot/__main__";
-  private static final String OUTPUT_BASE = "/path/to/_bazel_user/1234bf129e";
+/** Unit tests for [ProcSelfCwdEnvironmentProcessor]. */
+@RunWith(JUnit4::class)
+class ProcSelfCwdEnvironmentProcessorTest : BlazeTestCase() {
 
-  private final ProcSelfCwdEnvironmentProcessor processor = new ProcSelfCwdEnvironmentProcessor();
-  private ExecutionRootPathResolver resolver;
+    private val processor = ProcSelfCwdEnvironmentProcessor()
+    private lateinit var resolver: ExecutionRootPathResolver
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
-    resolver = new ExecutionRootPathResolverImpl(
-        new BazelBuildSystemProvider(),
-        WORKSPACE_ROOT,
-        new File(EXECUTION_ROOT),
-        new File(OUTPUT_BASE),
-        new WorkspacePathResolverImpl(WORKSPACE_ROOT),
-        new TargetMap(ImmutableMap.of())
-    );
-  }
+    override fun initTest(applicationServices: Container, projectServices: Container) {
+        resolver = ExecutionRootPathResolverImpl(
+            BazelBuildSystemProvider(),
+            WORKSPACE_ROOT,
+            EXECUTION_ROOT.toFile(),
+            OUTPUT_BASE.toFile(),
+            WorkspacePathResolverImpl(WORKSPACE_ROOT),
+            TargetMap(ImmutableMap.of())
+        )
+    }
 
-  @Test
-  public void testRewritesProcSelfCwdValueToAbsolutePath() {
-    final var result = processor.process(ImmutableMap.of("QNX_HOST", "/proc/self/cwd/external/qnx/host"), resolver);
-    assertThat(result).containsEntry("QNX_HOST", new File(OUTPUT_BASE, "external/qnx/host").getAbsolutePath());
-  }
+    @Test
+    fun testRewritesProcSelfCwdValueToAbsolutePath() {
+        val environment = mutableMapOf("QNX_HOST" to "/proc/self/cwd/external/qnx/host")
+        processor.process(environment, resolver)
 
-  @Test
-  public void testLeavesNonPathValuesUntouched() {
-    final var environment = ImmutableMap.of("FOO", "bar", "REL", "some/relative/value");
-    assertThat(processor.process(environment, resolver)).isEqualTo(environment);
-  }
+        val expected = OUTPUT_BASE.resolve("external/qnx/host").toAbsolutePath().toString()
+        assertThat(environment).containsEntry("QNX_HOST", expected)
+    }
 
-  @Test
-  public void testLeavesGenuineAbsolutePathsUntouched() {
-    final var environment = ImmutableMap.of("PATH", "/usr/bin:/bin");
-    assertThat(processor.process(environment, resolver)).isEqualTo(environment);
-  }
+    @Test
+    fun testLeavesNonPathValuesUntouched() {
+        val environment = mutableMapOf("FOO" to "bar", "REL" to "some/relative/value")
+        val expected = ImmutableMap.copyOf(environment)
+        processor.process(environment, resolver)
+        assertThat(environment).isEqualTo(expected)
+    }
+
+    @Test
+    fun testLeavesGenuineAbsolutePathsUntouched() {
+        val environment = mutableMapOf("PATH" to "/usr/bin:/bin")
+        val expected = ImmutableMap.copyOf(environment)
+        processor.process(environment, resolver)
+        assertThat(environment).isEqualTo(expected)
+    }
 }

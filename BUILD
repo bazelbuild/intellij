@@ -29,7 +29,7 @@ test_suite(
         "//clwb:headless_tests",
         "//clwb:integration_tests",
         "//clwb:unit_tests",
-        "//cpp:unit_tests",
+        "//cpp:unit_tests_suite",
         "//dart:unit_tests",
         "//python:unit_tests",
         "//skylark:integration_tests",

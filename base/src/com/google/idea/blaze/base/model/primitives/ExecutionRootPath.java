@@ -74,7 +74,11 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
    * Returns null for genuine absolute paths which must be used as-is, and for
    * invalid paths. Correctly resolves /proc/self/cwd references.
    */
-  public static @Nullable ExecutionRootPath tryCreate(String location) {
+  public static @Nullable ExecutionRootPath tryCreate(@Nullable String location) {
+    if (location == null) {
+      return null;
+    }
+
     Path path;
     try {
       path = Path.of(location);

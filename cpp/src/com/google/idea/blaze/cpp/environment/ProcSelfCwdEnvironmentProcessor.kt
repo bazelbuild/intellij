@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp.environment;
+package com.google.idea.blaze.cpp.environment
 
-import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import javax.annotation.Nullable;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath
+import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
 
 /**
- * Rewrites {@code /proc/self/cwd/} environment values to absolute paths.
+ * Rewrites `/proc/self/cwd/` environment values to absolute paths.
  */
-public final class ProcSelfCwdEnvironmentProcessor extends EnvironmentProcessor.Transform {
+class ProcSelfCwdEnvironmentProcessor : EnvironmentProcessor.Transform() {
 
-  @Override
-  public boolean enabled() {
-    return true;
-  }
-
-  @Override
-  @Nullable
-  protected String apply(String key, String value, ExecutionRootPathResolver resolver) {
-    if (ExecutionRootPath.isProcSelfCwd(value)) {
-      return resolver.resolveExecutionRootPath(ExecutionRootPath.create(value)).getAbsolutePath();
-    } else {
-      return null;
+    override fun enabled(): Boolean {
+        return true
     }
-  }
+
+    override fun apply(key: String, value: String, resolver: ExecutionRootPathResolver): String? {
+        if (!ExecutionRootPath.isProcSelfCwd(value)) {
+            return null
+        }
+
+        return resolver.resolveExecutionRootPath(ExecutionRootPath.create(value))?.absolutePath
+    }
 }

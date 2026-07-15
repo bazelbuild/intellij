@@ -37,10 +37,10 @@ class CoptsSysrootProcessor : CoptsProcessor.Transform() {
     sink: CompilerSpecificSwitchBuilder,
     resolver: ExecutionRootPathResolver
   ) {
-    val path = ExecutionRootPath.tryCreate(value)
+    val resolved = ExecutionRootPath.tryCreate(value)?.let(resolver::resolveExecutionRootPath)
 
-    if (path != null) {
-      sink.withSysroot(resolver.resolveExecutionRootPath(path).toString())
+    if (resolved != null) {
+      sink.withSysroot(resolved.toString())
     } else {
       sink.withSysroot(value)
     }

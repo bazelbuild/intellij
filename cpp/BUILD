@@ -2,7 +2,6 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load(
     "//:build-visibility.bzl",
-    "DEFAULT_TEST_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 load(
@@ -86,7 +85,6 @@ intellij_unit_test_suite(
     class_rules = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
     tags = ["noci:studio-win"],
     test_package_root = "com.google.idea.blaze.cpp",
-    visibility = DEFAULT_TEST_VISIBILITY,
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
@@ -103,4 +101,13 @@ intellij_unit_test_suite(
         "@com_google_guava_guava//jar",
         "@maven//:org_mockito_mockito_core",
     ],
+)
+
+test_suite(
+    name = "unit_tests_suite",
+    tests = [
+        ":unit_tests",
+        "//cpp/tests/unittests/com/google/idea/blaze/cpp/environment:ProcSelfCwdEnvironmentProcessorTest",
+    ],
+    visibility = ["//visibility:public"],
 )

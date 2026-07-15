@@ -67,7 +67,7 @@ public interface EnvironmentProcessor {
       ImmutableMap<String, String> environment,
       ExecutionRootPathResolver resolver
   ) {
-    final var mutable = new HashMap<>(environment);
+    final var mutable = new LinkedHashMap<>(environment);
     for (final var processor : EP_NAME.getExtensionList()) {
       if (processor.enabled()) {
         processor.process(mutable, resolver);

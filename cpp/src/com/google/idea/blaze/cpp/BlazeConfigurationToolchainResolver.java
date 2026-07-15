@@ -372,11 +372,14 @@ public final class BlazeConfigurationToolchainResolver {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
           builder.append("Missing execution root:\n").append(executionRoot.getAbsolutePath()).append("\n");
+          break;
         case MISSING_COMPILER:
           builder.append("Missing compiler executable:\n").append(executable.getAbsolutePath()).append("\n");
+          break;
         case GENERIC_FAILURE:
           builder.append("Failed to check compiler version:\n").append(e.getMessage()).append("\n");
           builder.append("Compiler executable:\n").append(executable.getAbsolutePath()).append("\n");
+          break;
       }
 
       IssueOutput.warn("Unable to check compiler version").withDescription(builder.toString()).submit(context);
