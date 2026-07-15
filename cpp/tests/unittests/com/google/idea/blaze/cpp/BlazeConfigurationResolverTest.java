@@ -401,9 +401,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .build();
     String errMessage =
         String.format(
-            "cc target is expected to depend on exactly 1 cc toolchain."
-                + " Found 0 toolchains for these targets: %s",
-            ccTarget.getKey());
+            "Unexpected number of cc toolchain dependencies\n"
+                + "%s: No toolchain dependencies found\n",
+            ccTarget.getKey().presentable());
     assertThatResolving(projectView, targetMap, errMessage)
         .producesCompilerSettingsForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
   }
