@@ -131,6 +131,15 @@ intellij_unit_test_suite(
     ],
 )
 
+test_suite(
+    name = "unit_tests_suite",
+    tests = [
+        ":unit_tests",
+        "//clwb/tests/unittests/com/google/idea/blaze/clwb/run:DebugInfoCheckTest",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # When enabled, headless/integration tests run with the new IntelliJ split aspect instead of the legacy bundled aspect.
 bool_flag(
     name = "use_intellij_aspect",
