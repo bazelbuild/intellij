@@ -60,7 +60,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
         ctx.pushJob("HeaderRootTrimmer") {
           val results = paths.map { root ->
             async(Dispatchers.IO) {
-              collectHeaderRoots(executionRootPathResolver, root, projectData)
+              collectHeaderRoots(executionRootPathResolver, root)
             }
           }
 
