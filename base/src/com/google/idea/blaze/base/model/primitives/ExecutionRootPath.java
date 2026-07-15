@@ -30,6 +30,9 @@ import javax.annotation.Nullable;
 @AutoValue
 public abstract class ExecutionRootPath implements ProtoWrapper<String> {
 
+  private static final Path BAZEL_OUT = Path.of("bazel-out");
+  private static final Path BIN = Path.of("bin");
+
   public abstract Path path();
 
   public static ExecutionRootPath create(Path path) {
@@ -149,5 +152,21 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
   @ToPrettyString
   public String toPrettyString() {
     return path().toString();
+  }
+
+  public boolean isBazelOut() {
+    return path().equals(BAZEL_OUT);
+  }
+
+  public boolean isInBazelOut() {
+    return path().startsWith(BAZEL_OUT);
+  }
+
+  public boolean isBazelBin() {
+    return isInBazelOut() && path().getNameCount() == 3 && path().getName(2).equals(BIN);
+  }
+
+  public boolean isInBazelBin() {
+    return isInBazelOut() && path().getNameCount() >= 3 && path().getName(2).equals(BIN);
   }
 }
