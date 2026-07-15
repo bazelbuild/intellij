@@ -28,7 +28,7 @@ test_suite(
         "//base:unit_tests_kt",
         "//clwb:headless_tests",
         "//clwb:integration_tests",
-        "//clwb:unit_tests_sutie",
+        "//clwb:unit_tests_suite",
         "//cpp:unit_tests",
         "//dart:unit_tests",
         "//python:unit_tests",
