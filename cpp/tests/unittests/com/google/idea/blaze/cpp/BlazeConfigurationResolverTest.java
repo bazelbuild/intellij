@@ -742,9 +742,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     computeResolverResult(projectView, targetMap);
     errorCollector.assertIssueContaining(
-        "Unable to check compiler version for \"/root/cc\".\n"
-            + "injected fault\n"
-            + "Check if running the compiler with --version works on the cmdline.");
+        "Unable to check compiler version\n" +
+            "Failed to check compiler version:\n" +
+            "injected fault\n" +
+            "Compiler executable:\n" +
+            "/root/cc"
+    );
   }
 
   @Test
