@@ -384,7 +384,7 @@
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
         "bzlTransitiveDigest": "WgE6i3N349thGakuJK1nxa5LEJrLt9Pwd3CNbmP2PZc=",
-        "usagesDigest": "fLfiND11fB2QUkQXWzpzyvJehsKehmQi1JqvCxdBWc8=",
+        "usagesDigest": "xvnDoG0Rfk5PIwgt6SMpjKaIvk9eSi3myxikhwCxZag=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
@@ -411,9 +411,9 @@
             "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_intellij_sdk",
             "attributes": {
               "build_file": "@@//intellij_platform_sdk:BUILD.clion262",
-              "sha256": "dea7f6e8c1407eb13e5d038fbb6f6cb01196f79aadb6315324b2d5462e6a26fb",
+              "sha256": "cb2616a36e25653fc00f056977a2dca22d6119431039b587605d6404bf713c12",
               "product": "clion",
-              "version": "262.8377.40-EAP-SNAPSHOT"
+              "version": "262.8665.173-EAP-SNAPSHOT"
             }
           },
           "python_2025_3": {
@@ -436,8 +436,8 @@
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
               "build_file": "@@//intellij_platform_sdk:BUILD.python",
-              "sha256": "86db97b15282555162a7e886cfa1ba06a3e1f8f894206050052e4e26972e0e89",
-              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/262.8377.35/PythonCore-262.8377.35.zip"
+              "sha256": "d6009c06e42825cb1b0c6554bf3205282f6695c797dea8c672e00565f9be2900",
+              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/262.8665.176/PythonCore-262.8665.176.zip"
             }
           },
           "jbr_25_0_3": {
