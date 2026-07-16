@@ -33,17 +33,17 @@ fun createGoogleTestFilter(suite: String?, name: String?): String {
   val suite = suite ?: "*"
   val name = name ?: "*"
 
-  return sequence {
+  return listOf(
     // matches regular test
-    yield("$suite.$name")
+    "$suite.$name",
 
-    // matches parameterized thest without an installation prefix
-    yield("$suite.$name/*")
+    // matches parameterized test without an installation prefix
+    "$suite.$name/*",
 
     // matches parameterized test with an installation prefix
-    yield("*/$suite.$name/*")
+    "*/$suite.$name/*",
 
     // matches typed tests
-    yield("$suite/*.$name")
-  }.joinToString(":")
+    "$suite/*.$name"
+  ).joinToString(":")
 }
