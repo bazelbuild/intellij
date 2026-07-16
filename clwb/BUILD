@@ -170,6 +170,12 @@ clwb_headless_test(
 )
 
 clwb_headless_test(
+    name = "gutter_headless_test",
+    srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/GutterTest.kt"],
+    project = "execution",
+)
+
+clwb_headless_test(
     name = "target_compatible_headless_test",
     srcs = ["tests/headlesstests/com/google/idea/blaze/clwb/TargetCompatibleTest.java"],
     project = "target_compatible",
@@ -222,6 +228,7 @@ test_suite(
         ":example_headless_test",
         ":execution_headless_test",
         ":external_includes_headless_test",
+        ":gutter_headless_test",
         ":lib_cpp_headless_test",
         ":llvm_toolchain_headless_test",
         ":protobuf_headless_test",
@@ -237,9 +244,15 @@ clwb_integration_test(
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/CoptsProcessorTest.kt"],
 )
 
+clwb_integration_test(
+    name = "rad_google_test_filter",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/RadGoogleTestFilterTest.kt"],
+)
+
 test_suite(
     name = "integration_tests",
     tests = [
+        ":rad_google_test_filter",
         ":copts_processor",
     ],
 )

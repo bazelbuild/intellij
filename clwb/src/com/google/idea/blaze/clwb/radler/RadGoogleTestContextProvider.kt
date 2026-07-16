@@ -17,19 +17,33 @@ package com.google.idea.blaze.clwb.radler
 
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
+import org.jetbrains.annotations.VisibleForTesting
 
 class RadGoogleTestContextProvider : RadTestContextProvider() {
 
   override val testFramework: RadTestFramework = RadTestFramework.GTest
 
   override fun createTestFilter(test: RadTestElementModel): String {
-    val suite = test.suites?.firstOrNull() ?: "*"
-    val name = test.test ?: "*"
-
-    // derive 3 patterns from the suite and test name:
-    // 1. match regular test
-    // 2. match parameterized thest without installation prefix
-    // 3. match parameterized test with installation prefix
-    return "$suite.$name:$suite.$name/*:*/$suite.$name/*"
+    return createGoogleTestFilter(test.suites?.firstOrNull(), test.test)
   }
+}
+
+@VisibleForTesting
+fun createGoogleTestFilter(suite: String?, name: String?): String {
+  val suite = suite ?: "*"
+  val name = name ?: "*"
+
+  return sequence {
+    // matches regular test
+    yield("$suite.$name")
+
+    // matches parameterized thest without an installation prefix
+    yield("$suite.$name/*")
+
+    // matches parameterized test with an installation prefix
+    yield("*/$suite.$name/*")
+
+    // matches typed tests
+    yield("$suite/*.$name")
+  }.joinToString(":")
 }

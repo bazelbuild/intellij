@@ -50,7 +50,10 @@ def clwb_integration_test(name, srcs, deps = []):
             "tests/integrationtests/com/google/idea/blaze/clwb/base/*.java",
             "tests/integrationtests/com/google/idea/blaze/clwb/base/*.kt",
         ]),
-        deps = deps + ["//cpp"],
+        deps = deps + [
+            "//cpp",
+            "//clwb/src/com/google/idea/blaze/clwb/radler",
+        ],
     )
 
 def clwb_headless_test(name, srcs, project = None, example = None, deps = [], last_green = True):
