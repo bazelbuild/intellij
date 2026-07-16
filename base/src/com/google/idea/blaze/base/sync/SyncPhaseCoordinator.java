@@ -88,7 +88,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -188,14 +187,6 @@ public final class SyncPhaseCoordinator {
     }
   }
 
-  // an application-wide cap on the number of concurrent remote builds
-  private static final int MAX_BUILD_TASKS = 8;
-
-  // an application-wide executor to run concurrent blaze builds remotely
-  private static final ListeningExecutorService remoteBuildExecutor =
-      MoreExecutors.listeningDecorator(
-          AppExecutorUtil.createBoundedApplicationPoolExecutor("FetchExecutor", MAX_BUILD_TASKS));
-
   // a per-project executor to run single-threaded sync phases
   private final ListeningExecutorService singleThreadedExecutor;
   private final Project project;
@@ -223,7 +214,7 @@ public final class SyncPhaseCoordinator {
   ListenableFuture<Void> syncProject(BlazeSyncParams syncParams, BlazeContext parentContext) {
     boolean singleThreaded = true;
     return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
-        .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
+        .setExecutor(singleThreadedExecutor)
         .setModality(BuildViewMigration.progressModality())
         .submitTask(
             indicator ->

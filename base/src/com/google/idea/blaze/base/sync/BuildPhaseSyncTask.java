@@ -202,8 +202,6 @@ public final class BuildPhaseSyncTask {
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
-    boolean parallel = false;
-
     if (!shardedTargetsResult
         .shardedTargets
         .shardStats()
@@ -213,13 +211,10 @@ public final class BuildPhaseSyncTask {
           shardedTargets.shardStats().actualTargetSizePerShard().stream()
               .mapToInt(Integer::intValue)
               .sum();
-      printShardingSummary(context, targetCount, shardedTargets.shardCount(), parallel);
+      printShardingSummary(context, targetCount, shardedTargets.shardCount());
     }
 
-    BuildInvoker syncBuildInvoker =
-        parallel
-            ? buildSystem.getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS)).orElseThrow()
-            : defaultInvoker;
+    BuildInvoker syncBuildInvoker = defaultInvoker;
     resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo(context));
 
     buildStats
@@ -231,7 +226,7 @@ public final class BuildPhaseSyncTask {
                 .getCapabilities()
                 .contains(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS));
 
-    final var blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
+    final var blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, false);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult())
@@ -259,8 +254,7 @@ public final class BuildPhaseSyncTask {
     resultBuilder.setConfigurationData(getBlazeConfigData(context, defaultInvoker));
   }
 
-  private void printShardingSummary(
-      BlazeContext context, int targetCount, int shardCount, boolean parallel) {
+  private void printShardingSummary(BlazeContext context, int targetCount, int shardCount) {
     if (targetCount == 0 || shardCount == 0) {
       return;
     }
@@ -275,12 +269,7 @@ public final class BuildPhaseSyncTask {
                     StringUtil.pluralize("shard", shardCount)))
             .log());
     if (shardCount > 1) {
-      context.output(
-          SummaryOutput.output(
-                  Prefix.INFO,
-                  String.format(
-                      "Building multiple shards in %s...", parallel ? "parallel" : "serial"))
-              .log());
+      context.output(SummaryOutput.output(Prefix.INFO, "Building multiple shards in serial...").log());
     }
   }
 
