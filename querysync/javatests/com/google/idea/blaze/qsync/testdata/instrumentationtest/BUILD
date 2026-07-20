@@ -28,6 +28,6 @@ android_binary(
 
 android_instrumentation_test(
     name = "instrumentationtest",
-    target_device = "//tools/mobile/devices/android/generic_phone:android_23_x86",
+    target_device = "//tools/mobile/devices/android/generic_phone:android_30_x86",
     test_app = ":test_app",
 )
