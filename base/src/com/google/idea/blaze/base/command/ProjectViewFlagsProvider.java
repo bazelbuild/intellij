@@ -64,20 +64,30 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
     final var syncFlags = BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
 
     if (BlazeCommandName.INFO.equals(command)) {
-      syncFlags.removeIf(ProjectViewFlagsProvider::isInfoIncompatibleFlag);
+      removeInfoIncompatibleFlags(syncFlags);
     }
 
     flags.addAll(syncFlags);
   }
 
-  /**
-   * Whether a flag references a build configuration that the bazel info command cannot resolve. The
-   * flag name is taken from the leading token, so both the {@code --flag=value} and {@code --flag
-   * value} forms are matched, while unrelated flags sharing a prefix (e.g. {@code --config_foo}) are
-   * kept.
-   */
-  private static boolean isInfoIncompatibleFlag(String flag) {
-    final var name = flag.split("[=\\s]", 2)[0];
-    return INFO_INCOMPATIBLE_FLAGS.contains(name);
+  private static void removeInfoIncompatibleFlags(List<String> flags) {
+    final var iter = flags.listIterator();
+
+    while (iter.hasNext()) {
+      final var flag = iter.next();
+
+      final var name = flag.split("[=\\s]", 2)[0];
+      if (!INFO_INCOMPATIBLE_FLAGS.contains(name)) {
+        continue;
+      }
+
+      iter.remove();
+
+      // a bare flag carries its value in the next argument; drop that too
+      if (flag.equals(name) && iter.hasNext()) {
+        iter.next();
+        iter.remove();
+      }
+    }
   }
 }
