@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The Bazel Authors. All rights reserved.
+ * Copyright 2026 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link ProjectViewFlagsProvider}. */
 @RunWith(JUnit4.class)
 public class ProjectViewFlagsProviderTest {
 
@@ -45,7 +44,6 @@ public class ProjectViewFlagsProviderTest {
 
   @Test
   public void removesSpaceSeparatedFormWithinSingleElement() {
-    // a single project view line such as "--config release" arrives as one element
     assertThat(filter("--config release", "--platforms //foo:bar")).isEmpty();
   }
 
@@ -57,7 +55,6 @@ public class ProjectViewFlagsProviderTest {
 
   @Test
   public void bareFlagConsumesFollowingArgumentEvenIfItLooksLikeAFlag() {
-    // --config/--platforms always take the next argument as their value, so it is dropped too
     assertThat(filter("--config", "--foo", "--keep")).containsExactly("--keep");
   }
 
@@ -68,22 +65,18 @@ public class ProjectViewFlagsProviderTest {
 
   @Test
   public void keepsFlagsThatOnlySharePrefix() {
-    assertThat(filter("--config_foo", "--platforms_bar"))
-        .containsExactly("--config_foo", "--platforms_bar")
-        .inOrder();
+    assertThat(filter("--config_foo", "--platforms_bar")).containsExactly("--config_foo", "--platforms_bar").inOrder();
   }
 
   @Test
   public void handlesMixOfFormsAndPreservesOrder() {
-    assertThat(
-            filter(
-                "--keep_one",
-                "--config=debug",
-                "--config",
-                "fastbuild",
-                "--platforms //foo:bar",
-                "--keep_two"))
-        .containsExactly("--keep_one", "--keep_two")
-        .inOrder();
+    assertThat(filter(
+        "--keep_one",
+        "--config=debug",
+        "--config",
+        "fastbuild",
+        "--platforms //foo:bar",
+        "--keep_two"
+    )).containsExactly("--keep_one", "--keep_two").inOrder();
   }
 }
