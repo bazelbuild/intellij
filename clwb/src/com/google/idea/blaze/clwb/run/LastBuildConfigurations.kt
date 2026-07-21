@@ -45,12 +45,21 @@ class LastBuildConfigurations(private val project: Project) {
   var preferredConfigurations: Set<String> = emptySet()
     private set
 
+  @Synchronized
   fun update(compileActions: Map<Label, ActionGraph.Action>) {
-    preferredConfigurations = compileActions.values.map { it.configuration.checksum }.toSet()
+    // publishing this notifies OCResolveContextSettings, which bumps the OCWorkspace modification
+    // tracker and re-highlights all C++ files
+    val next = compileActions.values.map { it.configuration.checksum }.toSet()
+    if (next.all { preferredConfigurations.contains(it) }) return
+
+    preferredConfigurations = next
     project.messageBus.syncPublisher(TOPIC).preferredConfigurationChanged()
   }
 
+  @Synchronized
   private fun clear() {
+    if (preferredConfigurations.isEmpty()) return
+
     preferredConfigurations = emptySet()
     project.messageBus.syncPublisher(TOPIC).preferredConfigurationChanged()
   }
