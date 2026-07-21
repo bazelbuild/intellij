@@ -22,8 +22,12 @@ import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Set;
 
 public class ProjectViewFlagsProvider implements BuildFlagsProvider {
+
+  // bazel info cannot resolve these flags if they reference external repos
+  private static final Set<String> INFO_INCOMPATIBLE_FLAGS = Set.of("--platforms", "--config");
 
   @Override
   public void addBuildFlags(
@@ -59,11 +63,21 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
       List<String> flags) {
     final var syncFlags = BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
 
-    // bazel info cannot resolve --platforms/--config that reference external repos
     if (BlazeCommandName.INFO.equals(command)) {
-      syncFlags.removeIf((it) -> it.startsWith("--platforms") || it.startsWith("--config"));
+      syncFlags.removeIf(ProjectViewFlagsProvider::isInfoIncompatibleFlag);
     }
 
     flags.addAll(syncFlags);
+  }
+
+  /**
+   * Whether a flag references a build configuration that the bazel info command cannot resolve. The
+   * flag name is taken from the leading token, so both the {@code --flag=value} and {@code --flag
+   * value} forms are matched, while unrelated flags sharing a prefix (e.g. {@code --config_foo}) are
+   * kept.
+   */
+  private static boolean isInfoIncompatibleFlag(String flag) {
+    final var name = flag.split("[=\\s]", 2)[0];
+    return INFO_INCOMPATIBLE_FLAGS.contains(name);
   }
 }
