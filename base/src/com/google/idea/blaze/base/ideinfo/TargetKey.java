@@ -29,6 +29,8 @@ import java.util.List;
 @AutoValue
 public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKey>, Comparable<TargetKey> {
 
+  private static final int CONFIG_SHORT_ID_LENGTH = 7;
+
   public abstract Label label();
 
   public abstract ImmutableList<String> aspectIds();
@@ -89,8 +91,8 @@ public abstract class TargetKey implements ProtoWrapper<IntellijIdeInfo.TargetKe
     final var builder = new StringBuilder();
     builder.append(label());
 
-    if (configuration().length() >= 7) {
-      builder.append(" (").append(configuration().substring(0, 7)).append(")");
+    if (configuration().length() >= CONFIG_SHORT_ID_LENGTH) {
+      builder.append(" (").append(configuration(), 0, CONFIG_SHORT_ID_LENGTH).append(")");
     } else {
       builder.append(" (missing)");
     }

@@ -97,7 +97,7 @@ public final class BlazeConfigurationToolchainResolver {
     final var toolchainDepsTable = ImmutableMap.<TargetIdeInfo, List<TargetKey>>builder();
     for (final var target : targets) {
       // switch to: target.getcIdeInfo() == null || target.getcToolchainIdeInfo() != null
-      // once the intellij aspect becomes the default as it can handle proto correctly
+      // once the IntelliJ aspect becomes the default (#8412) as it can handle proto correctly
       if (!target.getKind().hasLanguage(LanguageClass.C)  || target.getcToolchainIdeInfo() != null) {
         continue;
       }
