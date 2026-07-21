@@ -26,7 +26,6 @@ import static com.google.idea.blaze.base.sync.sharding.ShardedTargetList.remoteC
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -86,63 +85,7 @@ public class LexicographicTargetSharderTest extends BlazeTestCase {
     setRemoteConcurrentSyncs(10);
     Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
     ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.SERIAL, 2);
-    assertThat(shardedTargets).hasSize(2);
-    assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
-    assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();
-  }
-
-  @Test
-  public void
-      calculateTargetBatches_testRemoteBuildTypeAndSuggestedSizeIsSmaller_suggestedSizeIsUsed() {
-    Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
-    setParallelThreshold(4);
-    setRemoteConcurrentSyncs(1);
-    ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 2);
-    assertThat(shardedTargets).hasSize(2);
-    assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
-    assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();
-  }
-
-  @Test
-  public void
-      calculateTargetBatches_testRemoteBuildTypeAndCalculatedSizeIsSmaller_calculatedSizeIsUsed() {
-    Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
-    setParallelThreshold(4);
-    setRemoteConcurrentSyncs(10);
-    ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 2);
-    assertThat(shardedTargets).hasSize(4);
-    assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR);
-    assertThat(shardedTargets.get(1)).containsExactly(LABEL_ONE);
-    assertThat(shardedTargets.get(2)).containsExactly(LABEL_THREE);
-    assertThat(shardedTargets.get(3)).containsExactly(LABEL_TWO);
-  }
-
-  @Test
-  public void
-      calculateTargetBatches_testRemoteBuildTypeAndMaximumRemoteShardSizeIsSmaller_maximumRemoteShardSizeIsUsed() {
-    Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
-    setParallelThreshold(4);
-    setRemoteConcurrentSyncs(1);
-    setMaximumRemoteShardSize(3);
-    ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 100);
-    assertThat(shardedTargets).hasSize(2);
-    assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE, LABEL_THREE).inOrder();
-    assertThat(shardedTargets.get(1)).containsExactly(LABEL_TWO);
-  }
-
-  @Test
-  public void
-      calculateTargetBatches_testRemoteBuildTypeAndMinimumRemoteShardSizeIsLargerThanCalculated_minimumRemoteShardSizeIsUsed() {
-    ImmutableSet<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
-    setParallelThreshold(4);
-    setRemoteConcurrentSyncs(10);
-    setMinimumRemoteShardSize(2);
-    ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 100);
+        lexicographicTargetSharder.calculateTargetBatches(targets, 2);
     assertThat(shardedTargets).hasSize(2);
     assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
     assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();

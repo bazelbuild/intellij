@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 public abstract class FakeBuildSystem implements BuildSystem {
 
   public static Builder builder(BuildSystemName name) {
-    return new AutoValue_FakeBuildSystem.Builder().setName(name).setSyncStrategy(SyncStrategy.SERIAL);
+    return new AutoValue_FakeBuildSystem.Builder().setName(name);
   }
 
   @Override
@@ -51,12 +51,6 @@ public abstract class FakeBuildSystem implements BuildSystem {
   public Optional<BuildInvoker> getBuildInvoker(Project project, Set<BuildInvoker.Capability> requirements) {
     return getBuildInvoker();
   }
-  @Override
-  public SyncStrategy getSyncStrategy(Project project) {
-    return getSyncStrategy();
-  }
-
-  protected abstract SyncStrategy getSyncStrategy();
 
   @Override
   public void populateBlazeVersionData(WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) { }
@@ -80,8 +74,6 @@ public abstract class FakeBuildSystem implements BuildSystem {
     public abstract Builder setName(BuildSystemName value);
 
     public abstract Builder setBuildInvoker(BuildInvoker value);
-
-    public abstract Builder setSyncStrategy(SyncStrategy value);
 
     public abstract Builder setBazelVersionString(Optional<String> value);
   }

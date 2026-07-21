@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -53,7 +52,6 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   private BuildSystem buildSystem;
   private boolean throwExceptionOnGetBlazeInfo;
   private BuildBinaryType buildBinaryType;
-  private SyncStrategy syncStrategy;
 
   /**
    * Create a wrapper for the given {@link BuildSystemProvider}.
@@ -284,14 +282,6 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     @Override
     public BuildInvoker getBuildInvoker(Project project) {
       return new BuildInvokerWrapper(inner.getBuildInvoker(project));
-    }
-
-    @Override
-    public SyncStrategy getSyncStrategy(Project project) {
-      if (syncStrategy != null) {
-        return syncStrategy;
-      }
-      return inner.getSyncStrategy(project);
     }
 
     @Override
