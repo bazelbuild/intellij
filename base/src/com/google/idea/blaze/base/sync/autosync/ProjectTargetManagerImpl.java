@@ -32,9 +32,11 @@ import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -148,8 +150,11 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
       if (fullProjectSync) {
         manager.projectSyncStatus = SyncStatus.RESYNCING;
       }
-      // refresh the sync status indicators
-      refreshSyncStatusIndicators(project);
+
+      ApplicationManager.getApplication().invokeLater(
+          () -> refreshSyncStatusIndicators(project),
+          project.getDisposed()
+      );
     }
 
     @Override
@@ -163,9 +168,14 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
       buildIds.forEach(manager.inProgressBuilds::remove);
       manager.updateProjectSyncStatus();
       SourceToTargetMap.getInstance(project).init();
-      refreshSyncStatusIndicators(project);
+
+      ApplicationManager.getApplication().invokeLater(
+          () -> refreshSyncStatusIndicators(project),
+          project.getDisposed()
+      );
     }
 
+    @RequiresEdt
     private static void refreshSyncStatusIndicators(Project project) {
       ProjectView.getInstance(project).refresh();
 
