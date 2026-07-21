@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
@@ -70,7 +71,8 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
     flags.addAll(syncFlags);
   }
 
-  private static void removeInfoIncompatibleFlags(List<String> flags) {
+  @VisibleForTesting
+  static void removeInfoIncompatibleFlags(List<String> flags) {
     final var iter = flags.listIterator();
 
     while (iter.hasNext()) {
