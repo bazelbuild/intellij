@@ -16,6 +16,8 @@
 package com.google.idea.blaze.clwb.run
 
 import com.google.common.truth.Truth.assertThat
+import com.google.devtools.build.lib.analysis.AnalysisProtosV2
+import com.google.idea.common.aquery.ActionGraph
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
@@ -29,12 +31,19 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class DebugInfoCheckTest {
 
+  private val graph = ActionGraph.fromProto(AnalysisProtosV2.ActionGraphContainer.getDefaultInstance())
+
+  private fun action(arguments: List<String>): ActionGraph.Action {
+    val proto = AnalysisProtosV2.Action.newBuilder().addAllArguments(arguments).build()
+    return graph.Action(proto)
+  }
+
   private fun assertPasses(arguments: List<String>, compilerKind: OCCompilerKind?) {
-    assertThat(checkCompileAction(arguments, compilerKind)).isTrue()
+    assertThat(action(arguments).checkCompileAction(compilerKind)).isTrue()
   }
 
   private fun assertFails(arguments: List<String>, compilerKind: OCCompilerKind?) {
-    assertThat(checkCompileAction(arguments, compilerKind)).isFalse()
+    assertThat(action(arguments).checkCompileAction(compilerKind)).isFalse()
   }
 
   // -- GCC tests --
@@ -119,8 +128,9 @@ class DebugInfoCheckTest {
   }
 
   @Test
-  fun msvc_noDebugFlag_fails() {
-    assertFails(listOf("cl.exe", "/c", "/O2", "main.c"), MSVCCompilerKind)
+  fun msvc_noDebugFlag_passes() {
+    // MSVC uses response files, so the arguments cannot be inspected; the check always passes.
+    assertPasses(listOf("cl.exe", "/c", "/O2", "main.c"), MSVCCompilerKind)
   }
 
   // -- Clang-CL tests --
@@ -164,32 +174,31 @@ class DebugInfoCheckTest {
 
   // -- Link action tests --
   // Note: checkLinkAction uses OS.CURRENT, so on non-macOS these always pass trivially.
-  // The tests are still valuable as documentation and will exercise the real logic on macOS CI.
 
   @Test
   fun linkAction_gcc_alwaysPasses() {
-    assertThat(checkLinkAction(listOf("/usr/bin/ld", "-o", "a.out", "main.o"), GCCCompilerKind)).isTrue()
+    assertThat(action(listOf("/usr/bin/ld", "-o", "a.out", "main.o")).checkLinkAction(GCCCompilerKind)).isTrue()
   }
 
   @Test
   fun linkAction_msvc_alwaysPasses() {
-    assertThat(checkLinkAction(listOf("link.exe", "/OUT:a.exe", "main.obj"), MSVCCompilerKind)).isTrue()
+    assertThat(action(listOf("link.exe", "/OUT:a.exe", "main.obj")).checkLinkAction(MSVCCompilerKind)).isTrue()
   }
 
   @Test
   fun linkAction_nullCompiler_alwaysPasses() {
-    assertThat(checkLinkAction(listOf("/usr/bin/ld", "-o", "a.out"), null)).isTrue()
+    assertThat(action(listOf("/usr/bin/ld", "-o", "a.out")).checkLinkAction(null)).isTrue()
   }
 
   @Test
   fun linkAction_clang_withOsoPrefix_passesOnMacOS() {
     // On non-macOS this passes trivially; on macOS it validates the flag is present
-    assertThat(checkLinkAction(listOf("/usr/bin/clang", "-Wl,-oso_prefix,.", "-o", "a.out"), ClangCompilerKind)).isTrue()
+    assertThat(action(listOf("/usr/bin/clang", "-Wl,-oso_prefix,.", "-o", "a.out")).checkLinkAction(ClangCompilerKind)).isTrue()
   }
 
   @Test
   fun linkAction_clang_withoutOsoPrefix_failsOnMacOS() {
-    val result = checkLinkAction(listOf("/usr/bin/clang", "-o", "a.out", "main.o"), ClangCompilerKind)
+    val result = action(listOf("/usr/bin/clang", "-o", "a.out", "main.o")).checkLinkAction(ClangCompilerKind)
     if (OS.CURRENT == OS.macOS) {
       assertThat(result).isFalse()
     } else {
