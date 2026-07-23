@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
@@ -22,8 +23,12 @@ import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Set;
 
 public class ProjectViewFlagsProvider implements BuildFlagsProvider {
+
+  // bazel info cannot resolve these flags if they reference external repos
+  private static final Set<String> INFO_INCOMPATIBLE_FLAGS = Set.of("--platforms", "--config");
 
   @Override
   public void addBuildFlags(
@@ -37,15 +42,15 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
       return;
     }
 
+    // some build configuration flags can cause the bazel info command to fail
+    if (BlazeCommandName.INFO.equals(command)) {
+      return;
+    }
+
     flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
 
     if (BlazeCommandName.TEST.equals(command)) {
       flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(TestFlagsSection.KEY)));
-    }
-
-    // platforms can break bazel info commands when using Bazel 8 https://github.com/bazelbuild/bazel/issues/25145
-    if (BlazeCommandName.INFO.equals(command)) {
-      flags.removeIf((it) -> it.startsWith("--platforms"));
     }
   }
 
@@ -57,6 +62,34 @@ public class ProjectViewFlagsProvider implements BuildFlagsProvider {
       BlazeContext context,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
-    flags.addAll(BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
+    final var syncFlags = BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
+
+    if (BlazeCommandName.INFO.equals(command)) {
+      removeInfoIncompatibleFlags(syncFlags);
+    }
+
+    flags.addAll(syncFlags);
+  }
+
+  @VisibleForTesting
+  static void removeInfoIncompatibleFlags(List<String> flags) {
+    final var iter = flags.listIterator();
+
+    while (iter.hasNext()) {
+      final var flag = iter.next();
+
+      final var name = flag.split("[=\\s]", 2)[0];
+      if (!INFO_INCOMPATIBLE_FLAGS.contains(name)) {
+        continue;
+      }
+
+      iter.remove();
+
+      // a bare flag carries its value in the next argument; drop that too
+      if (flag.equals(name) && iter.hasNext()) {
+        iter.next();
+        iter.remove();
+      }
+    }
   }
 }

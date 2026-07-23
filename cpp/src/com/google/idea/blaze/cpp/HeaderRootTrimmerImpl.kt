@@ -60,7 +60,7 @@ class HeaderRootTrimmerImpl(private val scope: CoroutineScope) : HeaderRootTrimm
         ctx.pushJob("HeaderRootTrimmer") {
           val results = paths.map { root ->
             async(Dispatchers.IO) {
-              collectHeaderRoots(executionRootPathResolver, root, projectData)
+              collectHeaderRoots(executionRootPathResolver, root)
             }
           }
 
@@ -103,7 +103,6 @@ private fun collectExecutionRootPaths(
 private fun collectHeaderRoots(
   executionRootPathResolver: ExecutionRootPathResolver,
   path: ExecutionRootPath,
-  projectData: BlazeProjectData,
 ): List<Path> {
   val possibleDirectories = executionRootPathResolver.resolveToIncludeDirectories(path).map(File::toPath)
 
@@ -113,10 +112,10 @@ private fun collectHeaderRoots(
   for (directory in possibleDirectories) {
     val add = when {
       // only allow bazel-bin as a header search path when the registry key is set
-      path.isBazelBin(projectData.blazeInfo()) -> allowBazelBin
+      path.isBazelBin -> allowBazelBin
 
       // if it is not an output directory, there should be now big binary artifacts
-      !path.isOutputDirectory(projectData.blazeInfo()) -> true
+      !path.isInBazelOut -> true
 
       // if it is an output directory, but there are headers, we need to allow it
       genRootMayContainHeaders(directory) -> true
@@ -166,13 +165,4 @@ private fun logHeaderRootPaths(roots: ImmutableSet<Path>) {
   LOG.trace("############################## VALID HEADER ROOTS ##############################")
   roots.forEach { LOG.trace(it.toString()) }
   LOG.trace("################################################################################")
-}
-
-private fun ExecutionRootPath.isBazelBin(info: BlazeInfo): Boolean {
-  return ExecutionRootPath.pathsEqual(info.blazeBin, this)
-}
-
-private fun ExecutionRootPath.isOutputDirectory(info: BlazeInfo): Boolean {
-  return ExecutionRootPath.isAncestor(info.blazeGenfiles, this, false)
-      || ExecutionRootPath.isAncestor(info.blazeBin, this, false)
 }
