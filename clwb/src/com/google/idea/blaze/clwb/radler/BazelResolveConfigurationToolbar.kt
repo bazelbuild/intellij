@@ -75,27 +75,38 @@ private class BazelConfigSwitchComboAction(
     // trigger update on configuration changes
     bus.subscribe(OCWorkspaceListener.TOPIC, object : OCWorkspaceListener {
       override fun selectedResolveConfigurationChanged() {
-        state.invalidate()
+        invalidateAndRefresh()
       }
 
       override fun workspaceChanged(event: OCWorkspaceListener.OCWorkspaceEvent) {
-        state.invalidate()
+        invalidateAndRefresh()
       }
     })
 
     // trigger update on project data changes
     bus.subscribe(SyncListener.TOPIC, object : SyncListener {
       override fun afterSync(project: Project, context: BlazeContext, syncMode: SyncMode, syncResult: SyncResult, buildIds: ImmutableSet<Int>) {
-        state.invalidate()
+        invalidateAndRefresh()
       }
     })
 
     // trigger update when the preferred run configuration changes
     bus.subscribe(LastBuildConfigurations.TOPIC, object : LastBuildConfigurations.Listener {
       override fun preferredConfigurationChanged() {
-        state.invalidate()
+        invalidateAndRefresh()
       }
     })
+  }
+
+  private fun invalidateAndRefresh() {
+    state.invalidate()
+
+    // calling this from update creates an infinite update loop
+    ActionToolbar.findToolbarBy(comboBox)?.let { toolbar ->
+      UIUtil.invokeLaterIfNeeded {
+        toolbar.updateActionsAsync()
+      }
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -113,12 +124,6 @@ private class BazelConfigSwitchComboAction(
     e.presentation.text = autoPrefix + state.currentConfig.name
     e.presentation.icon = AllIcons.General.Settings
     e.presentation.isVisible = true
-
-    ActionToolbar.findToolbarBy(comboBox)?.let { toolbar ->
-      UIUtil.invokeLaterIfNeeded {
-        toolbar.updateActionsAsync()
-      }
-    }
   }
 
   private fun createPopupActionGroup(): DefaultActionGroup {
