@@ -26,9 +26,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.Navigatable
+import com.intellij.pom.NavigatableAdapter
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.ExceptionUtilRt
 import java.io.File
+import java.util.function.Consumer
 
 /** An issue in a blaze operation.  */
 class IssueOutput(
@@ -85,6 +86,16 @@ class IssueOutput(
 
     fun withNavigatable(navigatable: Navigatable): Builder {
       this.navigatable = { navigatable }
+      return this
+    }
+
+    fun withOnClick(consumer: Consumer<Project>): Builder {
+      this.navigatable = { project ->
+        object : NavigatableAdapter() {
+          override fun navigate(requestFocus: Boolean) = consumer.accept(project)
+        }
+      }
+
       return this
     }
 
