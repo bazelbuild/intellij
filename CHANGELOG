@@ -1,3 +1,15 @@
+v2026.07.24
+===========
+* Add support for cc_toolchain environment variables #8400
+* Add support for typed Google Tests #8409
+* Mark the active project view file with a "(current)" label #8395
+* Fix an infinite loop in the C++ resolve configuration toolbar #8415
+* Fix C++ toolchain resolution with the new IntelliJ aspect #8394
+* Fix incompatible flags in `bazel info` commands #8399
+* Refresh file sync status after sync #8407
+* Fix C++ compiler info collection for paths into the external directory #8406
+* Fix C++ gutter-icon flicker when re-running the same target #8408
+
 v2026.07.03
 ===========
 * Ignore external targets in the debug info check #8382
