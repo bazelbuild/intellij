@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -67,8 +66,7 @@ public class LexicographicTargetSharder implements BuildBatchingService {
   private static final int LEGACY_CONCURRENT_SHARD_COUNT = 10;
 
   @Override
-  public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
+  public ImmutableList<ImmutableList<Label>> calculateTargetBatches(Set<Label> targets, int suggestedShardSize) {
     List<Label> sorted = ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
     // When LexicographicTargetSharder is used for remote build, we may decide optimized shard size
     // for users even they have provided shard_size in project view. The size is decided according
@@ -81,17 +79,6 @@ public class LexicographicTargetSharder implements BuildBatchingService {
     // will still be used. But use suggestedShardSize without further calculation since there's
     // only one worker in that case.
 
-    // TODO(b/218800878) Perhaps we should treat PARALLEL and DECIDE_AUTOMATICALLY differently here?
-    if (syncStrategy != SyncStrategy.SERIAL) {
-      suggestedShardSize =
-          computeParallelShardSize(
-              targets.size(),
-              parallelThreshold.getValue(),
-              remoteConcurrentSyncs.getValue(),
-              minimumRemoteShardSize.getValue(),
-              maximumRemoteShardSize.getValue(),
-              suggestedShardSize);
-    }
     return Lists.partition(sorted, suggestedShardSize).stream()
         .map(ImmutableList::copyOf)
         .collect(toImmutableList());

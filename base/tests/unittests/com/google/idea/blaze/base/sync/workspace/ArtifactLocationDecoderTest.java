@@ -54,8 +54,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
-                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
             null,
             RemoteOutputArtifacts.EMPTY);
 
@@ -84,8 +83,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
-                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
             null,
             RemoteOutputArtifacts.EMPTY);
 
@@ -113,8 +111,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 OUTPUT_BASE,
                 EXECUTION_ROOT,
                 EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
-                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
+                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles"),
             null,
             RemoteOutputArtifacts.EMPTY);
 

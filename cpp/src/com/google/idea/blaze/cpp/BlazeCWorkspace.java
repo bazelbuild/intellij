@@ -40,7 +40,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.CLanguageKind;
@@ -67,7 +66,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Main entry point for C/CPP configuration data. */
@@ -125,8 +123,7 @@ public final class BlazeCWorkspace {
             new Task.Backgroundable(project, "Configuration Sync", false) {
               @Override
               public void run(ProgressIndicator indicator) {
-                if (!syncMode.equals(SyncMode.FULL)
-                    && oldResult.isEquivalentConfigurations(newResult)) {
+                if (!syncMode.equals(SyncMode.FULL) && oldResult.isEquivalentConfigurations(newResult)) {
                   LOG.info("Skipping update configurations -- no changes");
                 } else {
                   Stopwatch s = Stopwatch.createStarted();
@@ -135,7 +132,7 @@ public final class BlazeCWorkspace {
                   indicator.setFraction(0.0);
 
                   final var model = calculateConfigurations(blazeProjectData, newResult, indicator);
-                  commit(SERIALIZATION_VERSION, context, model, workspaceRoot);
+                  commit(SERIALIZATION_VERSION, context, model, blazeProjectData);
                   LOG.info(String.format("Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
                 }
                 resolverResult = newResult;
@@ -449,22 +446,23 @@ public final class BlazeCWorkspace {
       int serialVersion,
       BlazeContext context,
       WorkspaceModel workspaceModel,
-      WorkspaceRoot workspaceRoot) {
-    collectCompilerSettingsInParallel(context, workspaceModel, workspaceRoot);
+      BlazeProjectData projectData
+  ) {
+    collectCompilerSettingsInParallel(context, workspaceModel, projectData);
 
     workspaceModel.model.setClientVersion(serialVersion);
     workspaceModel.model.preCommit();
 
     TransactionGuard.getInstance().submitTransactionAndWait(
-        () -> ApplicationManager.getApplication()
-            .runWriteAction((Runnable) workspaceModel.model::commit)
+        () -> ApplicationManager.getApplication().runWriteAction((Runnable) workspaceModel.model::commit)
     );
   }
 
   private void collectCompilerSettingsInParallel(
       BlazeContext context,
       WorkspaceModel workspaceModel,
-      WorkspaceRoot workspaceRoot) {
+      BlazeProjectData projectData
+  ) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     TempFilesPool tempFilesPool = new CachedTempFilesPool();
     Session<Integer> session = compilerInfoCache.createSession(new EmptyProgressIndicator());
@@ -476,7 +474,8 @@ public final class BlazeCWorkspace {
             i++,
             config,
             workspaceModel.environments.get(config),
-            workspaceRoot.directory().getAbsolutePath());
+            projectData.blazeInfo().getExecutionRoot().getAbsolutePath()
+        );
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);

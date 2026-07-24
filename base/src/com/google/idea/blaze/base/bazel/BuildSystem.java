@@ -46,24 +46,6 @@ import java.util.Set;
 public interface BuildSystem {
 
   /**
-   * Strategy to use for builds that are part of a project sync.
-   */
-  enum SyncStrategy {
-    /**
-     * Never parallelize sync builds.
-     */
-    SERIAL,
-    /**
-     * Parallelize sync builds if it's deemed likely that doing so will be faster.
-     */
-    DECIDE_AUTOMATICALLY,
-    /**
-     * Always parallelize sync builds.
-     */
-    PARALLEL,
-  }
-
-  /**
    * Encapsulates a means of executing build commands, often as a Bazel compatible binary.
    */
   interface BuildInvoker {
@@ -169,11 +151,6 @@ public interface BuildSystem {
   }
 
   /**
-   * Return the strategy for remote syncs to be used with this build system.
-   */
-  SyncStrategy getSyncStrategy(Project project);
-
-  /**
    * Populates the passed builder with version data.
    */
   void populateBlazeVersionData(
@@ -189,10 +166,6 @@ public interface BuildSystem {
    * otherwise returns the standard invoker.
    */
   default BuildInvoker getDefaultInvoker(Project project) {
-    if (Blaze.getProjectType(project) != ProjectType.QUERY_SYNC
-        && getSyncStrategy(project) == SyncStrategy.PARALLEL) {
-      return getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS)).orElseThrow();
-    }
     return getBuildInvoker(project);
   }
 

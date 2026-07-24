@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -47,8 +46,7 @@ public interface BuildBatchingService {
    * @param suggestedShardSize a suggestion only; may be entirely ignored by the implementation
    */
   @Nullable
-  ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize);
+  ImmutableList<ImmutableList<Label>> calculateTargetBatches(Set<Label> targets, int suggestedShardSize);
 
   ShardingApproach getShardingApproach();
 
@@ -59,10 +57,9 @@ public interface BuildBatchingService {
    * <p>Iterates through all available implementations, returning the first successful result, or
    * else falling back to returning a single batch.
    */
-  static ShardedTargetList batchTargets(
-      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
+  static ShardedTargetList batchTargets(Set<Label> targets, int suggestedShardSize) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(s -> s.getShardedTargetList(targets, syncStrategy, suggestedShardSize))
+        .map(s -> s.getShardedTargetList(targets, suggestedShardSize))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(
@@ -79,10 +76,8 @@ public interface BuildBatchingService {
    * private when Java 11 language features are available.
    */
   @Nullable
-  default ShardedTargetList getShardedTargetList(
-      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
-    ImmutableList<ImmutableList<Label>> targetBatches =
-        calculateTargetBatches(targets, syncStrategy, suggestedShardSize);
+  default ShardedTargetList getShardedTargetList(Set<Label> targets, int suggestedShardSize) {
+    ImmutableList<ImmutableList<Label>> targetBatches = calculateTargetBatches(targets, suggestedShardSize);
     return targetBatches == null
         ? null
         : new ShardedTargetList(targetBatches, getShardingApproach(), suggestedShardSize);

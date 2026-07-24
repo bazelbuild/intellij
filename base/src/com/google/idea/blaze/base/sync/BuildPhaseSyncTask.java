@@ -25,7 +25,6 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
-import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.config.BlazeConfigException;
 import com.google.idea.blaze.base.command.config.BlazeConfigRunner;
 import com.google.idea.blaze.base.buildview.BuildViewMigration;
@@ -197,28 +196,11 @@ public final class BuildPhaseSyncTask {
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
-            defaultInvoker,
-            buildSystem.getSyncStrategy(project));
+            defaultInvoker);
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
-
-    boolean parallel;
-    SyncStrategy strategy = buildSystem.getSyncStrategy(project);
-    switch (strategy) {
-      case PARALLEL:
-        parallel = true;
-        break;
-      case DECIDE_AUTOMATICALLY:
-        parallel = shardedTargets.shardCount() > 1;
-        break;
-      case SERIAL:
-        parallel = false;
-        break;
-      default:
-        throw new IllegalStateException("Invalid sync strategy: " + strategy);
-    }
 
     if (!shardedTargetsResult
         .shardedTargets
@@ -229,13 +211,10 @@ public final class BuildPhaseSyncTask {
           shardedTargets.shardStats().actualTargetSizePerShard().stream()
               .mapToInt(Integer::intValue)
               .sum();
-      printShardingSummary(context, targetCount, shardedTargets.shardCount(), parallel);
+      printShardingSummary(context, targetCount, shardedTargets.shardCount());
     }
 
-    BuildInvoker syncBuildInvoker =
-        parallel
-            ? buildSystem.getBuildInvoker(project, ImmutableSet.of(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS)).orElseThrow()
-            : defaultInvoker;
+    BuildInvoker syncBuildInvoker = defaultInvoker;
     resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo(context));
 
     buildStats
@@ -247,7 +226,7 @@ public final class BuildPhaseSyncTask {
                 .getCapabilities()
                 .contains(BuildInvoker.Capability.BUILD_PARALLEL_SHARDS));
 
-    final var blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
+    final var blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, false);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult())
@@ -275,8 +254,7 @@ public final class BuildPhaseSyncTask {
     resultBuilder.setConfigurationData(getBlazeConfigData(context, defaultInvoker));
   }
 
-  private void printShardingSummary(
-      BlazeContext context, int targetCount, int shardCount, boolean parallel) {
+  private void printShardingSummary(BlazeContext context, int targetCount, int shardCount) {
     if (targetCount == 0 || shardCount == 0) {
       return;
     }
@@ -291,12 +269,7 @@ public final class BuildPhaseSyncTask {
                     StringUtil.pluralize("shard", shardCount)))
             .log());
     if (shardCount > 1) {
-      context.output(
-          SummaryOutput.output(
-                  Prefix.INFO,
-                  String.format(
-                      "Building multiple shards in %s...", parallel ? "parallel" : "serial"))
-              .log());
+      context.output(SummaryOutput.output(Prefix.INFO, "Building multiple shards in serial...").log());
     }
   }
 
