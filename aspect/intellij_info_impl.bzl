@@ -17,6 +17,12 @@ load(
     "expand_make_variables",
 )
 
+def _dedup_list(items):
+    """Deduplicates a list while preserving order, avoiding depset allocation churn."""
+    if not items:
+        return []
+    return {item: None for item in items}.keys()
+
 IntelliJInfo = provider(
     doc = "Collected information about the targets visited by the aspect.",
     fields = [
@@ -260,13 +266,21 @@ def update_sync_output_groups(groups_dict, key, new_set):
       key: the base output group name.
       new_set: a depset of artifacts to add to the output groups.
     """
+    if not new_set:
+        return
     update_set_in_dict(groups_dict, key, new_set)
     update_set_in_dict(groups_dict, key + "-outputs", new_set)
     update_set_in_dict(groups_dict, key + "-direct-deps", new_set)
 
 def update_set_in_dict(input_dict, key, other_set):
     """Updates depset in dict, merging it with another depset."""
-    input_dict[key] = depset(transitive = [input_dict.get(key, depset()), other_set])
+    if not other_set:
+        return
+    existing = input_dict.get(key)
+    if not existing:
+        input_dict[key] = other_set
+    else:
+        input_dict[key] = depset(transitive = [existing, other_set])
 
 def _get_output_mnemonic(ctx):
     """Gives the output directory mnemonic for some target context."""
@@ -631,7 +645,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     if hasattr(java, "annotation_processing") and java.annotation_processing and hasattr(java.annotation_processing, "processor_classpath"):
         plugin_processor_jar_files += java.annotation_processing.processor_classpath.to_list()
     resolve_files += plugin_processor_jar_files
-    plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in depset(plugin_processor_jar_files).to_list()]
+    plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in _dedup_list(plugin_processor_jar_files)]
 
     java_info = struct_omit_none(
         filtered_gen_jar = filtered_gen_jar,
@@ -1069,7 +1083,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
                 export_deps.extend(compiletime_deps)
 
         # Deduplicate the entries
-        export_deps = depset(export_deps).to_list()
+        export_deps = _dedup_list(export_deps)
 
     # runtime_deps
     runtime_dep_targets = collect_targets_from_attrs(
@@ -1077,7 +1091,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         RUNTIME_DEPS,
     )
     runtime_deps = make_deps(runtime_dep_targets, RUNTIME)
-    all_deps = depset(compiletime_deps + runtime_deps).to_list()
+    all_deps = _dedup_list(compiletime_deps + runtime_deps)
 
     # extra prerequisites
     extra_prerequisite_targets = collect_targets_from_attrs(
@@ -1112,7 +1126,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # creating and growing depsets gradually, as that results in depsets many levels deep:
     # a construct which would give the build system some trouble.
     for k, v in output_groups.items():
-        output_groups[k] = depset(transitive = output_groups[k])
+        if len(v) == 1:
+            output_groups[k] = v[0]
+        else:
+            output_groups[k] = depset(transitive = v)
 
     # Initialize the ide info dict, and corresponding output file
     # This will be passed to each language-specific handler to fill in as required
