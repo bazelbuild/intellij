@@ -24,14 +24,12 @@ import java.nio.file.Path
 abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
   override fun apply(value: String, sink: CompilerSpecificSwitchBuilder, resolver: ExecutionRootPathResolver) {
-    val path = Path.of(value)
+    val path = ExecutionRootPath.tryCreate(value)
 
-    if (path.isAbsolute) {
-      apply(path, sink)
+    if (path != null) {
+      resolver.resolveToIncludeDirectories(path).forEach { apply(it.toPath(), sink) }
     } else {
-      resolver.resolveToIncludeDirectories(ExecutionRootPath.create(path)).forEach {
-        apply(it.toPath(), sink)
-      }
+      apply(Path.of(value), sink)
     }
   }
 

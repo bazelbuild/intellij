@@ -17,6 +17,8 @@
 package com.google.idea.blaze.cpp;
 
 public class CompilerVersionUtil {
+  public static final String FALLBACK_VERSION = "gcc (GCC) 16.1.1 20260515 (fallback)";
+
   public static boolean isClang(String version) {
     return version.contains("clang");
   }

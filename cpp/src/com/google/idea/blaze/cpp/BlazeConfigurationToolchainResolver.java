@@ -41,23 +41,22 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
+import com.google.idea.blaze.cpp.environment.EnvironmentProcessor;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.pom.NavigatableAdapter;
 
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -254,61 +253,77 @@ public final class BlazeConfigurationToolchainResolver {
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings
   ) {
-    Set<CToolchainIdeInfo> toolchains = new HashSet<>(toolchainLookupMap.values());
-    List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
-        compilerSettingsFutures = new ArrayList<>();
+    final var toolchains = new HashSet<>(toolchainLookupMap.values());
+    final var compilerSettingsFutures = new ArrayList<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>();
+
     for (CToolchainIdeInfo toolchain : toolchains) {
-      compilerSettingsFutures.add(
-          submit(
-              () -> {
-                File cCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
-                    toolchain.cCompiler());
-                if (cCompiler == null) {
-                  return null;
-                }
-                File cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver,
-                    toolchain.cppCompiler());
-                if (cppCompiler == null) {
-                  return null;
-                }
+      compilerSettingsFutures.add(submit(() -> {
+        final var cCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cCompiler());
+        if (cCompiler == null) {
+          return null;
+        }
+        final var cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cppCompiler());
+        if (cppCompiler == null) {
+          return null;
+        }
 
-                String cCompilerVersion = getCompilerVersion(project, context,
-                    executionRootPathResolver, xcodeCompilerSettings, cCompiler);
-                String cppCompilerVersion = getCompilerVersion(project, context,
-                    executionRootPathResolver, xcodeCompilerSettings, cppCompiler);
+        final var cEnvironment = EnvironmentProcessor.apply(toolchain.cEnvironment(), executionRootPathResolver);
+        final var cppEnvironment = EnvironmentProcessor.apply(toolchain.cppEnvironment(), executionRootPathResolver);
 
-                String compilerVersion = mergeCompilerVersions(context, cCompilerVersion,
-                    cppCompilerVersion);
-                if (compilerVersion == null) {
-                  return null;
-                }
+        final var cCompilerVersion = getCompilerVersion(
+            project,
+            context,
+            executionRootPathResolver,
+            xcodeCompilerSettings,
+            cEnvironment,
+            cCompiler
+        );
+        final var cppCompilerVersion = getCompilerVersion(
+            project,
+            context,
+            executionRootPathResolver,
+            xcodeCompilerSettings,
+            cppEnvironment,
+            cppCompiler
+        );
 
-                BlazeCompilerSettings oldSettings = oldCompilerSettings.get(toolchain);
-                if (oldSettings != null && oldSettings.version().equals(compilerVersion)) {
-                  return new SimpleImmutableEntry<>(toolchain, oldSettings);
-                }
+        var compilerVersion = mergeCompilerVersions(context, cCompilerVersion, cppCompilerVersion);
+        if (compilerVersion == null) {
+          compilerVersion = CompilerVersionUtil.FALLBACK_VERSION;
+        }
 
-                final var environment = XcodeCompilerSettingsProvider
-                    .getInstance(project)
-                    .asEnvironmentVariables(xcodeCompilerSettings);
+        final var oldSettings = oldCompilerSettings.get(toolchain);
+        if (oldSettings != null && oldSettings.version().equals(compilerVersion)) {
+          return new SimpleImmutableEntry<>(toolchain, oldSettings);
+        }
 
-                final var settings = BlazeCompilerSettings.builder()
-                    .setCCompiler(cCompiler)
-                    .setCppCompiler(cppCompiler)
-                    .setCSwitches(toolchain.cCompilerOptions())
-                    .setCppSwitches(toolchain.cppCompilerOptions())
-                    .setVersion(compilerVersion)
-                    .setEnvironment(environment)
-                    .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
-                    .setName(toolchain.compilerName())
-                    .setSysroot(toolchain.sysroot())
-                    .build();
+        final var xcodeEnvironment = XcodeCompilerSettingsProvider
+            .getInstance(project)
+            .asEnvironmentVariables(xcodeCompilerSettings);
+        final var environment = mergeEnvironments(
+            xcodeEnvironment,
+            cEnvironment,
+            cppEnvironment
+        );
 
-                if (settings == null) {
-                  return null;
-                }
-                return new SimpleImmutableEntry<>(toolchain, settings);
-              }));
+        final var settings = BlazeCompilerSettings.builder()
+            .setCCompiler(cCompiler)
+            .setCppCompiler(cppCompiler)
+            .setCSwitches(toolchain.cCompilerOptions())
+            .setCppSwitches(toolchain.cppCompilerOptions())
+            .setVersion(compilerVersion)
+            .setEnvironment(environment)
+            .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
+            .setName(toolchain.compilerName())
+            .setSysroot(toolchain.sysroot())
+            .build();
+
+        if (settings == null) {
+          return null;
+        }
+
+        return new SimpleImmutableEntry<>(toolchain, settings);
+      }));
     }
 
     final var compilerSettingsMap = ImmutableMap.<CToolchainIdeInfo, BlazeCompilerSettings>builder();
@@ -326,55 +341,48 @@ public final class BlazeConfigurationToolchainResolver {
     return compilerSettingsMap.build();
   }
 
+  @SafeVarargs
+  private static ImmutableMap<String, String> mergeEnvironments(Map<String, String>... environments) {
+    final var merged = new LinkedHashMap<String, String>();
+    for (final var environment : environments) {
+      merged.putAll(environment);
+    }
+    return ImmutableMap.copyOf(merged);
+  }
+
   @Nullable
   private static String getCompilerVersion(
       Project project,
       BlazeContext context,
       ExecutionRootPathResolver executionRootPathResolver,
       Optional<XcodeCompilerSettings> xcodeCompilerSettings,
+      Map<String, String> toolchainEnv,
       File executable) {
-    File executionRoot = executionRootPathResolver.getExecutionRoot();
-    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance(project)
+    final var executionRoot = executionRootPathResolver.getExecutionRoot();
+
+    final var xcodeEnvFlags = XcodeCompilerSettingsProvider.getInstance(project)
         .asEnvironmentVariables(xcodeCompilerSettings);
+    final var compilerEnvFlags = mergeEnvironments(xcodeEnvFlags, toolchainEnv);
+
     try {
-      return CompilerVersionChecker.getInstance()
-          .checkCompilerVersion(executionRoot, executable, compilerEnvFlags);
+      return CompilerVersionChecker.getInstance().checkCompilerVersion(executionRoot, executable, compilerEnvFlags);
     } catch (VersionCheckException e) {
+      final var builder = new StringBuilder();
+
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
-          IssueOutput.warn(
-                  String.format(
-                      "Missing execution root %s (checking compiler).\n"
-                          + "Double-click to run sync and create the execution root.",
-                      executionRoot.getAbsolutePath()))
-              .withNavigatable(
-                  new NavigatableAdapter() {
-                    @Override
-                    public void navigate(boolean requestFocus) {
-                      BlazeSyncManager.getInstance(project)
-                          .incrementalProjectSync(
-                              /* reason= */ "BlazeConfigurationToolchainResolver");
-                    }
-                  })
-              .submit(context);
-          return null;
+          builder.append("Missing execution root:\n").append(executionRoot.getAbsolutePath()).append("\n");
+          break;
         case MISSING_COMPILER:
-          IssueOutput.warn(
-                  String.format(
-                      "Unable to access compiler executable \"%s\".\n"
-                          + "Check if it is accessible from the cmdline.",
-                      executable.getAbsolutePath()))
-              .submit(context);
-          return null;
+          builder.append("Missing compiler executable:\n").append(executable.getAbsolutePath()).append("\n");
+          break;
         case GENERIC_FAILURE:
-          IssueOutput.warn(
-                  String.format(
-                      "Unable to check compiler version for \"%s\".\n%s\n"
-                          + "Check if running the compiler with --version works on the cmdline.",
-                      executable.getAbsolutePath(), e.getMessage()))
-              .submit(context);
-          return null;
+          builder.append("Failed to check compiler version:\n").append(e.getMessage()).append("\n");
+          builder.append("Compiler executable:\n").append(executable.getAbsolutePath()).append("\n");
+          break;
       }
+
+      IssueOutput.warn("Unable to check compiler version").withDescription(builder.toString()).submit(context);
       return null;
     }
   }

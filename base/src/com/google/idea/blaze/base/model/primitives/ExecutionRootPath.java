@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
@@ -33,10 +34,32 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
   private static final Path BAZEL_OUT = Path.of("bazel-out");
   private static final Path BIN = Path.of("bin");
 
+  /**
+   * Marker Bazel emits for paths relative to the execution root.
+   */
+  public static final Path PROC_SELF_CWD = Path.of("/proc", "self", "cwd");
+
   public abstract Path path();
 
   public static ExecutionRootPath create(Path path) {
+    // strip the /proc/self/cwd marker so it becomes an execution-root-relative path
+    if (isProcSelfCwd(path)) {
+      path = PROC_SELF_CWD.relativize(path);
+    }
+
     return new AutoValue_ExecutionRootPath(path);
+  }
+
+  public static boolean isProcSelfCwd(Path path) {
+    return path.startsWith(PROC_SELF_CWD);
+  }
+
+  public static boolean isProcSelfCwd(String value) {
+    try {
+      return isProcSelfCwd(Path.of(value));
+    } catch (InvalidPathException e) {
+      return false;
+    }
   }
 
   public static ExecutionRootPath create(String path) {
@@ -45,6 +68,29 @@ public abstract class ExecutionRootPath implements ProtoWrapper<String> {
 
   public static ExecutionRootPath create(File file) {
     return create(file.toPath());
+  }
+
+  /**
+   * Returns null for genuine absolute paths which must be used as-is, and for
+   * invalid paths. Correctly resolves /proc/self/cwd references.
+   */
+  public static @Nullable ExecutionRootPath tryCreate(@Nullable String location) {
+    if (location == null) {
+      return null;
+    }
+
+    Path path;
+    try {
+      path = Path.of(location);
+    } catch (InvalidPathException e) {
+      return null;
+    }
+
+    if (isProcSelfCwd(path) || !path.isAbsolute()) {
+      return create(path);
+    } else {
+      return null;
+    }
   }
 
   @Deprecated

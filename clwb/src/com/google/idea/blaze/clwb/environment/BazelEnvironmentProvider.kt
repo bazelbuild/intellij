@@ -15,35 +15,48 @@
  */
 package com.google.idea.blaze.clwb.environment
 
-import com.google.common.collect.ImmutableMap
 import com.google.idea.blaze.cpp.BlazeCompilerSettings
 import com.google.idea.blaze.cpp.CppEnvironmentProvider
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 
 /**
- * Forwards environment variables from [BlazeCompilerSettings.environment] to compiler invocations.
- * 
- * Previously, these environment variables (e.g. `DEVELOPER_DIR`, `SDKROOT` on macOS)
- * were embedded as `export` statements in the compiler wrapper script. Now that the wrapper
- * script has been removed, this provider ensures they are still passed to the compiler.
- * 
- * This provider is registered with `order="last"` so that more specific providers
- * (MSVC, Clang-CL) take precedence when applicable.
+ * Fallback environment provider. Forwards the environment variables set on the
+ * Bazel compiler settings.
  */
 class BazelEnvironmentProvider : CppEnvironmentProvider {
 
-  override fun create(settings: BlazeCompilerSettings): CidrToolEnvironment? {
-    val env = settings.environment()
-    if (env.isEmpty()) return null
+  companion object {
 
-    return ToolEnvironment(env)
+    /**
+     * Creates a CPPEnvironment that forwards the environment variables set on
+     * the Bazel compiler settings.
+     */
+    @JvmStatic
+    fun create(settings: BlazeCompilerSettings, toolchain: CPPToolchains.Toolchain): CPPEnvironment {
+      return object : CPPEnvironment(toolchain) {
+        @Throws(ExecutionException::class)
+        override fun prepare(cl: GeneralCommandLine, prepareFor: PrepareFor) {
+          super.prepare(cl, prepareFor)
+          cl.environment.putAll(settings.environment())
+        }
+      }
+    }
+
   }
 
-  private class ToolEnvironment(private val environment: ImmutableMap<String, String>) : CidrToolEnvironment() {
-
+  /**
+   * Creates a CidrToolEnvironment that forwards the environment variables set
+   * on the Bazel compiler settings.
+   */
+  override fun create(settings: BlazeCompilerSettings): CidrToolEnvironment = object : CidrToolEnvironment() {
+    @Throws(ExecutionException::class)
     override fun prepare(cl: GeneralCommandLine, prepareFor: PrepareFor) {
-      cl.environment.putAll(environment)
+      super.prepare(cl, prepareFor)
+      cl.environment.putAll(settings.environment())
     }
   }
 }

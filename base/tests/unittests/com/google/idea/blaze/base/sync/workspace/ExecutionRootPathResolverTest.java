@@ -285,6 +285,27 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
 
   @Test
+  public void testProcSelfCwdResolvesLikeExecRootRelativePath() {
+    final var execRootPath = ExecutionRootPath.create("/proc/self/cwd/bazel-out/crosstool/genfiles/res/normal");
+    assertThat(pathResolver.resolveToIncludeDirectories(execRootPath))
+        .containsExactly(new File(EXECUTION_ROOT, "bazel-out/crosstool/genfiles/res/normal"));
+
+    final var outputBasePath = ExecutionRootPath.create("/proc/self/cwd/external/guava/src");
+    assertThat(pathResolver.resolveToIncludeDirectories(outputBasePath))
+        .containsExactly(new File(OUTPUT_BASE, "external/guava/src"));
+
+    final var workspacePath = ExecutionRootPath.create("/proc/self/cwd/tools/fast");
+    assertThat(pathResolver.resolveToIncludeDirectories(workspacePath))
+        .containsExactly(WORKSPACE_ROOT.fileForPath(new WorkspacePath("tools/fast")));
+  }
+
+  @Test
+  public void testProcSelfCwdResolveExecutionRootPath() {
+    assertThat(pathResolver.resolveExecutionRootPath(ExecutionRootPath.create("/proc/self/cwd/bazel-out/genfiles/foo")))
+        .isEqualTo(new File(EXECUTION_ROOT, "bazel-out/genfiles/foo"));
+  }
+
+  @Test
   public void testExternalWorkspaceSymlinkToProject() throws IOException {
     Path expectedPath = Path.of(WORKSPACE_ROOT.toString(), "guava", "src");
 

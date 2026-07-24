@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -302,7 +303,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             runner.executable.toString(),
             "target:",
             ImmutableList.of(
-                new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
+                new CidrRemotePathMapping(
+                    ExecutionRootPath.PROC_SELF_CWD.toString(), workspaceRootDirectory.getParent())));
 
     BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
         new BlazeCLionGDBDriverConfiguration(project);
@@ -337,7 +339,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     // Forge creates debug symbol paths rooted at /proc/self/cwd .
     // We need to tell gdb to translate this path prefix to the user's workspace
     // root so the IDE can find the files.
-    String from = "/proc/self/cwd";
+    String from = ExecutionRootPath.PROC_SELF_CWD.toString();
     String to = workspaceRootDirectory.getPath();
     String subPathCommand = String.format("set substitute-path %s %s", from, to);
 
