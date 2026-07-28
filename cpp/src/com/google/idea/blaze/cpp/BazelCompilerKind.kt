@@ -31,16 +31,15 @@ import java.io.File
 /**
  * An [OCCompilerKind] wrapper that disables response file usage.
  *
- * Bazel's compiler wrapper scripts do not support response files (`@file` arguments).
- * This kind delegates all behavior to the underlying [delegate] kind, but overrides
- * [getCompilerInstance] to return a [BazelGCCCompiler] (which disables response file
- * shortening) and [getCommandLineShortener] to return a no-op shortener.
+ * Bazel's compiler wrappers cannot read the response files CLion writes. This kind delegates
+ * all behavior to the underlying [delegate] kind, but overrides [getCompilerInstance] to return
+ * a [BazelGCCCompiler], which reports a no-op command line shortener.
  *
- * Yes, there are two places to define the command line shortener :(
+ * These kinds must only ever be used while for compiler info collection, but never in the committed
+ * workspace model, because they are not subtypes of the stock kinds. Nova checks the compiler kind
+ * with `is ClangCompilerKind` and silently drops all clang extensions otherwise (CPP-51220).
  */
 open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by delegate {
-
-  override fun getCommandLineShortener(): OCCompilerCommandLineShortener = BasicCompilerCommandLineShortener()
 
   override fun getCompilerInstance(
     project: Project,
@@ -50,11 +49,6 @@ open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by d
     tempFilesPool: TempFilesPool,
   ): OCCompiler = BazelGCCCompiler(compilerExecutable, compilerWorkingDirectory, environment, tempFilesPool)
 
-  override fun equals(other: Any?): Boolean =
-    delegate == other || (other is BazelCompilerKind && delegate == other.delegate)
-
-  override fun hashCode(): Int = delegate.hashCode()
-
   override fun toString(): String = "Bazel($delegate)"
 
   /** Default methods require a manual override even with by delegate. */
@@ -62,7 +56,6 @@ open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by d
 
   /** Default methods require a manual override even with by delegate. */
   override fun fixPchSwitches(switches: List<String?>): List<String?> = delegate.fixPchSwitches(switches)
-
 }
 
 private class BazelGCCCompiler(

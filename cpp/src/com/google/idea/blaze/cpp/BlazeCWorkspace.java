@@ -200,6 +200,7 @@ public final class BlazeCWorkspace {
         .getModifiableModel(OCWorkspace.LEGACY_CLIENT_KEY, true);
 
     final var environmentMap = new HashMap<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment>();
+    final var languageMap = new HashMap<OCResolveConfiguration.ModifiableModel, Map<OCLanguageKind, PerLanguageCompilerOpts>>();
     final var configurations = configResolveData.getAllConfigurations();
     final var executionRootPathResolver = ExecutionRootPathResolver.fromProjectData(project, blazeProjectData);
 
@@ -322,11 +323,17 @@ public final class BlazeCWorkspace {
       );
 
       environmentMap.put(modelConfig, CppEnvironmentProvider.createEnvironment(compilerSettings));
+      languageMap.put(modelConfig, configLanguages);
 
       progress++;
     }
 
-    return new WorkspaceModel(workspaceModifiable, environmentMap);
+    return new WorkspaceModel(
+        workspaceModifiable,
+        environmentMap,
+        languageMap,
+        blazeProjectData.blazeInfo().getExecutionRoot()
+    );
   }
 
   private static OCResolveConfiguration.ModifiableModel addConfiguration(
@@ -373,13 +380,21 @@ public final class BlazeCWorkspace {
 
   /** Group compiler options for a specific language. */
   private static class PerLanguageCompilerOpts {
+
+    /** The real compiler kind and the compiler kind only used for compiler info collection. */
     final OCCompilerKind kind;
+    final OCCompilerKind probeKind;
+
     final File compiler;
     final CidrCompilerSwitches switches;
 
     private PerLanguageCompilerOpts(
-        OCCompilerKind kind, File compiler, CidrCompilerSwitches switches) {
+        OCCompilerKind kind,
+        OCCompilerKind probeKind,
+        File compiler,
+        CidrCompilerSwitches switches) {
       this.kind = kind;
+      this.probeKind = probeKind;
       this.compiler = compiler;
       this.switches = switches;
     }
@@ -390,11 +405,28 @@ public final class BlazeCWorkspace {
     final OCWorkspaceImpl.ModifiableModel model;
     final Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environments;
 
+    // TODO(CPP-51220): remove together with BlazeCompilerSettings#getCompilerProbeKind
+    private final Map<OCResolveConfiguration.ModifiableModel, Map<OCLanguageKind, PerLanguageCompilerOpts>> languages;
+    private final File directory;
+
     private WorkspaceModel(
         OCWorkspace.ModifiableModel model,
-        Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environments) {
+        Map<OCResolveConfiguration.ModifiableModel, CidrToolEnvironment> environments,
+        Map<OCResolveConfiguration.ModifiableModel, Map<OCLanguageKind, PerLanguageCompilerOpts>> languages,
+        File directory) {
       this.model = model;
       this.environments = environments;
+      this.languages = languages;
+      this.directory = directory;
+    }
+
+    /** Updates the compiler of every configuration. */
+    void setCompilerKinds(Function<PerLanguageCompilerOpts, OCCompilerKind> selector) {
+      languages.forEach((config, configLanguages) ->
+          configLanguages.forEach((language, opts) ->
+              config.getLanguageCompilerSettings(language).setCompiler(selector.apply(opts), opts.compiler, directory)
+          )
+      );
     }
   }
 
@@ -403,7 +435,6 @@ public final class BlazeCWorkspace {
       BlazeCompilerSettings compilerSettings,
       List<String> quoteIncludePaths,
       OCLanguageKind language) {
-    OCCompilerKind compilerKind = compilerSettings.getCompilerKind();
     File executable = compilerSettings.getCompilerExecutable(language);
 
     final var switchBuilder = compilerSettings.createSwitchBuilder();
@@ -411,7 +442,11 @@ public final class BlazeCWorkspace {
     quoteIncludePaths.forEach(switchBuilder::withQuoteIncludePath);
 
     PerLanguageCompilerOpts perLanguageCompilerOpts =
-        new PerLanguageCompilerOpts(compilerKind, executable, switchBuilder.build());
+        new PerLanguageCompilerOpts(
+            compilerSettings.getCompilerKind(),
+            compilerSettings.getCompilerProbeKind(),
+            executable,
+            switchBuilder.build());
     configLanguages.put(language, perLanguageCompilerOpts);
   }
 
@@ -448,7 +483,14 @@ public final class BlazeCWorkspace {
       WorkspaceModel workspaceModel,
       BlazeProjectData projectData
   ) {
-    collectCompilerSettingsInParallel(context, workspaceModel, projectData);
+    // run compiler info collection with a kind that disables response files, then put the real
+    // kind back before anything else can observe the model
+    workspaceModel.setCompilerKinds(it -> it.probeKind);
+    try {
+      collectCompilerSettingsInParallel(context, workspaceModel, projectData);
+    } finally {
+      workspaceModel.setCompilerKinds(it -> it.kind);
+    }
 
     workspaceModel.model.setClientVersion(serialVersion);
     workspaceModel.model.preCommit();
