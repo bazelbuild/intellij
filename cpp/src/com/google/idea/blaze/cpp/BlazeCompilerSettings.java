@@ -78,7 +78,18 @@ public abstract class BlazeCompilerSettings {
     return gcc.get();
   }
 
+  /** The real compiler kind. This is what the commited workspace gets to see. */
   public OCCompilerKind getCompilerKind() {
+    return when(
+        /* msvc */ () -> MSVCCompilerKind.INSTANCE,
+        /* clang */ () -> ClangCompilerKind.INSTANCE,
+        /* clangCl */ () -> ClangClCompilerKind.INSTANCE,
+        /* gcc */ () -> GCCCompilerKind.INSTANCE
+    );
+  }
+
+  /** The compiler kind used only for compiler info collection. */
+  public OCCompilerKind getCompilerProbeKind() {
     return when(
         /* msvc */ () -> MSVCCompilerKind.INSTANCE,
         /* clang */ () -> BazelClangCompilerKind.INSTANCE,

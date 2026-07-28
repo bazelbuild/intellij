@@ -25,15 +25,14 @@ import static com.google.idea.blaze.clwb.base.Assertions.assertNotContainsCompil
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
-import com.google.idea.blaze.cpp.BazelClangCompilerKind;
-import com.google.idea.blaze.cpp.BazelCompilerKind;
-import com.google.idea.blaze.cpp.BazelGCCCompilerKind;
 import com.google.idea.blaze.cpp.BlazeCWorkspace;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,15 +59,12 @@ public class SimpleTest extends ClwbHeadlessTestCase {
     final var compilerSettingsC = findFileCompilerSettings("main/main.c", CLanguageKind.C);
 
     if (SystemInfo.isMac) {
-      assertThat(compilerSettingsCC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
-      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
-      assertThat(compilerSettingsC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
-      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
+      // must be the stock kind, Nova checks it with `is ClangCompilerKind` (CPP-51220)
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     } else if (SystemInfo.isLinux) {
-      assertThat(compilerSettingsCC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
-      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
-      assertThat(compilerSettingsC.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
-      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
     } else if (SystemInfo.isWindows) {
       assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
       assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);

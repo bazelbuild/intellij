@@ -27,8 +27,7 @@ import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
 import com.google.idea.testing.headless.OSRule;
 import com.intellij.util.system.OS;
-import com.google.idea.blaze.cpp.BazelClangCompilerKind;
-import com.google.idea.blaze.cpp.BazelCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import java.io.File;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,8 +58,7 @@ public class LlvmToolchainTest extends ClwbHeadlessTestCase {
   private void checkCompiler() {
     final var compilerSettings = findFileCompilerSettings("main/hello-world.cc");
 
-    assertThat(compilerSettings.getCompilerKind()).isInstanceOf(BazelCompilerKind.class);
-    assertThat(compilerSettings.getCompilerKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
+    assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
     assertDefine("__llvm__", compilerSettings).isNotEmpty();
     assertDefine("__VERSION__", compilerSettings).startsWith("\"Clang 19.1.0");
 
