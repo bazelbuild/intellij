@@ -31,6 +31,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
@@ -60,8 +61,8 @@ public class SimpleTest extends ClwbHeadlessTestCase {
 
     if (SystemInfo.isMac) {
       // must be the stock kind, Nova checks it with `is ClangCompilerKind` (CPP-51220)
-      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
-      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(AppleClangCompilerKind.INSTANCE);
+      assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(AppleClangCompilerKind.INSTANCE);
     } else if (SystemInfo.isLinux) {
       assertThat(compilerSettingsCC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
       assertThat(compilerSettingsC.getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
