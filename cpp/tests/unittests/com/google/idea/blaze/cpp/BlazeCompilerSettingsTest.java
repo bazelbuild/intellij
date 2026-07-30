@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind;
@@ -37,6 +38,7 @@ import org.junit.runners.JUnit4;
 public class BlazeCompilerSettingsTest {
 
   private static final String CLANG_VERSION = "clang version 19.1.0";
+  private static final String APPLE_CLANG_VERSION = "Apple clang version 15.0.0 (clang-1500.3.9.4)";
   private static final String GCC_VERSION = "gcc (GCC) 14.2.1 20240912";
   private static final String MSVC_VERSION = "Microsoft (R) C/C++ Optimizing Compiler Version 19";
 
@@ -57,6 +59,7 @@ public class BlazeCompilerSettingsTest {
   @Test
   public void reportsStockKinds() {
     assertThat(settings("clang", CLANG_VERSION).getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+    assertThat(settings("clang", APPLE_CLANG_VERSION).getCompilerKind()).isEqualTo(AppleClangCompilerKind.INSTANCE);
     assertThat(settings("gcc", GCC_VERSION).getCompilerKind()).isEqualTo(GCCCompilerKind.INSTANCE);
     assertThat(settings("clang-cl", CLANG_VERSION).getCompilerKind()).isEqualTo(ClangClCompilerKind.INSTANCE);
     assertThat(settings("cl", MSVC_VERSION).getCompilerKind()).isEqualTo(MSVCCompilerKind.INSTANCE);
@@ -65,6 +68,7 @@ public class BlazeCompilerSettingsTest {
   @Test
   public void neverReportsAWrapperKind() {
     assertThat(settings("clang", CLANG_VERSION).getCompilerKind()).isNotInstanceOf(BazelCompilerKind.class);
+    assertThat(settings("clang", APPLE_CLANG_VERSION).getCompilerKind()).isNotInstanceOf(BazelCompilerKind.class);
     assertThat(settings("gcc", GCC_VERSION).getCompilerKind()).isNotInstanceOf(BazelCompilerKind.class);
     assertThat(settings("clang-cl", CLANG_VERSION).getCompilerKind()).isNotInstanceOf(BazelCompilerKind.class);
     assertThat(settings("cl", MSVC_VERSION).getCompilerKind()).isNotInstanceOf(BazelCompilerKind.class);
@@ -73,6 +77,7 @@ public class BlazeCompilerSettingsTest {
   @Test
   public void probesGccAndClangWithoutResponseFiles() {
     assertThat(settings("clang", CLANG_VERSION).getCompilerProbeKind()).isEqualTo(BazelClangCompilerKind.INSTANCE);
+    assertThat(settings("clang", APPLE_CLANG_VERSION).getCompilerProbeKind()).isEqualTo(BazelAppleClangCompilerKind.INSTANCE);
     assertThat(settings("gcc", GCC_VERSION).getCompilerProbeKind()).isEqualTo(BazelGCCCompilerKind.INSTANCE);
   }
 

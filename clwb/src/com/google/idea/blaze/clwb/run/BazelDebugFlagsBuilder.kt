@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.minutes
 private val LOG = logger<BazelDebugFlagsBuilder>()
 
 private val VALID_GDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, GCCCompilerKind)
-private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, ClangClCompilerKind, MSVCCompilerKind)
+private val VALID_LLDB_COMPILERS = listOf(ClangCompilerKind, AppleClangCompilerKind, ClangClCompilerKind, MSVCCompilerKind)
 
 /**
  * Builds flags for debugging a blaze target, flags are either used for just
@@ -71,7 +71,7 @@ class BazelDebugFlagsBuilder private constructor(
     }
   }
 
-  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == ClangClCompilerKind
+  private fun isClang() = compilerKind == ClangCompilerKind || compilerKind == AppleClangCompilerKind || compilerKind == ClangClCompilerKind
 
   private fun isLldb() = debuggerKind == BlazeDebuggerKind.BUNDLED_LLDB
 
@@ -89,7 +89,7 @@ class BazelDebugFlagsBuilder private constructor(
     val switchBuilder = when (compilerKind) {
       // we should use the MSVCSwitchBuilder for clang-cl as well
       MSVCCompilerKind, ClangClCompilerKind -> MSVCSwitchBuilder()
-      ClangCompilerKind -> ClangSwitchBuilder()
+      ClangCompilerKind, AppleClangCompilerKind -> ClangSwitchBuilder()
       else -> GCCSwitchBuilder() // default to GCC, as usual
     }
 

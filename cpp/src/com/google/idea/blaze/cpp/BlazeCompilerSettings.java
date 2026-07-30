@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClSwitchBuilder;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
@@ -61,7 +63,12 @@ public abstract class BlazeCompilerSettings {
   @ToPrettyString
   public abstract String toPrettyString();
 
-  private <T> T when(Supplier<T> msvc, Supplier<T> clang, Supplier<T> clangCl, Supplier<T> gcc) {
+  private <T> T when(
+      Supplier<T> msvc,
+      Supplier<T> appleClang,
+      Supplier<T> clang,
+      Supplier<T> clangCl,
+      Supplier<T> gcc) {
     if (CompilerVersionUtil.isMSVC(version())) {
       return msvc.get();
     }
@@ -69,29 +76,37 @@ public abstract class BlazeCompilerSettings {
     if (CompilerVersionUtil.isClang(version())) {
       if (name().endsWith("-cl")) {
         return clangCl.get();
-      } else {
-        return clang.get();
       }
+      if (CompilerVersionUtil.isAppleClang(version())) {
+        return appleClang.get();
+      }
+      return clang.get();
     }
 
     // default to gcc
     return gcc.get();
   }
 
-  /** The real compiler kind. This is what the commited workspace gets to see. */
+  /**
+   * The real compiler kind. This is what the commited workspace gets to see.
+   */
   public OCCompilerKind getCompilerKind() {
     return when(
         /* msvc */ () -> MSVCCompilerKind.INSTANCE,
+        /* appleClang */ () -> AppleClangCompilerKind.INSTANCE,
         /* clang */ () -> ClangCompilerKind.INSTANCE,
         /* clangCl */ () -> ClangClCompilerKind.INSTANCE,
         /* gcc */ () -> GCCCompilerKind.INSTANCE
     );
   }
 
-  /** The compiler kind used only for compiler info collection. */
+  /**
+   * The compiler kind used only for compiler info collection.
+   */
   public OCCompilerKind getCompilerProbeKind() {
     return when(
         /* msvc */ () -> MSVCCompilerKind.INSTANCE,
+        /* appleClang */ () -> BazelAppleClangCompilerKind.INSTANCE,
         /* clang */ () -> BazelClangCompilerKind.INSTANCE,
         /* clangCl */ () -> ClangClCompilerKind.INSTANCE,
         /* gcc */ () -> BazelGCCCompilerKind.INSTANCE
@@ -101,6 +116,7 @@ public abstract class BlazeCompilerSettings {
   public CompilerSpecificSwitchBuilder createSwitchBuilder() {
     return when(
         /* msvc */ MSVCSwitchBuilder::new,
+        /* appleClang */ AppleClangSwitchBuilder::new,
         /* clang */ ClangSwitchBuilder::new,
         /* clangCl */ ClangClSwitchBuilder::new,
         /* gcc */ GCCSwitchBuilder::new

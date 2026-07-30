@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.lang.CLanguageKind
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
@@ -146,7 +147,7 @@ private fun findCompilerKind(project: Project, bazelConfigHash: String): OCCompi
  */
 fun ActionGraph.Action.checkCompileAction(compilerKind: OCCompilerKind?): Boolean {
   return when (compilerKind) {
-    GCCCompilerKind, ClangCompilerKind -> hasGccDebugInfo(arguments)
+    GCCCompilerKind, ClangCompilerKind, AppleClangCompilerKind -> hasGccDebugInfo(arguments)
     MSVCCompilerKind -> true // the MSVC toolchain uses response files, so we cannot look at the arguments directly
     ClangClCompilerKind -> hasGccDebugInfo(arguments) || hasClangClDebugInfo(arguments) || hasMsvcDebugInfo(arguments)
     else -> hasGccDebugInfo(arguments) || hasMsvcDebugInfo(arguments)
@@ -172,6 +173,6 @@ private fun hasMsvcDebugInfo(arguments: List<String>): Boolean {
  * debug information. Atm only checks for oso_prefix on macOS.
  */
 fun ActionGraph.Action.checkLinkAction(compilerKind: OCCompilerKind?): Boolean {
-  if (compilerKind != ClangCompilerKind || OS.CURRENT != OS.macOS) return true
+  if ((compilerKind != ClangCompilerKind && compilerKind != AppleClangCompilerKind) || OS.CURRENT != OS.macOS) return true
   return arguments.any { it.contains("-oso_prefix,.") }
 }

@@ -39,7 +39,7 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {
-        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-I")
+        GCCCompilerKind, ClangCompilerKind, AppleClangCompilerKind -> ImmutableList.of("-I")
         MSVCCompilerKind -> ImmutableList.of("/I")
         ClangClCompilerKind -> ImmutableList.of("/I", "/clang:-I")
         else -> ImmutableList.of()
@@ -55,7 +55,7 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {
-        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-isystem")
+        GCCCompilerKind, ClangCompilerKind, AppleClangCompilerKind -> ImmutableList.of("-isystem")
         MSVCCompilerKind -> ImmutableList.of("/external:I")
         ClangClCompilerKind -> ImmutableList.of("/external:I", "/clang:-isystem")
         else -> ImmutableList.of()
@@ -71,7 +71,7 @@ abstract class CoptsIncludeProcessor : CoptsProcessor.Transform() {
 
     override fun flags(kind: OCCompilerKind?): ImmutableList<String> {
       return when (kind) {
-        GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("-iquote")
+        GCCCompilerKind, ClangCompilerKind, AppleClangCompilerKind -> ImmutableList.of("-iquote")
         ClangClCompilerKind -> ImmutableList.of("/clang:-iquote")
         else -> ImmutableList.of()
       }
