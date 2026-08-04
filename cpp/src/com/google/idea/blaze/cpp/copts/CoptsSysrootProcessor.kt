@@ -18,6 +18,7 @@ package com.google.idea.blaze.cpp.copts
 import com.google.common.collect.ImmutableList
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerSpecificSwitchBuilder
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
@@ -27,7 +28,7 @@ class CoptsSysrootProcessor : CoptsProcessor.Transform() {
 
   override fun flags(kind: OCCompilerKind): ImmutableList<String> {
     return when (kind) {
-      GCCCompilerKind, ClangCompilerKind -> ImmutableList.of("--sysroot")
+      GCCCompilerKind, ClangCompilerKind, AppleClangCompilerKind -> ImmutableList.of("--sysroot")
       else -> ImmutableList.of()
     }
   }

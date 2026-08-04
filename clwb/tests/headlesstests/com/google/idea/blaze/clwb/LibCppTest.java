@@ -23,9 +23,11 @@ import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase;
 import com.google.idea.testing.headless.BazelVersionRule;
 import com.google.idea.testing.headless.OSRule;
 import com.google.idea.testing.headless.ProjectViewBuilder;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.system.OS;
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.io.File;
@@ -91,7 +93,12 @@ public class LibCppTest extends ClwbHeadlessTestCase {
 
   private void checkCompiler() {
     final var compilerSettings = findFileCompilerSettings("main/main.cc");
-    assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+
+    if (SystemInfo.isMac) {
+      assertThat(compilerSettings.getCompilerKind()).isEqualTo(AppleClangCompilerKind.INSTANCE);
+    } else {
+      assertThat(compilerSettings.getCompilerKind()).isEqualTo(ClangCompilerKind.INSTANCE);
+    }
   }
 
   private void checkLibCpp() throws IOException {

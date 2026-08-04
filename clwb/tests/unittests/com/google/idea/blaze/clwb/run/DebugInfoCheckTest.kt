@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb.run
 
 import com.google.common.truth.Truth.assertThat
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangClCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompilerKind
@@ -99,6 +100,18 @@ class DebugInfoCheckTest {
   @Test
   fun clang_noDebugFlag_fails() {
     assertFails(listOf("/usr/bin/clang", "-c", "-O2", "main.c"), ClangCompilerKind)
+  }
+
+  // -- Apple Clang tests --
+
+  @Test
+  fun appleClang_withDashG_passes() {
+    assertPasses(listOf("/usr/bin/clang", "-c", "-g", "main.c"), AppleClangCompilerKind)
+  }
+
+  @Test
+  fun appleClang_noDebugFlag_fails() {
+    assertFails(listOf("/usr/bin/clang", "-c", "-O2", "main.c"), AppleClangCompilerKind)
   }
 
   // -- MSVC tests --
@@ -190,6 +203,23 @@ class DebugInfoCheckTest {
   @Test
   fun linkAction_clang_withoutOsoPrefix_failsOnMacOS() {
     val result = checkLinkAction(listOf("/usr/bin/clang", "-o", "a.out", "main.o"), ClangCompilerKind)
+    if (OS.CURRENT == OS.macOS) {
+      assertThat(result).isFalse()
+    } else {
+      // On non-macOS, link action checks are skipped
+      assertThat(result).isTrue()
+    }
+  }
+
+  @Test
+  fun linkAction_appleClang_withOsoPrefix_passesOnMacOS() {
+    // On non-macOS this passes trivially; on macOS it validates the flag is present
+    assertThat(checkLinkAction(listOf("/usr/bin/clang", "-Wl,-oso_prefix,.", "-o", "a.out"), AppleClangCompilerKind)).isTrue()
+  }
+
+  @Test
+  fun linkAction_appleClang_withoutOsoPrefix_failsOnMacOS() {
+    val result = checkLinkAction(listOf("/usr/bin/clang", "-o", "a.out", "main.o"), AppleClangCompilerKind)
     if (OS.CURRENT == OS.macOS) {
       assertThat(result).isFalse()
     } else {

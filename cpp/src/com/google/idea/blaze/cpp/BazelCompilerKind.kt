@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
+import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.BasicCompilerCommandLineShortener
 import com.jetbrains.cidr.lang.workspace.compiler.ClangCompilerKind
 import com.jetbrains.cidr.lang.workspace.compiler.GCCCompiler
@@ -74,8 +75,11 @@ object BazelGCCCompilerKind : BazelCompilerKind(GCCCompilerKind)
 /** Bazel-specific Clang compiler kind that disables response files. */
 object BazelClangCompilerKind : BazelCompilerKind(ClangCompilerKind)
 
+/** Bazel-specific Apple Clang compiler kind that disables response files. */
+object BazelAppleClangCompilerKind : BazelCompilerKind(AppleClangCompilerKind)
+
 /** Provider to register the compiler kinds with CLion. */
 class BazelCompilerKindProvider : OCCompilerKindProvider {
 
-  override fun getCompilerKinds(): List<OCCompilerKind> = listOf(BazelGCCCompilerKind, BazelClangCompilerKind)
+  override fun getCompilerKinds(): List<OCCompilerKind> = listOf(BazelGCCCompilerKind, BazelClangCompilerKind, BazelAppleClangCompilerKind)
 }
