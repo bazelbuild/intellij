@@ -162,11 +162,15 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             .addBlazeFlags(testHandlerFlags);
 
     String testFilterFlag = handlerState.getTestFilterFlag();
-    if (testFilterFlag != null && BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+    if (testFilterFlag != null && handlerState.isTestCommand()) {
       commandBuilder.addBlazeFlags(testFilterFlag, BlazeFlags.DISABLE_TEST_SHARDING);
     }
 
-    commandBuilder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+    if (handlerState.isTestCommand()) {
+      commandBuilder.addBlazeFlags(handlerState.getExeFlagsState().getFlagsForTestArgs());
+    } else {
+      commandBuilder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+    }
 
     state.setConsoleBuilder(createConsoleBuilder(testUiSession));
     state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));

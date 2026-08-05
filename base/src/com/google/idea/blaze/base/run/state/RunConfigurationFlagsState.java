@@ -61,6 +61,13 @@ public final class RunConfigurationFlagsState implements RunConfigurationState {
     return BlazeFlags.expandBuildFlags(processedFlags);
   }
 
+  /** Flags ready to be passed as Bazel command line arguments to a test. */
+  public ImmutableList<String> getFlagsForTestArgs() {
+    return flags.stream()
+        .map(flag -> BlazeFlags.TEST_ARG + "=" + flag)
+        .collect(ImmutableList.toImmutableList());
+  }
+
   /** Unprocessed flags that haven't been macro expanded or processed for escaping/quotes. */
   public List<String> getRawFlags() {
     return flags;

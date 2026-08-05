@@ -171,6 +171,15 @@ class ExecutionTest : ClwbHeadlessTestCase() {
     assertThat(catchFiltered.output).contains("FilteredTest")
     assertThat(catchFiltered.output).doesNotContain("SkippedTest")
     assertThat(catchFiltered.output).doesNotContain("Test0")
+
+    // arguments for the test binary must be passed as --test_arg
+    val gtestArgs = execute(
+      Label.create("//main:gtest"), executorId,
+      args = listOf("--gtest_filter=FilterSuite.*")
+    )
+    gtestArgs.assertSuccess()
+    assertThat(gtestArgs.output).contains("FilterSuite.FilteredTest")
+    assertThat(gtestArgs.output).doesNotContain("SampleSuite.SampleTest")
   }
 
   fun checkTestSandboxNoNetwork() {
