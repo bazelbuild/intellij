@@ -26,11 +26,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
-/** Adds hyperlinks to generic console output of the form 'path:line:column: ...' */
+/** Adds hyperlinks to generic console output of the form 'workspace/relative/path:line[:column]' */
 class GenericFileMessageFilter implements Filter {
 
-  private static final Pattern FILE_LINE_COLUMN =
-      Pattern.compile("^([^:\\s]+):([0-9]+):([0-9]+): ");
+  /** A single path segment: no colon, whitespace, separator, parenthesis, or quote. */
+  private static final String SEGMENT = "[^:\\s/\\\\(){}\\[\\]'\"]+";
+
+  /** A single relative path with windows or normal separators followed by line and colon number. */
+  private static final String PATH = String.format("(%s([/\\\\]%s)+)(:(\\d+))(:(\\d+))?", SEGMENT, SEGMENT);
+
+  /**
+   * Matches a workspace-relative path followed by a line number and an optional column number,
+   * anywhere in the line.
+   */
+  private static final Pattern FILE_LINE_COLUMN = Pattern.compile(String.format("(?<![\\w./\\\\])(%s)", PATH));
+
   private final Project project;
 
   GenericFileMessageFilter(Project project) {
@@ -40,26 +50,31 @@ class GenericFileMessageFilter implements Filter {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = FILE_LINE_COLUMN.matcher(line);
+    final var matcher = FILE_LINE_COLUMN.matcher(line);
     if (!matcher.find()) {
       return null;
     }
-    String filePath = matcher.group(1);
+
+    final var filePath = matcher.group(2);
     if (filePath == null) {
       return null;
     }
-    VirtualFile file = FileResolver.resolveToVirtualFile(project, filePath);
+
+    final var file = FileResolver.resolveToVirtualFile(project, filePath);
     if (file == null) {
       return null;
     }
-    int lineNumber = parseNumber(matcher.group(2));
-    int columnNumber = parseNumber(matcher.group(3));
-    OpenFileHyperlinkInfo hyperlink =
-        new CustomOpenFileHyperlinkInfo(project, file, lineNumber - 1, columnNumber - 1);
 
-    int startIx = matcher.start(1);
-    int endIx = matcher.end(3);
-    int offset = entireLength - line.length();
+    final var columnGroup = matcher.group(7);
+    final var columnNumber = columnGroup != null ? parseNumber(columnGroup) : 1;
+
+    final var lineNumber = parseNumber(matcher.group(5));
+    final var hyperlink = new CustomOpenFileHyperlinkInfo(project, file, lineNumber - 1, columnNumber - 1);
+
+    final var startIx = matcher.start(1);
+    final var endIx = columnGroup != null ? matcher.end(7) : matcher.end(5);
+    final var offset = entireLength - line.length();
+
     return new Result(startIx + offset, endIx + offset, hyperlink);
   }
 

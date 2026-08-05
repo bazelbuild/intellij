@@ -23,8 +23,8 @@ import com.google.idea.blaze.base.run.filter.GenericFileMessageFilter.CustomOpen
 import com.intellij.execution.filters.Filter.Result;
 import com.intellij.mock.MockLocalFileSystem;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Test;
@@ -36,53 +36,121 @@ import org.junit.runners.JUnit4;
 public class GenericFileMessageFilterTest extends BlazeTestCase {
 
   private static final File mockFile = new File("filename");
-  private static final Map<String, File> filePathToFile = new HashMap<>();
+
+  /** Every path string the filter asked the {@link FileResolver} chain to resolve. */
+  private static final List<String> resolvedPaths = new ArrayList<>();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    registerExtensionPoint(FileResolver.EP_NAME, FileResolver.class)
-        .registerExtension((project, path) -> filePathToFile.get(path));
+    registerExtensionPoint(FileResolver.EP_NAME, FileResolver.class).registerExtension((project, path) -> {
+      resolvedPaths.add(path);
+      return mockFile;
+    });
     applicationServices.register(VirtualFileSystemProvider.class, MockLocalFileSystem::new);
   }
 
   @After
   public final void doTearDown() {
-    filePathToFile.clear();
+    resolvedPaths.clear();
   }
 
   @Test
-  public void testAbsoluteFilePath() {
-    filePathToFile.put("/absolute/file/path.go", mockFile);
-    assertHasMatch("/absolute/file/path.go:10:50: error", 10, 50);
+  public void testCatch2FailureLocation() {
+    // the line from https://youtrack.jetbrains.com/issue/CPP-51382
+    assertHasMatch("at test/adder/adder_tests.cpp:16", "test/adder/adder_tests.cpp", 16, 1);
   }
 
   @Test
-  public void testRelativeFilePath() {
-    filePathToFile.put("relative/file/p-a_th.go", mockFile);
-    assertHasMatch("relative/file/p-a_th.go:10:50: some other message", 10, 50);
+  public void testIndentedFilePath() {
+    assertHasMatch("  at test/adder/adder_tests.cpp:16", "test/adder/adder_tests.cpp", 16, 1);
   }
 
   @Test
-  public void testIgnoreLinesWithLeadingWhitespace() {
-    filePathToFile.put("/absolute/file/path.go", mockFile);
-    assertThat(findMatch(" /absolute/file/path.go:10:50: string")).isNull();
+  public void testGoogleTestFailureLocation() {
+    assertHasMatch("src/lib/greeting_test.cc:15: Failure", "src/lib/greeting_test.cc", 15, 1);
   }
 
   @Test
-  public void testIgnoreLineNumberWithoutColumnNumber() {
-    filePathToFile.put("file/path.go", mockFile);
-    assertThat(findMatch("file/path.go:10: string")).isNull();
+  public void testRelativeFilePathWithColumn() {
+    assertHasMatch("relative/file/p-a_th.go:10:50: some other message", "relative/file/p-a_th.go", 10, 50);
   }
 
-  private void assertHasMatch(String text, int line, int column) {
+  @Test
+  public void testFilePathWithoutColumn() {
+    assertHasMatch("file/path.go:10: string", "file/path.go", 10, 1);
+  }
+
+  /** Regression test: the whole path must be captured, not just its last two segments. */
+  @Test
+  public void testPathWithOddNumberOfSegments() {
+    assertHasMatch("a/b/c.cpp:7", "a/b/c.cpp", 7, 1);
+  }
+
+  @Test
+  public void testGeneratedFilePath() {
+    assertHasMatch("bazel-out/k8-fastbuild/bin/gen/x.h:3:9: error", "bazel-out/k8-fastbuild/bin/gen/x.h", 3, 9);
+  }
+
+  @Test
+  public void testSurroundingDelimitersAreNotPartOfThePath() {
+    assertHasMatch("\"test/adder/x.cpp:16\"", "test/adder/x.cpp", 16, 1);
+    assertHasMatch("(test/adder/x.cpp:16)", "test/adder/x.cpp", 16, 1);
+  }
+
+  @Test
+  public void testExplicitlyRelativeFilePath() {
+    assertHasMatch("./test/x.cpp:16", "./test/x.cpp", 16, 1);
+  }
+
+  /**
+   * Regression test: without the leading look-behind, back-tracking matches an absolute path from
+   * its second character, and the resulting relative path resolves against the workspace root --
+   * silently opening the wrong file.
+   */
+  @Test
+  public void testIgnoreAbsoluteFilePath() {
+    assertNoMatch("/absolute/file/path.go:10:50: error");
+    assertNoMatch("C:\\ws\\foo\\bar.cc:12");
+  }
+
+  @Test
+  public void testIgnoreTokensWithoutAPathSeparator() {
+    assertNoMatch("Total:15");
+    assertNoMatch("12:34:56");
+    assertNoMatch("INFO: Elapsed time: 12:34");
+    assertNoMatch("  Duration: 1:23");
+  }
+
+  @Test
+  public void testIgnoreOtherCatch2OutputLines() {
+    assertNoMatch("with expansion:");
+    assertNoMatch("  CHECK( theAdder.add(1, 2) == 5 )");
+  }
+
+  private void assertHasMatch(String text, String expectedPath, int line, int column) {
     Result result = findMatch(text);
     assertThat(result).isNotNull();
+
+    assertThat(resolvedPaths).containsExactly(expectedPath);
     assertThat(result.getFirstHyperlinkInfo()).isInstanceOf(CustomOpenFileHyperlinkInfo.class);
 
-    CustomOpenFileHyperlinkInfo link = (CustomOpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
+    final var link = (CustomOpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
+    assertThat(link).isNotNull();
     assertThat(link.vf).isNotNull();
     assertThat(link.line).isEqualTo(line - 1);
     assertThat(link.column).isEqualTo(column - 1);
+
+    // the hyperlink covers the path and the line/column numbers, and nothing else
+    final var expectedLink = expectedPath + ":" + line + (column > 1 ? ":" + column : "");
+    assertThat(text.substring(result.getHighlightStartOffset(), result.getHighlightEndOffset()))
+        .isEqualTo(expectedLink);
+
+    resolvedPaths.clear();
+  }
+
+  private void assertNoMatch(String text) {
+    assertThat(findMatch(text)).isNull();
+    assertThat(resolvedPaths).isEmpty();
   }
 
   @Nullable

@@ -356,7 +356,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     private GoogleTestConsoleBuilder(Project project, @Nullable BlazeTestUiSession testUiSession) {
       super(project, null, null);
       this.testUiSession = testUiSession;
-      addFilter(new BlazeCidrTestOutputFilter(project));
     }
 
     @Override
