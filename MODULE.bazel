@@ -76,7 +76,7 @@ maven.install(
         "junit:junit:4.13.2",
         "org.opentest4j:opentest4j:1.3.0",
         "org.mockito:mockito-core:5.23.0",
-        "org.objenesis:objenesis:3.5",
+        "org.objenesis:objenesis:3.6",
         "net.bytebuddy:byte-buddy:1.18.11",
         "net.bytebuddy:byte-buddy-agent:1.18.11",
         "com.google.flogger:flogger:0.9",
