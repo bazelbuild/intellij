@@ -17,10 +17,7 @@ package com.google.idea.blaze.clwb
 
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase
-import com.google.idea.blaze.clwb.radler.RadGoogleTestContextProvider
-import com.google.idea.blaze.clwb.radler.createGoogleTestFilter
-import com.jetbrains.rider.model.RadTestElementModel
-import com.jetbrains.rider.model.RadTestFramework
+import com.google.idea.blaze.clwb.radler.test.createGoogleTestFilter
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

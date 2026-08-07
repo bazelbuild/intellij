@@ -16,31 +16,40 @@
 
 package com.google.idea.blaze.clwb.radler
 
+import com.google.idea.blaze.base.execution.BlazeParametersListUtil
 import com.google.idea.blaze.base.model.primitives.Kind
 import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.model.primitives.RuleType
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler
+import com.intellij.clion.radler.testing.RadTestPsiElement
 import com.intellij.execution.Location
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.project.Project
+import com.intellij.util.asSafely
 
-class RadTestEventsHandler: BlazeTestEventsHandler {
+/**
+ * The single [BlazeTestEventsHandler] for C/C++ test targets under the radler engine. Framework specifics are
+ * implemented through [RadTestFrameworkSupport].
+ */
+class RadTestEventsHandler : BlazeTestEventsHandler {
+
   override fun handlesKind(kind: Kind?): Boolean {
     return kind != null
         && kind.hasLanguage(LanguageClass.C)
         && kind.getRuleType().equals(RuleType.TEST)
   }
 
-  override fun getTestLocator(): SMTestLocator? {
-    // not supported yet
-    return null
-  }
+  override fun getTestLocator(): SMTestLocator = RadTestLocator
 
-  override fun getTestFilter(
-    project: Project?,
-    testLocations: List<Location<*>?>?
-  ): String? {
-    // not supported yet, we need to support both catch and gtest here
-    return null
+  override fun getTestFilter(project: Project, testLocations: List<Location<*>?>): String? {
+    val tests = testLocations.mapNotNull { it?.psiElement.asSafely<RadTestPsiElement>()?.test }
+
+    // a single blaze invocation carries one --test_filter, which is framework-specific
+    val framework = tests.map { it.framework }.distinct().singleOrNull() ?: return null
+
+    val support = RadTestFrameworkSupport.forFramework(framework) ?: return null
+    val filter = support.createTestFilter(tests) ?: return null
+
+    return BlazeParametersListUtil.encodeTestFilterFlag(filter)
   }
 }

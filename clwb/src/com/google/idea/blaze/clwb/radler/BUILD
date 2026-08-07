@@ -7,9 +7,19 @@ optional_plugin_xml(
 )
 
 intellij_plugin_library(
-    name = "radler",
+    name = "lib",
     srcs = glob(["*.kt"]),
     optional_plugin_xmls = [":plugin_xml"],
-    visibility = ["//clwb:__subpackages__"],
+    visibility = ["//clwb/src/com/google/idea/blaze/clwb/radler:__subpackages__"],
     deps = ["//clwb:clwb_lib"],
+)
+
+intellij_plugin_library(
+    name = "radler",
+    visibility = ["//clwb:__subpackages__"],
+    deps = [
+        ":lib",
+        "//clwb/src/com/google/idea/blaze/clwb/radler/test:catch",
+        "//clwb/src/com/google/idea/blaze/clwb/radler/test:gtest",
+    ],
 )

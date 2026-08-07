@@ -14,9 +14,13 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.clwb.radTestSupport"
+                    interface="com.google.idea.blaze.clwb.radler.RadTestFrameworkSupport"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.google.idea.blaze">
-    <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadGoogleTestContextProvider"/>
-    <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadCatchTestContextProvider"/>
+    <TestContextProvider implementation="com.google.idea.blaze.clwb.radler.RadTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.clwb.radler.RadBinaryContextProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.radler.RadTestEventsHandler"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.clwb.radler.RadSyncStatusContributor"/>

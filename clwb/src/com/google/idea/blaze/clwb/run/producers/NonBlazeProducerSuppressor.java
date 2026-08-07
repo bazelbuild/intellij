@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.clwb.run.producers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
@@ -24,10 +25,18 @@ import com.intellij.openapi.startup.StartupActivity;
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor implements StartupActivity.DumbAware {
 
-  private static final ImmutableList<String> PRODUCERS_TO_SUPPRESS =
+  @VisibleForTesting
+  public static final ImmutableList<String> PRODUCERS_TO_SUPPRESS =
       ImmutableList.of(
-          // Gutter icons in different cpp files of different tests.
+          // Gutter icons in different cpp files of different tests, and the run/debug entries of the test tree context menu.
+          "com.jetbrains.cidr.execution.testing.boost.CidrBoostTestRunConfigurationProducer",
+          "com.jetbrains.cidr.execution.testing.doctest.CidrDoctestTestRunConfigurationProducer",
+          "com.jetbrains.cidr.execution.testing.google.CidrGoogleTestRunConfigurationProducer",
+          "com.jetbrains.cidr.execution.testing.tcatch.CidrCatchTestRunConfigurationProducer",
+
+          // The same four producers under the names they had before being moved out of the cmake packages. #api253
           "com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer",
+          "com.jetbrains.cidr.cpp.execution.testing.doctest.CMakeDoctestTestRunConfigurationProducer",
           "com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer",
           "com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer",
 
