@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression
 import com.google.idea.blaze.base.model.primitives.Label
 import com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor
 import com.google.idea.blaze.clwb.base.ClwbHeadlessTestCase
+import com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor
+import com.intellij.execution.RunConfigurationProducerService
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -53,6 +55,14 @@ class GutterTest : ClwbHeadlessTestCase() {
     assertGutterPresent(Label.create("//main:echo0")) // cc_binary
     assertGutterPresent(Label.create("//main:gtest")) // cc_test
     assertGutterPresent(Label.create("//main:catch")) // cc_test
+
+    assertNonBlazeProducersSuppressed()
+  }
+
+  /** The counterpart of the markers above: the non-blaze producers must not contribute any. */
+  private fun assertNonBlazeProducersSuppressed() {
+    val ignored = RunConfigurationProducerService.getInstance(project).state.ignoredProducers
+    assertThat(ignored).containsAtLeastElementsIn(NonBlazeProducerSuppressor.PRODUCERS_TO_SUPPRESS)
   }
 
   /** Asserts that a run/test gutter icon is contributed for the rule [label] in its BUILD file. */

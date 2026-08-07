@@ -49,7 +49,7 @@ class GoogleTestSupport : RadTestFrameworkSupport {
   }
 }
 
-fun createGoogleTestFilter(suite: String?, name: String?): String {
+private fun createGoogleTestFilter(suite: String?, name: String?): String {
   val suite = suite ?: "*"
   val name = name ?: "*"
 
