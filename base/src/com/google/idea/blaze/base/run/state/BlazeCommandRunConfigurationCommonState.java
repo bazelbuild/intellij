@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.state;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -78,6 +79,11 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
 
   public BlazeCommandState getCommandState() {
     return command;
+  }
+
+  /** Whether the selected command runs tests. */
+  public boolean isTestCommand() {
+    return BlazeCommandName.TEST.equals(command.getCommand());
   }
 
   /** Returns the {@code --test_filter=<encoded>} flag for inclusion on a Bazel command line. */

@@ -149,6 +149,39 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeIntegratio
   }
 
   @Test
+  public void isTestCommandOnlyHoldsForTheTestCommand() {
+    assertThat(state.isTestCommand()).isFalse();
+
+    state.getCommandState().setCommand(BlazeCommandName.RUN);
+    assertThat(state.isTestCommand()).isFalse();
+
+    state.getCommandState().setCommand(BlazeCommandName.TEST);
+    assertThat(state.isTestCommand()).isTrue();
+  }
+
+  @Test
+  public void exeFlagsAreEncodedAsTestArgs() {
+    state.getExeFlagsState().setRawFlags(ImmutableList.of("--first", "--second"));
+
+    assertThat(state.getExeFlagsState().getFlagsForTestArgs())
+        .containsExactly("--test_arg=--first", "--test_arg=--second")
+        .inOrder();
+  }
+
+  @Test
+  public void testArgWithWhitespaceIsNotShellQuoted() {
+    state.getExeFlagsState().setRawFlags(ImmutableList.of("\"one two\""));
+
+    assertThat(state.getExeFlagsState().getFlagsForTestArgs())
+        .containsExactly("--test_arg=\"one two\"");
+  }
+
+  @Test
+  public void testArgsAreEmptyWhenNoExeFlagsAreSet() {
+    assertThat(state.getExeFlagsState().getFlagsForTestArgs()).isEmpty();
+  }
+
+  @Test
   public void legacyBlazeUserFlagXmlMigratesToTestFilter() throws Exception {
     Element element = new Element("blaze-settings");
     element.addContent(new Element("blaze-user-flag").setText("--test_filter=Foo#bar"));

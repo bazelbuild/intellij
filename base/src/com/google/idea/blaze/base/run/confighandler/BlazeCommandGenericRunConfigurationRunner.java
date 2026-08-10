@@ -255,11 +255,17 @@ public final class BlazeCommandGenericRunConfigurationRunner
           .addBlazeFlags(extraBlazeFlags);
 
       final var testFilterFlag = handlerState.getTestFilterFlag();
-      if (testFilterFlag != null && BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand())) {
+      if (testFilterFlag != null && handlerState.isTestCommand()) {
         builder.addBlazeFlags(testFilterFlag, BlazeFlags.DISABLE_TEST_SHARDING);
       }
 
-      return builder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+      if (handlerState.isTestCommand()) {
+        builder.addBlazeFlags(handlerState.getExeFlagsState().getFlagsForTestArgs());
+      } else {
+        builder.addExeFlags(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
+      }
+
+      return builder;
     }
 
     private BlazeCommandName getCommand() {
