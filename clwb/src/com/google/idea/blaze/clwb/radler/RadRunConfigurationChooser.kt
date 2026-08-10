@@ -36,7 +36,9 @@ class RadRunConfigurationChooser : OCResolveConfigurationChooserAdapter() {
   override fun doSelectResolveConfiguration(
     project: Project,
     configurations: List<OCResolveConfiguration>,
-  ): OCResolveConfiguration? = byLastBuild(project, configurations) ?: byConfigurationID(configurations)
+  ): OCResolveConfiguration? {
+    return byLastBuild(project, configurations) ?: byConfigurationID(configurations)
+  }
 
   private fun byLastBuild(
     project: Project,
