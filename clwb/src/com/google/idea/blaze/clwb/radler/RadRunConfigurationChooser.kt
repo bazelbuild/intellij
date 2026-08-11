@@ -37,6 +37,13 @@ class RadRunConfigurationChooser : OCResolveConfigurationChooserAdapter() {
     project: Project,
     configurations: List<OCResolveConfiguration>,
   ): OCResolveConfiguration? {
+    return byLastBuild(project, configurations) ?: byConfigurationID(configurations)
+  }
+
+  private fun byLastBuild(
+    project: Project,
+    configurations: List<OCResolveConfiguration>,
+  ): OCResolveConfiguration? {
     val checksums = LastBuildConfigurations.getInstance(project).preferredConfigurations
     if (checksums.isEmpty()) return null
 
@@ -44,5 +51,12 @@ class RadRunConfigurationChooser : OCResolveConfigurationChooserAdapter() {
       val id = BlazeResolveConfigurationID.fromOCResolveConfiguration(config) ?: return@firstOrNull false
       checksums.any { checksum -> checksum.startsWith(id.configurationId) }
     }
+  }
+
+  // deterministic fallback
+  private fun byConfigurationID(configurations: List<OCResolveConfiguration>): OCResolveConfiguration? {
+     return configurations.maxByOrNull {
+       BlazeResolveConfigurationID.fromOCResolveConfiguration(it)?.configurationId ?: ""
+     }
   }
 }
