@@ -155,26 +155,11 @@ intellij_platform.jbr(
         "windows-x64": "b5d07556d36fa84239e35b5458ce31e7f6e2b8088d6423ddbf29c19ebd8812b4",
     },
 )
-intellij_platform.jbr(
-    major = "21.0.11",
-    minor = "b1163.116",
-    sha256 = {
-        "osx-aarch64": "ff2d12e6cf6b2f9d7793b8b6596afe413bdd4074fbfc91d9a36f379df61df182",
-        "linux-x64": "097bf328b5bf5a236c095b8c8e5204c0eda91e5baa06b37383a7754b10671d8b",
-        "windows-x64": "a3b01a47e67207722064c136616a3c0529e0dc96e17d0d5e44a0e8b4a92c57e7",
-    },
-)
-intellij_platform.sdk(
-    name = "clion",
-    build_file = "//intellij_platform_sdk:BUILD.clion253",
-    sha256 = "163c824caad59aa8750b44238e4fa7055dc4e41c939ef4f1bc8ef8c46a3a976a",
-    version = "2025.3.6.1",
-)
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion261",
-    sha256 = "b38d625ea0d3c1c93e15108cc305aa1d216509af92c836e2c9eb3188c3dd3a16",
-    version = "2026.1.4",
+    sha256 = "4e8cf1b176fdcbed167d12255872acdccd438390cfc941126b22b8bd426a6fed",
+    version = "2026.1.5",
 )
 intellij_platform.sdk(
     name = "clion",
@@ -184,17 +169,10 @@ intellij_platform.sdk(
 )
 intellij_platform.plugin(
     name = "PythonCore",
-    alias = "python_2025_3",
-    build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "6d8ed947ca4c50d2127ff16b8e5465d955910549762b8101b569625b29761dc6",
-    version = "253.33813.55",
-)
-intellij_platform.plugin(
-    name = "PythonCore",
     alias = "python_2026_1",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "0630a97788d6eaf383e800f52172a5612d3965ddf58301ef69493fd1a4d256e7",
-    version = "261.27258.27",
+    sha256 = "03afe7c26d078c026e4a7f2b6121ec1c19f7769efea2ed675bdefd9c8658a51f",
+    version = "261.27258.48",
 )
 intellij_platform.plugin(
     name = "PythonCore",
@@ -203,11 +181,9 @@ intellij_platform.plugin(
     sha256 = "d6046f360cae5cc6d027cc9d12f9bf5c1a40123f99f7bd3746bb0f2d8fbec41c",
     version = "262.9437.185",
 )
-use_repo(intellij_platform, "clion_2025_3", "clion_2026_1", "clion_2026_2", "jbr_21_0_11", "jbr_25_0_3", "python_2025_3", "python_2026_1", "python_2026_2")
+use_repo(intellij_platform, "clion_2026_1", "clion_2026_2", "jbr_25_0_3", "python_2026_1", "python_2026_2")
 
 register_toolchains(
-    "@clion_2025_3//:runtime",
-    "@clion_2025_3//:bootstrap_runtime",
     "@clion_2026_1//:runtime",
     "@clion_2026_1//:bootstrap_runtime",
     "@clion_2026_2//:runtime",

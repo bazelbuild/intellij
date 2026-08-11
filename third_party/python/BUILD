@@ -9,7 +9,6 @@ java_library(
     name = "python_internal",
     visibility = ["//visibility:private"],
     exports = select_for_version({
-        "2025.3": ["@python_2025_3//:python"],
         "2026.1": ["@python_2026_1//:python"],
         "2026.2": ["@python_2026_2//:python"],
     }),
@@ -18,7 +17,6 @@ java_library(
 filegroup(
     name = "python_helpers",
     srcs = select_for_version({
-        "2025.3": ["@python_2025_3//:python_helpers"],
         "2026.1": ["@python_2026_1//:python_helpers"],
         "2026.2": ["@python_2026_2//:python_helpers"],
     }),
