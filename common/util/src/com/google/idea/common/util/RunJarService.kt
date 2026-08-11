@@ -51,7 +51,13 @@ class RunJarService {
 
     val cmdLine = GeneralCommandLine()
       .withExePath(java.toString())
-      .withParameters("-jar", jar.toString(), *args)
+      .withParameters(
+        // suppress the restricted-method warning on jdk 21+
+        "--enable-native-access=ALL-UNNAMED",
+        // suppress the terminally deprecated method in sun.misc.Unsafe has been called warning
+        "--sun-misc-unsafe-memory-access=allow",
+        "-jar", jar.toString(), *args,
+      )
 
     return withContext(Dispatchers.IO) {
       OSProcessHandler(cmdLine)

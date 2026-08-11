@@ -37,5 +37,8 @@ class SkylarkReplTest : BasePlatformTestCase() {
     val output = runBlocking { RunJarService.capture(REPL_JAR_PATH, "-c", "print('hello world')") }
     assertThat(output.stdout).isEqualTo("hello world\n")
     assertThat(output.exitCode).isEqualTo(0)
+
+    // the parser must not emit anything on stderr, in particular no jvm warnings
+    assertThat(output.stderr).isEmpty()
   }
 }
