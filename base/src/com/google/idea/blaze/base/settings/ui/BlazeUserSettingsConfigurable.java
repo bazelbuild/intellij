@@ -147,7 +147,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .componentFactory(fileSelector(BLAZE_BINARY_PATH_KEY, "Specify the blaze binary path"));
 
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
-  private static final ConfigurableSetting<?, ?> BAZEL_BINARY_PATH =
+  public static final ConfigurableSetting<?, ?> BAZEL_BINARY_PATH =
       setting("Bazel binary location")
           .getter(BlazeUserSettings::getBazelBinaryPath)
           .setter(BlazeUserSettings::setBazelBinaryPath)
