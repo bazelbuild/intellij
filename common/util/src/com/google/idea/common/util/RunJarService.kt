@@ -23,12 +23,25 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.system.OS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+
+private val STRIP_ENVIRONMENT_VARIABLES = listOf(
+  // suppress warnings about picked up local options
+  "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"
+)
+
+private val ADDITIONAL_ARGUMENTS = listOf(
+  // suppress the restricted-method warning on jdk 21+
+  "--enable-native-access=ALL-UNNAMED",
+  // suppress the terminally deprecated method in sun.misc.Unsafe has been called warning
+  "--sun-misc-unsafe-memory-access=allow",
+)
 
 @Service(Service.Level.APP)
 class RunJarService {
@@ -51,13 +64,10 @@ class RunJarService {
 
     val cmdLine = GeneralCommandLine()
       .withExePath(java.toString())
-      .withParameters(
-        // suppress the restricted-method warning on jdk 21+
-        "--enable-native-access=ALL-UNNAMED",
-        // suppress the terminally deprecated method in sun.misc.Unsafe has been called warning
-        "--sun-misc-unsafe-memory-access=allow",
-        "-jar", jar.toString(), *args,
-      )
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE)
+      .withEnvironment(EnvironmentUtil.getEnvironmentMap().filterKeys { !STRIP_ENVIRONMENT_VARIABLES.contains(it) })
+      .withParameters(ADDITIONAL_ARGUMENTS)
+      .withParameters("-jar", jar.toString(), *args)
 
     return withContext(Dispatchers.IO) {
       OSProcessHandler(cmdLine)
