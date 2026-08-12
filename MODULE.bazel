@@ -167,8 +167,8 @@ intellij_platform.jbr(
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion253",
-    sha256 = "cb0a96a45c0aefcca0fda1d8318e755bcc36d7b99b5d383d606754c0500f0863",
-    version = "2025.3.6",
+    sha256 = "163c824caad59aa8750b44238e4fa7055dc4e41c939ef4f1bc8ef8c46a3a976a",
+    version = "2025.3.6.1",
 )
 intellij_platform.sdk(
     name = "clion",
@@ -179,29 +179,29 @@ intellij_platform.sdk(
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion262",
-    sha256 = "fb9f4d7aaf79b5b4abaa037b93800e603b1d6516ac57a6902c6efa723396b9e8",
-    version = "2026.2.0.1",
+    sha256 = "e5b31027a5221ce9644d2872cfade77f46eae2c53ee606292801fab73dca0bf8",
+    version = "2026.2.1",
 )
 intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2025_3",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "8c3dada7f1a2bd89f9a5dacd54e3f8e814e2b058ed787915c1eb41d19744fbfe",
-    version = "253.33813.25",
+    sha256 = "6d8ed947ca4c50d2127ff16b8e5465d955910549762b8101b569625b29761dc6",
+    version = "253.33813.55",
 )
 intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2026_1",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "7560d290fed0365596dd8493323b4629ab294abefcdea9be82f9f14508994f23",
-    version = "261.26222.65",
+    sha256 = "0630a97788d6eaf383e800f52172a5612d3965ddf58301ef69493fd1a4d256e7",
+    version = "261.27258.27",
 )
 intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2026_2",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "aba45e48346e2a88858cc51b5549b20843f9837e7b3b1f98719acc2d2dddff28",
-    version = "262.9437.22",
+    sha256 = "d6046f360cae5cc6d027cc9d12f9bf5c1a40123f99f7bd3746bb0f2d8fbec41c",
+    version = "262.9437.185",
 )
 use_repo(intellij_platform, "clion_2025_3", "clion_2026_1", "clion_2026_2", "jbr_21_0_11", "jbr_25_0_3", "python_2025_3", "python_2026_1", "python_2026_2")
 
