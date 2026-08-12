@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.bazel.BazelBinaryUtil;
-import com.google.idea.blaze.base.buildview.BuildViewMigration;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -67,6 +66,7 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -76,6 +76,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -84,18 +85,28 @@ import javax.annotation.Nullable;
  */
 final class ProjectStateSyncTask {
 
-  private static final BuildIssueQuickFix OPEN_SETTINGS_FIX = new BuildIssueQuickFix() {
+  /** Persisted property which permanently disables {@link #verifyBazelBinary}. */
+  private static final String SKIP_BINARY_VALIDATION_KEY = "bazel.sync.skip.binary.validation";
+
+  /** A {@link BuildIssueQuickFix} which simply runs an action on the project. */
+  private record QuickFix(String id, Consumer<Project> action) implements BuildIssueQuickFix {
     @Override
     public @NotNull String getId() {
-      return "bazel.settings.bazel.binary.path";
+      return id;
     }
 
     @Override
     public @NotNull CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
-      showBazelBinarySetting(project);
+      action.accept(project);
       return CompletableFuture.completedFuture(null);
     }
-  };
+  }
+
+  private static final BuildIssueQuickFix OPEN_SETTINGS_FIX =
+      new QuickFix("bazel.settings.bazel.binary.path", ProjectStateSyncTask::showBazelBinarySetting);
+
+  private static final BuildIssueQuickFix SKIP_VALIDATION_FIX =
+      new QuickFix(SKIP_BINARY_VALIDATION_KEY, ProjectStateSyncTask::skipBinaryValidation);
 
   static SyncProjectState collectProjectState(Project project, BlazeContext context, BlazeSyncParams syncParams)
       throws SyncCanceledException, SyncFailedException {
@@ -231,8 +242,12 @@ final class ProjectStateSyncTask {
   /**
    * Checks that the configured bazel binary can actually be executed. Throws
    * a {@link SyncFailedException} if the binary is invalid.
+   *
+   * <p>The check is skipped once the user dismissed it via {@link #SKIP_BINARY_VALIDATION_KEY}.
    */
   private void verifyBazelBinary(BlazeContext context, ProjectViewSet projectViewSet) throws SyncFailedException {
+    if (PropertiesComponent.getInstance().getBoolean(SKIP_BINARY_VALIDATION_KEY, false)) return;
+
     final var binaryPath = BazelBinaryUtil.resolvePath(projectViewSet);
     final var problem = BazelBinaryUtil.validate(binaryPath, workspaceRoot.directory().toPath());
     if (problem == null) return;
@@ -253,9 +268,15 @@ final class ProjectStateSyncTask {
         )
         .withOnClick(ProjectStateSyncTask::showBazelBinarySetting)
         .withFix("Open the Bazel settings", OPEN_SETTINGS_FIX)
+        .withFix("Disable this check and retry the sync", SKIP_VALIDATION_FIX)
         .submit(context);
 
     throw new SyncFailedException();
+  }
+
+  private static void skipBinaryValidation(Project project) {
+    PropertiesComponent.getInstance().setValue(SKIP_BINARY_VALIDATION_KEY, true);
+    BlazeSyncManager.getInstance(project).incrementalProjectSync("BazelBinaryValidationSkipped");
   }
 
   private static void showBazelBinarySetting(Project project) {
