@@ -37,6 +37,9 @@ class ExeclogParserTest : BasePlatformTestCase() {
   fun testRunParser() {
     val output = runBlocking { RunJarService.capture(PARSER_JAR_PATH, "--help") }
     assertThat(output.exitCode).isEqualTo(0)
+
+    // the parser must not emit anything on stderr, in particular no jvm warnings
+    assertThat(output.stderr).isEmpty()
   }
 
   @Test
@@ -51,5 +54,6 @@ class ExeclogParserTest : BasePlatformTestCase() {
     val output = runBlocking { RunJarService.capture(PARSER_JAR_PATH, "--log_path", fixturePath) }
     assertThat(output.exitCode).isEqualTo(0)
     assertThat(output.stdout).isNotEmpty()
+    assertThat(output.stderr).isEmpty()
   }
 }
