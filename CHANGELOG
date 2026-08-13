@@ -1,3 +1,12 @@
+v2026.08.13
+===========
+* Add test navigation and filtering support for Catch2 and Google Test #8431
+* Add support for Apple clang #8426
+* Pass run configuration program arguments as `--test_args` for test commands #8429
+* Detect workspace relative paths anywhere in console output and turn them into links #8430
+* Automatically select a Bazel resolve configuration when no run configuration has been executed yet #8419
+* Suppress JVM warnings printed by the Starlark REPL #8439
+
 v2026.07.24
 ===========
 * Add support for cc_toolchain environment variables #8400
