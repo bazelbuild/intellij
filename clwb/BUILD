@@ -38,8 +38,8 @@ intellij_plugin_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":clwb_lib",
-        "//clwb/src/com/google/idea/blaze/clwb/radler",
         "//clwb/src/com/google/idea/blaze/clwb/oclang",
+        "//clwb/src/com/google/idea/blaze/clwb/radler",
     ],
 )
 
@@ -258,10 +258,22 @@ clwb_integration_test(
     srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/RadGoogleTestFilterTest.kt"],
 )
 
+clwb_integration_test(
+    name = "rad_catch_test_filter",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/RadCatchTestFilterTest.kt"],
+)
+
+clwb_integration_test(
+    name = "non_blaze_producers",
+    srcs = ["tests/integrationtests/com/google/idea/blaze/clwb/NonBlazeProducerSuppressorTest.kt"],
+)
+
 test_suite(
     name = "integration_tests",
     tests = [
-        ":rad_google_test_filter",
         ":copts_processor",
+        ":non_blaze_producers",
+        ":rad_catch_test_filter",
+        ":rad_google_test_filter",
     ],
 )

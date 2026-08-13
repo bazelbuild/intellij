@@ -38,7 +38,7 @@ intellij_plugin(
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_binary", "java_common", "java_import")
-load(":intellij_plugin_library.bzl", "OptionalPluginXmlInfo", "IntellijPluginLibraryInfo")
+load(":intellij_plugin_library.bzl", "IntellijPluginLibraryInfo", "OptionalPluginXmlInfo")
 
 def _optional_plugin_xml_impl(ctx):
     attr = ctx.attr
@@ -84,7 +84,9 @@ def _synthetic_plugin_id(modules):
     return struct(name = "___".join(modules), is_synthetic = len(modules) > 1)
 
 def _synthetic_dep_file(ctx, modules):
-    synthname = ctx.actions.declare_file("synthetic_" + "_".join(modules[:-1]) + ".xml")
+    # hashed over the whole chain rather than named after its prefix: two chains may share a prefix
+    name = "synthetic_%x.xml" % hash(",".join(modules))
+    synthname = ctx.actions.declare_file(name)
     file = _filename_for_module_dependency(_synthetic_plugin_id(modules).name)
     ctx.actions.write(
         synthname,
@@ -149,7 +151,10 @@ def _merge_optional_plugin_xmls(ctx):
             dependency_file_chain = _create_dependency_file_chain(ctx, xml)
             for module, plugin_xml in dependency_file_chain.items():
                 plugin_xmls = module_to_xmls.setdefault(module, [])
-                plugin_xmls.append(plugin_xml)
+
+                # two libraries depending on the same pair of plugins contribute the same synthetic file
+                if plugin_xml not in plugin_xmls:
+                    plugin_xmls.append(plugin_xml)
 
     # Merge xmls with the same module dependency
     module_to_merged_xmls = {}

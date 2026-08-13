@@ -17,8 +17,7 @@ package com.google.idea.blaze.clwb
 
 import com.google.common.truth.Truth.assertWithMessage
 import com.google.idea.blaze.clwb.base.ClwbIntegrationTestCase
-import com.google.idea.blaze.clwb.radler.RadGoogleTestContextProvider
-import com.google.idea.blaze.clwb.radler.createGoogleTestFilter
+import com.google.idea.blaze.clwb.radler.test.GoogleTestSupport
 import com.jetbrains.rider.model.RadTestElementModel
 import com.jetbrains.rider.model.RadTestFramework
 import org.junit.Test
@@ -63,7 +62,7 @@ class RadGoogleTestFilterTest : ClwbIntegrationTestCase() {
     selects: List<String> = emptyList(),
     excludes: List<String> = emptyList(),
   ) {
-    val filter = createGoogleTestFilter(suite, test)
+    val filter = requireNotNull(GoogleTestSupport().createTestFilter(listOf(gtest(suite, test))))
 
     for (name in selects) {
       assertWithMessage("filter '$filter' for $suite.$test should select '$name'")
@@ -74,6 +73,10 @@ class RadGoogleTestFilterTest : ClwbIntegrationTestCase() {
         .that(matchesGoogleTestFilter(filter, name)).isFalse()
     }
   }
+
+  private fun gtest(suite: String?, test: String?) = RadTestElementModel(
+    RadTestFramework.GTest, suite?.let { arrayOf(it) }, test, null
+  )
 
   private fun matchesGoogleTestFilter(filter: String, testName: String): Boolean {
     val patterns = filter.split(':').filter { it.isNotEmpty() }

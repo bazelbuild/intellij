@@ -32,22 +32,18 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.openapi.application.readAction
 import com.intellij.util.asSafely
 import com.intellij.util.io.await
-import com.jetbrains.rider.model.RadTestElementModel
-import com.jetbrains.rider.model.RadTestFramework
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.ide.PooledThreadExecutor
 import java.util.*
 
-abstract class RadTestContextProvider : TestContextProvider {
+class RadTestContextProvider : TestContextProvider {
 
   override fun getTestContext(context: ConfigurationContext): RunConfigurationContext? {
     val psiElement = context.psiLocation.asSafely<RadTestPsiElement>() ?: return null
 
-    if (psiElement.test.framework != testFramework) {
-      return null
-    }
+    val support = RadTestFrameworkSupport.forFramework(psiElement.test.framework) ?: return null
 
     val target = pluginProjectScope(context.project).async {
       chooseTargetForFile(context, findTargets(context))
@@ -55,13 +51,9 @@ abstract class RadTestContextProvider : TestContextProvider {
 
     return TestContext.builder(psiElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
       .setTarget(target)
-      .setTestFilter(createTestFilter(psiElement.test))
+      .setTestFilter(support.createTestFilter(listOf(psiElement.test)))
       .build()
   }
-
-  protected abstract val testFramework: RadTestFramework
-
-  protected abstract fun createTestFilter(test: RadTestElementModel): String?
 }
 
 private suspend fun findTargets(context: ConfigurationContext): Collection<TargetInfo> {
