@@ -30,9 +30,10 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.components.panels.VerticalLayout;
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /** Settings configurable combining settings from multiple nested configurables. */
 public class BlazeUserSettingsCompositeConfigurable
@@ -50,6 +51,7 @@ public class BlazeUserSettingsCompositeConfigurable
 
   public static final String ID = "blaze.view";
   private static final String DISPLAY_NAME = Blaze.defaultBuildSystemName() + " Settings";
+  private static final String HELP_TOPIC = "reference.bazel";
 
   @Override
   public String getId() {
@@ -59,6 +61,11 @@ public class BlazeUserSettingsCompositeConfigurable
   @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
+  }
+
+  @Override
+  public @Nullable @NonNls String getHelpTopic() {
+    return HELP_TOPIC;
   }
 
   @Override
@@ -89,25 +96,4 @@ public class BlazeUserSettingsCompositeConfigurable
           .forEach(helper::registerText);
     }
   }
-
-  /**
-   * Used if the settings are not applicable for the user's configuration. This ensures that no
-   * artifacts affect the UI.
-   */
-  public static final UnnamedConfigurable EMPTY_CONFIGURABLE =
-      new UnnamedConfigurable() {
-        @Override
-        @Nullable
-        public JComponent createComponent() {
-          return null;
-        }
-
-        @Override
-        public boolean isModified() {
-          return false;
-        }
-
-        @Override
-        public void apply() {}
-      };
 }
