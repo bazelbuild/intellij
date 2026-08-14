@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BazelBinaryUtil;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -48,7 +49,8 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
+import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -58,18 +60,53 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsSyncHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsSyncHandler.ValidationResult;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
+import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-/** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
+/**
+ * Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.).
+ */
 final class ProjectStateSyncTask {
+
+  /** Persisted property which permanently disables {@link #verifyBazelBinary}. */
+  private static final String SKIP_BINARY_VALIDATION_KEY = "bazel.sync.skip.binary.validation";
+
+  /** A {@link BuildIssueQuickFix} which simply runs an action on the project. */
+  private record QuickFix(String id, Consumer<Project> action) implements BuildIssueQuickFix {
+    @Override
+    public @NotNull String getId() {
+      return id;
+    }
+
+    @Override
+    public @NotNull CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
+      action.accept(project);
+      return CompletableFuture.completedFuture(null);
+    }
+  }
+
+  private static final BuildIssueQuickFix OPEN_SETTINGS_FIX =
+      new QuickFix("bazel.settings.bazel.binary.path", ProjectStateSyncTask::showBazelBinarySetting);
+
+  private static final BuildIssueQuickFix SKIP_VALIDATION_FIX =
+      new QuickFix(SKIP_BINARY_VALIDATION_KEY, ProjectStateSyncTask::skipBinaryValidation);
 
   static SyncProjectState collectProjectState(Project project, BlazeContext context, BlazeSyncParams syncParams)
       throws SyncCanceledException, SyncFailedException {
@@ -113,7 +150,9 @@ final class ProjectStateSyncTask {
           context);
       throw new SyncFailedException();
     }
-    ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
+
+    final var projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
+    verifyBazelBinary(context, projectViewSet);
 
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
@@ -200,6 +239,56 @@ final class ProjectStateSyncTask {
                .build();
   }
 
+  /**
+   * Checks that the configured bazel binary can actually be executed. Throws
+   * a {@link SyncFailedException} if the binary is invalid.
+   *
+   * <p>The check is skipped once the user dismissed it via {@link #SKIP_BINARY_VALIDATION_KEY}.
+   */
+  private void verifyBazelBinary(BlazeContext context, ProjectViewSet projectViewSet) throws SyncFailedException {
+    if (PropertiesComponent.getInstance().getBoolean(SKIP_BINARY_VALIDATION_KEY, false)) return;
+
+    final var binaryPath = BazelBinaryUtil.resolvePath(projectViewSet);
+    final var problem = BazelBinaryUtil.validate(binaryPath, workspaceRoot.directory().toPath());
+    if (problem == null) return;
+
+    final var msg = switch (problem) {
+      case NOT_CONFIGURED -> "no binary is configured";
+      case INVALID_PATH -> String.format("not a valid path: %s", binaryPath);
+      case DOES_NOT_EXIST -> String.format("binary not found: %s", binaryPath);
+      case IS_A_DIRECTORY -> String.format("binary is a directory: %s", binaryPath);
+      case NOT_EXECUTABLE -> String.format("binary is not executable: %s", binaryPath);
+    };
+
+    IssueOutput.error("Invalid Bazel binary")
+        .withDescription(
+            "The Bazel binary could not be executed, " + msg + "\n" +
+            "The location is configured in the Bazel Settings, " +
+            "and can be overridden per project by the 'bazel_binary' section of the project view file."
+        )
+        .withOnClick(ProjectStateSyncTask::showBazelBinarySetting)
+        .withFix("Open the Bazel settings", OPEN_SETTINGS_FIX)
+        .withFix("Disable this check and retry the sync", SKIP_VALIDATION_FIX)
+        .submit(context);
+
+    throw new SyncFailedException();
+  }
+
+  private static void skipBinaryValidation(Project project) {
+    PropertiesComponent.getInstance().setValue(SKIP_BINARY_VALIDATION_KEY, true);
+    BlazeSyncManager.getInstance(project).incrementalProjectSync("BazelBinaryValidationSkipped");
+  }
+
+  private static void showBazelBinarySetting(Project project) {
+    ApplicationManager.getApplication().invokeLater(() ->
+        ShowSettingsUtilImpl.showSettingsDialog(
+            project,
+            BlazeUserSettingsCompositeConfigurable.ID,
+            BlazeUserSettingsConfigurable.BAZEL_BINARY_PATH.label()
+        )
+    );
+  }
+
   private ListenableFuture<BlazeInfo> createBazelInfoFuture(
       BlazeContext context,
       List<String> syncFlags,
@@ -207,16 +296,16 @@ final class ProjectStateSyncTask {
     boolean useBazelInfoRunner = !BlazeInfoProvider.isEnabled() || syncMode == SyncMode.FULL;
     if (useBazelInfoRunner) {
       return BlazeInfoRunner.getInstance()
-                 .runBlazeInfo(
-                     project,
-                     context,
-                     importSettings.getBuildSystem(),
-                     syncFlags);
+          .runBlazeInfo(
+              project,
+              context,
+              importSettings.getBuildSystem(),
+              syncFlags);
     }
     return BlazeInfoProvider.getInstance(project)
-               .getBlazeInfo(
-                   context,
-                   syncFlags);
+        .getBlazeInfo(
+            context,
+            syncFlags);
   }
 
   private ExternalWorkspaceData getExternalWorkspaceData(
@@ -235,6 +324,7 @@ final class ProjectStateSyncTask {
   }
 
   private static class WorkspacePathResolverAndProjectView {
+
     final WorkspacePathResolver workspacePathResolver;
     final ProjectViewSet projectViewSet;
 
@@ -252,7 +342,7 @@ final class ProjectStateSyncTask {
 
     for (int i = 0; i < 3; ++i) {
       WorkspacePathResolver vcsWorkspacePathResolver = null;
-      BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler = vcsHandler.createSyncHandler();
+      BlazeVcsSyncHandler vcsSyncHandler = vcsHandler.createSyncHandler();
       if (vcsSyncHandler != null) {
         boolean ok =
             Scope.push(
@@ -283,7 +373,7 @@ final class ProjectStateSyncTask {
       }
 
       if (vcsSyncHandler != null) {
-        BlazeVcsHandlerProvider.BlazeVcsSyncHandler.ValidationResult validationResult =
+        ValidationResult validationResult =
             vcsSyncHandler.validateProjectView(context, projectViewSet);
         switch (validationResult) {
           case OK:

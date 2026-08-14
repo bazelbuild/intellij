@@ -122,7 +122,7 @@ class IssueOutput(
       }
 
       for ((description, fix) in fixes) {
-        builder.append("$description (<a href=\"${fix.id}\">click here</a>)")
+        builder.append("$description (<a href=\"${fix.id}\">click here</a>)\n")
       }
 
       val issue = object : BuildIssue {

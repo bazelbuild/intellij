@@ -34,9 +34,6 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.execution.BazelGuard;
 import com.google.idea.blaze.base.execution.ExecutionDeniedException;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -58,7 +55,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 /** A local Blaze/Bazel invoker that issues commands via CLI. */
 public class LocalInvoker extends AbstractBuildInvoker {
@@ -244,15 +240,6 @@ public class LocalInvoker extends AbstractBuildInvoker {
         || binaryType.equals(BuildBinaryType.BLAZE_CUSTOM)) {
       return BlazeUserSettings.getInstance().getBlazeBinaryPath();
     }
-    File projectSpecificBinary = null;
-    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectView != null) {
-      projectSpecificBinary = projectView.getScalarValue(BazelBinarySection.KEY).orElse(null);
-    }
-
-    if (projectSpecificBinary != null) {
-      return projectSpecificBinary.getPath();
-    }
-    return BlazeUserSettings.getInstance().getBazelBinaryPath();
+    return BazelBinaryUtil.resolvePath(project);
   }
 }

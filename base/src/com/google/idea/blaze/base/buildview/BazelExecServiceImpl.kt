@@ -19,6 +19,7 @@ package com.google.idea.blaze.base.buildview
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent
 import com.google.errorprone.annotations.MustBeClosed
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream
+import com.google.idea.blaze.base.bazel.BazelBinaryUtil
 import com.google.idea.blaze.base.buildview.events.BuildEventParser
 import com.google.idea.blaze.base.command.BlazeCommand
 import com.google.idea.blaze.base.command.BlazeCommandName
@@ -28,11 +29,8 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultParser
 import com.google.idea.blaze.base.execution.BazelGuard
 import com.google.idea.blaze.base.execution.ExecutionDeniedException
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot
-import com.google.idea.blaze.base.projectview.ProjectViewManager
-import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection
 import com.google.idea.blaze.base.scope.BlazeContext
 import com.google.idea.blaze.base.scope.output.IssueOutput
-import com.google.idea.blaze.base.settings.BlazeUserSettings
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs
 import com.google.idea.blaze.common.Interners
 import com.google.idea.blaze.common.PrintOutput
@@ -67,13 +65,6 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     } catch (e: ExecutionDeniedException) {
       throw ExecutionException("Bazel execution denied: project is not trusted", e)
     }
-  }
-
-  private fun resolveBinaryPath(): String {
-    return Optional.ofNullable(ProjectViewManager.getInstance(project).projectViewSet)
-      .flatMap { it.getScalarValue(BazelBinarySection.KEY) }
-      .map { it.path }
-      .orElseGet { BlazeUserSettings.getInstance().bazelBinaryPath }
   }
 
   private fun assertNonBlocking() {
@@ -129,7 +120,7 @@ class BazelExecServiceImpl(private val project: Project, private val scope: Coro
     }
 
     cmdLine
-      .withExePath(resolveBinaryPath())
+      .withExePath(BazelBinaryUtil.resolvePath(project))
       .withParameters(cmd.toArgumentList())
       .withEnvironment(cmd.environment())
       .withWorkDirectory(root.pathString)
