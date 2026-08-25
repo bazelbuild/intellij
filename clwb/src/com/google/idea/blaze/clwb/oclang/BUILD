@@ -18,7 +18,6 @@ intellij_plugin_library(
     name = "oclang",
     visibility = ["//clwb:__subpackages__"],
     deps = select_for_version({
-        "2025.3": [":lib"],
         "2026.1": [":lib"],
     }),
 )

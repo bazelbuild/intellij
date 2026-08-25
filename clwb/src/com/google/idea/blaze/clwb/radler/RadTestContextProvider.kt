@@ -35,6 +35,7 @@ import com.intellij.util.io.await
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.guava.asListenableFuture
 import org.jetbrains.ide.PooledThreadExecutor
 import java.util.*
 
@@ -64,16 +65,6 @@ private suspend fun findTargets(context: ConfigurationContext): Collection<Targe
     virtualFile.toNioPath().toFile(),
     Optional.of(RuleType.TEST),
   ).await()
-}
-
-/**
- * Temporary workaround for converting Deferred to ListenableFuture since kotlinx.coroutines.guava.asListenableFuture is
- * not available due to some bundling issues of CLion 252 and 253.
- *
- * #api253
- */
-private fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
-  return JdkFutureAdapters.listenInPoolThread(asCompletableFuture(), PooledThreadExecutor.INSTANCE)
 }
 
 private suspend fun chooseTargetForFile(context: ConfigurationContext, targets: Collection<TargetInfo>): TargetInfo? {

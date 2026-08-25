@@ -83,7 +83,7 @@ If the IDE refuses to load the plugin because of version issues, specify the cor
 * `latest-stable`
 * `under-dev`.
 
-Alternatively, for you can set `ij_product` to direct CLion versions, for example `clion-2025.2`.
+Alternatively, for you can set `ij_product` to direct CLion versions, for example `clion-2026.1`.
 
 `<IDE>-oss-oldest-stable` and `<IDE>-oss-latest-stable` are aliases for the two IDE versions
 that the plugin is officially compatible with at a given time. `<IDE>-oss-latest-stable` usually 

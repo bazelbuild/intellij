@@ -34,7 +34,7 @@ kt_jvm_library(
 
 kt_jvm_library(
     name = "v262_radler",
-    srcs = glob(["com/google/idea/sdkcompat/radler/**"]),  #api253
+    srcs = glob(["com/google/idea/sdkcompat/radler/**"]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep

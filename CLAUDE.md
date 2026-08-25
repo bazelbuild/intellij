@@ -25,7 +25,7 @@ The `ij_product` flag controls which IDE version to build for:
 - `clion-oss-oldest-stable` - Oldest supported IDE version
 - `clion-oss-latest-stable` - Latest supported IDE version
 - `clion-oss-under-dev` - Upcoming IDE version being worked on
-- Direct versions: `clion-2025.2`, `clion-2025.3`, etc.
+- Direct versions: `clion-2026.1`, `clion-2026.2`, etc.
 
 Version mappings are defined in `intellij_platform_sdk/build_defs.bzl`.
 
@@ -187,7 +187,7 @@ The plugin supports multiple IntelliJ versions simultaneously. SDK compatibility
 - `/sdkcompat` - Production compatibility code
 - `/testing/testcompat` - Test-only compatibility code
 
-Each directory contains version-specific subdirectories (e.g., `v252/`, `v253/`).
+Each directory contains version-specific subdirectories (e.g., `v261/`, `v262/`).
 
 Three patterns for handling incompatibilities:
 1. **Compat** - Static utility methods wrapping changed APIs

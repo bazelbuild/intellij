@@ -5,8 +5,8 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "clion-oss-oldest-stable": "clion-2025.3",
-    "clion-oss-latest-stable": "clion-2026.1",
+    "clion-oss-oldest-stable": "clion-2026.1",
+    "clion-oss-latest-stable": "clion-2026.2",
     "clion-oss-under-dev": "clion-2026.2",
 }
 
@@ -47,7 +47,7 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2025.3", "2026.1", "2026.2"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2026.1", "2026.2"])
 
 def define_ij_product_settings():
     """Defines a config_setting per ij_product (direct and indirect) and a
@@ -60,14 +60,18 @@ def define_ij_product_settings():
             values = {"define": "ij_product=" + ij_product},
         )
 
-    for indirect, direct in INDIRECT_IJ_PRODUCTS.items():
+    for indirect in INDIRECT_IJ_PRODUCTS.keys():
         native.config_setting(
             name = indirect,
             values = {"define": "ij_product=" + indirect},
         )
+
+    for direct in set(INDIRECT_IJ_PRODUCTS.values()):
+        indirect_products = [":" + indirect for (indirect, it) in INDIRECT_IJ_PRODUCTS.items() if it == direct]
+
         selects.config_setting_group(
             name = direct + "-or-alias",
-            match_any = [":" + direct, ":" + indirect],
+            match_any = [":" + direct] + indirect_products,
         )
 
 def _do_select_for_plugin_api(params):

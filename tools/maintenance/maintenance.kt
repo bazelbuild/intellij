@@ -33,8 +33,6 @@ import javax.xml.parsers.DocumentBuilderFactory
 fun main(args: Array<String>) {
   var content = Files.readString(Path.of(args[0]))
 
-  content = bumpSdk("2025.3", eap = false, content)
-  content = bumpPythonPlugin("253", content)
   content = bumpSdk("2026.1", eap = false, content)
   content = bumpPythonPlugin("261", content)
   content = bumpSdk("2026.2", eap = false, content)

@@ -21,7 +21,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.jetbrains.cidr.execution.CidrCommandLineState
 import com.jetbrains.cidr.execution.CidrRunner
 
-// #api253
+// #api261
 object XDebugSessionCompat {
     @JvmStatic
     fun getRunContentDescriptor(
