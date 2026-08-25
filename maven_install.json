@@ -9,13 +9,13 @@
     "com.google.flogger:flogger": 1661800041,
     "com.google.flogger:flogger-system-backend": -285378212,
     "com.google.guava:failureaccess": -2032498474,
-    "com.google.guava:guava": -249069712,
+    "com.google.guava:guava": 965079090,
     "com.google.j2objc:j2objc-annotations": -26400317,
     "com.google.truth:truth": 1696781452,
     "com.googlecode.java-diff-utils:diffutils": -433021253,
     "junit:junit": -744267592,
     "net.bytebuddy:byte-buddy": -1875367778,
-    "net.bytebuddy:byte-buddy-agent": 1759328918,
+    "net.bytebuddy:byte-buddy-agent": -48125545,
     "net.java.dev.jna:jna": -867910362,
     "net.java.dev.jna:jna-platform": -561312286,
     "org.hamcrest:hamcrest-core": 477294799,
@@ -24,7 +24,7 @@
     "org.jetbrains.pty4j:pty4j": 1622800979,
     "org.jetbrains:annotations": 989775437,
     "org.mockito:mockito-core": 1330163800,
-    "org.objenesis:objenesis": -1059077808,
+    "org.objenesis:objenesis": 1428435025,
     "org.opentest4j:opentest4j": 36565236,
     "repositories": 1485828590
   },
@@ -34,17 +34,17 @@
     "com.google.code.findbugs:jsr305": 377355476,
     "com.google.code.gson:gson": -1633322735,
     "com.google.errorprone:error_prone_annotations": -982741075,
-    "com.google.flogger:flogger": -539652174,
-    "com.google.flogger:flogger-system-backend": 1340066852,
+    "com.google.flogger:flogger": -1724631034,
+    "com.google.flogger:flogger-system-backend": -2025959469,
     "com.google.guava:failureaccess": 120263671,
-    "com.google.guava:guava": 690689650,
+    "com.google.guava:guava": -1863811603,
     "com.google.guava:listenablefuture": 2001005618,
     "com.google.j2objc:j2objc-annotations": -77575218,
-    "com.google.truth:truth": 812549237,
+    "com.google.truth:truth": 371343500,
     "com.googlecode.java-diff-utils:diffutils": -1594449752,
     "junit:junit": 64898858,
     "net.bytebuddy:byte-buddy": -1652750039,
-    "net.bytebuddy:byte-buddy-agent": 1599327931,
+    "net.bytebuddy:byte-buddy-agent": 417366852,
     "net.java.dev.jna:jna": -593584636,
     "net.java.dev.jna:jna-platform": 1744032122,
     "org.hamcrest:hamcrest": -2067871445,
@@ -55,9 +55,9 @@
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1681628020,
     "org.jetbrains.pty4j:pty4j": 1746746875,
     "org.jetbrains:annotations": 1361021425,
-    "org.jspecify:jspecify": 463317310,
-    "org.mockito:mockito-core": 548845763,
-    "org.objenesis:objenesis": 1321346345,
+    "org.jspecify:jspecify": 664233727,
+    "org.mockito:mockito-core": 1577560633,
+    "org.objenesis:objenesis": -1243511454,
     "org.opentest4j:opentest4j": -408028435,
     "org.ow2.asm:asm": 49325259,
     "org.slf4j:slf4j-api": 1670924319
@@ -116,9 +116,9 @@
     },
     "com.google.guava:guava": {
       "shasums": {
-        "jar": "dc573e1fca4fd5454f4a5fd3d7da2df03002876a4175bafc14a95980dd7713b3"
+        "jar": "796d8e28ac64e83a47c4c5935a8fecc4682650a04bbdead738ef0f5a3a0e6c46"
       },
-      "version": "33.6.0-jre"
+      "version": "33.7.1-jre"
     },
     "com.google.guava:listenablefuture": {
       "shasums": {
@@ -158,9 +158,9 @@
     },
     "net.bytebuddy:byte-buddy-agent": {
       "shasums": {
-        "jar": "780b3601c34150ab9fb822673c472f7229c1041e8e2a12facf6a5de9ba7a2d64"
+        "jar": "287703bea3473edf89e1b373a097e49bad04ed48b85796228f68b1474dc93cf8"
       },
-      "version": "1.18.11"
+      "version": "1.18.12"
     },
     "net.java.dev.jna:jna": {
       "shasums": {
@@ -224,9 +224,9 @@
     },
     "org.jspecify:jspecify": {
       "shasums": {
-        "jar": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+        "jar": "070d75f261fe4c5b8202508366715f7f2d4660f88c8ef7e6d3575e48c9683b66"
       },
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     "org.mockito:mockito-core": {
       "shasums": {
@@ -236,9 +236,9 @@
     },
     "org.objenesis:objenesis": {
       "shasums": {
-        "jar": "6f5abd42cf3ebc0f2bdae73dbc57820fc4a1cb8930492841e29e9a9f9dcc86e0"
+        "jar": "6ecc0fc776af04e2bfd2bf42d618ab5161440dcb8a0e7dff9e84c065c7cec3dd"
       },
-      "version": "3.5"
+      "version": "3.6"
     },
     "org.opentest4j:opentest4j": {
       "shasums": {
@@ -326,20 +326,12 @@
       "autovalue.shaded.com.google.auto.service",
       "autovalue.shaded.com.google.common.annotations",
       "autovalue.shaded.com.google.common.base",
-      "autovalue.shaded.com.google.common.cache",
       "autovalue.shaded.com.google.common.collect",
-      "autovalue.shaded.com.google.common.escape",
-      "autovalue.shaded.com.google.common.eventbus",
-      "autovalue.shaded.com.google.common.graph",
       "autovalue.shaded.com.google.common.hash",
-      "autovalue.shaded.com.google.common.html",
       "autovalue.shaded.com.google.common.io",
       "autovalue.shaded.com.google.common.math",
-      "autovalue.shaded.com.google.common.net",
       "autovalue.shaded.com.google.common.primitives",
       "autovalue.shaded.com.google.common.reflect",
-      "autovalue.shaded.com.google.common.util.concurrent",
-      "autovalue.shaded.com.google.common.xml",
       "autovalue.shaded.com.google.errorprone.annotations",
       "autovalue.shaded.com.google.errorprone.annotations.concurrent",
       "autovalue.shaded.com.google.escapevelocity",
