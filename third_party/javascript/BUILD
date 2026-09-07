@@ -12,6 +12,7 @@ java_library(
     exports = select_for_version({
         "2026.1": ["@clion_2026_1//:javascript"],
         "2026.2": ["@clion_2026_2//:javascript"],
+        "2026.3": ["@clion_2026_3//:javascript"],
     }),
 )
 
@@ -22,6 +23,7 @@ java_library(
     exports = select_for_version({
         "2026.1": ["@clion_2026_1//:css"],
         "2026.2": ["@clion_2026_2//:css"],
+        "2026.3": ["@clion_2026_3//:css"],
     }),
 )
 
@@ -32,6 +34,7 @@ java_library(
     exports = select_for_version({
         "2026.1": ["@clion_2026_1//:tslint"],
         "2026.2": ["@clion_2026_2//:tslint"],
+        "2026.3": ["@clion_2026_3//:tslint"],
     }),
 )
 

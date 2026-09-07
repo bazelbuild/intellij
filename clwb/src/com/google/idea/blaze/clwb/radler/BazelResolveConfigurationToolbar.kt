@@ -216,7 +216,7 @@ private class BazelConfigSwitchComboAction(
     }
 
     if (configurations.isEmpty()) return null
-    val current = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys).first
+    val current = OCResolveConfigurations.findPreselectedOrSuitableConfiguration(project, configurations.keys).first ?: return null
     val selected = OCResolveContextSettingsCompat.findPriorityConfiguration(OCResolveContextSettings.getInstance(project), configurations.keys)
 
     return SwitcherState(

@@ -7,7 +7,7 @@ load("@rules_java//java:defs.bzl", "java_import")
 INDIRECT_IJ_PRODUCTS = {
     "clion-oss-oldest-stable": "clion-2026.1",
     "clion-oss-latest-stable": "clion-2026.2",
-    "clion-oss-under-dev": "clion-2026.2",
+    "clion-oss-under-dev": "clion-2026.3",
 }
 
 (CHANNEL_STABLE, CHANNEL_BETA, CHANNEL_CANARY, CHANNEL_FREEFORM) = ("stable", "beta", "canary", "freeform")
@@ -47,7 +47,7 @@ def _build_ij_product_dict(versions):
 
     return result
 
-DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2026.1", "2026.2"])
+DIRECT_IJ_PRODUCTS = _build_ij_product_dict(["2026.1", "2026.2", "2026.3"])
 
 def define_ij_product_settings():
     """Defines a config_setting per ij_product (direct and indirect) and a
