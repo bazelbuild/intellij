@@ -19,7 +19,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 licenses(["notice"])
 
 kt_jvm_library(
-    name = "v262",
+    name = "v263",
     srcs = glob([
         "com/google/idea/sdkcompat/clion/**",
         "com/google/idea/sdkcompat/javascript/**",
@@ -35,7 +35,7 @@ kt_jvm_library(
 )
 
 kt_jvm_library(
-    name = "v262_radler",
+    name = "v263_radler",
     srcs = glob(["com/google/idea/sdkcompat/radler/**"]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
