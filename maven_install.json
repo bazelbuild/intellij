@@ -14,14 +14,14 @@
     "com.google.truth:truth": 1696781452,
     "com.googlecode.java-diff-utils:diffutils": -433021253,
     "junit:junit": -744267592,
-    "net.bytebuddy:byte-buddy": -1875367778,
-    "net.bytebuddy:byte-buddy-agent": -48125545,
+    "net.bytebuddy:byte-buddy": -1195309408,
+    "net.bytebuddy:byte-buddy-agent": -1855580008,
     "net.java.dev.jna:jna": -867910362,
     "net.java.dev.jna:jna-platform": -561312286,
     "org.hamcrest:hamcrest-core": 477294799,
     "org.jetbrains.kotlin:kotlin-stdlib": 52847824,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": -261545747,
-    "org.jetbrains.pty4j:pty4j": 1622800979,
+    "org.jetbrains.pty4j:pty4j": -184653484,
     "org.jetbrains:annotations": 989775437,
     "org.mockito:mockito-core": 1330163800,
     "org.objenesis:objenesis": 1428435025,
@@ -43,8 +43,8 @@
     "com.google.truth:truth": 371343500,
     "com.googlecode.java-diff-utils:diffutils": -1594449752,
     "junit:junit": 64898858,
-    "net.bytebuddy:byte-buddy": -1652750039,
-    "net.bytebuddy:byte-buddy-agent": 417366852,
+    "net.bytebuddy:byte-buddy": -485669461,
+    "net.bytebuddy:byte-buddy-agent": 466611397,
     "net.java.dev.jna:jna": -593584636,
     "net.java.dev.jna:jna-platform": 1744032122,
     "org.hamcrest:hamcrest": -2067871445,
@@ -53,10 +53,10 @@
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": 1066920260,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": -2019062389,
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1681628020,
-    "org.jetbrains.pty4j:pty4j": 1746746875,
+    "org.jetbrains.pty4j:pty4j": 1166328261,
     "org.jetbrains:annotations": 1361021425,
     "org.jspecify:jspecify": 664233727,
-    "org.mockito:mockito-core": 1577560633,
+    "org.mockito:mockito-core": -1279283521,
     "org.objenesis:objenesis": -1243511454,
     "org.opentest4j:opentest4j": -408028435,
     "org.ow2.asm:asm": 49325259,
@@ -152,15 +152,15 @@
     },
     "net.bytebuddy:byte-buddy": {
       "shasums": {
-        "jar": "e32f454c2c1f4aca982f9ec764ed892d9a6eee7e8a77f435cbdd180f6ffdb821"
+        "jar": "aa0013fbcb7e8086f4775f3dcb69a6c6833f7fd9023fe027d2d0241834cc51d5"
       },
-      "version": "1.18.11"
+      "version": "1.18.13"
     },
     "net.bytebuddy:byte-buddy-agent": {
       "shasums": {
-        "jar": "287703bea3473edf89e1b373a097e49bad04ed48b85796228f68b1474dc93cf8"
+        "jar": "990c630297fb8c84fea5b16085a4b3035b81748084a94a98f0b9dc0c5d63d499"
       },
-      "version": "1.18.12"
+      "version": "1.18.13"
     },
     "net.java.dev.jna:jna": {
       "shasums": {
@@ -212,9 +212,9 @@
     },
     "org.jetbrains.pty4j:pty4j": {
       "shasums": {
-        "jar": "da86078dafc3c4e4e3a497981df9794e5d9ed081963ad9561d0e69657f2475d4"
+        "jar": "e9bf5de4703d14e175d846f267e41291896caa9d4cecc365a17178e4612b2fd7"
       },
-      "version": "0.13.12"
+      "version": "0.13.13"
     },
     "org.jetbrains:annotations": {
       "shasums": {
