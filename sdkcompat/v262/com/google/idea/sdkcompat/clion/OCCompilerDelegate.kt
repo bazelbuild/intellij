@@ -47,13 +47,12 @@ abstract class OCCompilerDelegate(val delegate: OCCompilerKind) : OCCompilerKind
     tempFilesPool: TempFilesPool,
     cache: OCCompilerResolverCache
   ): OCCompiler {
-    return delegate.getCompilerInstance(
+    return getCompilerInstance(
       project,
       compilerExecutable,
       compilerWorkingDirectory,
       environment,
-      tempFilesPool,
-      cache
+      tempFilesPool
     )
   }
 }

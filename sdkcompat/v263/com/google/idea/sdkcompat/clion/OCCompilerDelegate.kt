@@ -42,6 +42,11 @@ abstract class OCCompilerDelegate(val delegate: OCCompilerKind) : OCCompilerKind
     return delegate.getCommandLineShortener()
   }
 
+  /**
+   * Mirrors the default implementation of [OCCompilerKind], which forwards to the overload without
+   * `OCCompilerResolverCache`. Forwarding to [delegate] instead would bypass subclass overrides of
+   * that overload, since `OCCompilerBase.getCompilerInstance` only ever calls this one.
+   */
   override fun getCompilerInstance(
     project: Project,
     compilerExecutable: File,
@@ -50,13 +55,12 @@ abstract class OCCompilerDelegate(val delegate: OCCompilerKind) : OCCompilerKind
     tempFilesPool: TempFilesPool,
     cache: OCCompilerResolverCache
   ): OCCompiler {
-    return delegate.getCompilerInstance(
+    return getCompilerInstance(
       project,
       compilerExecutable,
       compilerWorkingDirectory,
       environment,
-      tempFilesPool,
-      cache
+      tempFilesPool
     )
   }
 }
