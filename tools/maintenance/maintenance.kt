@@ -37,6 +37,8 @@ fun main(args: Array<String>) {
   content = bumpPythonPlugin("261", content)
   content = bumpSdk("2026.2", eap = false, content)
   content = bumpPythonPlugin("262", content)
+  content = bumpSdk("263", eap = true, content)
+  content = bumpPythonPlugin("263", content)
 
   Files.writeString(Paths.get("${args[0]}.out"), content,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 }
