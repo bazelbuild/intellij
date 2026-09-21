@@ -134,15 +134,15 @@ test_suite(
     visibility = ["//visibility:public"],
 )
 
-# When enabled, headless/integration tests run with the new IntelliJ split aspect instead of the legacy bundled aspect.
+# When enabled, headless/integration tests run with the legacy bundled aspect instead of the new IntelliJ aspect.
 bool_flag(
-    name = "use_intellij_aspect",
+    name = "use_legacy_aspect",
     build_setting_default = False,
 )
 
 config_setting(
-    name = "intellij_aspect_enabled",
-    flag_values = {":use_intellij_aspect": "True"},
+    name = "legacy_aspect_enabled",
+    flag_values = {":use_legacy_aspect": "True"},
 )
 
 clwb_headless_test(
