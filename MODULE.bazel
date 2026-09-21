@@ -167,6 +167,13 @@ intellij_platform.sdk(
     sha256 = "e5b31027a5221ce9644d2872cfade77f46eae2c53ee606292801fab73dca0bf8",
     version = "2026.2.1",
 )
+intellij_platform.sdk(
+    name = "clion",
+    alias = "clion_2026_3",
+    build_file = "//intellij_platform_sdk:BUILD.clion263",
+    sha256 = "c4c7e36bbb66cce9152436da04b06d68e928823b844943b4b7efdb296bb7b628",
+    version = "263.3889.68-EAP-SNAPSHOT",
+)
 intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2026_1",
@@ -181,13 +188,22 @@ intellij_platform.plugin(
     sha256 = "d6046f360cae5cc6d027cc9d12f9bf5c1a40123f99f7bd3746bb0f2d8fbec41c",
     version = "262.9437.185",
 )
-use_repo(intellij_platform, "clion_2026_1", "clion_2026_2", "jbr_25_0_3", "python_2026_1", "python_2026_2")
+intellij_platform.plugin(
+    name = "PythonCore",
+    alias = "python_2026_3",
+    build_file = "//intellij_platform_sdk:BUILD.python",
+    sha256 = "dafebc86263769f42d4c264497d6e851638c359eed0aa14eced9797754beb667",
+    version = "263.3889.65",
+)
+use_repo(intellij_platform, "clion_2026_1", "clion_2026_2", "clion_2026_3", "jbr_25_0_3", "python_2026_1", "python_2026_2", "python_2026_3")
 
 register_toolchains(
     "@clion_2026_1//:runtime",
     "@clion_2026_1//:bootstrap_runtime",
     "@clion_2026_2//:runtime",
     "@clion_2026_2//:bootstrap_runtime",
+    "@clion_2026_3//:runtime",
+    "@clion_2026_3//:bootstrap_runtime",
 )
 
 # build tools deploy jars for the tools required by the plugin

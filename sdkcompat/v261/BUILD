@@ -23,12 +23,14 @@ kt_jvm_library(
     srcs = glob([
         "com/google/idea/sdkcompat/clion/**",
         "com/google/idea/sdkcompat/javascript/**",
+        "com/google/idea/sdkcompat/python/**",
     ]),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
         "//third_party/javascript",
+        "//third_party/python",
     ],
 )
 

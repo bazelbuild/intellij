@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.cpp
 
+import com.google.idea.sdkcompat.clion.OCCompilerDelegate
 import com.intellij.openapi.project.Project
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 import com.jetbrains.cidr.lang.workspace.compiler.AppleClangCompilerKind
@@ -40,7 +41,7 @@ import java.io.File
  * workspace model, because they are not subtypes of the stock kinds. Nova checks the compiler kind
  * with `is ClangCompilerKind` and silently drops all clang extensions otherwise (CPP-51220).
  */
-open class BazelCompilerKind(val delegate: OCCompilerKind) : OCCompilerKind by delegate {
+open class BazelCompilerKind(delegate: OCCompilerKind) : OCCompilerDelegate(delegate) {
 
   override fun getCompilerInstance(
     project: Project,
