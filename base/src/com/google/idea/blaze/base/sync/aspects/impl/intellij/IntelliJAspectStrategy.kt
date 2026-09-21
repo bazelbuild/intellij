@@ -70,7 +70,7 @@ class IntelliJAspectStrategy : AspectStrategy() {
   }
 }
 
-private fun toAspectRules(active: Set<LanguageClass>): Set<Rules> = buildSet {
+internal fun toAspectRules(active: Set<LanguageClass>): Set<Rules> = buildSet {
   if (LanguageClass.C in active) add(Rules.CC)
   if (LanguageClass.PYTHON in active) add(Rules.PYTHON)
 }
