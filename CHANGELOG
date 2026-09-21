@@ -1,3 +1,8 @@
+v2026.09.21
+===========
+* Report a clear error when the configured Bazel binary cannot be executed #8442
+* Drop 2025.3 support and promote 2026.2 to stable #8438
+
 v2026.08.13
 ===========
 * Add test navigation and filtering support for Catch2 and Google Test #8431
