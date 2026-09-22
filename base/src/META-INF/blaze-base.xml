@@ -194,7 +194,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
-    <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
     <postStartupActivity implementation="com.google.idea.blaze.base.project.OpenProjectViewStartupActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.run.state.LegacyBlazeFlagsMigrationNotifier"/>
@@ -236,7 +235,6 @@
 
     <applicationService serviceInterface="com.google.idea.blaze.base.async.executor.BlazeExecutor"
                         serviceImplementation="com.google.idea.blaze.base.async.executor.BlazeExecutorImpl"/>
-    <fileDocumentManagerListener implementation="com.google.idea.blaze.base.buildmodifier.BuildFileFormatOnSaveHandler" order="first"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.io.InputStreamProvider"
                         serviceImplementation="com.google.idea.blaze.base.io.InputStreamProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.io.FileOperationProvider"
@@ -452,6 +450,7 @@
     <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.editor.BazelEditorTabTitleProvider"/>
     <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
+    <actionOnSave id="BuildFileFormatOnSaveAction" implementation="com.google.idea.blaze.base.buildmodifier.BuildFileFormatOnSaveAction"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -554,7 +553,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CommonMacroContributor" interface="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryPathRemapper" interface="com.google.idea.blaze.base.async.process.BinaryPathRemapper"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.CustomFormatter" interface="com.google.idea.blaze.base.formatter.CustomFormatter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildEventParser" interface="com.google.idea.blaze.base.buildview.events.BuildEventParser" />
@@ -644,7 +642,6 @@
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
     <MacroTargetProvider implementation="com.google.idea.blaze.base.query.BlazeQueryMacroTargetProvider" order="last"/>
     <BinaryPathRemapper implementation="com.google.idea.blaze.base.async.process.MacBinaryPathRemapper" order="last"/>
-    <CustomFormatter implementation="com.google.idea.blaze.base.buildmodifier.BuildifierCustomFormatter"/>
     <ArtifactStateHelper implementation="com.google.idea.blaze.base.filecache.LocalArtifactStateProtoConverter"/>
     <!-- Order of loaders is important. If a value for the same experiment defined in a few sources, then the first has higher priority. -->
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
