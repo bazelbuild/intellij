@@ -83,7 +83,7 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
 
   @Override
   public boolean canFormat(PsiFile file) {
-    return file instanceof BuildFile && getBinary(file.getProject()).isPresent();
+    return file instanceof BuildFile;
   }
 
   private static Optional<String> getBinary(Project project) {
