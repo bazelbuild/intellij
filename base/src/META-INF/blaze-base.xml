@@ -387,7 +387,7 @@
     <registryKey defaultValue="false"
                  description="Mark execroot as dirty before refresh after sync"
                  key="bazel.sync.mark.dirty"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Use the new IntelliJ split aspect (intellij_aspect_sdk) instead of the bundled legacy aspect. Switching this setting requires a full re-sync."
                  key="bazel.sync.use.intellij.aspect"/>
   </extensions>
