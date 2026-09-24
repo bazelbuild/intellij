@@ -20,7 +20,7 @@ java_library(
         "//third_party:flogger",
         "//third_party:guava",
         "//third_party:jsr305",
-        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/analysis:analysis_cluster",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/analysis:analysis_core",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/cmdline",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/collect:extrema",
