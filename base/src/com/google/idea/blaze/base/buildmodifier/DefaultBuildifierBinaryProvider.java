@@ -40,12 +40,6 @@ public class DefaultBuildifierBinaryProvider implements BuildifierBinaryProvider
       return relativeBinaryFile.getPath();
     }
 
-    if (BuildifierDownloader.canDownload()) {
-      BuildifierNotification.showDownloadNotification(project);
-    } else {
-      BuildifierNotification.showNotFoundNotification();
-    }
-
     return null;
   }
 }
