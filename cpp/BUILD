@@ -24,6 +24,7 @@ kt_jvm_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/util:datafiles",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
@@ -41,6 +42,7 @@ stamped_plugin_xml(
 
 intellij_plugin_library(
     name = "plugin_library",
+    data = {"xcode/xcode_query.bzl": "src/com/google/idea/blaze/cpp/xcode_query.bzl"},
     plugin_xmls = [":plugin_xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],

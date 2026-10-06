@@ -32,8 +32,8 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException.IssueKind;
+import com.google.idea.common.util.Datafiles;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.ByteArrayOutputStream;
@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
@@ -54,7 +55,8 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
   // provides the current xcode version but is not available in Bazel 9 anymore
   private static final String CURRENT_XCODE_CONFIG_TARGET = "@bazel_tools//tools/osx:current_xcode_config";
 
-  private static final String QUERY_STARLARK_FILE = "xcode_query.bzl";
+  // bundled as a data file of the plugin, see cpp/BUILD
+  private static final String QUERY_STARLARK_FILE = "xcode/xcode_query.bzl";
   
   // This only exists because it's impossible to escape a `deps()` query expression correctly in a Java string.
   private static final String[] QUERY_XCODE_VERSION_SCRIPT_LINES = new String[]{
@@ -70,15 +72,10 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
   public Optional<XcodeCompilerSettings> fromContext(BlazeContext context, Project project, BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    BuildSystem.BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
+    BuildSystem.BuildInvoker invoker = Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
 
-    Optional<XcodeAndSdkVersions> xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(
-        context, 
-        invoker,
-        workspaceRoot,
-        project,
-        projectData);
+    final var xcodeAndSdkVersions = XcodeCompilerSettingsProviderImpl.queryXcodeAndSdkVersions(
+        context, invoker, workspaceRoot, projectData);
 
     if (!xcodeAndSdkVersions.isPresent()) {
       return Optional.empty();
@@ -216,17 +213,8 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       BlazeContext context,
       BuildInvoker invoker, 
       WorkspaceRoot workspaceRoot,
-      Project project,
       BlazeProjectData projectData)
       throws XcodeCompilerSettingsException {
-    // this will not work with query sync, since at the moment aspects are only written as part of the async
-    final var queryLabel = AspectStorageService.of(project)
-        .resolve(QUERY_STARLARK_FILE)
-        .orElseThrow(() -> new IllegalStateException("could not resolve query file"));
-    final var queryFile = queryLabel.blazePackage().asPath()
-        .resolve(queryLabel.targetName().toString())
-        .toString();
-
     final String queryTarget;
     if (projectData.blazeVersionData().bazelIsAtLeastVersion(9, 0, 0)) {
       queryTarget = HOST_XCODES_TARGET;
@@ -234,6 +222,12 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       queryTarget = CURRENT_XCODE_CONFIG_TARGET;
     }
     
+    final Path queryFile = Datafiles.INSTANCE.resolve(QUERY_STARLARK_FILE);
+    if (!Files.exists(queryFile)) {
+      throw new XcodeCompilerSettingsException(IssueKind.FETCH_XCODE_VERSION,
+          String.format("Error getting Xcode info: Couldn't find query file %s", queryFile));
+    }
+
     File blazeCqueryWrapper = null;
     try {
       blazeCqueryWrapper =
@@ -245,7 +239,7 @@ public class XcodeCompilerSettingsProviderImpl implements XcodeCompilerSettingsP
       try (PrintWriter pw = new PrintWriter(blazeCqueryWrapper, UTF_8.name())) {
         Arrays.stream(QUERY_XCODE_VERSION_SCRIPT_LINES).forEach(line -> {
           line = line.replace("__BAZEL_BIN__", invoker.getBinaryPath());
-          line = line.replace("__QUERY_FILE__", queryFile);
+          line = line.replace("__QUERY_FILE__", queryFile.toAbsolutePath().toString());
           line = line.replace("__TARGET__", queryTarget);
 
           pw.println(line);
