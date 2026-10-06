@@ -47,6 +47,8 @@ class IntelliJAspectWriter : AspectWriter {
               bazelVersion = formatBazelVersion(state),
               repoMapping = emptyMap(),
               useBuiltin = emptySet(),
+              // selects the aspect modules baked into the generated config/aspect.bzl
+              rulesets = toAspectRules(state.languageSettings.activeLanguages),
           ),
           archiveZip = null,
       )

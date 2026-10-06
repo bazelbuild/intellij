@@ -14,7 +14,6 @@ aspect_library(
         "artifacts.bzl",
         "intellij_info_impl_bundled.bzl",
         "make_variables.bzl",
-        "xcode_query.bzl",  # maybe move this to a dedicated library, but let's keep this here for now
     ],
     namespace = "aspect/default",
     visibility = ["//visibility:public"],

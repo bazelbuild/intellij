@@ -24,8 +24,8 @@ def _integration_test_suite(name, srcs, deps = []):
             "-Didea.log.trace.categories=com.jetbrains.cidr.lang.workspace,com.google.idea.blaze.cpp.BlazeCWorkspace",
             "-Dcidr.debugger.use.lldbfrontend.from.plugin=false",
         ] + select({
-            # enables the new IntelliJ split aspect via its registry key, off by default
-            "//clwb:intellij_aspect_enabled": ["-Dbazel.sync.use.intellij.aspect=true"],
+            # falls back to the legacy bundled aspect via its registry key, the new IntelliJ split aspect is used by default
+            "//clwb:legacy_aspect_enabled": ["-Dbazel.sync.use.intellij.aspect=false"],
             "//conditions:default": [],
         }),
         deps = deps + [
