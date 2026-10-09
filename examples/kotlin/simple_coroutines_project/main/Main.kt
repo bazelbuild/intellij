@@ -11,7 +11,7 @@ object Main {
    * i} seconds. After the delay, the coroutine prints a greeting message indicating its number.
    */
   @JvmStatic
-  fun main(args: Array<String>) = runBlocking {
+  fun main(args: Array<String>) : Unit = runBlocking {
     val num: Int =
       if (args.isNotEmpty()) {
         args[0].toInt()
