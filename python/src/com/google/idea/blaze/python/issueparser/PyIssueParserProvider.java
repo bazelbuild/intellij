@@ -34,7 +34,7 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -124,7 +124,7 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
       if (projectScope.contains(vf)) {
         return 0;
       }
-      return PythonSdkUtil.isStdLib(vf, sdk) ? 2 : 1;
+      return PySkeletonUtil.isStdLib(vf, sdk) ? 2 : 1;
     }
 
     /** defaults to -1 if no line number can be parsed. */
