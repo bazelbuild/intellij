@@ -16,6 +16,7 @@
 package com.google.idea.sdkcompat.radler
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationChooser
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationSlice
@@ -25,6 +26,7 @@ abstract class OCResolveConfigurationChooserAdapter : OCResolveConfigurationChoo
   override fun selectPreselectedResolveConfiguration(
     project: Project,
     slice: OCResolveConfigurationSlice,
+    file: VirtualFile?,
   ): OCResolveConfiguration? {
     return doSelectResolveConfiguration(project, slice.resolve(project))
   }
