@@ -9,7 +9,7 @@
     "com.google.flogger:flogger": 1661800041,
     "com.google.flogger:flogger-system-backend": -285378212,
     "com.google.guava:failureaccess": -2032498474,
-    "com.google.guava:guava": 965079090,
+    "com.google.guava:guava": 671676083,
     "com.google.j2objc:j2objc-annotations": -26400317,
     "com.google.truth:truth": 1696781452,
     "com.googlecode.java-diff-utils:diffutils": -433021253,
@@ -21,7 +21,7 @@
     "org.hamcrest:hamcrest-core": 477294799,
     "org.jetbrains.kotlin:kotlin-stdlib": 52847824,
     "org.jetbrains.kotlinx:kotlinx-serialization-json": -261545747,
-    "org.jetbrains.pty4j:pty4j": -184653484,
+    "org.jetbrains.pty4j:pty4j": 542014819,
     "org.jetbrains:annotations": 989775437,
     "org.mockito:mockito-core": -466787559,
     "org.objenesis:objenesis": 1428435025,
@@ -37,10 +37,10 @@
     "com.google.flogger:flogger": -1724631034,
     "com.google.flogger:flogger-system-backend": -2025959469,
     "com.google.guava:failureaccess": 120263671,
-    "com.google.guava:guava": -1863811603,
+    "com.google.guava:guava": -826879639,
     "com.google.guava:listenablefuture": 2001005618,
     "com.google.j2objc:j2objc-annotations": -77575218,
-    "com.google.truth:truth": 371343500,
+    "com.google.truth:truth": 709108021,
     "com.googlecode.java-diff-utils:diffutils": -1594449752,
     "junit:junit": 64898858,
     "net.bytebuddy:byte-buddy": -796462638,
@@ -49,21 +49,21 @@
     "net.java.dev.jna:jna-platform": 1744032122,
     "org.hamcrest:hamcrest": -2067871445,
     "org.hamcrest:hamcrest-core": -1752676859,
-    "org.jetbrains.kotlin:kotlin-stdlib": -1966999684,
-    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": 1066920260,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json": -2019062389,
-    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": 1681628020,
-    "org.jetbrains.pty4j:pty4j": 1166328261,
+    "org.jetbrains.kotlin:kotlin-stdlib": -1382137672,
+    "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": -639375525,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json": 1215397906,
+    "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm": -2077495123,
+    "org.jetbrains.pty4j:pty4j": 203549114,
     "org.jetbrains:annotations": 1361021425,
     "org.jspecify:jspecify": 664233727,
     "org.mockito:mockito-core": -661695491,
     "org.objenesis:objenesis": -1243511454,
     "org.opentest4j:opentest4j": -408028435,
     "org.ow2.asm:asm": 49325259,
-    "org.slf4j:slf4j-api": 1670924319
+    "org.slf4j:slf4j-api": -724049522
   },
   "conflict_resolution": {
-    "org.jetbrains.kotlin:kotlin-stdlib:2.2.21": "org.jetbrains.kotlin:kotlin-stdlib:2.3.20"
+    "org.jetbrains.kotlin:kotlin-stdlib:2.2.21": "org.jetbrains.kotlin:kotlin-stdlib:2.4.20"
   },
   "artifacts": {
     "com.google.auto.value:auto-value": {
@@ -116,9 +116,9 @@
     },
     "com.google.guava:guava": {
       "shasums": {
-        "jar": "796d8e28ac64e83a47c4c5935a8fecc4682650a04bbdead738ef0f5a3a0e6c46"
+        "jar": "b530942257fb935f8b2cfaa5f8eb5bd59c555fd8e8d01b8ce98912e077ea606c"
       },
-      "version": "33.7.1-jre"
+      "version": "33.7.2-jre"
     },
     "com.google.guava:listenablefuture": {
       "shasums": {
@@ -188,9 +188,9 @@
     },
     "org.jetbrains.kotlin:kotlin-stdlib": {
       "shasums": {
-        "jar": "0ae12504a5040ebaf37703908483420d1a5624dd1d93f357665f8c77c848a01e"
+        "jar": "2226de463d309d4a5500a481320b3dea515a6981dcae1def531fbc158884e25f"
       },
-      "version": "2.3.20"
+      "version": "2.4.20"
     },
     "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm": {
       "shasums": {
@@ -212,9 +212,9 @@
     },
     "org.jetbrains.pty4j:pty4j": {
       "shasums": {
-        "jar": "e9bf5de4703d14e175d846f267e41291896caa9d4cecc365a17178e4612b2fd7"
+        "jar": "4190d2a6afbfaf80b538fb5dff3978b541c344c07398ed317bb7c87e6d8a6745"
       },
-      "version": "0.13.13"
+      "version": "0.14.0"
     },
     "org.jetbrains:annotations": {
       "shasums": {
@@ -254,9 +254,9 @@
     },
     "org.slf4j:slf4j-api": {
       "shasums": {
-        "jar": "e7c2a48e8515ba1f49fa637d57b4e2f590b3f5bd97407ac699c3aa5efb1204a9"
+        "jar": "e91ff6d720609e7a194ffe758c3ed5c84e798617ae07b0a0f6a4fe229741b4bb"
       },
-      "version": "2.0.13"
+      "version": "2.0.19"
     }
   },
   "dependencies": {
@@ -553,6 +553,7 @@
       "kotlin.contracts",
       "kotlin.coroutines",
       "kotlin.coroutines.cancellation",
+      "kotlin.coroutines.debug",
       "kotlin.coroutines.intrinsics",
       "kotlin.coroutines.jvm.internal",
       "kotlin.enums",
