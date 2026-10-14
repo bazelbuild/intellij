@@ -1,7 +1,7 @@
 """Custom rule for creating IntelliJ plugin tests.
 """
 
-load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
 load(
     "//build_defs:build_defs.bzl",
     "api_version_txt",
@@ -88,6 +88,14 @@ def intellij_unit_test_suite(
         test_package_root,
         class_rules = [],
         size = "medium",
+        deps = None,
+        runtime_deps = None,
+        tags = None,
+        add_exports = None,
+        add_opens = None,
+        javacopts = None,
+        plugins = None,
+        resources = None,
         **kwargs):
     """Creates a java_test rule composed of all valid test classes in the specified srcs.
 
@@ -102,6 +110,14 @@ def intellij_unit_test_suite(
       test_package_root: only tests under this package root will be run.
       class_rules: JUnit class rules to apply to these tests.
       size: the test size.
+      deps: the dependencies for compiling the test classes.
+      runtime_deps: the runtime dependencies.
+      tags: tags to apply to the test target.
+      add_exports: packages to export during compilation and test execution.
+      add_opens: packages to open during compilation and test execution.
+      javacopts: extra javac options for compiling the test classes.
+      plugins: annotation processor plugins for compiling the test classes.
+      resources: resources to include in the companion library.
       **kwargs: Any other args to be passed to the java_test.
     """
     suite_class_name = name + "TestSuite"
@@ -126,13 +142,32 @@ def intellij_unit_test_suite(
         test_package_root = test_package_root,
         class_rules = class_rules,
     )
+    tags = list(tags or [])
+    lib_name = name + "_lib"
+    java_library(
+        name = lib_name,
+        testonly = True,
+        srcs = srcs + [suite_class_name],
+        tags = ["manual"] + [t for t in tags if t != "manual"],
+        deps = deps,
+        add_exports = add_exports,
+        add_opens = add_opens,
+        javacopts = javacopts,
+        plugins = plugins,
+        resources = resources,
+    )
+    runtime_deps = list(runtime_deps or [])
+    runtime_deps.append(":" + lib_name)
     java_test(
         name = name,
         size = size,
-        srcs = srcs + [suite_class_name],
         data = data,
         jvm_flags = jvm_flags,
+        tags = tags,
         test_class = suite_class,
+        runtime_deps = runtime_deps,
+        add_exports = add_exports,
+        add_opens = add_opens,
         **kwargs
     )
 
@@ -146,6 +181,11 @@ def intellij_integration_test_suite(
         jvm_flags = [],
         runtime_deps = [],
         required_plugins = None,
+        add_exports = None,
+        add_opens = None,
+        javacopts = None,
+        plugins = None,
+        resources = None,
         **kwargs):
     """Creates a java_test rule composed of all valid test classes in the specified srcs and specifically tailored for intellij-ide integration tests.
 
@@ -168,11 +208,17 @@ def intellij_integration_test_suite(
       srcs: the test classes.
       test_package_root: only tests under this package root will be run.
       deps: the required deps.
+      additional_class_rules: additional JUnit class rules to apply to these tests.
       size: the test size.
       jvm_flags: extra flags to be passed to the test vm.
       runtime_deps: the required runtime dependencies, (e.g., intellij_plugin targets).
       required_plugins: optional comma-separated list of plugin IDs. Integration tests will fail if
           these plugins aren't loaded at runtime.
+      add_exports: packages to export during compilation and test execution.
+      add_opens: packages to open during compilation and test execution.
+      javacopts: extra javac options for compiling the test classes.
+      plugins: annotation processor plugins for compiling the test classes.
+      resources: resources to include in the companion library.
       **kwargs: Any other args to be passed to the java_test.
     """
     suite_class_name = name + "TestSuite"
@@ -227,17 +273,31 @@ def intellij_integration_test_suite(
     args = kwargs.pop("args", [])
     args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
     data.append(name + "_protoeditor_resource_fix")
+    lib_name = name + "_lib"
+    java_library(
+        name = lib_name,
+        testonly = True,
+        srcs = srcs + [suite_class_name],
+        tags = ["manual"] + [t for t in tags if t != "manual"],
+        deps = deps,
+        add_exports = add_exports,
+        add_opens = add_opens,
+        javacopts = javacopts,
+        plugins = plugins,
+        resources = resources,
+    )
+    runtime_deps.append(":" + lib_name)
     java_test(
         name = name,
         size = size,
-        srcs = srcs + [suite_class_name],
         data = data,
         tags = tags,
         args = args,
         jvm_flags = jvm_flags,
         test_class = suite_class,
         runtime_deps = runtime_deps,
-        deps = deps,
+        add_exports = add_exports,
+        add_opens = add_opens,
         **kwargs
     )
 
