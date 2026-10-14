@@ -30,8 +30,8 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.copts.CoptsProcessor;
 import com.google.idea.blaze.cpp.sync.HeaderCacheService;
+import com.google.idea.sdkcompat.clion.OCWorkspaceCommitCompat;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -495,9 +495,7 @@ public final class BlazeCWorkspace {
     workspaceModel.model.setClientVersion(serialVersion);
     workspaceModel.model.preCommit();
 
-    TransactionGuard.getInstance().submitTransactionAndWait(
-        () -> ApplicationManager.getApplication().runWriteAction((Runnable) workspaceModel.model::commit)
-    );
+    OCWorkspaceCommitCompat.commit(workspaceModel.model);
   }
 
   private void collectCompilerSettingsInParallel(
