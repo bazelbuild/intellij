@@ -1,3 +1,10 @@
+v2026.10.14
+===========
+Released from BazelCon 2026, enjoy the conference :)
+
+* Enable the new IntelliJ aspect by default (can be turned off with the bazel.sync.use.intellij.aspect registry key) #8473
+* Fix missing buildifier download popup by migrating to the new formatter platform APIs #8475 #8480
+
 v2026.09.21
 ===========
 * Report a clear error when the configured Bazel binary cannot be executed #8442
