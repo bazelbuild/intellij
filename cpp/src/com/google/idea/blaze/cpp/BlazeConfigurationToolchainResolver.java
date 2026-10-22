@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
@@ -49,6 +50,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,6 +68,12 @@ import javax.annotation.Nullable;
  * com.jetbrains.cidr.lang.workspace.OCResolveConfiguration}
  */
 public final class BlazeConfigurationToolchainResolver {
+
+  // placeholders that the apple_support compiler wrapper replaces
+  private static final String EXECUTION_ROOT_PLACEHOLDER = "__BAZEL_EXECUTION_ROOT__";
+  private static final String EXECUTION_ROOT_CANONICAL_PLACEHOLDER = "__BAZEL_EXECUTION_ROOT_CANONICAL__";
+  private static final String XCODE_DEVELOPER_DIR_PLACEHOLDER = "__BAZEL_XCODE_DEVELOPER_DIR__";
+  private static final String XCODE_SDKROOT_PLACEHOLDER = "__BAZEL_XCODE_SDKROOT__";
 
   private BlazeConfigurationToolchainResolver() {}
 
@@ -343,11 +351,13 @@ public final class BlazeConfigurationToolchainResolver {
         cppEnvironment
     );
 
+    final var placeholders = createPlaceholders(executionRootPathResolver.getExecutionRoot(), xcodeSettings);
+
     final var settings = BlazeCompilerSettings.builder()
         .setCCompiler(cCompiler)
         .setCppCompiler(cppCompiler)
-        .setCSwitches(toolchain.cCompilerOptions())
-        .setCppSwitches(toolchain.cppCompilerOptions())
+        .setCSwitches(expandPlaceholders(toolchain.cCompilerOptions(), placeholders))
+        .setCppSwitches(expandPlaceholders(toolchain.cppCompilerOptions(), placeholders))
         .setVersion(compilerVersion)
         .setEnvironment(environment)
         .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
@@ -387,6 +397,40 @@ public final class BlazeConfigurationToolchainResolver {
     }
 
     return XcodeCompilerSettings.fromEnvironment(environment);
+  }
+
+  private static ImmutableMap<String, String> createPlaceholders(
+      File executionRoot,
+      Optional<XcodeCompilerSettings> xcodeSettings
+  ) {
+    File canonicalExecutionRoot;
+    try {
+      canonicalExecutionRoot = executionRoot.toPath().toRealPath().toFile();
+    } catch (IOException e) {
+      canonicalExecutionRoot = executionRoot;
+    }
+
+    final var placeholders = ImmutableMap.<String, String>builder()
+        .put(EXECUTION_ROOT_PLACEHOLDER, executionRoot.toString())
+        .put(EXECUTION_ROOT_CANONICAL_PLACEHOLDER, canonicalExecutionRoot.toString());
+
+    xcodeSettings.ifPresent(settings -> placeholders
+        .put(XCODE_DEVELOPER_DIR_PLACEHOLDER, settings.getDeveloperDir().toString())
+        .put(XCODE_SDKROOT_PLACEHOLDER, settings.getSdkRoot().toString()));
+
+    return placeholders.build();
+  }
+
+  private static ImmutableList<String> expandPlaceholders(
+      ImmutableList<String> options,
+      ImmutableMap<String, String> placeholders
+  ) {
+    return options.stream().map(option -> {
+      for (final var placeholder : placeholders.entrySet()) {
+        option = option.replace(placeholder.getKey(), placeholder.getValue());
+      }
+      return option;
+    }).collect(toImmutableList());
   }
 
   @SafeVarargs

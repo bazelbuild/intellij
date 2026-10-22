@@ -97,6 +97,85 @@ import org.mockito.Mockito;
 @RunWith(JUnit4.class)
 public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
+  private static final String DEVELOPER_DIR = "/Applications/Xcode.app/Contents/Developer";
+  private static final String SDK_ROOT = DEVELOPER_DIR + "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
+
+  // default execution root of MockBlazeProjectDataBuilder, does not exist and is therefore also the canonical one
+  private static final String EXECUTION_ROOT = "/usr/workspace/1234/execroot/_main";
+
+  private BlazeCompilerSettings resolveToolchainOptions(CToolchainIdeInfo.Builder toolchain) {
+    final var targetMap = TargetMapBuilder.builder()
+        .addTarget(TargetIdeInfo.builder()
+            .setLabel("//:toolchain")
+            .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
+            .setCToolchainInfo(toolchain.setTargetName("toolchain")))
+        .addTarget(createCcTarget(
+            "//foo/bar:binary",
+            CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+            ImmutableList.of(src("foo/bar/binary.cc")),
+            "//:toolchain"))
+        .build();
+
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    computeResolverResult(projectView, targetMap);
+    errorCollector.assertNoIssues();
+
+    return getCompilerSettingsForTarget("//foo/bar:binary");
+  }
+
+  @Test
+  public void expandsXcodePlaceholdersInOptions() {
+    xcodeSettingsProvider.setXcodeSettings(XcodeCompilerSettings.create(Path.of(DEVELOPER_DIR), Path.of(SDK_ROOT)));
+
+    final var settings = resolveToolchainOptions(createToolchainIdeInfoBuilder()
+        .setCCompilerOptions(ImmutableList.of(
+            "-isysroot",
+            "__BAZEL_XCODE_SDKROOT__",
+            "-F__BAZEL_XCODE_SDKROOT__/System/Library/Frameworks"))
+        .setCppCompilerOptions(ImmutableList.of("-B__BAZEL_XCODE_DEVELOPER_DIR__/usr/bin")));
+
+    assertThat(settings.cSwitches())
+        .containsExactly("-isysroot", SDK_ROOT, "-F" + SDK_ROOT + "/System/Library/Frameworks")
+        .inOrder();
+    assertThat(settings.cppSwitches()).containsExactly("-B" + DEVELOPER_DIR + "/usr/bin");
+  }
+
+  @Test
+  public void expandsExecutionRootPlaceholdersInOptions() {
+    xcodeSettingsProvider.setXcodeSettings(XcodeCompilerSettings.create(Path.of(DEVELOPER_DIR), Path.of(SDK_ROOT)));
+
+    // the flags of the apple_support toolchain, see toolchain/BUILD and toolchain/coverage/BUILD
+    final var settings = resolveToolchainOptions(createToolchainIdeInfoBuilder()
+        .setCCompilerOptions(ImmutableList.of(
+            "-fdebug-prefix-map=__BAZEL_EXECUTION_ROOT__=.",
+            "-fdebug-prefix-map=__BAZEL_XCODE_DEVELOPER_DIR__=/PLACEHOLDER_DEVELOPER_DIR"))
+        .setCppCompilerOptions(ImmutableList.of(
+            "-fcoverage-prefix-map=__BAZEL_EXECUTION_ROOT__=__BAZEL_EXECUTION_ROOT_CANONICAL__")));
+
+    assertThat(settings.cSwitches())
+        .containsExactly(
+            "-fdebug-prefix-map=" + EXECUTION_ROOT + "=.",
+            "-fdebug-prefix-map=" + DEVELOPER_DIR + "=/PLACEHOLDER_DEVELOPER_DIR")
+        .inOrder();
+    assertThat(settings.cppSwitches())
+        .containsExactly("-fcoverage-prefix-map=" + EXECUTION_ROOT + "=" + EXECUTION_ROOT);
+  }
+
+  @Test
+  public void leavesXcodePlaceholdersWithoutXcodeSettings() {
+    final var settings = resolveToolchainOptions(createToolchainIdeInfoBuilder()
+        .setCCompilerOptions(ImmutableList.of(
+            "-isysroot",
+            "__BAZEL_XCODE_SDKROOT__",
+            "-fdebug-prefix-map=__BAZEL_EXECUTION_ROOT__=.")));
+
+    assertThat(settings.cSwitches())
+        .containsExactly("-isysroot", "__BAZEL_XCODE_SDKROOT__", "-fdebug-prefix-map=" + EXECUTION_ROOT + "=.")
+        .inOrder();
+    assertThat(settings.environment()).doesNotContainKey("DEVELOPER_DIR");
+    assertThat(settings.environment()).doesNotContainKey("SDKROOT");
+  }
+
   private static final ArtifactLocation XCODE_INFO = ArtifactLocation.builder()
       .setRootPath("bazel-out/darwin_arm64-fastbuild/bin")
       .setRelativePath("toolchain.intellij-generated-1234")
