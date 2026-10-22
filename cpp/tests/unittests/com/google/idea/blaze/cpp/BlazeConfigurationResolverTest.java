@@ -77,6 +77,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,7 +85,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
@@ -92,9 +96,19 @@ import org.mockito.Mockito;
 /** Tests for {@link BlazeConfigurationResolver}. */
 @RunWith(JUnit4.class)
 public class BlazeConfigurationResolverTest extends BlazeTestCase {
+
+  private static final ArtifactLocation XCODE_INFO = ArtifactLocation.builder()
+      .setRootPath("bazel-out/darwin_arm64-fastbuild/bin")
+      .setRelativePath("toolchain.intellij-generated-1234")
+      .setIsSource(false)
+      .build();
+
   private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
+
+  @Rule
+  public final TemporaryFolder tempFolder = new TemporaryFolder();
 
   private BlazeConfigurationResolver resolver;
   private BlazeConfigurationResolverResult resolverResult;
@@ -123,8 +137,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     Registry.get(BlazeConfigurationResolver.SYNC_EXTERNAL_TARGETS_FROM_DIRECTORIES_KEY).setValue(true);
 
-    ExtensionPointImpl<Kind.Provider> ep =
-        registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
+    final var ep = registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new CppBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
@@ -876,6 +889,51 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     assertThatResolving(projectView, targetMap).producesXcodeConfiguration(expected);
   }
 
+  private TargetMap createXcodeTargetMap() {
+    return TargetMapBuilder.builder()
+        .addTarget(TargetIdeInfo.builder()
+            .setLabel("//:toolchain")
+            .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
+            .setCToolchainInfo(createToolchainIdeInfoBuilder().setTargetName("toolchain").setXcodeInfo(XCODE_INFO)))
+        .addTarget(createCcTarget(
+            "//foo/bar:binary",
+            CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+            ImmutableList.of(src("foo/bar/binary.cc")),
+            "//:toolchain"))
+        .build();
+  }
+
+  @Test
+  public void xcodeSettingsOfToolchainArePreferred() throws IOException {
+    final var outputBase = tempFolder.getRoot().toPath();
+    final var xcodeInfoFile = outputBase.resolve("execroot/_main").resolve(XCODE_INFO.getExecutionRootRelativePath());
+    Files.createDirectories(xcodeInfoFile.getParent());
+    Files.writeString(xcodeInfoFile, "XCODE_VERSION_OVERRIDE=26.0\0DEVELOPER_DIR=/xcode/dev_dir\0SDKROOT=/xcode/sdk\0");
+
+    xcodeSettingsProvider.setXcodeSettings(XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk")));
+
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    computeResolverResult(projectView, createXcodeTargetMap(), outputBase.toString());
+    errorCollector.assertNoIssues();
+
+    assertThat(getCompilerSettingsForTarget("//foo/bar:binary").environment())
+        .containsAtLeast("DEVELOPER_DIR", "/xcode/dev_dir", "SDKROOT", "/xcode/sdk");
+  }
+
+  @Test
+  public void xcodeSettingsFallBackIfToolchainInfoIsMissing() {
+    final var outputBase = tempFolder.getRoot().toPath();
+
+    xcodeSettingsProvider.setXcodeSettings(XcodeCompilerSettings.create(Path.of("/tmp/dev_dir"), Path.of("/tmp/dev_dir/sdk")));
+
+    final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    computeResolverResult(projectView, createXcodeTargetMap(), outputBase.toString());
+    errorCollector.assertIssues("Unable to read Xcode info of toolchain: " + XCODE_INFO);
+
+    assertThat(getCompilerSettingsForTarget("//foo/bar:binary").environment())
+        .containsAtLeast("DEVELOPER_DIR", "/tmp/dev_dir", "SDKROOT", "/tmp/dev_dir/sdk");
+  }
+
   @Test
   public void testSingleSourceTargetWithConfigurationId() {
     final var projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
@@ -1005,8 +1063,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   private void computeResolverResult(ProjectView projectView, TargetMap targetMap) {
+    computeResolverResult(projectView, targetMap, null);
+  }
+
+  private void computeResolverResult(ProjectView projectView, TargetMap targetMap, @Nullable String outputBase) {
     BlazeProjectData blazeProjectData =
-        MockBlazeProjectDataBuilder.builder(workspaceRoot).setTargetMap(targetMap).build();
+        MockBlazeProjectDataBuilder.builder(workspaceRoot).setTargetMap(targetMap).setOutputBase(outputBase).build();
     resolverResult =
         resolver.update(
             context,
@@ -1078,14 +1140,18 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     };
   }
 
-  private void assertCompilerSettingsForTarget(String target, CToolchainIdeInfo expected) {
+  private BlazeCompilerSettings getCompilerSettingsForTarget(String target) {
     final var settings = resolverResult.getConfigurationMap().values().stream()
         .filter(it -> it.getDisplayName().equals(target))
         .map(it -> it.getConfigurationData().compilerSettings())
         .collect(toImmutableList());
 
     assertThat(settings).hasSize(1);
-    final var setting = settings.get(0);
+    return settings.get(0);
+  }
+
+  private void assertCompilerSettingsForTarget(String target, CToolchainIdeInfo expected) {
+    final var setting = getCompilerSettingsForTarget(target);
 
     assertThat(setting.name()).isEqualTo(expected.compilerName());
     assertThat(setting.cSwitches()).containsExactlyElementsIn(expected.cCompilerOptions());

@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.aspects.impl.intellij
 
+import com.google.idea.blaze.base.model.primitives.LanguageClass
 import com.google.idea.blaze.base.sync.SyncProjectState
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException
 import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter
 import com.intellij.aspect.lib.AspectConfig
+import com.intellij.aspect.lib.Rules
 import com.intellij.aspect.lib.deployAspectZip
 import com.intellij.openapi.project.Project
 import java.io.IOException
@@ -47,7 +49,6 @@ class IntelliJAspectWriter : AspectWriter {
               bazelVersion = formatBazelVersion(state),
               repoMapping = emptyMap(),
               useBuiltin = emptySet(),
-              // selects the aspect modules baked into the generated config/aspect.bzl
               rulesets = toAspectRules(state.languageSettings.activeLanguages),
           ),
           archiveZip = null,
@@ -60,4 +61,9 @@ class IntelliJAspectWriter : AspectWriter {
   private fun formatBazelVersion(state: SyncProjectState): String {
     return state.blazeVersionData.bazelVersion?.toString().orEmpty()
   }
+}
+
+private fun toAspectRules(active: Set<LanguageClass>): Set<Rules> = buildSet {
+  if (LanguageClass.C in active) add(Rules.CC)
+  if (LanguageClass.PYTHON in active) add(Rules.PYTHON)
 }
