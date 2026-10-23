@@ -16,8 +16,10 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Strings;
 import java.nio.file.Path;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents the Xcode settings a C compiler needs to run.
@@ -26,6 +28,17 @@ import java.util.Objects;
 public abstract class XcodeCompilerSettings {
   static XcodeCompilerSettings create(Path developerDir, Path sdkRoot) {
     return new AutoValue_XcodeCompilerSettings(developerDir, sdkRoot);
+  }
+
+  static Optional<XcodeCompilerSettings> fromEnvironment(Map<String, String> environment) {
+    final var developerDir = environment.get("DEVELOPER_DIR");
+    final var sdkRoot = environment.get("SDKROOT");
+
+    if (Strings.isNullOrEmpty(developerDir) || Strings.isNullOrEmpty(sdkRoot)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(create(Path.of(developerDir), Path.of(sdkRoot)));
   }
 
   abstract Path getDeveloperDir();

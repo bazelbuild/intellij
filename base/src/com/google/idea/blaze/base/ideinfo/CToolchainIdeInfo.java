@@ -46,6 +46,8 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
 
   public abstract @Nullable ExecutionRootPath sysroot();
 
+  public abstract @Nullable ArtifactLocation xcodeInfo();
+
   static CToolchainIdeInfo fromProto(IntellijIdeInfo.CToolchainIdeInfo proto) {
     return CToolchainIdeInfo.builder()
         .setCCompilerOptions(ImmutableList.copyOf(proto.getCOptionList()))
@@ -58,6 +60,7 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
         .setSysroot(ExecutionRootPath.fromNullableProto(proto.getSysroot()))
         .setCEnvironment(ImmutableMap.copyOf(proto.getCEnvironmentMap()))
         .setCppEnvironment(ImmutableMap.copyOf(proto.getCppEnvironmentMap()))
+        .setXcodeInfo(proto.hasXcodeInfo() ? ArtifactLocation.fromProto(proto.getXcodeInfo()) : null)
         .build();
   }
 
@@ -77,6 +80,11 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
     final var sysroot = sysroot();
     if (sysroot != null) {
       builder.setSysroot(sysroot.toProto());
+    }
+
+    final var xcodeInfo = xcodeInfo();
+    if (xcodeInfo != null) {
+      builder.setXcodeInfo(xcodeInfo.toProto());
     }
 
     return builder.build();
@@ -113,6 +121,8 @@ public abstract class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.
     public abstract Builder setCEnvironment(ImmutableMap<String, String> value);
 
     public abstract Builder setCppEnvironment(ImmutableMap<String, String> value);
+
+    public abstract Builder setXcodeInfo(@Nullable ArtifactLocation value);
 
     public abstract CToolchainIdeInfo build();
   }

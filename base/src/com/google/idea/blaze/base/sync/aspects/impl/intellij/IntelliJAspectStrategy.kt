@@ -22,14 +22,12 @@ import com.google.idea.blaze.base.sync.aspects.storage.AspectStorageService
 import com.google.idea.blaze.base.sync.aspects.storage.AspectWriter
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider
-import com.intellij.aspect.lib.Aspects
-import com.intellij.aspect.lib.Rules
+import com.intellij.aspect.lib.ASPECT_NAME
 import com.intellij.aspect.lib.OutputGroups
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
 import java.util.Optional
-import kotlin.jvm.optionals.getOrNull
 
 /**
  * The IntelliJ split aspect strategy: the `intellij_aspect_sdk` archive is materialized by
@@ -56,21 +54,13 @@ class IntelliJAspectStrategy : AspectStrategy() {
   }
 
   override fun getAspectFlag(project: Project, activeLanguages: Set<LanguageClass>): Optional<String> {
-    val aspects = Aspects.forRules(toAspectRules(activeLanguages)).mapNotNull { aspect ->
-      resolve(project, "${aspect.pkg}/${aspect.file}").map { "$it%${aspect.aspect}" }.getOrNull()
-    }
-
-    if (aspects.isEmpty()) return Optional.empty()
-    return Optional.of("--aspects=" + aspects.joinToString(","))
+    // ASPECT_NAME is relative to the deployed location, e.g. `config:aspect.bzl%intellij_aspect`
+    val (file, aspect) = ASPECT_NAME.split('%', limit = 2)
+    return resolve(project, file.replace(':', '/')).map { "--aspects=$it%$aspect" }
   }
 
   override fun genericOutputGroup(outputGroup: OutputGroup): ImmutableList<String> {
     // we do not support the light weight "SYNC" without the build output group yet
     return ImmutableList.of(OutputGroups.INFO.groupName, OutputGroups.SYNC.groupName, OutputGroups.BUILD.groupName)
   }
-}
-
-internal fun toAspectRules(active: Set<LanguageClass>): Set<Rules> = buildSet {
-  if (LanguageClass.C in active) add(Rules.CC)
-  if (LanguageClass.PYTHON in active) add(Rules.PYTHON)
 }
