@@ -137,8 +137,13 @@ public class Assertions {
     final var childrenInVfs = VfsUtil.getVfsChildrenAsList(executionRoot);
 
     loop: for (final var child : childrenInVfs) {
+      final var relativeChild = executionRoot.relativize(child);
+
+      // files from external repositories are always allowed
+      if (relativeChild.startsWith("external")) continue;
+
       for (final var allowedRoot : allowedRoots) {
-        if (allowedRoot.contains(executionRoot.relativize(child))) continue loop;
+        if (allowedRoot.contains(relativeChild)) continue loop;
       }
 
       final var roots = allowedRoots.stream().map(Object::toString).collect(Collectors.joining(";"));
