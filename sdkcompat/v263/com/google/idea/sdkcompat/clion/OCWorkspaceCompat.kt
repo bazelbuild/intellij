@@ -18,9 +18,8 @@ package com.google.idea.sdkcompat.clion
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
-import com.jetbrains.cidr.lang.workspace.model.OCWorkspaceStorageCustomizer
 
-// #api262: the synchronous commit freezes the EDT and the storage customizer was added in 2026.3
+// #api262: the synchronous commit freezes the EDT since 2026.3
 object OCWorkspaceCommitCompat {
   @JvmStatic
   @RequiresBackgroundThread
@@ -28,5 +27,3 @@ object OCWorkspaceCommitCompat {
     runBlockingCancellable { model.commitAndContribute() }
   }
 }
-
-typealias OCWorkspaceStorageCustomizerAdapter = OCWorkspaceStorageCustomizer
