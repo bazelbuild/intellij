@@ -112,6 +112,8 @@ java_import(
         # for native debug plugin
         "plugins/platform-images/lib/*.jar",
         "plugins/platform-images/lib/modules/*.jar",
+        "plugins/json/lib/*.jar",
+        "plugins/json/lib/modules/*.jar",
 
         "plugins/performanceTesting/lib/*.jar",
         "plugins/performanceTesting/lib/modules/*.jar",

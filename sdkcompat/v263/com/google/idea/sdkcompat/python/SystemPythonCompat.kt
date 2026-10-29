@@ -16,6 +16,7 @@
 package com.google.idea.sdkcompat.python
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.psi.LanguageLevel
 
@@ -24,6 +25,6 @@ object SystemPythonCompat {
   /** Detects the python interpreters installed on the system, mapped to their language level. */
   @JvmStatic
   fun detectSystemPythons(): Map<String, LanguageLevel> =
-    runBlockingMaybeCancellable { SystemPythonService().findSystemPythons() }
+    runBlockingMaybeCancellable { SystemPythonService().findSystemPythons(localEel) }
       .associate { it.pythonBinary.toString() to it.pythonInfo.languageLevel }
 }

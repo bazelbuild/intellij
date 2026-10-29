@@ -17,18 +17,12 @@ package com.google.idea.sdkcompat.clion
 
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.jetbrains.cidr.lang.workspace.OCWorkspace
 
-// #api262: the synchronous commit freezes the EDT and the storage customizer was added in 2026.3
+// #api262: the synchronous commit freezes the EDT since 2026.3
 object OCWorkspaceCommitCompat {
   @JvmStatic
   fun commit(model: OCWorkspace.ModifiableModel) {
     TransactionGuard.getInstance().submitTransactionAndWait { runWriteAction { model.commit() } }
   }
-}
-
-interface OCWorkspaceStorageCustomizerAdapter {
-  fun getModuleId(project: Project): ModuleId? = null
 }
