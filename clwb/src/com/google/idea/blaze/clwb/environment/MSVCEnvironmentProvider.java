@@ -18,13 +18,13 @@ package com.google.idea.blaze.clwb.environment;
 
 import com.google.idea.blaze.cpp.BlazeCompilerSettings;
 import com.google.idea.blaze.cpp.CppEnvironmentProvider;
-import com.google.idea.sdkcompat.clion.MSVCCompilerVersionCompat;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.system.OS;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet.Kind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.MSVC;
+import com.jetbrains.cidr.cpp.toolchains.msvc.MSVCCompilerToVersionCache;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.compiler.MSVCCompilerKind;
@@ -55,7 +55,8 @@ class MSVCEnvironmentProvider implements CppEnvironmentProvider {
       return null;
     }
 
-    final var version = MSVCCompilerVersionCompat.getCompilerVersion(compiler.getAbsolutePath());
+    final var version = MSVCCompilerToVersionCache.Companion.getInstance()
+        .getCompilerVersion(compiler.getAbsolutePath());
 
     if (version == null) {
       LOG.warn("Could not derive arch and version.");

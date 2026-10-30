@@ -16,7 +16,6 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.sdkcompat.clion.XDebugSessionCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -58,7 +57,7 @@ public class BlazeCppRunner extends CidrRunner {
       throws ExecutionException {
     if (environment.getExecutor().getId().equals(DefaultDebugExecutor.EXECUTOR_ID)
         && state instanceof CidrCommandLineState cidrState) {
-        return XDebugSessionCompat.getRunContentDescriptor(this, environment, cidrState);
+        return startDebugDescriptor(cidrState, environment, false);
     }
     return super.doExecute(state, environment);
   }

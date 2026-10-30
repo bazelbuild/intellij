@@ -446,20 +446,11 @@
     "//intellij_platform_sdk:extension.bzl%intellij_platform": {
       "general": {
         "bzlTransitiveDigest": "WgE6i3N349thGakuJK1nxa5LEJrLt9Pwd3CNbmP2PZc=",
-        "usagesDigest": "4ZQlC4Y3VNt6mwUq0u/WtEZ8GUO1I/af9MwNSZVUBZM=",
+        "usagesDigest": "bSzBeO6UAGpwCi6Qjf7NgYVr70eSDdzTrL/WnFyZYYE=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
         ],
         "generatedRepoSpecs": {
-          "clion_2026_1": {
-            "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_intellij_sdk",
-            "attributes": {
-              "build_file": "@@//intellij_platform_sdk:BUILD.clion261",
-              "sha256": "e5e652679fd1bbea83d951996a809311284e69b08d68d784f375ee181d4c46c8",
-              "product": "clion",
-              "version": "2026.1.5.1"
-            }
-          },
           "clion_2026_2": {
             "repoRuleId": "@@//intellij_platform_sdk:extension.bzl%_intellij_sdk",
             "attributes": {
@@ -476,14 +467,6 @@
               "sha256": "7193c2d4659d06c405b92b5d5a93006feb272032b227839df5a3f46fcdd1ff73",
               "product": "clion",
               "version": "263.7307.35-EAP-SNAPSHOT"
-            }
-          },
-          "python_2026_1": {
-            "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
-            "attributes": {
-              "build_file": "@@//intellij_platform_sdk:BUILD.python",
-              "sha256": "03afe7c26d078c026e4a7f2b6121ec1c19f7769efea2ed675bdefd9c8658a51f",
-              "url": "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/261.27258.48/PythonCore-261.27258.48.zip"
             }
           },
           "python_2026_2": {
