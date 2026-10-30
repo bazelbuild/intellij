@@ -32,6 +32,7 @@ kt_jvm_library(
         "//shared",
         "//third_party/java/auto_value",
         "@error_prone_annotations//jar",
+        "@intellij_aspect_sdk//sdk",
     ],
 )
 
