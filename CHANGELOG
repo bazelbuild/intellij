@@ -1,3 +1,8 @@
+v2026.10.30
+===========
+* Load Xcode information from the aspect and request generated toolchain files #8504
+* Compatibility fixes for 263 #8498 #8510 #8506
+
 v2026.10.14
 ===========
 Released from BazelCon 2026, enjoy the conference :)
