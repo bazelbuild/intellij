@@ -21,7 +21,7 @@ import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationChooser
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationSlice
 
-// #api261
+// #api262
 abstract class OCResolveConfigurationChooserAdapter : OCResolveConfigurationChooser {
   override fun selectPreselectedResolveConfiguration(
     project: Project,
