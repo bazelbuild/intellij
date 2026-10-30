@@ -19,7 +19,7 @@ bazel_dep(name = "abseil-cpp", version = "20250814.2")
 bazel_dep(name = "intellij_aspect_sdk")
 git_override(
     module_name = "intellij_aspect_sdk",
-    commit = "94d2c1116f1e2b10df0d0e4d2a18e9f2f4e90ce0",
+    commit = "c1ee5028efdc090f1265006641836aeee376815e",
     remote = "https://github.com/JetBrains/intellij-aspect.git",
 )
 
@@ -164,15 +164,15 @@ intellij_platform.sdk(
 intellij_platform.sdk(
     name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion262",
-    sha256 = "a19ec5a0428c726782cbaa592332dcb3a64f7892053b703856e6ec82b8e75e87",
-    version = "2026.2.3.1",
+    sha256 = "1798f3fd8c85ad074f1e6d46cb0fa820507dd289b82e8030ae42475185944266",
+    version = "2026.2.4",
 )
 intellij_platform.sdk(
     name = "clion",
     alias = "clion_2026_3",
     build_file = "//intellij_platform_sdk:BUILD.clion263",
-    sha256 = "5669b1f13267e7e584f74e4cf01720e15ab2c5db9d6ff6b502c262b6cfffd6e6",
-    version = "263.6259.39-EAP-SNAPSHOT",
+    sha256 = "7193c2d4659d06c405b92b5d5a93006feb272032b227839df5a3f46fcdd1ff73",
+    version = "263.7307.35-EAP-SNAPSHOT",
 )
 intellij_platform.plugin(
     name = "PythonCore",
@@ -192,8 +192,8 @@ intellij_platform.plugin(
     name = "PythonCore",
     alias = "python_2026_3",
     build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "a26e1b2d0b76ee6d064859d22f16eee1bd573091e20fd2fddff2ecad96c0ac79",
-    version = "263.6800.24",
+    sha256 = "8e4669a6cab003fd5408390f42cd8f717d100b7883d05b71a38860e55d87e402",
+    version = "263.7307.44",
 )
 use_repo(intellij_platform, "clion_2026_1", "clion_2026_2", "clion_2026_3", "jbr_25_0_3", "python_2026_1", "python_2026_2", "python_2026_3")
 

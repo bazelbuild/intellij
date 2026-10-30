@@ -32,6 +32,7 @@ kt_jvm_library(
         "//shared",
         "//third_party/java/auto_value",
         "@error_prone_annotations//jar",
+        "@intellij_aspect_sdk//sdk",
     ],
 )
 
@@ -43,10 +44,7 @@ stamped_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     data = {"xcode/xcode_query.bzl": "src/com/google/idea/blaze/cpp/xcode_query.bzl"},
-    # #api262: the storage customizer extension point was added in 2026.3
-    plugin_xmls = [":plugin_xml"] + select_for_version({
-        "2026.3": ["src/META-INF/blaze-cpp-storage.xml"],
-    }),
+    plugin_xmls = [":plugin_xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )

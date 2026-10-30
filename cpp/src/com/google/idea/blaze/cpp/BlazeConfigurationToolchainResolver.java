@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
@@ -35,7 +36,6 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -45,10 +45,12 @@ import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
 import com.google.idea.blaze.cpp.environment.EnvironmentProcessor;
 import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
+import com.intellij.aspect.lib.ReadtargetKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,6 +68,12 @@ import javax.annotation.Nullable;
  * com.jetbrains.cidr.lang.workspace.OCResolveConfiguration}
  */
 public final class BlazeConfigurationToolchainResolver {
+
+  // placeholders that the apple_support compiler wrapper replaces
+  private static final String EXECUTION_ROOT_PLACEHOLDER = "__BAZEL_EXECUTION_ROOT__";
+  private static final String EXECUTION_ROOT_CANONICAL_PLACEHOLDER = "__BAZEL_EXECUTION_ROOT_CANONICAL__";
+  private static final String XCODE_DEVELOPER_DIR_PLACEHOLDER = "__BAZEL_XCODE_DEVELOPER_DIR__";
+  private static final String XCODE_SDKROOT_PLACEHOLDER = "__BAZEL_XCODE_SDKROOT__";
 
   private BlazeConfigurationToolchainResolver() {}
 
@@ -257,73 +265,14 @@ public final class BlazeConfigurationToolchainResolver {
     final var compilerSettingsFutures = new ArrayList<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>();
 
     for (CToolchainIdeInfo toolchain : toolchains) {
-      compilerSettingsFutures.add(submit(() -> {
-        final var cCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cCompiler());
-        if (cCompiler == null) {
-          return null;
-        }
-        final var cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cppCompiler());
-        if (cppCompiler == null) {
-          return null;
-        }
-
-        final var cEnvironment = EnvironmentProcessor.apply(toolchain.cEnvironment(), executionRootPathResolver);
-        final var cppEnvironment = EnvironmentProcessor.apply(toolchain.cppEnvironment(), executionRootPathResolver);
-
-        final var cCompilerVersion = getCompilerVersion(
-            project,
-            context,
-            executionRootPathResolver,
-            xcodeCompilerSettings,
-            cEnvironment,
-            cCompiler
-        );
-        final var cppCompilerVersion = getCompilerVersion(
-            project,
-            context,
-            executionRootPathResolver,
-            xcodeCompilerSettings,
-            cppEnvironment,
-            cppCompiler
-        );
-
-        var compilerVersion = mergeCompilerVersions(context, cCompilerVersion, cppCompilerVersion);
-        if (compilerVersion == null) {
-          compilerVersion = CompilerVersionUtil.FALLBACK_VERSION;
-        }
-
-        final var oldSettings = oldCompilerSettings.get(toolchain);
-        if (oldSettings != null && oldSettings.version().equals(compilerVersion)) {
-          return new SimpleImmutableEntry<>(toolchain, oldSettings);
-        }
-
-        final var xcodeEnvironment = XcodeCompilerSettingsProvider
-            .getInstance(project)
-            .asEnvironmentVariables(xcodeCompilerSettings);
-        final var environment = mergeEnvironments(
-            xcodeEnvironment,
-            cEnvironment,
-            cppEnvironment
-        );
-
-        final var settings = BlazeCompilerSettings.builder()
-            .setCCompiler(cCompiler)
-            .setCppCompiler(cppCompiler)
-            .setCSwitches(toolchain.cCompilerOptions())
-            .setCppSwitches(toolchain.cppCompilerOptions())
-            .setVersion(compilerVersion)
-            .setEnvironment(environment)
-            .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
-            .setName(toolchain.compilerName())
-            .setSysroot(toolchain.sysroot())
-            .build();
-
-        if (settings == null) {
-          return null;
-        }
-
-        return new SimpleImmutableEntry<>(toolchain, settings);
-      }));
+      compilerSettingsFutures.add(submit(() -> doBuildCompilerSettings(
+          context,
+          project,
+          toolchain,
+          executionRootPathResolver,
+          xcodeCompilerSettings,
+          oldCompilerSettings
+      )));
     }
 
     final var compilerSettingsMap = ImmutableMap.<CToolchainIdeInfo, BlazeCompilerSettings>builder();
@@ -339,6 +288,149 @@ public final class BlazeConfigurationToolchainResolver {
     }
 
     return compilerSettingsMap.build();
+  }
+
+  private static @Nullable Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings> doBuildCompilerSettings(
+      BlazeContext context,
+      Project project,
+      CToolchainIdeInfo toolchain,
+      ExecutionRootPathResolver executionRootPathResolver,
+      Optional<XcodeCompilerSettings> fallbackXcodeSettings,
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings
+  ) {
+    // prefer the Xcode info reported by the toolchain, fall back to the project wide settings otherwise
+    final var xcodeSettings = resolveToolchainXcodeSettings(context, executionRootPathResolver, toolchain)
+        .or(() -> fallbackXcodeSettings);
+
+    final var cCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cCompiler());
+    if (cCompiler == null) {
+      return null;
+    }
+    final var cppCompiler = resolveCompilerExecutable(context, executionRootPathResolver, toolchain.cppCompiler());
+    if (cppCompiler == null) {
+      return null;
+    }
+
+    final var cEnvironment = EnvironmentProcessor.apply(toolchain.cEnvironment(), executionRootPathResolver);
+    final var cppEnvironment = EnvironmentProcessor.apply(toolchain.cppEnvironment(), executionRootPathResolver);
+
+    final var cCompilerVersion = getCompilerVersion(
+        project,
+        context,
+        executionRootPathResolver,
+        xcodeSettings,
+        cEnvironment,
+        cCompiler
+    );
+    final var cppCompilerVersion = getCompilerVersion(
+        project,
+        context,
+        executionRootPathResolver,
+        xcodeSettings,
+        cppEnvironment,
+        cppCompiler
+    );
+
+    var compilerVersion = mergeCompilerVersions(context, cCompilerVersion, cppCompilerVersion);
+    if (compilerVersion == null) {
+      compilerVersion = CompilerVersionUtil.FALLBACK_VERSION;
+    }
+
+    final var oldSettings = oldCompilerSettings.get(toolchain);
+    if (oldSettings != null && oldSettings.version().equals(compilerVersion)) {
+      return new SimpleImmutableEntry<>(toolchain, oldSettings);
+    }
+
+    final var xcodeEnvironment = XcodeCompilerSettingsProvider
+        .getInstance(project)
+        .asEnvironmentVariables(xcodeSettings);
+
+    final var environment = mergeEnvironments(
+        xcodeEnvironment,
+        cEnvironment,
+        cppEnvironment
+    );
+
+    final var placeholders = createPlaceholders(executionRootPathResolver.getExecutionRoot(), xcodeSettings);
+
+    final var settings = BlazeCompilerSettings.builder()
+        .setCCompiler(cCompiler)
+        .setCppCompiler(cppCompiler)
+        .setCSwitches(expandPlaceholders(toolchain.cCompilerOptions(), placeholders))
+        .setCppSwitches(expandPlaceholders(toolchain.cppCompilerOptions(), placeholders))
+        .setVersion(compilerVersion)
+        .setEnvironment(environment)
+        .setBuiltInIncludes(toolchain.builtInIncludeDirectories())
+        .setName(toolchain.compilerName())
+        .setSysroot(toolchain.sysroot())
+        .build();
+
+    if (settings == null) {
+      return null;
+    }
+
+    return new SimpleImmutableEntry<>(toolchain, settings);
+  }
+
+  /**
+   * Reads the resolved Xcode environment generated by the aspect for Apple toolchains. Only available with the IntelliJ
+   * aspect, returns empty for toolchains without Xcode info.
+   */
+  private static Optional<XcodeCompilerSettings> resolveToolchainXcodeSettings(
+      BlazeContext context,
+      ExecutionRootPathResolver executionRootPathResolver,
+      CToolchainIdeInfo toolchain
+  ) {
+    final var xcodeInfo = toolchain.xcodeInfo();
+    if (xcodeInfo == null) {
+      return Optional.empty();
+    }
+
+    final var file = executionRootPathResolver.resolveExecutionRootPath(
+        ExecutionRootPath.create(xcodeInfo.getExecutionRootRelativePath())
+    );
+
+    final var environment = file != null ? ReadtargetKt.readEnvFromFile(file.toPath()) : null;
+    if (environment == null) {
+      IssueOutput.warn("Unable to read Xcode info of toolchain: " + xcodeInfo).submit(context);
+      return Optional.empty();
+    }
+
+    return XcodeCompilerSettings.fromEnvironment(environment);
+  }
+
+  private static ImmutableMap<String, String> createPlaceholders(
+      File executionRoot,
+      Optional<XcodeCompilerSettings> xcodeSettings
+  ) {
+    File canonicalExecutionRoot;
+    try {
+      canonicalExecutionRoot = executionRoot.toPath().toRealPath().toFile();
+    } catch (IOException e) {
+      canonicalExecutionRoot = executionRoot;
+    }
+
+    final var placeholders = ImmutableMap.<String, String>builder()
+        .put(EXECUTION_ROOT_PLACEHOLDER, executionRoot.toString())
+        .put(EXECUTION_ROOT_CANONICAL_PLACEHOLDER, canonicalExecutionRoot.toString());
+
+    xcodeSettings.ifPresent(settings -> placeholders
+        .put(XCODE_DEVELOPER_DIR_PLACEHOLDER, settings.getDeveloperDir().toString())
+        .put(XCODE_SDKROOT_PLACEHOLDER, settings.getSdkRoot().toString()));
+
+    return placeholders.build();
+  }
+
+  private static ImmutableList<String> expandPlaceholders(
+      ImmutableList<String> options,
+      ImmutableMap<String, String> placeholders
+  ) {
+    return options.stream().map(option -> {
+      for (final var placeholder : placeholders.entrySet()) {
+        option = option.replace(placeholder.getKey(), placeholder.getValue());
+      }
+      return option;
+    }).collect(toImmutableList());
   }
 
   @SafeVarargs
