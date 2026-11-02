@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.sdkcompat.javascript.BlazeTypeScriptConfigCompat;
 import com.intellij.lang.javascript.config.JSFileImports;
 import com.intellij.lang.javascript.config.JSFileImportsImpl;
 import com.intellij.lang.javascript.config.JSModuleResolution;
@@ -79,7 +78,7 @@ import java.util.stream.Stream;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
+class BlazeTypeScriptConfig implements TypeScriptConfig {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
 
   private final Project project;
@@ -509,7 +508,7 @@ class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
   }
 
   @Override
-  protected LanguageTarget getLanguageTargetImpl() {
+  public LanguageTarget getLanguageTarget(boolean ts6orNewer) {
     return target;
   }
 
@@ -656,17 +655,17 @@ class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
   }
 
   @Override
-  protected boolean noImplicitAnyImpl() {
+  public boolean noImplicitAny(boolean ts6orNewer) {
     return noImplicitAny;
   }
 
   @Override
-  protected boolean noImplicitThisImpl() {
+  public boolean noImplicitThis(boolean ts6orNewer) {
     return noImplicitThis;
   }
 
   @Override
-  protected boolean strictNullChecksImpl() {
+  public boolean strictNullChecks(boolean ts6orNewer) {
     return strictNullChecks;
   }
 
@@ -676,7 +675,7 @@ class BlazeTypeScriptConfig extends BlazeTypeScriptConfigCompat {
   }
 
   @Override
-  protected boolean strictBindCallApplyImpl() {
+  public boolean strictBindCallApply(boolean ts6orNewer) {
     return false;
   }
 

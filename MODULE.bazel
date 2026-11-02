@@ -157,12 +157,6 @@ intellij_platform.jbr(
 )
 intellij_platform.sdk(
     name = "clion",
-    build_file = "//intellij_platform_sdk:BUILD.clion261",
-    sha256 = "e5e652679fd1bbea83d951996a809311284e69b08d68d784f375ee181d4c46c8",
-    version = "2026.1.5.1",
-)
-intellij_platform.sdk(
-    name = "clion",
     build_file = "//intellij_platform_sdk:BUILD.clion262",
     sha256 = "1798f3fd8c85ad074f1e6d46cb0fa820507dd289b82e8030ae42475185944266",
     version = "2026.2.4",
@@ -173,13 +167,6 @@ intellij_platform.sdk(
     build_file = "//intellij_platform_sdk:BUILD.clion263",
     sha256 = "7193c2d4659d06c405b92b5d5a93006feb272032b227839df5a3f46fcdd1ff73",
     version = "263.7307.35-EAP-SNAPSHOT",
-)
-intellij_platform.plugin(
-    name = "PythonCore",
-    alias = "python_2026_1",
-    build_file = "//intellij_platform_sdk:BUILD.python",
-    sha256 = "03afe7c26d078c026e4a7f2b6121ec1c19f7769efea2ed675bdefd9c8658a51f",
-    version = "261.27258.48",
 )
 intellij_platform.plugin(
     name = "PythonCore",
@@ -195,11 +182,9 @@ intellij_platform.plugin(
     sha256 = "8e4669a6cab003fd5408390f42cd8f717d100b7883d05b71a38860e55d87e402",
     version = "263.7307.44",
 )
-use_repo(intellij_platform, "clion_2026_1", "clion_2026_2", "clion_2026_3", "jbr_25_0_3", "python_2026_1", "python_2026_2", "python_2026_3")
+use_repo(intellij_platform, "clion_2026_2", "clion_2026_3", "jbr_25_0_3", "python_2026_2", "python_2026_3")
 
 register_toolchains(
-    "@clion_2026_1//:runtime",
-    "@clion_2026_1//:bootstrap_runtime",
     "@clion_2026_2//:runtime",
     "@clion_2026_2//:bootstrap_runtime",
     "@clion_2026_3//:runtime",

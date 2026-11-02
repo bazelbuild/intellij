@@ -38,7 +38,6 @@ intellij_plugin_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":clwb_lib",
-        "//clwb/src/com/google/idea/blaze/clwb/oclang",
         "//clwb/src/com/google/idea/blaze/clwb/radler",
     ],
 )
