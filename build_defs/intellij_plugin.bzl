@@ -296,6 +296,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         name = binary_name,
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
+        swigdeps = False,
     )
 
     if not ("testonly" in kwargs and kwargs["testonly"]):
