@@ -288,14 +288,17 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
     deploy_jar = binary_name + "_deploy.jar"
+    testonly_kwargs = {"testonly": kwargs["testonly"]} if "testonly" in kwargs else {}
     _intellij_plugin_java_deps(
         name = java_deps_name,
         deps = deps,
+        **testonly_kwargs
     )
     java_binary(
         name = binary_name,
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
+        **testonly_kwargs
     )
 
     if not ("testonly" in kwargs and kwargs["testonly"]):
@@ -316,6 +319,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
                 "zip -q -d $@ " + " ".join(DELETE_ENTRIES) + " || true ",
             ]),
             message = "Applying workarounds to plugin jar",
+            **testonly_kwargs
         )
 
     jar_target_name = name + "_intellij_plugin_jar"
@@ -333,6 +337,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
         plugin_icons = plugin_icons,
+        **testonly_kwargs
     )
 
     # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin
